@@ -1,0 +1,75 @@
+{
+  "preset": "../readme/presets/Cage_Fractal.fpt",
+  "output": "Typed_Program_Fold.png",
+  "width": 512,
+  "height": 384,
+  "samples": 32,
+  "camera": {
+    "position": [0.0, 0.2, -4.2],
+    "yaw_pitch": [0.0, -0.03],
+    "fov": 58,
+    "dof": 0,
+    "focus_distance": 4.0
+  },
+  "render": {
+    "bounces": 4,
+    "marching_steps": 220,
+    "normal_epsilon": 0.0008,
+    "min_distance": 0.0008,
+    "max_distance": 40,
+    "adaptive_marching": 0.18,
+    "error_protection": 0,
+    "random_mode": 0
+  },
+  "world": {
+    "mode": 3,
+    "light_size": 1,
+    "rotation": 0,
+    "elevation": 0,
+    "power": 0.18,
+    "contrast": 1,
+    "gradient_background": 0,
+    "one_color": [0.025, 0.035, 0.055]
+  },
+  "sun": {
+    "enabled": 1,
+    "rotation": 42,
+    "elevation": 38,
+    "power": 2.2,
+    "softness": 0.06,
+    "color": [1.0, 0.82, 0.62]
+  },
+  "post": {
+    "tone_map": 3,
+    "exposure": 1.1,
+    "brightness": 0,
+    "saturation": 1.05,
+    "contrast": 1.08,
+    "chromatic_aberration": 0,
+    "highlights": 0.04
+  },
+  "sdf_program": {
+    "operations": [
+      {"op": "rotate_y", "angle": 0.32},
+      {"op": "rotate_x", "angle": -0.18},
+      {"op": "abs"},
+      {"op": "sort_desc"},
+      {"op": "scale", "factor": 1.12},
+      {"op": "box", "value": [0.92, 0.72, 0.58], "orbit_weight": 0.8},
+      {"op": "sphere", "radius": 0.46, "combine": "subtract", "orbit_weight": 0.5}
+    ],
+    "material": {
+      "mode": "gradient",
+      "roughness": 0.58,
+      "specular": 0.3,
+      "translucency": 0,
+      "ior": 1.5,
+      "emission": 0.01
+    },
+    "gradient": [
+      {"position": 0.0, "color": [0.03, 0.15, 0.52]},
+      {"position": 0.45, "color": [0.08, 0.72, 0.82]},
+      {"position": 1.0, "color": [0.95, 0.28, 0.08]}
+    ]
+  }
+}

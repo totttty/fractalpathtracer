@@ -1,0 +1,6 @@
+target/
+reports/
+renders/
+.DS_Store
+__pycache__/
+*.py[cod]

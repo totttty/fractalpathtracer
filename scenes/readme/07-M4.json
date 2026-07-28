@@ -1,0 +1,13 @@
+{
+  "preset": "presets/Cage_Fractal.fpt",
+  "output": "07-M4-metal.png",
+  "width": 720,
+  "height": 720,
+  "samples": 96,
+  "camera": {"position": [13.0, 3.2, 13.0], "yaw_pitch": [-2.356, -0.14], "fov": 50, "dof": 0.003, "focus_distance": 0},
+  "render": {"bounces": 4, "marching_steps": 300, "normal_epsilon": 0.0004, "min_distance": 0.0004, "max_distance": 80, "adaptive_marching": 0.15, "error_protection": 0, "random_mode": 0},
+  "world": {"mode": 3, "light_size": 1, "rotation": 0, "elevation": 0, "power": 0.005, "contrast": 1, "gradient_background": 0, "one_color": [0, 0, 0]},
+  "sun": {"enabled": 1, "rotation": 138, "elevation": 42, "power": 1.55, "softness": 0.04, "color": [1, 1, 1]},
+  "post": {"tone_map": 0, "exposure": 0.72, "brightness": -0.035, "saturation": 0, "contrast": 1.18, "chromatic_aberration": 0, "highlights": 0.01},
+  "style": {"mode": "solid", "value": 0.62, "roughness": 0.92, "specular": 0.05, "emission": 0, "solid_color": [0.72, 0.74, 0.76]}
+}

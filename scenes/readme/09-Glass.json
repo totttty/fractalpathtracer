@@ -1,0 +1,13 @@
+{
+  "preset": "presets/Cage_Fractal.fpt",
+  "output": "09-Glass-metal.png",
+  "width": 960,
+  "height": 540,
+  "samples": 112,
+  "camera": {"position": [5.0, 0.55, 5.0], "yaw_pitch": [-2.356, 0.03], "fov": 47, "dof": 0.020, "focus_distance": 0},
+  "render": {"bounces": 5, "marching_steps": 300, "normal_epsilon": 0.0004, "min_distance": 0.0004, "max_distance": 80, "adaptive_marching": 0.14, "error_protection": 0, "random_mode": 0},
+  "world": {"mode": 3, "light_size": 1, "rotation": 0, "elevation": 0, "power": 1.15, "contrast": 1, "gradient_background": 0, "one_color": [1, 1, 1]},
+  "sun": {"enabled": 1, "rotation": 145, "elevation": 46, "power": 1.6, "softness": 0.08, "color": [0.55, 0.92, 0.78]},
+  "post": {"tone_map": 0, "exposure": 1.05, "brightness": 0, "saturation": 1.18, "contrast": 1.08, "chromatic_aberration": 0.012, "highlights": 0.06},
+  "style": {"mode": "gradient", "hue_offset": 0, "hue_scale": 0.22, "value": 0.92, "roughness": 0.45, "specular": 0.44, "emission": 0.015, "gradient": [{"position": 0, "color": [0.005, 0.035, 0.025]}, {"position": 0.30, "color": [0.01, 0.38, 0.24]}, {"position": 0.65, "color": [0.08, 0.72, 0.58]}, {"position": 1, "color": [0.40, 0.15, 0.62]}]}
+}

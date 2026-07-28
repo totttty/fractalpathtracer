@@ -1,0 +1,12 @@
+{
+  "preset": "presets/README_Glass.fpt",
+  "output": "04-Glass_Ball-metal.png",
+  "width": 720,
+  "height": 720,
+  "samples": 160,
+  "camera": {"position": [0, -0.02, -3.20], "yaw_pitch": [0, -0.02], "fov": 45, "dof": 0, "focus_distance": 3.7},
+  "render": {"bounces": 9, "marching_steps": 280, "normal_epsilon": 0.0004, "min_distance": 0.0004, "max_distance": 24, "adaptive_marching": 0.08, "error_protection": 0, "random_mode": 0},
+  "world": {"mode": 3, "light_size": 1, "rotation": 0, "elevation": 0, "power": 0.02, "contrast": 1, "gradient_background": 0, "one_color": [0.01, 0.01, 0.01]},
+  "sun": {"enabled": 0, "rotation": 0, "elevation": 0, "power": 0, "softness": 0},
+  "post": {"tone_map": 0, "exposure": 1.45, "brightness": 0, "saturation": 0.96, "contrast": 1.04, "chromatic_aberration": 0, "highlights": 0.025}
+}

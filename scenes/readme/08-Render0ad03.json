@@ -1,0 +1,13 @@
+{
+  "preset": "presets/Tower_Fractal.fpt",
+  "output": "08-Render0ad03-metal.png",
+  "width": 720,
+  "height": 720,
+  "samples": 128,
+  "camera": {"position": [5.0, 1.4, 5.0], "yaw_pitch": [-2.356, -0.18], "fov": 35, "dof": 0.028, "focus_distance": 0},
+  "render": {"bounces": 5, "marching_steps": 300, "normal_epsilon": 0.0004, "min_distance": 0.0004, "max_distance": 90, "adaptive_marching": 0.14, "error_protection": 0, "random_mode": 0},
+  "world": {"mode": 3, "light_size": 1, "rotation": 0, "elevation": 0, "power": 1.0, "contrast": 1, "gradient_background": 0, "one_color": [0.040, 0.018, 0.002]},
+  "sun": {"enabled": 1, "rotation": 132, "elevation": 34, "power": 5.0, "softness": 0.10, "color": [1.0, 0.68, 0.22]},
+  "post": {"tone_map": 0, "exposure": 1.35, "brightness": -0.005, "saturation": 0.96, "contrast": 1.08, "chromatic_aberration": 0.014, "highlights": 0.08},
+  "style": {"mode": "gradient", "hue_offset": 0, "hue_scale": 0.16, "value": 1.0, "roughness": 0.72, "specular": 0.30, "emission": 1.20, "gradient": [{"position": 0, "color": [0.16, 0.055, 0.006]}, {"position": 0.45, "color": [0.62, 0.28, 0.035]}, {"position": 0.76, "color": [1.0, 0.68, 0.16]}, {"position": 1, "color": [1.0, 0.92, 0.55]}]}
+}
