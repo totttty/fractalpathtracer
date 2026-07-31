@@ -29,6 +29,24 @@ pub enum SdfNormalMode {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RendererBackend {
+    Sdf = RENDERER_SDF as isize,
+    Voxel = RENDERER_VOXEL as isize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VoxelNormalMode {
+    Face = VOXEL_NORMAL_FACE as isize,
+    Smooth = VOXEL_NORMAL_SMOOTH as isize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VoxelStorageMode {
+    Dense = VOXEL_STORAGE_DENSE as isize,
+    SparseBricks = VOXEL_STORAGE_SPARSE_BRICKS as isize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DiagnosticMode {
     Depth = DIAGNOSTIC_DEPTH as isize,
     Normal = DIAGNOSTIC_NORMAL as isize,
@@ -59,6 +77,11 @@ pub struct RenderArgs {
     pub sdf_bounce_cap: Option<u32>,
     pub sdf_russian_roulette: bool,
     pub sdf_normal_mode: SdfNormalMode,
+    pub renderer_backend: RendererBackend,
+    pub voxel_resolution: Option<u32>,
+    pub voxel_normal_mode: VoxelNormalMode,
+    pub voxel_storage_mode: Option<VoxelStorageMode>,
+    pub voxel_surface_band: Option<f32>,
     pub sdf_rr_start: f32,
     pub sdf_rr_min_prob: f32,
     pub sdf_bounce_index: u32,
@@ -84,6 +107,11 @@ impl RenderArgs {
             sdf_bounce_cap: None,
             sdf_russian_roulette: false,
             sdf_normal_mode: SdfNormalMode::Auto,
+            renderer_backend: RendererBackend::Sdf,
+            voxel_resolution: None,
+            voxel_normal_mode: VoxelNormalMode::Face,
+            voxel_storage_mode: None,
+            voxel_surface_band: None,
             sdf_rr_start: 3.0,
             sdf_rr_min_prob: 0.2,
             sdf_bounce_index: 0,
@@ -116,6 +144,43 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
             "--preview" => out.preview = true,
             "--pathtrace" => out.live_pathtrace = true,
             "--sdf-profile" => out.sdf_profile = true,
+            "--renderer" => {
+                out.renderer_backend = match next_value(args, &mut i, "--renderer")? {
+                    "sdf" => RendererBackend::Sdf,
+                    "voxel" => RendererBackend::Voxel,
+                    value => bail!("invalid renderer: {value}"),
+                }
+            }
+            "--voxel-resolution" => {
+                let resolution = next_value(args, &mut i, "--voxel-resolution")?.parse()?;
+                ensure!(
+                    (32..=512).contains(&resolution),
+                    "voxel resolution must be 32..512"
+                );
+                out.voxel_resolution = Some(resolution);
+            }
+            "--voxel-normal" => {
+                out.voxel_normal_mode = match next_value(args, &mut i, "--voxel-normal")? {
+                    "face" => VoxelNormalMode::Face,
+                    "smooth" => VoxelNormalMode::Smooth,
+                    value => bail!("invalid voxel normal mode: {value}"),
+                }
+            }
+            "--voxel-storage" => {
+                out.voxel_storage_mode = Some(match next_value(args, &mut i, "--voxel-storage")? {
+                    "dense" => VoxelStorageMode::Dense,
+                    "sparse-bricks" => VoxelStorageMode::SparseBricks,
+                    value => bail!("invalid voxel storage mode: {value}"),
+                })
+            }
+            "--voxel-surface-band" => {
+                let band = next_value(args, &mut i, "--voxel-surface-band")?.parse()?;
+                ensure!(
+                    (0.25..=4.0).contains(&band),
+                    "voxel surface band must be 0.25..4"
+                );
+                out.voxel_surface_band = Some(band);
+            }
             "--out" => out.out_dir = next_value(args, &mut i, "--out")?.into(),
             "--fpt-root" => out.fpt_root = next_value(args, &mut i, "--fpt-root")?.into(),
             "--metallib" => out.metallib = Some(next_value(args, &mut i, "--metallib")?.into()),
@@ -202,6 +267,17 @@ pub fn apply_optimization_args(config: &mut FptRenderConfig, args: &RenderArgs) 
     config.sdf_rr_start = args.sdf_rr_start;
     config.sdf_rr_min_prob = args.sdf_rr_min_prob;
     config.sdf_chunk_samples = args.sdf_chunk_samples;
+    config.renderer_backend = args.renderer_backend as u32;
+    config.voxel_normal_mode = args.voxel_normal_mode as u32;
+    if let Some(storage) = args.voxel_storage_mode {
+        config.voxel_storage = storage as u32;
+    }
+    if let Some(resolution) = args.voxel_resolution {
+        config.voxel_resolution = resolution;
+    }
+    if let Some(surface_band) = args.voxel_surface_band {
+        config.voxel_surface_band = surface_band;
+    }
 }
 
 pub fn default_config() -> FptRenderConfig {
@@ -226,6 +302,11 @@ pub fn default_config() -> FptRenderConfig {
         post: [0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0],
         program_material: [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.5, 0.0],
         fractal_style: [0.0, 1.0, 0.5, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0],
+        voxel_resolution: 128,
+        voxel_storage: VOXEL_STORAGE_SPARSE_BRICKS,
+        voxel_bounds_min: [-4.0, -4.0, -4.0],
+        voxel_surface_band: 1.0,
+        voxel_bounds_max: [4.0, 4.0, 4.0],
         ..Default::default()
     };
     cfg.focus_distance = 0.0;
@@ -667,6 +748,44 @@ pub fn load_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
     if let Some(value) = object.get("style") {
         apply_fractal_style(&mut config, value)?;
     }
+    if let Some(voxel) = object.get("voxel").and_then(Value::as_object) {
+        if let Some(value) = voxel.get("resolution") {
+            config.voxel_resolution = number_u32(Some(value), config.voxel_resolution);
+        }
+        ensure!(
+            (32..=512).contains(&config.voxel_resolution),
+            "voxel resolution must be 32..512"
+        );
+        if let Some(value) = voxel.get("bounds_min") {
+            copy_float_array(&mut config.voxel_bounds_min, value);
+        }
+        if let Some(value) = voxel.get("bounds_max") {
+            copy_float_array(&mut config.voxel_bounds_max, value);
+        }
+        config.voxel_surface_band =
+            number_f32(voxel.get("surface_band"), config.voxel_surface_band);
+        if let Some(storage) = voxel.get("storage").and_then(Value::as_str) {
+            config.voxel_storage = match storage {
+                "dense" => VOXEL_STORAGE_DENSE,
+                "sparse-bricks" => VOXEL_STORAGE_SPARSE_BRICKS,
+                value => bail!("invalid voxel storage mode: {value}"),
+            };
+        }
+        config.voxel_fill_interior = u32::from(
+            voxel
+                .get("fill_interior")
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+        );
+    }
+    ensure!(
+        config
+            .voxel_bounds_min
+            .iter()
+            .zip(config.voxel_bounds_max)
+            .all(|(min, max)| *min < max),
+        "voxel bounds_max must be greater than bounds_min"
+    );
     load_fpt_settings(&preset_path, &mut config)?;
     if let Some(value) = object.get("sdf_program") {
         apply_sdf_program(&mut config, value)?;
@@ -699,6 +818,11 @@ pub fn preview_scene_list(
     args: &RenderArgs,
     current: &FptRenderConfig,
 ) -> Result<(Vec<FptRenderConfig>, u32)> {
+    let bundled = [
+        PathBuf::from("scenes/readme/01-Render005.json"),
+        PathBuf::from("scenes/readme/08-Render0ad03.json"),
+        PathBuf::from("scenes/readme/09-Glass.json"),
+    ];
     let relatives = [
         "Beauty/Cornell_Box.json",
         "Beauty/Glass_Ball.json",
@@ -710,10 +834,12 @@ pub fn preview_scene_list(
         "Beauty/Fractals/Tower_Fractal.json",
         "Beauty/Fractals/Tree_Fractal.json",
     ];
-    let mut configs = Vec::with_capacity(relatives.len());
-    for relative in relatives {
+    let mut scene_paths: Vec<PathBuf> = bundled.into_iter().filter(|path| path.exists()).collect();
+    scene_paths.extend(relatives.into_iter().map(|path| args.fpt_root.join(path)));
+    let mut configs = Vec::with_capacity(scene_paths.len());
+    for scene_path in scene_paths {
         let mut scene_args = args.clone();
-        scene_args.scene_path = args.fpt_root.join(relative);
+        scene_args.scene_path = scene_path;
         if !scene_args.scene_path.exists() {
             continue;
         }
@@ -736,7 +862,17 @@ fn prioritize_preview_config(
     current: &FptRenderConfig,
     mut candidates: Vec<FptRenderConfig>,
 ) -> (Vec<FptRenderConfig>, u32) {
-    candidates.retain(|candidate| candidate.sdf_id != current.sdf_id);
+    if current.renderer_backend == RENDERER_VOXEL {
+        candidates.retain(|candidate| {
+            candidate.sdf_id != current.sdf_id
+                || candidate.camera_position != current.camera_position
+                || candidate.camera_yaw_pitch != current.camera_yaw_pitch
+                || candidate.fractal_style != current.fractal_style
+                || candidate.post != current.post
+        });
+    } else {
+        candidates.retain(|candidate| candidate.sdf_id != current.sdf_id);
+    }
     candidates.insert(0, *current);
     (candidates, 0)
 }
@@ -794,6 +930,49 @@ mod tests {
             "0".to_owned(),
         ];
         assert!(parse_render_args(&zero).is_err());
+    }
+
+    #[test]
+    fn voxel_backend_arguments_parse() {
+        let args = vec![
+            "scene.json".to_owned(),
+            "--renderer".to_owned(),
+            "voxel".to_owned(),
+            "--voxel-resolution".to_owned(),
+            "192".to_owned(),
+            "--voxel-normal".to_owned(),
+            "smooth".to_owned(),
+            "--voxel-storage".to_owned(),
+            "dense".to_owned(),
+            "--voxel-surface-band".to_owned(),
+            "1.25".to_owned(),
+        ];
+        let parsed = parse_render_args(&args).unwrap();
+        assert_eq!(parsed.renderer_backend, RendererBackend::Voxel);
+        assert_eq!(parsed.voxel_resolution, Some(192));
+        assert_eq!(parsed.voxel_normal_mode, VoxelNormalMode::Smooth);
+        assert_eq!(parsed.voxel_storage_mode, Some(VoxelStorageMode::Dense));
+        assert_eq!(parsed.voxel_surface_band, Some(1.25));
+    }
+
+    #[test]
+    fn voxel_resolution_accepts_512_and_rejects_larger_fields() {
+        let maximum = vec![
+            "scene.json".to_owned(),
+            "--voxel-resolution".to_owned(),
+            "512".to_owned(),
+        ];
+        assert_eq!(
+            parse_render_args(&maximum).unwrap().voxel_resolution,
+            Some(512)
+        );
+
+        let too_large = vec![
+            "scene.json".to_owned(),
+            "--voxel-resolution".to_owned(),
+            "513".to_owned(),
+        ];
+        assert!(parse_render_args(&too_large).is_err());
     }
 
     #[test]

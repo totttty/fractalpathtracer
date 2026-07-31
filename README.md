@@ -2,7 +2,7 @@
 
 # FPT Metal
 
-**A native Rust + Metal signed-distance-field path tracer for macOS.**
+**A native Rust + Metal fractal path tracer with SDF and voxel backends for macOS.**
 
 [![macOS](https://img.shields.io/badge/platform-macOS-111111?style=flat-square&logo=apple)](https://developer.apple.com/metal/)
 [![Rust](https://img.shields.io/badge/host-Rust-dea584?style=flat-square&logo=rust)](https://www.rust-lang.org/)
@@ -25,6 +25,7 @@ Python/OpenGL runtime with a standalone macOS renderer.
 | Runtime shader and application dependencies | Embedded `.metallib` and a standalone release binary with no Python or Zig runtime |
 | Original Beauty JSON scenes | Compatibility loader plus explicit Metal implementations of all nine Beauty presets |
 | Fixed shader-authored fractals | Typed, scene-independent SDF programs for generated fractals, transforms, folds, repetition, CSG, gradients, and materials |
+| Procedural SDF traversal only | Optional GPU voxelization with reusable sparse-brick storage and exact grid DDA traversal |
 | Six finite-difference samples per normal | Analytic derivative propagation for typed programs, measured up to `1.83x` faster |
 | Per-sample automatic focus and full SDF material queries | One-shot GPU focus prepass and distance-only marching, producing a `1.71x` combined featured-scene speedup |
 | Original viewport and offline output | Progressive interactive path tracing, responsive camera controls, scene cycling, and deterministic offline accumulation |
@@ -33,9 +34,9 @@ Python/OpenGL runtime with a standalone macOS renderer.
 | Environment and post effects | Radiance RGBE HDR input and shared offline/interactive tone mapping, exposure, saturation, aberration, and highlights |
 
 The experimental NAADF backend used during development was removed before
-release. The repository now focuses on a clean SDF path tracer and the generic
-typed-program route for future procedurally generated fractals. Arbitrary GLSL
-translation remains intentionally out of scope.
+release. The repository now provides shared SDF and voxel geometry paths plus
+the generic typed-program route for future procedurally generated fractals.
+Arbitrary GLSL translation remains intentionally out of scope.
 
 ## Quick Start
 
@@ -138,6 +139,74 @@ Instruments trace with:
 ```sh
 scripts/run_metal_system_trace.sh
 ```
+
+## Voxel Renderer
+
+The voxel backend converts the same procedural SDF programs into a reusable GPU
+field, then traces that field instead of evaluating the distance estimator for
+every ray step. Camera, lighting, materials, path accumulation, and
+postprocessing remain shared with the SDF renderer.
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/readme-renders/01-render005-voxel.png" alt="Render005 rendered with the 256 cubed voxel backend"></td>
+    <td width="33%"><img src="docs/readme-renders/08-render0ad03-voxel.png" alt="Render0ad03 rendered with the 256 cubed voxel backend"></td>
+    <td width="33%"><img src="docs/readme-renders/09-glass-voxel.png" alt="Glass rendered with the 256 cubed voxel backend"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Render005</strong></td>
+    <td align="center"><strong>Render0ad03</strong></td>
+    <td align="center"><strong>Glass</strong></td>
+  </tr>
+</table>
+
+All three examples use the same release settings: `256^3`, bounds
+`[-3.25, 3.25]^3`, surface band `0.50`, face normals, `960x540`, and 112 spp.
+Measured on an Apple M1 Max against SDF renders from the same build and sample
+count:
+
+| Scene | MAE | SSIM | LF-SSIM | SDF render | Voxel build | Voxel render | Cached speedup |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Render005 | `26.70` | `0.291` | `0.401` | 11,380 ms | 52 ms | 3,456 ms | **3.29x** |
+| Render0ad03 | `31.63` | `0.328` | `0.172` | 4,837 ms | 52 ms | 3,547 ms | **1.36x** |
+| Glass | `55.75` | `0.202` | `0.493` | 9,760 ms | 60 ms | 3,087 ms | **3.16x** |
+
+MAE is lower-is-better; SSIM and low-frequency luminance SSIM are
+higher-is-better. Build time is reported separately because the field is reused
+across progressive samples and camera movement.
+
+Reproduce the gallery, comparison JSON, performance summary, and contact sheet:
+
+```sh
+scripts/run_voxel_readme.sh
+```
+
+The harness defaults to the settings above. Override `WIDTH`, `HEIGHT`,
+`SAMPLES`, `VOXEL_RESOLUTION`, or `OUT_DIR` for experiments. Render one scene
+directly with:
+
+```sh
+target/release/fpt-metal render scenes/readme/09-Glass.json \
+  --renderer voxel \
+  --voxel-resolution 256 \
+  --voxel-surface-band 0.50 \
+  --voxel-storage sparse-bricks \
+  --voxel-normal face \
+  --width 960 --height 540 --samples 112 \
+  --out renders/voxel
+```
+
+The build kernel samples `distanceSdf` at each cell centre, marks cells within
+the configured surface band, evaluates `userSdf` once for occupied-cell
+material data, and packs colour, roughness, specular, translucency, IOR, and
+emission. The host compacts occupied `4x4x4` bricks behind a dense page table;
+`--voxel-storage dense` retains the complete field as a correctness reference.
+Rays intersect the field bounds and use exact grid DDA to find the first packed
+cell before continuing through the shared path-tracing and postprocess stages.
+
+Resolutions up to `512` remain available as an opt-in offline quality mode, but
+`256` is the recommended balance. The current builder creates a dense staging
+field before sparse compaction, so a `512^3` Tower build peaks near `1.8 GiB`.
 
 ## Generated SDF Programs
 

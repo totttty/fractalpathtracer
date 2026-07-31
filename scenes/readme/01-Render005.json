@@ -3,11 +3,12 @@
   "output": "01-Render005-metal.png",
   "width": 960,
   "height": 540,
-  "samples": 96,
+  "samples": 112,
   "camera": {"position": [5.0, 1.2, 5.0], "yaw_pitch": [-2.356, -0.12], "fov": 42, "dof": 0.022, "focus_distance": 0},
   "render": {"bounces": 5, "marching_steps": 280, "normal_epsilon": 0.00045, "min_distance": 0.00045, "max_distance": 80, "adaptive_marching": 0.16, "error_protection": 0, "random_mode": 0},
   "world": {"mode": 3, "light_size": 1, "rotation": 120, "elevation": 25, "power": 0.08, "contrast": 1, "gradient_background": 0, "one_color": [0.002, 0.0005, 0.0002]},
   "sun": {"enabled": 1, "rotation": 125, "elevation": 28, "power": 3.2, "softness": 0.08, "color": [1.0, 0.22, 0.025]},
   "post": {"tone_map": 0, "exposure": 1.10, "brightness": -0.015, "saturation": 1.08, "contrast": 1.18, "chromatic_aberration": 0.012, "highlights": 0.10},
+  "voxel": {"resolution": 256, "bounds_min": [-3.25, -3.25, -3.25], "bounds_max": [3.25, 3.25, 3.25], "surface_band": 0.5},
   "style": {"mode": "gradient", "hue_offset": 0.0, "hue_scale": 0.13, "value": 0.82, "roughness": 0.68, "specular": 0.22, "emission": 0.025, "gradient": [{"position": 0, "color": [0.025, 0.001, 0.0]}, {"position": 0.35, "color": [0.58, 0.045, 0.001]}, {"position": 0.72, "color": [1.0, 0.34, 0.006]}, {"position": 1, "color": [1.0, 0.76, 0.10]}]}
 }

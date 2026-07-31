@@ -94,6 +94,14 @@ struct FptRenderConfig {
     float gradient_stops[FPT_SDF_GRADIENT_MAX_STOPS][4];
     uchar hdri_path[256];
     ushort hdri_lut[32 * 16 * 3];
+    uint renderer_backend;
+    uint voxel_resolution;
+    uint voxel_normal_mode;
+    uint voxel_storage;
+    float voxel_bounds_min[3];
+    float voxel_surface_band;
+    float voxel_bounds_max[3];
+    uint voxel_fill_interior;
 };
 
 enum {
@@ -938,6 +946,206 @@ static float3 normalAt(float3 p, constant FptRenderConfig &cfg) {
     return normalize(n);
 }
 
+struct VoxelCell {
+    uint packed_color;
+    uint packed_properties;
+    float emission;
+};
+
+struct VoxelHit {
+    bool hit;
+    float distance;
+    float3 position;
+    float3 cell_center;
+    float3 normal;
+    Material material;
+    uint steps;
+};
+
+static uint packVoxelUnorm4(float4 value) {
+    uint4 q = uint4(round(clamp(value, 0.0f, 1.0f) * 255.0f));
+    return q.x | (q.y << 8u) | (q.z << 16u) | (q.w << 24u);
+}
+
+static float4 unpackVoxelUnorm4(uint value) {
+    return float4(value & 255u,
+                  (value >> 8u) & 255u,
+                  (value >> 16u) & 255u,
+                  (value >> 24u) & 255u) / 255.0f;
+}
+
+static Material unpackVoxelMaterial(VoxelCell cell) {
+    float4 color = unpackVoxelUnorm4(cell.packed_color);
+    float4 properties = unpackVoxelUnorm4(cell.packed_properties);
+    Material material = defaultMaterial();
+    material.rgb = color.rgb;
+    material.roughness = properties.x;
+    material.specular = properties.y;
+    material.translucency = properties.z;
+    material.ior = mix(1.0f, 2.5f, properties.w);
+    material.emission = cell.emission;
+    return material;
+}
+
+static uint voxelIndex(uint3 cell, uint resolution) {
+    return cell.x + cell.y * resolution + cell.z * resolution * resolution;
+}
+
+static float3 voxelBoundsMin(constant FptRenderConfig &cfg) {
+    return float3(cfg.voxel_bounds_min[0], cfg.voxel_bounds_min[1], cfg.voxel_bounds_min[2]);
+}
+
+static float3 voxelBoundsMax(constant FptRenderConfig &cfg) {
+    return float3(cfg.voxel_bounds_max[0], cfg.voxel_bounds_max[1], cfg.voxel_bounds_max[2]);
+}
+
+static float3 voxelCellSize(constant FptRenderConfig &cfg) {
+    return (voxelBoundsMax(cfg) - voxelBoundsMin(cfg)) / float(max(cfg.voxel_resolution, 1u));
+}
+
+static bool voxelRayAabb(float3 origin,
+                         float3 direction,
+                         float3 bounds_min,
+                         float3 bounds_max,
+                         thread float &near_t,
+                         thread float &far_t,
+                         thread float3 &entry_normal) {
+    near_t = -inf;
+    far_t = inf;
+    entry_normal = float3(0.0f);
+    for (uint axis = 0u; axis < 3u; ++axis) {
+        if (abs(direction[axis]) < 1.0e-8f) {
+            if (origin[axis] < bounds_min[axis] || origin[axis] > bounds_max[axis]) return false;
+            continue;
+        }
+        float a = (bounds_min[axis] - origin[axis]) / direction[axis];
+        float b = (bounds_max[axis] - origin[axis]) / direction[axis];
+        float axis_near = min(a, b);
+        float axis_far = max(a, b);
+        if (axis_near > near_t) {
+            near_t = axis_near;
+            entry_normal = float3(0.0f);
+            entry_normal[axis] = direction[axis] > 0.0f ? -1.0f : 1.0f;
+        }
+        far_t = min(far_t, axis_far);
+        if (near_t > far_t) return false;
+    }
+    return far_t >= max(near_t, 0.0f);
+}
+
+static VoxelHit traceVoxel(float3 origin,
+                           float3 direction,
+                           constant FptRenderConfig &cfg,
+                           device const VoxelCell *cells,
+                           device const uint *page_table) {
+    VoxelHit result;
+    result.hit = false;
+    result.distance = inf;
+    result.steps = 0u;
+    uint resolution = max(cfg.voxel_resolution, 1u);
+    float3 bounds_min = voxelBoundsMin(cfg);
+    float3 bounds_max = voxelBoundsMax(cfg);
+    float3 cell_size = voxelCellSize(cfg);
+    float near_t;
+    float far_t;
+    float3 entry_normal;
+    if (!voxelRayAabb(origin, direction, bounds_min, bounds_max, near_t, far_t, entry_normal)) return result;
+
+    float entry_t = max(near_t, 0.0f);
+    float epsilon = max(min(cell_size.x, min(cell_size.y, cell_size.z)) * 1.0e-4f, 1.0e-6f);
+    float3 start = origin + direction * (entry_t + epsilon);
+    int3 cell = clamp(int3(floor((start - bounds_min) / cell_size)),
+                      int3(0),
+                      int3(int(resolution) - 1));
+    int3 step_direction = int3(0);
+    float3 next_t = float3(inf);
+    float3 delta_t = float3(inf);
+    for (uint axis = 0u; axis < 3u; ++axis) {
+        if (direction[axis] > 1.0e-8f) {
+            step_direction[axis] = 1;
+            float boundary = bounds_min[axis] + float(cell[axis] + 1) * cell_size[axis];
+            next_t[axis] = (boundary - origin[axis]) / direction[axis];
+            delta_t[axis] = cell_size[axis] / direction[axis];
+        } else if (direction[axis] < -1.0e-8f) {
+            step_direction[axis] = -1;
+            float boundary = bounds_min[axis] + float(cell[axis]) * cell_size[axis];
+            next_t[axis] = (boundary - origin[axis]) / direction[axis];
+            delta_t[axis] = -cell_size[axis] / direction[axis];
+        }
+    }
+
+    uint max_steps = resolution * 3u + 3u;
+    for (uint step = 0u; step < max_steps && entry_t <= far_t; ++step) {
+        if (any(cell < int3(0)) || any(cell >= int3(int(resolution)))) break;
+        uint3 coordinate = uint3(cell);
+        VoxelCell voxel;
+        voxel.packed_color = 0u;
+        voxel.packed_properties = 0u;
+        voxel.emission = 0.0f;
+        if (cfg.voxel_storage == 1u) {
+            uint brick_grid = (resolution + 3u) >> 2u;
+            uint3 brick = coordinate >> 2u;
+            uint page = page_table[brick.x + brick.y * brick_grid + brick.z * brick_grid * brick_grid];
+            if (page != 0u) {
+                uint3 local = coordinate & 3u;
+                uint local_index = local.x + local.y * 4u + local.z * 16u;
+                voxel = cells[(page - 1u) * 64u + local_index];
+            }
+        } else {
+            voxel = cells[voxelIndex(coordinate, resolution)];
+        }
+        if ((voxel.packed_color & 0x80000000u) != 0u) {
+            result.hit = true;
+            result.distance = entry_t;
+            result.position = origin + direction * entry_t;
+            result.cell_center = bounds_min + (float3(coordinate) + 0.5f) * cell_size;
+            result.normal = entry_normal;
+            result.material = unpackVoxelMaterial(voxel);
+            result.steps = step + 1u;
+            return result;
+        }
+
+        uint axis = 0u;
+        if (next_t.y < next_t[axis]) axis = 1u;
+        if (next_t.z < next_t[axis]) axis = 2u;
+        entry_t = next_t[axis];
+        entry_normal = float3(0.0f);
+        entry_normal[axis] = step_direction[axis] > 0 ? -1.0f : 1.0f;
+        cell[axis] += step_direction[axis];
+        next_t[axis] += delta_t[axis];
+    }
+    return result;
+}
+
+kernel void voxel_build_kernel(device VoxelCell *cells [[buffer(0)]],
+                               constant FptRenderConfig &cfg [[buffer(1)]],
+                               uint3 gid [[thread_position_in_grid]]) {
+    uint resolution = max(cfg.voxel_resolution, 1u);
+    if (any(gid >= uint3(resolution))) return;
+    uint index = voxelIndex(gid, resolution);
+    float3 cell_size = voxelCellSize(cfg);
+    float3 position = voxelBoundsMin(cfg) + (float3(gid) + 0.5f) * cell_size;
+    float distance = distanceSdf(position, cfg);
+    float half_diagonal = length(cell_size) * 0.5f;
+    bool occupied = isfinite(distance) && abs(distance) <= half_diagonal * max(cfg.voxel_surface_band, 0.25f);
+    if (cfg.voxel_fill_interior != 0u && isfinite(distance) && distance < 0.0f) occupied = true;
+    VoxelCell cell;
+    cell.packed_color = 0u;
+    cell.packed_properties = 0u;
+    cell.emission = 0.0f;
+    if (occupied) {
+        Material material = userSdf(position, cfg).material;
+        uint packed_color = packVoxelUnorm4(float4(material.rgb, 0.0f));
+        cell.packed_color = packed_color | 0x80000000u;
+        cell.packed_properties = packVoxelUnorm4(float4(material.roughness,
+                                                        material.specular,
+                                                        material.translucency,
+                                                        (material.ior - 1.0f) / 1.5f));
+        cell.emission = material.emission;
+    }
+    cells[index] = cell;
+}
+
 static float preetham(float3 dr, float3 sunDir) {
     float T = 2.0f;
     float A = 0.1787f * T - 1.4630f;
@@ -1144,6 +1352,134 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
     return min(col, float3(8.0f));
 }
 
+static float3 voxelSunContributionWithSurface(float3 position,
+                                               float2 xy,
+                                               float seed,
+                                               Material material,
+                                               float3 normal,
+                                               constant FptRenderConfig &cfg,
+                                               device const VoxelCell *cells,
+                                               device const uint *page_table) {
+    float3 light_direction = rotateCamera(float3(0.0f, 0.0f, 1.0f),
+                                          float2(cfg.sun[1] * pi / 180.0f, cfg.sun[2] * pi / 180.0f));
+    float h1 = hash13(float3(xy, seed * 5.0f + 1.0f));
+    float h2 = hash13(float3(xy, seed * 3.0f + 5.0f));
+    float2 divergence = float2(cos(h1 * 2.0f * pi), sin(h1 * 2.0f * pi)) * sqrt(h2) * cfg.sun[4];
+    light_direction = rotateCamera(light_direction, divergence);
+    float cell_epsilon = min(voxelCellSize(cfg).x, min(voxelCellSize(cfg).y, voxelCellSize(cfg).z)) * 0.01f;
+    VoxelHit shadow = traceVoxel(position + normal * cell_epsilon, light_direction, cfg, cells, page_table);
+    if (!shadow.hit) {
+        float diffuse = max(dot(normal, light_direction), 0.0f);
+        return cfg.sun[3] * diffuse * material.roughness * (1.0f - material.translucency) *
+               float3(cfg.sun_color[0], cfg.sun_color[1], cfg.sun_color[2]);
+    }
+    return float3(0.0f);
+}
+
+static float estimateVoxelFocusDistance(constant FptRenderConfig &cfg,
+                                        device const VoxelCell *cells,
+                                        device const uint *page_table) {
+    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+    float3 direction = rotateCamera(normalize(float3(0.0f, 0.0f, focal_length)), cameraYawPitch(cfg));
+    VoxelHit hit = traceVoxel(cameraPos(cfg), direction, cfg, cells, page_table);
+    return hit.hit && hit.distance > 0.001f ? hit.distance : 5.0f;
+}
+
+static float3 renderVoxelPath(float2 xy,
+                              uint sample_index,
+                              constant FptRenderConfig &cfg,
+                              device const VoxelCell *cells,
+                              device const uint *page_table) {
+    float frame = float(sample_index);
+    float3 position = cameraPos(cfg);
+    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+    float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
+    float3 direction = normalize(float3(xy + randomPoint(aa_strength, xy, frame), focal_length));
+    direction = rotateCamera(direction, cameraYawPitch(cfg));
+    float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateVoxelFocusDistance(cfg, cells, page_table);
+    float3 focus_point = position + direction * focus;
+    float2 lens = randomPoint(cfg.camera_dof, xy, frame);
+    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
+    direction = normalize(focus_point - position);
+
+    float3 pixel_light = float3(0.0f);
+    float3 pixel_color = float3(1.0f);
+    float sky_mask = 0.0f;
+    float3 gradient_color = backgroundGradient(direction, cfg);
+    int bounces = min(int(cfg.render[0]), 8);
+    if (cfg.sdf_bounce_cap > 0u) bounces = min(bounces, int(cfg.sdf_bounce_cap));
+    float cell_size = min(voxelCellSize(cfg).x, min(voxelCellSize(cfg).y, voxelCellSize(cfg).z));
+    for (int bounce = 0; bounce < bounces; ++bounce) {
+        VoxelHit hit = traceVoxel(position, direction, cfg, cells, page_table);
+        if (!hit.hit) {
+            if (bounce == 0) sky_mask = 1.0f;
+            pixel_light += environment(direction, cfg);
+            break;
+        }
+
+        Material material = hit.material;
+        if (material.emission > 0.001f) pixel_light += material.rgb * material.emission;
+        float3 normal = hit.normal;
+        if (cfg.voxel_normal_mode == 1u) normal = normalAt(hit.cell_center, cfg);
+        if (dot(normal, direction) > 0.0f) normal = -normal;
+        if (cfg.sun[0] == 1.0f) {
+            pixel_light += voxelSunContributionWithSurface(hit.position,
+                                                            xy,
+                                                            frame,
+                                                            material,
+                                                            normal,
+                                                            cfg,
+                                                            cells,
+                                                            page_table);
+        }
+
+        float random_scatter = hash13(float3(xy, frame * 1.37f + float(bounce)));
+        float random_fresnel = hash13(float3(xy, frame * 7.91f + float(bounce)));
+        bool transmitted = false;
+        if (random_scatter > material.translucency) {
+            float3 reflected = reflect(direction, normal);
+            float3 diffuse = randomVector(normal, xy, frame * 13.37f + float(bounce));
+            float f0 = pow((material.ior - 1.0f) / (material.ior + 1.0f), 2.0f);
+            float cos_theta = clamp(dot(normal, -direction), 0.0f, 1.0f);
+            float fresnel = f0 + (1.0f - f0) * pow5(1.0f - cos_theta);
+            direction = normalize(mix(reflected, diffuse, material.roughness));
+            if (random_fresnel < fresnel * material.specular) {
+                direction = reflected;
+            } else {
+                pixel_color *= material.rgb;
+            }
+        } else {
+            float f0 = pow((material.ior - 1.0f) / (material.ior + 1.0f), 2.0f);
+            float cos_theta = clamp(dot(normal, -direction), 0.0f, 1.0f);
+            float fresnel = f0 + (1.0f - f0) * pow5(1.0f - cos_theta);
+            float3 refracted = refract(direction, normal, 1.0f / material.ior);
+            float3 reflected = reflect(direction, normal);
+            if (dot(refracted, refracted) < 0.000001f || !isfinite(refracted.x) || random_fresnel < fresnel) {
+                direction = normalize(reflected);
+            } else {
+                direction = normalize(refracted);
+                pixel_color *= mix(float3(1.0f), material.rgb, 0.35f) * (1.0f - fresnel * 0.5f);
+                transmitted = true;
+            }
+        }
+        position = hit.position + (transmitted
+            ? direction * cell_size * 1.05f
+            : normal * cell_size * 0.01f * sign(dot(direction, normal)));
+
+        if (cfg.sdf_russian_roulette != 0u && bounce + 1 < bounces && float(bounce + 1) >= cfg.sdf_rr_start) {
+            float survival = clamp(max(pixel_color.x, max(pixel_color.y, pixel_color.z)),
+                                   clamp(cfg.sdf_rr_min_prob, 0.01f, 1.0f),
+                                   1.0f);
+            float roulette = hash13(float3(xy, frame * 19.19f + float(bounce) * 3.17f));
+            if (roulette > survival) break;
+            pixel_color /= survival;
+        }
+    }
+    float3 color = pixel_light * pixel_color;
+    if (cfg.world[6] == 1.0f) color = mix(color, gradient_color, sky_mask);
+    return min(color, float3(8.0f));
+}
+
 static bool raySphere(float3 ro, float3 rd, float3 center, float radius, thread float &t0, thread float &t1) {
     float3 oc = ro - center;
     float b = dot(oc, rd);
@@ -1267,6 +1603,27 @@ static float3 viewport(float2 xy, constant FptRenderConfig &cfg) {
     col = mix(col, col / 3.0f, shadow_area);
     col = pow(col, float3(1.0f / 2.2f));
     return mix(sky_col, col, confidence);
+}
+
+static float3 voxelViewport(float2 xy,
+                            constant FptRenderConfig &cfg,
+                            device const VoxelCell *cells,
+                            device const uint *page_table) {
+    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+    float3 direction = rotateCamera(normalize(float3(xy, focal_length)), cameraYawPitch(cfg));
+    VoxelHit hit = traceVoxel(cameraPos(cfg), direction, cfg, cells, page_table);
+    float3 sky_color = cfg.world[6] == 1.0f
+        ? backgroundGradient(direction, cfg)
+        : clamp(environment(direction, cfg), 0.0f, 1.0f);
+    if (!hit.hit) return sky_color;
+    float3 normal = cfg.voxel_normal_mode == 1u ? normalAt(hit.cell_center, cfg) : hit.normal;
+    if (dot(normal, direction) > 0.0f) normal = -normal;
+    float3 light_direction = normalize(float3(1.0f, 0.3f, 0.0f));
+    float diffuse = max(dot(light_direction, normal), 0.01f);
+    float shadow_area = max(-dot(normal, light_direction), 0.0f);
+    float3 color = diffuse * hit.material.rgb;
+    color = mix(color, color / 3.0f, shadow_area);
+    return pow(clamp(color, 0.0f, 1.0f), float3(1.0f / 2.2f));
 }
 
 static float3 gammaSrgb(float3 lin) {
@@ -1659,6 +2016,66 @@ kernel void sdf_diagnostic_kernel(device uchar4 *out [[buffer(0)]],
                       255);
 }
 
+static float3 voxelDiagnostic(float2 xy,
+                              constant FptRenderConfig &cfg,
+                              constant FptDiagnosticConfig &diag,
+                              device const VoxelCell *cells,
+                              device const uint *page_table) {
+    if (diag.mode == FPT_DIAGNOSTIC_PATH_FINAL) {
+        uint samples = min(max(cfg.samples, 1u), 64u);
+        float3 color = float3(0.0f);
+        for (uint sample = 0u; sample < samples; ++sample) {
+            color += renderVoxelPath(xy, sample, cfg, cells, page_table);
+        }
+        return postProcess(color / float(samples), cfg);
+    }
+    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+    float3 direction = rotateCamera(normalize(float3(xy, focal_length)), cameraYawPitch(cfg));
+    VoxelHit hit = traceVoxel(cameraPos(cfg), direction, cfg, cells, page_table);
+    if (diag.mode == FPT_DIAGNOSTIC_DEPTH) {
+        return diagnosticEncodeDepth(hit.distance, hit.hit, cfg, diag);
+    }
+    if (diag.mode == FPT_DIAGNOSTIC_SDF_PRIMARY_STEPS) {
+        return diagnosticEncodeScalar(float(hit.steps), float(max(cfg.voxel_resolution, 1u) * 3u));
+    }
+    if (!hit.hit) return float3(0.0f);
+    float3 normal = cfg.voxel_normal_mode == 1u ? normalAt(hit.cell_center, cfg) : hit.normal;
+    if (dot(normal, direction) > 0.0f) normal = -normal;
+    if (diag.mode == FPT_DIAGNOSTIC_MATERIAL) return clamp(hit.material.rgb, 0.0f, 1.0f);
+    if (diag.mode == FPT_DIAGNOSTIC_PATH_DIRECT) {
+        return diagnosticEncodeHdr(cfg.sun[0] == 1.0f
+            ? voxelSunContributionWithSurface(hit.position, xy, 0.0f, hit.material, normal, cfg, cells, page_table)
+            : float3(0.0f), cfg);
+    }
+    if (diag.mode == FPT_DIAGNOSTIC_PATH_ENVIRONMENT) return diagnosticEncodeHdr(environment(direction, cfg), cfg);
+    if (diag.mode == FPT_DIAGNOSTIC_PATH_THROUGHPUT) {
+        float3 next = normalize(mix(reflect(direction, normal),
+                                    randomVector(normal, xy, 0.0f),
+                                    hit.material.roughness));
+        float alignment = clamp(dot(next, normal) * 0.5f + 0.5f, 0.0f, 1.0f);
+        return clamp(hit.material.rgb * alignment, 0.0f, 1.0f);
+    }
+    return diagnosticEncodeNormal(normal);
+}
+
+kernel void voxel_diagnostic_kernel(device uchar4 *out [[buffer(0)]],
+                                    constant FptRenderConfig &cfg [[buffer(1)]],
+                                    constant FptDiagnosticConfig &diag [[buffer(2)]],
+                                    device const VoxelCell *cells [[buffer(3)]],
+                                    device const uint *page_table [[buffer(4)]],
+                                    uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
+    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
+    float2 uv = suv - 0.5f;
+    uv.x *= float(cfg.width) / float(cfg.height);
+    float3 color = voxelDiagnostic(uv, cfg, diag, cells, page_table);
+    uint index = (cfg.height - 1u - gid.y) * cfg.width + gid.x;
+    out[index] = uchar4(uchar(clamp(color.r, 0.0f, 1.0f) * 255.0f),
+                        uchar(clamp(color.g, 0.0f, 1.0f) * 255.0f),
+                        uchar(clamp(color.b, 0.0f, 1.0f) * 255.0f),
+                        255);
+}
+
 static uint outputIndex(uint2 gid, constant FptRenderConfig &cfg) {
     return (cfg.height - 1u - gid.y) * cfg.width + gid.x;
 }
@@ -1764,6 +2181,27 @@ kernel void preview_linear_kernel(device float4 *accum [[buffer(0)]],
     accum[index] = float4(viewport(uv, cfg), 1.0f);
 }
 
+kernel void estimate_voxel_focus_distance_kernel(device float *focus_distance [[buffer(0)]],
+                                                  constant FptRenderConfig &cfg [[buffer(1)]],
+                                                  device const VoxelCell *cells [[buffer(2)]],
+                                                  device const uint *page_table [[buffer(3)]],
+                                                  uint gid [[thread_position_in_grid]]) {
+    if (gid == 0u) focus_distance[0] = estimateVoxelFocusDistance(cfg, cells, page_table);
+}
+
+kernel void voxel_preview_linear_kernel(device float4 *accum [[buffer(0)]],
+                                        constant FptRenderConfig &cfg [[buffer(1)]],
+                                        device const VoxelCell *cells [[buffer(3)]],
+                                        device const uint *page_table [[buffer(4)]],
+                                        uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
+    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
+    float2 uv = suv - 0.5f;
+    uv.x *= float(cfg.width) / float(cfg.height);
+    uint index = gid.y * cfg.width + gid.x;
+    accum[index] = float4(voxelViewport(uv, cfg, cells, page_table), 1.0f);
+}
+
 kernel void sdf_profile_kernel(device FptSdfProfileCounts *counts [[buffer(0)]],
                                constant FptRenderConfig &cfg [[buffer(1)]],
                                constant FptSdfProfileConfig &profile [[buffer(2)]],
@@ -1843,6 +2281,60 @@ kernel void accumulate_chunk_kernel(device float4 *accum [[buffer(0)]],
             ? renderGlassAnalytic(uv, sample, cfg)
             : renderPath(uv, sample, cfg);
         color = mix(color, sample_color, 1.0f / float(sample + 1u));
+    }
+    accum[index] = float4(color, 1.0f);
+}
+
+kernel void voxel_accumulate_kernel(device float4 *accum [[buffer(0)]],
+                                    constant FptRenderConfig &cfg [[buffer(1)]],
+                                    constant uint &frame_index [[buffer(2)]],
+                                    device const VoxelCell *cells [[buffer(3)]],
+                                    device const uint *page_table [[buffer(4)]],
+                                    uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
+    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
+    float2 uv = suv - 0.5f;
+    uv.x *= float(cfg.width) / float(cfg.height);
+    float3 sample_color = renderVoxelPath(uv, frame_index, cfg, cells, page_table);
+    uint index = gid.y * cfg.width + gid.x;
+    float3 previous = frame_index == 0u ? float3(0.0f) : accum[index].xyz;
+    float weight = 1.0f / float(frame_index + 1u);
+    accum[index] = float4(mix(previous, sample_color, weight), 1.0f);
+}
+
+kernel void voxel_accumulate_all_kernel(device float4 *accum [[buffer(0)]],
+                                        constant FptRenderConfig &cfg [[buffer(1)]],
+                                        device const VoxelCell *cells [[buffer(3)]],
+                                        device const uint *page_table [[buffer(4)]],
+                                        uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
+    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
+    float2 uv = suv - 0.5f;
+    uv.x *= float(cfg.width) / float(cfg.height);
+    uint samples = min(max(cfg.samples, 1u), 512u);
+    float3 color = float3(0.0f);
+    for (uint sample = 0u; sample < samples; ++sample) {
+        color = mix(color, renderVoxelPath(uv, sample, cfg, cells, page_table), 1.0f / float(sample + 1u));
+    }
+    uint index = gid.y * cfg.width + gid.x;
+    accum[index] = float4(color, 1.0f);
+}
+
+kernel void voxel_accumulate_chunk_kernel(device float4 *accum [[buffer(0)]],
+                                          constant FptRenderConfig &cfg [[buffer(1)]],
+                                          constant FptAccumulationChunk &chunk [[buffer(2)]],
+                                          device const VoxelCell *cells [[buffer(3)]],
+                                          device const uint *page_table [[buffer(4)]],
+                                          uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= cfg.width || gid.y >= cfg.height || chunk.sample_count == 0u) return;
+    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
+    float2 uv = suv - 0.5f;
+    uv.x *= float(cfg.width) / float(cfg.height);
+    uint index = gid.y * cfg.width + gid.x;
+    float3 color = chunk.start_sample == 0u ? float3(0.0f) : accum[index].xyz;
+    uint end_sample = min(chunk.start_sample + chunk.sample_count, min(max(cfg.samples, 1u), 512u));
+    for (uint sample = chunk.start_sample; sample < end_sample; ++sample) {
+        color = mix(color, renderVoxelPath(uv, sample, cfg, cells, page_table), 1.0f / float(sample + 1u));
     }
     accum[index] = float4(color, 1.0f);
 }
