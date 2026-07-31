@@ -63,6 +63,21 @@ typedef enum FptSdfAccumulationMode {
     FPT_SDF_ACCUMULATION_CHUNKED = 3,
 } FptSdfAccumulationMode;
 
+typedef enum FptRendererBackend {
+    FPT_RENDERER_SDF = 0,
+    FPT_RENDERER_VOXEL = 1,
+} FptRendererBackend;
+
+typedef enum FptVoxelNormalMode {
+    FPT_VOXEL_NORMAL_FACE = 0,
+    FPT_VOXEL_NORMAL_SMOOTH = 1,
+} FptVoxelNormalMode;
+
+typedef enum FptVoxelStorage {
+    FPT_VOXEL_STORAGE_DENSE = 0,
+    FPT_VOXEL_STORAGE_SPARSE_BRICKS = 1,
+} FptVoxelStorage;
+
 struct FptRenderConfig {
     uint32_t width;
     uint32_t height;
@@ -110,6 +125,14 @@ struct FptRenderConfig {
     float gradient_stops[FPT_SDF_GRADIENT_MAX_STOPS][4];
     uint8_t hdri_path[FPT_HDRI_PATH_CAPACITY];
     uint16_t hdri_lut[FPT_HDRI_LUT_WIDTH * FPT_HDRI_LUT_HEIGHT * 3];
+    uint32_t renderer_backend;
+    uint32_t voxel_resolution;
+    uint32_t voxel_normal_mode;
+    uint32_t voxel_storage;
+    float voxel_bounds_min[3];
+    float voxel_surface_band;
+    float voxel_bounds_max[3];
+    uint32_t voxel_fill_interior;
 };
 
 typedef enum FptDiagnosticMode {
@@ -137,7 +160,10 @@ struct FptDiagnosticConfig {
 int fpt_metal_render(const char *metallib_path,
                      const char *output_path,
                      const struct FptRenderConfig *config,
+                     double *build_ms,
                      double *elapsed_ms,
+                     uint64_t *voxel_memory_bytes,
+                     uint32_t *voxel_active_bricks,
                      char *error,
                      size_t error_len);
 

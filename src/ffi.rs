@@ -37,6 +37,13 @@ pub const SDF_ACCUMULATION_PER_SAMPLE: u32 = 1;
 pub const SDF_ACCUMULATION_BATCH: u32 = 2;
 pub const SDF_ACCUMULATION_CHUNKED: u32 = 3;
 
+pub const RENDERER_SDF: u32 = 0;
+pub const RENDERER_VOXEL: u32 = 1;
+pub const VOXEL_NORMAL_FACE: u32 = 0;
+pub const VOXEL_NORMAL_SMOOTH: u32 = 1;
+pub const VOXEL_STORAGE_DENSE: u32 = 0;
+pub const VOXEL_STORAGE_SPARSE_BRICKS: u32 = 1;
+
 pub const DIAGNOSTIC_DEPTH: u32 = 0;
 pub const DIAGNOSTIC_NORMAL: u32 = 1;
 pub const DIAGNOSTIC_MATERIAL: u32 = 2;
@@ -106,6 +113,14 @@ pub struct FptRenderConfig {
     pub gradient_stops: [[f32; 4]; SDF_GRADIENT_MAX_STOPS],
     pub hdri_path: [u8; HDRI_PATH_CAPACITY],
     pub hdri_lut: [u16; HDRI_LUT_WIDTH * HDRI_LUT_HEIGHT * 3],
+    pub renderer_backend: u32,
+    pub voxel_resolution: u32,
+    pub voxel_normal_mode: u32,
+    pub voxel_storage: u32,
+    pub voxel_bounds_min: [f32; 3],
+    pub voxel_surface_band: f32,
+    pub voxel_bounds_max: [f32; 3],
+    pub voxel_fill_interior: u32,
 }
 
 impl Default for FptRenderConfig {
@@ -129,7 +144,10 @@ unsafe extern "C" {
         metallib_path: *const c_char,
         output_path: *const c_char,
         config: *const FptRenderConfig,
+        build_ms: *mut f64,
         elapsed_ms: *mut f64,
+        voxel_memory_bytes: *mut u64,
+        voxel_active_bricks: *mut u32,
         error: *mut c_char,
         error_len: usize,
     ) -> c_int;
@@ -168,7 +186,7 @@ mod tests {
     #[test]
     fn rust_layout_matches_c_bridge() {
         assert_eq!(std::mem::size_of::<FptSdfInstruction>(), 32);
-        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 6644);
+        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 6692);
         assert_eq!(std::mem::size_of::<FptDiagnosticConfig>(), 16);
     }
 }

@@ -60,6 +60,113 @@ struct FptAccumulationChunkCpp {
     uint32_t sample_count;
 };
 
+struct VoxelCellCpp {
+    uint32_t packed_color;
+    uint32_t packed_properties;
+    float emission;
+};
+
+static_assert(sizeof(VoxelCellCpp) == 12u, "VoxelCell layout must match Metal");
+
+struct VoxelStorageResult {
+    __strong id<MTLBuffer> cells = nil;
+    __strong id<MTLBuffer> page_table = nil;
+    uint32_t active_bricks = 0u;
+    uint64_t resident_bytes = 0u;
+};
+
+VoxelStorageResult finalize_voxel_storage(id<MTLDevice> device,
+                                          const FptRenderConfig &config,
+                                          id<MTLBuffer> dense_cells) {
+    VoxelStorageResult result;
+    const uint32_t resolution = config.voxel_resolution;
+    const uint32_t zero = 0u;
+    if (config.voxel_storage != FPT_VOXEL_STORAGE_SPARSE_BRICKS) {
+        result.cells = dense_cells;
+        result.page_table = [device newBufferWithBytes:&zero
+                                                length:sizeof(zero)
+                                               options:MTLResourceStorageModeShared];
+        result.resident_bytes = dense_cells.length + result.page_table.length;
+        return result;
+    }
+
+    constexpr uint32_t brick_size = 4u;
+    constexpr uint32_t brick_voxels = brick_size * brick_size * brick_size;
+    const uint32_t brick_grid = (resolution + brick_size - 1u) / brick_size;
+    const size_t page_count = static_cast<size_t>(brick_grid) * brick_grid * brick_grid;
+    std::vector<uint32_t> page_table(page_count, 0u);
+    const auto *dense = static_cast<const VoxelCellCpp *>(dense_cells.contents);
+    for (uint32_t bz = 0u; bz < brick_grid; ++bz) {
+        for (uint32_t by = 0u; by < brick_grid; ++by) {
+            for (uint32_t bx = 0u; bx < brick_grid; ++bx) {
+                bool occupied = false;
+                for (uint32_t lz = 0u; lz < brick_size && !occupied; ++lz) {
+                    const uint32_t z = bz * brick_size + lz;
+                    if (z >= resolution) continue;
+                    for (uint32_t ly = 0u; ly < brick_size && !occupied; ++ly) {
+                        const uint32_t y = by * brick_size + ly;
+                        if (y >= resolution) continue;
+                        for (uint32_t lx = 0u; lx < brick_size; ++lx) {
+                            const uint32_t x = bx * brick_size + lx;
+                            if (x >= resolution) continue;
+                            const size_t index = x + static_cast<size_t>(y) * resolution +
+                                                 static_cast<size_t>(z) * resolution * resolution;
+                            if ((dense[index].packed_color & 0x80000000u) != 0u) {
+                                occupied = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (occupied) {
+                    const size_t page = bx + static_cast<size_t>(by) * brick_grid +
+                                        static_cast<size_t>(bz) * brick_grid * brick_grid;
+                    page_table[page] = ++result.active_bricks;
+                }
+            }
+        }
+    }
+
+    const size_t compact_count = std::max<size_t>(1u,
+        static_cast<size_t>(result.active_bricks) * brick_voxels);
+    result.cells = [device newBufferWithLength:compact_count * sizeof(VoxelCellCpp)
+                                       options:MTLResourceStorageModeShared];
+    result.page_table = [device newBufferWithBytes:page_table.data()
+                                                length:page_table.size() * sizeof(uint32_t)
+                                               options:MTLResourceStorageModeShared];
+    if (!result.cells || !result.page_table) return {};
+    std::memset(result.cells.contents, 0, result.cells.length);
+    auto *compact = static_cast<VoxelCellCpp *>(result.cells.contents);
+    for (uint32_t bz = 0u; bz < brick_grid; ++bz) {
+        for (uint32_t by = 0u; by < brick_grid; ++by) {
+            for (uint32_t bx = 0u; bx < brick_grid; ++bx) {
+                const size_t page = bx + static_cast<size_t>(by) * brick_grid +
+                                    static_cast<size_t>(bz) * brick_grid * brick_grid;
+                const uint32_t compact_page = page_table[page];
+                if (compact_page == 0u) continue;
+                for (uint32_t lz = 0u; lz < brick_size; ++lz) {
+                    const uint32_t z = bz * brick_size + lz;
+                    if (z >= resolution) continue;
+                    for (uint32_t ly = 0u; ly < brick_size; ++ly) {
+                        const uint32_t y = by * brick_size + ly;
+                        if (y >= resolution) continue;
+                        for (uint32_t lx = 0u; lx < brick_size; ++lx) {
+                            const uint32_t x = bx * brick_size + lx;
+                            if (x >= resolution) continue;
+                            const size_t dense_index = x + static_cast<size_t>(y) * resolution +
+                                                       static_cast<size_t>(z) * resolution * resolution;
+                            const size_t local = lx + ly * brick_size + lz * brick_size * brick_size;
+                            compact[(static_cast<size_t>(compact_page) - 1u) * brick_voxels + local] = dense[dense_index];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    result.resident_bytes = result.cells.length + result.page_table.length;
+    return result;
+}
+
 NSString *format_perf_hud(NSString *renderer,
                           NSString *gpu_breakdown,
                           NSString *cpu_breakdown,
@@ -626,9 +733,13 @@ double low_frequency_luminance_ssim(const Image &baseline, const Image &candidat
 @property(nonatomic, strong) id<MTLComputePipelineState> pipeline;
 @property(nonatomic, strong) id<MTLComputePipelineState> presentPipeline;
 @property(nonatomic, strong) id<MTLComputePipelineState> profilePipeline;
+@property(nonatomic, strong) id<MTLComputePipelineState> voxelBuildPipeline;
+@property(nonatomic, strong) id<MTLComputePipelineState> voxelFocusPipeline;
 @property(nonatomic, strong) id<MTLBuffer> outBuffer;
 @property(nonatomic, strong) id<MTLBuffer> accumBuffer;
 @property(nonatomic, strong) id<MTLBuffer> profileBuffer;
+@property(nonatomic, strong) id<MTLBuffer> voxelBuffer;
+@property(nonatomic, strong) id<MTLBuffer> voxelPageTableBuffer;
 @property(nonatomic, strong) NSWindow *window;
 @property(nonatomic, strong) NSImageView *imageView;
 @property(nonatomic, strong) NSTextField *hudLabel;
@@ -637,6 +748,9 @@ double low_frequency_luminance_ssim(const Image &baseline, const Image &candidat
 @property(nonatomic) BOOL needsRender;
 @property(nonatomic) BOOL accumulationComplete;
 @property(nonatomic, copy) NSString *sdfWorkBreakdown;
+@property(nonatomic) double voxelBuildMs;
+@property(nonatomic) uint32_t voxelActiveBricks;
+@property(nonatomic) uint64_t voxelResidentBytes;
 @property(nonatomic) BOOL moveForward;
 @property(nonatomic) BOOL moveBackward;
 @property(nonatomic) BOOL moveLeft;
@@ -658,6 +772,7 @@ double low_frequency_luminance_ssim(const Image &baseline, const Image &candidat
 - (void)switchSceneByOffset:(int)offset;
 - (void)displayLinkTick;
 - (void)renderFrame;
+- (BOOL)rebuildVoxelField;
 - (void)updateSdfProfileWithConfigBuffer:(id<MTLBuffer>)cfgBuffer
                            sampleGpuTime:(double)sampleGpuMs
                                     frame:(uint32_t)frame
@@ -783,7 +898,11 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
     }
     id<MTLLibrary> library = [_device newLibraryWithURL:[NSURL fileURLWithPath:metallib] error:error];
     if (!library) return nil;
-    id<MTLFunction> function = [library newFunctionWithName:(_config.preview ? @"preview_linear_kernel" : @"accumulate_kernel")];
+    const bool useVoxels = _config.renderer_backend == FPT_RENDERER_VOXEL;
+    NSString *functionName = useVoxels
+        ? (_config.preview ? @"voxel_preview_linear_kernel" : @"voxel_accumulate_kernel")
+        : (_config.preview ? @"preview_linear_kernel" : @"accumulate_kernel");
+    id<MTLFunction> function = [library newFunctionWithName:functionName];
     if (!function) {
         if (error) *error = [NSError errorWithDomain:@"FPTMetal" code:2 userInfo:@{NSLocalizedDescriptionKey: @"preview compute kernel not found"}];
         return nil;
@@ -797,12 +916,24 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
     }
     _presentPipeline = [_device newComputePipelineStateWithFunction:presentFunction error:error];
     if (!_presentPipeline) return nil;
-    id<MTLFunction> profileFunction = _config.sdf_profile != 0u ? [library newFunctionWithName:@"sdf_profile_kernel"] : nil;
-    if (_config.sdf_profile != 0u && !profileFunction) {
+    if (useVoxels) {
+        id<MTLFunction> voxelBuildFunction = [library newFunctionWithName:@"voxel_build_kernel"];
+        id<MTLFunction> voxelFocusFunction = [library newFunctionWithName:@"estimate_voxel_focus_distance_kernel"];
+        if (!voxelBuildFunction || !voxelFocusFunction) {
+            if (error) *error = [NSError errorWithDomain:@"FPTMetal" code:10 userInfo:@{NSLocalizedDescriptionKey: @"voxel build kernels not found"}];
+            return nil;
+        }
+        _voxelBuildPipeline = [_device newComputePipelineStateWithFunction:voxelBuildFunction error:error];
+        if (!_voxelBuildPipeline) return nil;
+        _voxelFocusPipeline = [_device newComputePipelineStateWithFunction:voxelFocusFunction error:error];
+        if (!_voxelFocusPipeline) return nil;
+    }
+    id<MTLFunction> profileFunction = !useVoxels && _config.sdf_profile != 0u ? [library newFunctionWithName:@"sdf_profile_kernel"] : nil;
+    if (!useVoxels && _config.sdf_profile != 0u && !profileFunction) {
         if (error) *error = [NSError errorWithDomain:@"FPTMetal" code:7 userInfo:@{NSLocalizedDescriptionKey: @"sdf_profile_kernel not found"}];
         return nil;
     }
-    if (_config.sdf_profile != 0u && profileFunction) {
+    if (!useVoxels && _config.sdf_profile != 0u && profileFunction) {
         _profilePipeline = [_device newComputePipelineStateWithFunction:profileFunction error:error];
         if (!_profilePipeline) return nil;
     }
@@ -829,8 +960,75 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
             return nil;
         }
     }
-    _sdfWorkBreakdown = _config.sdf_profile != 0u ? @"SDF est: profiling..." : @"SDF profile: disabled (--sdf-profile)";
+    if (useVoxels && ![self rebuildVoxelField]) {
+        if (error) *error = [NSError errorWithDomain:@"FPTMetal" code:11 userInfo:@{NSLocalizedDescriptionKey: @"failed to build interactive voxel field"}];
+        return nil;
+    }
+    _sdfWorkBreakdown = useVoxels
+        ? @"Voxel field: persistent"
+        : (_config.sdf_profile != 0u ? @"SDF est: profiling..." : @"SDF profile: disabled (--sdf-profile)");
     return self;
+}
+
+- (BOOL)rebuildVoxelField {
+    if (self.config.renderer_backend != FPT_RENDERER_VOXEL) {
+        self.voxelBuffer = nil;
+        self.voxelPageTableBuffer = nil;
+        self.voxelBuildMs = 0.0;
+        self.voxelActiveBricks = 0u;
+        self.voxelResidentBytes = 0u;
+        return YES;
+    }
+    if (!self.voxelBuildPipeline || !self.voxelFocusPipeline || !self.queue) return NO;
+    const size_t resolution = std::clamp<size_t>(self.config.voxel_resolution, 32u, 512u);
+    const size_t voxelBytes = resolution * resolution * resolution * 12u;
+    id<MTLBuffer> denseVoxelBuffer = [self.device newBufferWithLength:voxelBytes
+                                                              options:MTLResourceStorageModeShared];
+    if (!denseVoxelBuffer) return NO;
+    id<MTLBuffer> cfgBuffer = [self.device newBufferWithBytes:&_config
+                                                       length:sizeof(FptRenderConfig)
+                                                      options:MTLResourceStorageModeShared];
+    if (!cfgBuffer) return NO;
+    NSDate *buildStart = [NSDate date];
+    id<MTLCommandBuffer> buildCommand = [self.queue commandBuffer];
+    id<MTLComputeCommandEncoder> encoder = [buildCommand computeCommandEncoder];
+    [encoder setComputePipelineState:self.voxelBuildPipeline];
+    [encoder setBuffer:denseVoxelBuffer offset:0 atIndex:0];
+    [encoder setBuffer:cfgBuffer offset:0 atIndex:1];
+    MTLSize grid = MTLSizeMake(resolution, resolution, resolution);
+    [encoder dispatchThreads:grid threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+    [encoder endEncoding];
+    [buildCommand commit];
+    [buildCommand waitUntilCompleted];
+    if (buildCommand.status == MTLCommandBufferStatusError) return NO;
+    VoxelStorageResult storage = finalize_voxel_storage(self.device, self.config, denseVoxelBuffer);
+    if (!storage.cells || !storage.page_table) return NO;
+    self.voxelBuffer = storage.cells;
+    self.voxelPageTableBuffer = storage.page_table;
+    self.voxelActiveBricks = storage.active_bricks;
+    self.voxelResidentBytes = storage.resident_bytes;
+
+    if (self.config.focus_distance <= 0.0f) {
+        id<MTLBuffer> focusBuffer = [self.device newBufferWithLength:sizeof(float) options:MTLResourceStorageModeShared];
+        if (!focusBuffer) return NO;
+        id<MTLCommandBuffer> focusCommand = [self.queue commandBuffer];
+        encoder = [focusCommand computeCommandEncoder];
+        [encoder setComputePipelineState:self.voxelFocusPipeline];
+        [encoder setBuffer:focusBuffer offset:0 atIndex:0];
+        [encoder setBuffer:cfgBuffer offset:0 atIndex:1];
+        [encoder setBuffer:self.voxelBuffer offset:0 atIndex:2];
+        [encoder setBuffer:self.voxelPageTableBuffer offset:0 atIndex:3];
+        [encoder dispatchThreads:MTLSizeMake(1u, 1u, 1u) threadsPerThreadgroup:MTLSizeMake(1u, 1u, 1u)];
+        [encoder endEncoding];
+        [focusCommand commit];
+        [focusCommand waitUntilCompleted];
+        if (focusCommand.status == MTLCommandBufferStatusError) return NO;
+        struct FptRenderConfig next = self.config;
+        next.focus_distance = *static_cast<const float *>(focusBuffer.contents);
+        self.config = next;
+    }
+    self.voxelBuildMs = -[buildStart timeIntervalSinceNow] * 1000.0;
+    return YES;
 }
 
 - (void)run {
@@ -896,7 +1094,12 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
     self.needsRender = YES;
     self.accumulationComplete = NO;
     self.profileFrameCounter = 0;
-    self.sdfWorkBreakdown = self.config.sdf_profile != 0u ? @"SDF est: profiling..." : @"SDF profile: disabled (--sdf-profile)";
+    if (self.config.renderer_backend == FPT_RENDERER_VOXEL) {
+        if (![self rebuildVoxelField]) return;
+        self.sdfWorkBreakdown = @"Voxel field: persistent";
+    } else {
+        self.sdfWorkBreakdown = self.config.sdf_profile != 0u ? @"SDF est: profiling..." : @"SDF profile: disabled (--sdf-profile)";
+    }
     self.window.title = [NSString stringWithFormat:@"%@ - %@",
                          self.config.preview ? @"FPT Metal Preview" : @"FPT Metal Pathtrace Preview",
                          sdf_scene_name(self.config.sdf_id)];
@@ -1053,6 +1256,8 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
         [encoder setComputePipelineState:self.pipeline];
         [encoder setBuffer:self.accumBuffer offset:0 atIndex:0];
         [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+        if (self.config.renderer_backend == FPT_RENDERER_VOXEL) [encoder setBuffer:self.voxelBuffer offset:0 atIndex:3];
+        if (self.config.renderer_backend == FPT_RENDERER_VOXEL) [encoder setBuffer:self.voxelPageTableBuffer offset:0 atIndex:4];
         [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
         [encoder endEncoding];
         encode_ms = -[encodeStart timeIntervalSinceNow] * 1000.0;
@@ -1087,6 +1292,8 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
         [encoder setBuffer:self.accumBuffer offset:0 atIndex:0];
         [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
         [encoder setBytes:&frame length:sizeof(frame) atIndex:2];
+        if (self.config.renderer_backend == FPT_RENDERER_VOXEL) [encoder setBuffer:self.voxelBuffer offset:0 atIndex:3];
+        if (self.config.renderer_backend == FPT_RENDERER_VOXEL) [encoder setBuffer:self.voxelPageTableBuffer offset:0 atIndex:4];
         [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
         [encoder endEncoding];
         encode_ms += -[encodeStart timeIntervalSinceNow] * 1000.0;
@@ -1153,19 +1360,26 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
     CGDataProviderRelease(provider);
     const double image_ms = -[imageStart timeIntervalSinceNow] * 1000.0;
     const double cpu_ms = -[frameStart timeIntervalSinceNow] * 1000.0;
-    NSString *renderer = [NSString stringWithFormat:@"%@ | %@",
-                          self.config.preview ? @"SDF viewport" : @"SDF pathtrace",
+    NSString *renderer = [NSString stringWithFormat:@"%@ %@ | %@",
+                          self.config.renderer_backend == FPT_RENDERER_VOXEL ? @"Voxel" : @"SDF",
+                          self.config.preview ? @"viewport" : @"pathtrace",
                           sdf_scene_name(self.config.sdf_id)];
     NSString *breakdown = self.config.preview
         ? format_stage_ms(@"render", render_gpu_ms, gpu_ms)
         : [NSString stringWithFormat:@"%@, %@",
            format_stage_ms(@"sample", render_gpu_ms, gpu_ms),
            format_stage_ms(@"present", present_gpu_ms, gpu_ms)];
-    NSString *detail = self.config.preview
+    NSString *detail = self.config.renderer_backend == FPT_RENDERER_VOXEL
+        ? [NSString stringWithFormat:@"Voxel field: %u^3 | %.1f MB | %u active bricks | build %.2f ms | reused",
+           self.config.voxel_resolution,
+           double(self.voxelResidentBytes) / (1024.0 * 1024.0),
+           self.voxelActiveBricks,
+           self.voxelBuildMs]
+        : (self.config.preview
         ? [NSString stringWithFormat:@"Bottleneck: %@", sdf_bottleneck_label(self.config)]
         : (self.config.sdf_profile != 0u
             ? [NSString stringWithFormat:@"%@\nBottleneck: %@", self.sdfWorkBreakdown ?: @"SDF est: profiling...", sdf_bottleneck_label(self.config)]
-            : [NSString stringWithFormat:@"Bottleneck: %@", sdf_bottleneck_label(self.config)]);
+            : [NSString stringWithFormat:@"Bottleneck: %@", sdf_bottleneck_label(self.config)]));
     self.hudLabel.stringValue = format_perf_hud(renderer,
                                                 breakdown,
                                                 format_cpu_breakdown(encode_ms, wait_ms, image_ms),
@@ -1174,11 +1388,13 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
                                                 cpu_ms,
                                                 rendered_frame,
                                                 self.config.preview ? 1u : std::max<uint32_t>(self.config.samples, 1u));
-    [self updateSdfProfileWithConfigBuffer:cfg_buffer
-                             sampleGpuTime:render_gpu_ms
-                                      frame:rendered_frame
-                                     groups:groups
-                            threadsPerGroup:threads_per_group];
+    if (self.config.renderer_backend != FPT_RENDERER_VOXEL) {
+        [self updateSdfProfileWithConfigBuffer:cfg_buffer
+                                 sampleGpuTime:render_gpu_ms
+                                          frame:rendered_frame
+                                         groups:groups
+                                threadsPerGroup:threads_per_group];
+    }
 }
 @end
 
@@ -1198,8 +1414,11 @@ extern "C" int fpt_metal_device_name(char *name, size_t name_len) {
 extern "C" int fpt_metal_render(const char *metallib_path,
                                  const char *output_path,
                                  const struct FptRenderConfig *config,
-                                double *elapsed_ms,
-                                char *error,
+                                 double *build_ms,
+                                 double *elapsed_ms,
+                                 uint64_t *voxel_memory_bytes,
+                                 uint32_t *voxel_active_bricks,
+                                 char *error,
                                 size_t error_len) {
     @autoreleasepool {
         if (!config) {
@@ -1226,6 +1445,9 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             set_error(error, error_len, "failed to load metallib %s: %s", metallib_path, ns_error.localizedDescription.UTF8String);
             return 1;
         }
+        const bool use_voxels = config->renderer_backend == FPT_RENDERER_VOXEL;
+        if (voxel_memory_bytes) *voxel_memory_bytes = 0u;
+        if (voxel_active_bricks) *voxel_active_bricks = 0u;
         const uint32_t requested_samples = std::clamp<uint32_t>(config->samples, 1u, 512u);
         const bool auto_batch_accumulation = requested_samples <= 16u && config->sdf_id != FPT_SDF_CAGE_FRACTAL;
         const bool use_batch_accumulation = !config->preview &&
@@ -1234,9 +1456,16 @@ extern "C" int fpt_metal_render(const char *metallib_path,
         const bool use_chunked_accumulation = !config->preview &&
                                               (config->sdf_accumulation_mode == FPT_SDF_ACCUMULATION_CHUNKED ||
                                                (config->sdf_accumulation_mode == FPT_SDF_ACCUMULATION_AUTO && !auto_batch_accumulation));
-        NSString *main_function_name = config->preview ? @"preview_linear_kernel" :
-            (use_batch_accumulation ? @"accumulate_all_kernel" :
-             (use_chunked_accumulation ? @"accumulate_chunk_kernel" : @"accumulate_kernel"));
+        NSString *main_function_name = nil;
+        if (use_voxels) {
+            main_function_name = config->preview ? @"voxel_preview_linear_kernel" :
+                (use_batch_accumulation ? @"voxel_accumulate_all_kernel" :
+                 (use_chunked_accumulation ? @"voxel_accumulate_chunk_kernel" : @"voxel_accumulate_kernel"));
+        } else {
+            main_function_name = config->preview ? @"preview_linear_kernel" :
+                (use_batch_accumulation ? @"accumulate_all_kernel" :
+                 (use_chunked_accumulation ? @"accumulate_chunk_kernel" : @"accumulate_kernel"));
+        }
         id<MTLFunction> main_function = [library newFunctionWithName:main_function_name];
         if (!main_function) {
             set_error(error, error_len, "%s not found in metallib", main_function_name.UTF8String);
@@ -1257,9 +1486,24 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             set_error(error, error_len, "failed to create present pipeline: %s", ns_error.localizedDescription.UTF8String);
             return 1;
         }
+        id<MTLComputePipelineState> voxel_build_pipeline = nil;
+        if (use_voxels) {
+            id<MTLFunction> voxel_build_function = [library newFunctionWithName:@"voxel_build_kernel"];
+            if (!voxel_build_function) {
+                set_error(error, error_len, "voxel_build_kernel not found in metallib");
+                return 1;
+            }
+            voxel_build_pipeline = [device newComputePipelineStateWithFunction:voxel_build_function error:&ns_error];
+            if (!voxel_build_pipeline) {
+                set_error(error, error_len, "failed to create voxel build pipeline: %s", ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+        }
         id<MTLComputePipelineState> focus_pipeline = nil;
         if (config->focus_distance <= 0.0f) {
-            id<MTLFunction> focus_function = [library newFunctionWithName:@"estimate_focus_distance_kernel"];
+            id<MTLFunction> focus_function = [library newFunctionWithName:use_voxels
+                ? @"estimate_voxel_focus_distance_kernel"
+                : @"estimate_focus_distance_kernel"];
             if (!focus_function) {
                 set_error(error, error_len, "estimate_focus_distance_kernel not found in metallib");
                 return 1;
@@ -1280,6 +1524,13 @@ extern "C" int fpt_metal_render(const char *metallib_path,
         id<MTLBuffer> out_buffer = [device newBufferWithLength:pixel_count * 4 options:MTLResourceStorageModeShared];
         id<MTLBuffer> cfg_buffer = [device newBufferWithBytes:config length:sizeof(FptRenderConfig) options:MTLResourceStorageModeShared];
         id<MTLBuffer> accum_buffer = [device newBufferWithLength:pixel_count * sizeof(float) * 4 options:MTLResourceStorageModePrivate];
+        const size_t voxel_count = use_voxels
+            ? static_cast<size_t>(config->voxel_resolution) * config->voxel_resolution * config->voxel_resolution
+            : 0u;
+        id<MTLBuffer> voxel_buffer = use_voxels
+            ? [device newBufferWithLength:voxel_count * 12u options:MTLResourceStorageModeShared]
+            : nil;
+        id<MTLBuffer> voxel_page_table_buffer = nil;
         id<MTLBuffer> focus_buffer = focus_pipeline ? [device newBufferWithLength:sizeof(float) options:MTLResourceStorageModeShared] : nil;
         if (!out_buffer || !cfg_buffer) {
             set_error(error, error_len, "failed to allocate Metal buffers");
@@ -1289,9 +1540,44 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             set_error(error, error_len, "failed to allocate Metal accumulation buffer");
             return 1;
         }
+        if (use_voxels && !voxel_buffer) {
+            set_error(error, error_len, "failed to allocate voxel field buffer");
+            return 1;
+        }
         if (focus_pipeline && !focus_buffer) {
             set_error(error, error_len, "failed to allocate focus-distance buffer");
             return 1;
+        }
+
+        if (build_ms) *build_ms = 0.0;
+        if (use_voxels) {
+            NSDate *voxel_build_start = [NSDate date];
+            id<MTLCommandBuffer> voxel_build_command = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> voxel_build_encoder = [voxel_build_command computeCommandEncoder];
+            [voxel_build_encoder setComputePipelineState:voxel_build_pipeline];
+            [voxel_build_encoder setBuffer:voxel_buffer offset:0 atIndex:0];
+            [voxel_build_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            MTLSize voxel_grid = MTLSizeMake(config->voxel_resolution,
+                                             config->voxel_resolution,
+                                             config->voxel_resolution);
+            [voxel_build_encoder dispatchThreads:voxel_grid threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+            [voxel_build_encoder endEncoding];
+            [voxel_build_command commit];
+            [voxel_build_command waitUntilCompleted];
+            if (voxel_build_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len, "Metal voxel build failed: %s", voxel_build_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            VoxelStorageResult storage = finalize_voxel_storage(device, *config, voxel_buffer);
+            if (!storage.cells || !storage.page_table) {
+                set_error(error, error_len, "failed to finalize voxel storage");
+                return 1;
+            }
+            voxel_buffer = storage.cells;
+            voxel_page_table_buffer = storage.page_table;
+            if (voxel_memory_bytes) *voxel_memory_bytes = storage.resident_bytes;
+            if (voxel_active_bricks) *voxel_active_bricks = storage.active_bricks;
+            if (build_ms) *build_ms = -[voxel_build_start timeIntervalSinceNow] * 1000.0;
         }
 
         NSDate *start_time = [NSDate date];
@@ -1301,6 +1587,8 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             [focus_encoder setComputePipelineState:focus_pipeline];
             [focus_encoder setBuffer:focus_buffer offset:0 atIndex:0];
             [focus_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            if (use_voxels) [focus_encoder setBuffer:voxel_buffer offset:0 atIndex:2];
+            if (use_voxels) [focus_encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:3];
             [focus_encoder dispatchThreads:MTLSizeMake(1u, 1u, 1u) threadsPerThreadgroup:MTLSizeMake(1u, 1u, 1u)];
             [focus_encoder endEncoding];
             [focus_command_buffer commit];
@@ -1326,6 +1614,8 @@ extern "C" int fpt_metal_render(const char *metallib_path,
                 [encoder setBuffer:accum_buffer offset:0 atIndex:0];
                 [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
                 [encoder setBytes:&chunk length:sizeof(chunk) atIndex:2];
+                if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
+                if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
                 [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
                 [encoder endEncoding];
                 [chunk_buffer commit];
@@ -1341,6 +1631,8 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             [encoder setComputePipelineState:main_pipeline];
             [encoder setBuffer:accum_buffer offset:0 atIndex:0];
             [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
+            if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
             [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
             [encoder endEncoding];
         } else {
@@ -1350,6 +1642,8 @@ extern "C" int fpt_metal_render(const char *metallib_path,
                 [encoder setBuffer:accum_buffer offset:0 atIndex:0];
                 [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
                 [encoder setBytes:&frame length:sizeof(frame) atIndex:2];
+                if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
+                if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
                 [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
                 [encoder endEncoding];
             }
@@ -1410,7 +1704,10 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             set_error(error, error_len, "failed to load metallib %s: %s", metallib_path, ns_error.localizedDescription.UTF8String);
             return 1;
         }
-        id<MTLFunction> function = [library newFunctionWithName:@"sdf_diagnostic_kernel"];
+        const bool use_voxels = config->renderer_backend == FPT_RENDERER_VOXEL;
+        id<MTLFunction> function = [library newFunctionWithName:use_voxels
+            ? @"voxel_diagnostic_kernel"
+            : @"sdf_diagnostic_kernel"];
         if (!function) {
             set_error(error, error_len, "sdf_diagnostic_kernel not found in metallib");
             return 1;
@@ -1420,22 +1717,67 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             set_error(error, error_len, "failed to create SDF diagnostic pipeline: %s", ns_error.localizedDescription.UTF8String);
             return 1;
         }
+        id<MTLComputePipelineState> voxel_build_pipeline = nil;
+        if (use_voxels) {
+            id<MTLFunction> voxel_build_function = [library newFunctionWithName:@"voxel_build_kernel"];
+            voxel_build_pipeline = voxel_build_function
+                ? [device newComputePipelineStateWithFunction:voxel_build_function error:&ns_error]
+                : nil;
+            if (!voxel_build_pipeline) {
+                set_error(error, error_len, "failed to create voxel diagnostic build pipeline: %s", ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+        }
         id<MTLCommandQueue> queue = [device newCommandQueue];
         const size_t pixel_count = static_cast<size_t>(config->width) * config->height;
         id<MTLBuffer> out_buffer = [device newBufferWithLength:pixel_count * 4 options:MTLResourceStorageModeShared];
         id<MTLBuffer> cfg_buffer = [device newBufferWithBytes:config length:sizeof(FptRenderConfig) options:MTLResourceStorageModeShared];
         id<MTLBuffer> diag_buffer = [device newBufferWithBytes:diagnostic length:sizeof(FptDiagnosticConfig) options:MTLResourceStorageModeShared];
-        if (!queue || !out_buffer || !cfg_buffer || !diag_buffer) {
+        const size_t voxel_count = use_voxels
+            ? static_cast<size_t>(config->voxel_resolution) * config->voxel_resolution * config->voxel_resolution
+            : 0u;
+        id<MTLBuffer> voxel_buffer = use_voxels
+            ? [device newBufferWithLength:voxel_count * 12u options:MTLResourceStorageModeShared]
+            : nil;
+        id<MTLBuffer> voxel_page_table_buffer = nil;
+        if (!queue || !out_buffer || !cfg_buffer || !diag_buffer || (use_voxels && !voxel_buffer)) {
             set_error(error, error_len, "failed to allocate SDF diagnostic buffers");
             return 1;
         }
         NSDate *start_time = [NSDate date];
+        if (use_voxels) {
+            id<MTLCommandBuffer> build_command = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> build_encoder = [build_command computeCommandEncoder];
+            [build_encoder setComputePipelineState:voxel_build_pipeline];
+            [build_encoder setBuffer:voxel_buffer offset:0 atIndex:0];
+            [build_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            MTLSize voxel_grid = MTLSizeMake(config->voxel_resolution,
+                                             config->voxel_resolution,
+                                             config->voxel_resolution);
+            [build_encoder dispatchThreads:voxel_grid threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+            [build_encoder endEncoding];
+            [build_command commit];
+            [build_command waitUntilCompleted];
+            if (build_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len, "voxel diagnostic build failed: %s", build_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            VoxelStorageResult storage = finalize_voxel_storage(device, *config, voxel_buffer);
+            if (!storage.cells || !storage.page_table) {
+                set_error(error, error_len, "failed to finalize diagnostic voxel storage");
+                return 1;
+            }
+            voxel_buffer = storage.cells;
+            voxel_page_table_buffer = storage.page_table;
+        }
         id<MTLCommandBuffer> command_buffer = [queue commandBuffer];
         id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoder];
         [encoder setComputePipelineState:pipeline];
         [encoder setBuffer:out_buffer offset:0 atIndex:0];
         [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
         [encoder setBuffer:diag_buffer offset:0 atIndex:2];
+        if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
+        if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
         MTLSize threads_per_group = threadgroup_for_pipeline(pipeline);
         MTLSize groups = groups_for_extent(config->width, config->height, threads_per_group);
         [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];

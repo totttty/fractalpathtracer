@@ -535,3 +535,77 @@ pub fn optimization_summary_command(args: &[String]) -> Result<()> {
     ensure!(failures.is_empty(), "{}", failures.join("\n"));
     Ok(())
 }
+
+pub fn voxel_summary_command(args: &[String]) -> Result<()> {
+    let output = PathBuf::from(
+        args.first()
+            .ok_or_else(|| anyhow!("missing voxel summary output path"))?,
+    );
+    ensure!(
+        args.len() >= 3 && (args.len() - 1).is_multiple_of(2),
+        "voxel-summary expects SDF/voxel metadata pairs"
+    );
+    let mut scenes = Vec::new();
+    for pair in args[1..].chunks_exact(2) {
+        let sdf: Value = serde_json::from_slice(&fs::read(&pair[0])?)?;
+        let voxel: Value = serde_json::from_slice(&fs::read(&pair[1])?)?;
+        let sdf_ms = json_number(&sdf, "elapsed_ms");
+        let build_ms = json_number(&voxel, "voxel_build_ms");
+        let voxel_ms = json_number(&voxel, "elapsed_ms");
+        let scene = sdf
+            .get("scene")
+            .and_then(Value::as_str)
+            .unwrap_or("unknown");
+        scenes.push(json!({
+            "scene": scene,
+            "width": voxel.get("width"),
+            "height": voxel.get("height"),
+            "samples": voxel.get("samples"),
+            "voxel_resolution": voxel.get("voxel_resolution"),
+            "voxel_storage": voxel.get("voxel_storage"),
+            "voxel_memory_bytes": voxel.get("voxel_memory_bytes"),
+            "voxel_active_bricks": voxel.get("voxel_active_bricks"),
+            "sdf_render_ms": sdf_ms,
+            "sdf_fps": if sdf_ms > 0.0 { 1000.0 / sdf_ms } else { 0.0 },
+            "voxel_build_ms": build_ms,
+            "voxel_render_ms": voxel_ms,
+            "voxel_render_fps": if voxel_ms > 0.0 { 1000.0 / voxel_ms } else { 0.0 },
+            "voxel_first_frame_ms": build_ms + voxel_ms,
+            "cached_render_speedup": if voxel_ms > 0.0 { sdf_ms / voxel_ms } else { 0.0 },
+        }));
+    }
+    let sdf_total: f64 = scenes
+        .iter()
+        .map(|scene| json_number(scene, "sdf_render_ms"))
+        .sum();
+    let voxel_build_total: f64 = scenes
+        .iter()
+        .map(|scene| json_number(scene, "voxel_build_ms"))
+        .sum();
+    let voxel_render_total: f64 = scenes
+        .iter()
+        .map(|scene| json_number(scene, "voxel_render_ms"))
+        .sum();
+    let report = json!({
+        "scenes": scenes,
+        "aggregate": {
+            "sdf_render_ms": sdf_total,
+            "voxel_build_ms": voxel_build_total,
+            "voxel_render_ms": voxel_render_total,
+            "voxel_first_frame_ms": voxel_build_total + voxel_render_total,
+            "cached_render_speedup": if voxel_render_total > 0.0 { sdf_total / voxel_render_total } else { 0.0 },
+        }
+    });
+    if let Some(parent) = output
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(
+        &output,
+        format!("{}\n", serde_json::to_string_pretty(&report)?),
+    )?;
+    println!("{}", serde_json::to_string_pretty(&report)?);
+    Ok(())
+}

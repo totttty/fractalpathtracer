@@ -17,9 +17,9 @@ const UPSTREAM_SHA: &str = "12c242d25e28c21b1cfa7842f554458996263891";
 fn usage() {
     eprintln!(
         "Usage:\n\
-  fpt-metal render <scene.json> --out <dir> [--fpt-root <dir>] [--preview] [--glass-mode analytic|pathtrace] [--sdf-accumulation auto|per-sample|batch|chunked] [--sdf-normal-mode auto|central|tetra|program-gradient] [--sdf-chunk-samples N] [--width N] [--height N] [--samples N]\n\
+  fpt-metal render <scene.json> --out <dir> [--renderer sdf|voxel] [--voxel-resolution N] [--voxel-normal face|smooth] [--voxel-storage dense|sparse-bricks] [--voxel-surface-band N] [--fpt-root <dir>] [--preview] [--glass-mode analytic|pathtrace] [--sdf-accumulation auto|per-sample|batch|chunked] [--sdf-normal-mode auto|central|tetra|program-gradient] [--sdf-chunk-samples N] [--width N] [--height N] [--samples N]\n\
   fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--fpt-root <dir>] [--width N] [--height N]\n\
-  fpt-metal preview <scene.json> [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
+  fpt-metal preview <scene.json> [--renderer sdf|voxel] [--voxel-resolution N] [--voxel-normal face|smooth] [--voxel-storage dense|sparse-bricks] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -29,6 +29,7 @@ fn usage() {
   fpt-metal path-cost-summary <out-dir>\n\
   fpt-metal bounce-summary <out-dir> <bounce...>\n\
   fpt-metal optimization-summary <out-dir> <max-mae> <max-rmse> <min-ssim> <min-lf-ssim> <runs> [expected-scenes]\n\
+  fpt-metal voxel-summary <report.json> <sdf.render.json> <voxel.render.json>...\n\
   fpt-metal list-scenes\n\
   fpt-metal clean-reports"
     );
@@ -95,7 +96,10 @@ fn write_render_metadata(
     output: &Path,
     scene: &Path,
     config: &FptRenderConfig,
+    build_ms: f64,
     elapsed_ms: f64,
+    voxel_memory_bytes: u64,
+    voxel_active_bricks: u32,
 ) -> Result<()> {
     let scene_data = fs::read(scene)?;
     let scene_sha = format!("{:x}", Sha256::digest(scene_data));
@@ -121,8 +125,9 @@ fn write_render_metadata(
         "upstream_sha": UPSTREAM_SHA,
         "metal_device": gpu,
         "output": output,
-        "backend": "sdf_pathtrace",
-        "geometry": "procedural_sdf",
+        "backend": if config.renderer_backend == RENDERER_VOXEL { "voxel_pathtrace" } else { "sdf_pathtrace" },
+        "geometry": if config.renderer_backend == RENDERER_VOXEL { "voxel_field" } else { "procedural_sdf" },
+        "renderer": if config.renderer_backend == RENDERER_VOXEL { "voxel" } else { "sdf" },
         "width": config.width,
         "height": config.height,
         "samples": config.samples,
@@ -142,6 +147,12 @@ fn write_render_metadata(
             _ => "auto",
         },
         "elapsed_ms": elapsed_ms,
+        "voxel_build_ms": build_ms,
+        "voxel_resolution": config.voxel_resolution,
+        "voxel_normal": if config.voxel_normal_mode == VOXEL_NORMAL_SMOOTH { "smooth" } else { "face" },
+        "voxel_storage": if config.voxel_storage == VOXEL_STORAGE_SPARSE_BRICKS { "sparse-bricks" } else { "dense" },
+        "voxel_memory_bytes": voxel_memory_bytes,
+        "voxel_active_bricks": voxel_active_bricks,
         "megapixel_samples_per_second": throughput,
     });
     let metadata_path = PathBuf::from(format!("{}.render.json", output.display()));
@@ -162,13 +173,19 @@ fn render(args: &RenderArgs) -> Result<()> {
     let metallib_c = c_path(&metallib)?;
     let output_c = c_path(&output)?;
     let mut elapsed_ms = 0.0;
+    let mut build_ms = 0.0;
+    let mut voxel_memory_bytes = 0_u64;
+    let mut voxel_active_bricks = 0_u32;
     let mut error = [0_i8; 4096];
     let status = unsafe {
         fpt_metal_render(
             metallib_c.as_ptr(),
             output_c.as_ptr(),
             &loaded.config,
+            &mut build_ms,
             &mut elapsed_ms,
+            &mut voxel_memory_bytes,
+            &mut voxel_active_bricks,
             error.as_mut_ptr(),
             error.len(),
         )
@@ -176,9 +193,17 @@ fn render(args: &RenderArgs) -> Result<()> {
     if status != 0 {
         bail!("{}", bridge_error(&error));
     }
-    write_render_metadata(&output, &args.scene_path, &loaded.config, elapsed_ms)?;
+    write_render_metadata(
+        &output,
+        &args.scene_path,
+        &loaded.config,
+        build_ms,
+        elapsed_ms,
+        voxel_memory_bytes,
+        voxel_active_bricks,
+    )?;
     eprintln!(
-        "rendered {} -> {} ({elapsed_ms:.2} ms)",
+        "rendered {} -> {} (build {build_ms:.2} ms, render {elapsed_ms:.2} ms)",
         args.scene_path.display(),
         output.display()
     );
@@ -216,9 +241,22 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
     if status != 0 {
         bail!("{}", bridge_error(&error));
     }
-    write_render_metadata(&output, &args.scene_path, &loaded.config, elapsed_ms)?;
+    write_render_metadata(
+        &output,
+        &args.scene_path,
+        &loaded.config,
+        0.0,
+        elapsed_ms,
+        0,
+        0,
+    )?;
     eprintln!(
-        "rendered SDF diagnostic {} -> {} ({elapsed_ms:.2} ms)",
+        "rendered {} diagnostic {} -> {} ({elapsed_ms:.2} ms)",
+        if loaded.config.renderer_backend == RENDERER_VOXEL {
+            "voxel"
+        } else {
+            "SDF"
+        },
         args.scene_path.display(),
         output.display()
     );
@@ -332,6 +370,7 @@ fn main() -> Result<()> {
         "path-cost-summary" => tools::path_cost_summary_command(tail),
         "bounce-summary" => tools::bounce_summary_command(tail),
         "optimization-summary" => tools::optimization_summary_command(tail),
+        "voxel-summary" => tools::voxel_summary_command(tail),
         "list-scenes" => {
             list_scenes();
             Ok(())
