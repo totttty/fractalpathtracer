@@ -1,0 +1,36 @@
+{
+  "preset": "../readme/presets/Cage_Fractal.fpt",
+  "output": "Exact_Translation_Union.png",
+  "width": 960,
+  "height": 540,
+  "samples": 112,
+  "camera": {
+    "position": [0.0, 0.0, -5.0],
+    "yaw_pitch": [0.0, 0.0],
+    "fov": 52,
+    "dof": 0,
+    "focus_distance": 5.0
+  },
+  "voxel": {
+    "bounds_min": [-3.25, -3.25, -3.25],
+    "bounds_max": [3.25, 3.25, 3.25]
+  },
+  "sdf_program": {
+    "operations": [
+      {"op": "translate", "value": [-1.2, 0.0, 0.0]},
+      {"op": "sphere", "radius": 0.72},
+      {"op": "translate", "value": [1.2, 0.0, 0.0]},
+      {"op": "box", "value": [0.62, 0.54, 0.48]},
+      {"op": "translate", "value": [1.2, 0.0, 0.0]},
+      {"op": "sphere", "radius": 0.66},
+      {"op": "translate", "value": [-1.2, 0.0, 0.0]},
+      {"op": "plane", "data": [0.0, 2.0, 0.0, 2.8]}
+    ],
+    "material": {
+      "mode": "solid",
+      "color": [0.16, 0.66, 0.92],
+      "roughness": 0.4,
+      "specular": 0.3
+    }
+  }
+}

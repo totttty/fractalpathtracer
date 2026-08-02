@@ -1,0 +1,82 @@
+{
+  "preset": "../readme/presets/Cage_Fractal.fpt",
+  "output": "Exact_Transforms.png",
+  "width": 960,
+  "height": 540,
+  "samples": 112,
+  "camera": {
+    "position": [0.0, 0.0, -4.0],
+    "yaw_pitch": [0.0, 0.0],
+    "fov": 52,
+    "dof": 0,
+    "focus_distance": 4.0
+  },
+  "render": {
+    "bounces": 3,
+    "marching_steps": 180,
+    "normal_epsilon": 0.0008,
+    "min_distance": 0.0008,
+    "max_distance": 30,
+    "adaptive_marching": 0.18,
+    "error_protection": 0,
+    "random_mode": 0
+  },
+  "world": {
+    "mode": 3,
+    "light_size": 1,
+    "rotation": 0,
+    "elevation": 0,
+    "power": 0.2,
+    "contrast": 1,
+    "gradient_background": 0,
+    "one_color": [0.025, 0.035, 0.055]
+  },
+  "sun": {
+    "enabled": 1,
+    "rotation": 40,
+    "elevation": 42,
+    "power": 2.5,
+    "softness": 0.05,
+    "color": [1.0, 0.84, 0.68]
+  },
+  "post": {
+    "tone_map": 3,
+    "exposure": 1.1,
+    "brightness": 0,
+    "saturation": 1.0,
+    "contrast": 1.05,
+    "chromatic_aberration": 0,
+    "highlights": 0.04
+  },
+  "voxel": {
+    "resolution": 256,
+    "bounds_min": [-3.25, -3.25, -3.25],
+    "bounds_max": [3.25, 3.25, 3.25],
+    "surface_band": 0.5,
+    "storage": "sparse-bricks"
+  },
+  "sdf_program": {
+    "operations": [
+      {"op": "abs"},
+      {"op": "repeat", "value": [3.0, 2.8, 3.2]},
+      {"op": "rotate_x", "angle": 0.31},
+      {"op": "rotate_y", "angle": -0.44},
+      {"op": "rotate_z", "angle": 0.19},
+      {"op": "scale", "factor": 1.2},
+      {"op": "translate", "value": [0.18, -0.12, 0.08]},
+      {"op": "sort_desc"},
+      {"op": "box", "value": [0.72, 0.56, 0.44]},
+      {"op": "translate", "value": [0.24, 0.0, 0.0]},
+      {"op": "sphere", "radius": 0.84, "combine": "intersection"},
+      {"op": "translate", "value": [0.18, 0.0, 0.0]},
+      {"op": "sphere", "radius": 0.28, "combine": "subtract"},
+      {"op": "plane", "data": [0.0, 1.0, 0.0, 0.34], "combine": "intersection"}
+    ],
+    "material": {
+      "mode": "solid",
+      "color": [0.84, 0.38, 0.16],
+      "roughness": 0.42,
+      "specular": 0.3
+    }
+  }
+}
