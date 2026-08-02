@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "production": {
+    "global_optimizer": {
+      "source_instructions": 12,
+      "optimized_instructions": 7,
+      "speedup": 1.5271934499297515,
+      "ssim": 1.0
+    },
+    "typed_soa": {
+      "speedup_vs_optimized_bytecode_min": 2.6129772861778333,
+      "speedup_vs_optimized_bytecode_max": 5.145387898213242,
+      "maximum_image_mae": 0.0000347222,
+      "minimum_ssim": 1.0
+    },
+    "canonical_direct": {
+      "conditions": 12,
+      "wins": 12,
+      "mean_speedup": 2.16,
+      "minimum_speedup": 1.57,
+      "maximum_speedup": 3.56,
+      "minimum_ssim": 0.999994
+    },
+    "generated_surface_28_primitives": {
+      "speedup_vs_typed_soa": 2.175462363182555,
+      "speedup_vs_generated_distance": 1.0999562522322985,
+      "speedup_vs_stitching": 1.201150967840107,
+      "distance_failures": 0,
+      "gradient_failures": 0,
+      "validation_samples": 1048576,
+      "maximum_distance_error": 9.5367431640625e-7,
+      "maximum_gradient_error": 4.246830940246582e-6
+    },
+    "selector_v8": {
+      "control_scenes": 5,
+      "specialized_selections": 5,
+      "cached_decisions_reused": 5,
+      "required_speedup": 1.1764705882352942,
+      "generated_surface_required_speedup": 1.1
+    }
+  },
+  "research_negative_controls": {
+    "canonical_descriptor_codegen": {
+      "conditions": 72,
+      "selector_wins": 0,
+      "mean_speedup_distance": 0.350,
+      "mean_speedup_surface": 0.354
+    },
+    "dual_generated_library": {
+      "cold_cost_ratio_min": 2.04,
+      "cold_cost_ratio_max": 2.59,
+      "render_regression_32_primitives_min": 9.08,
+      "render_regression_32_primitives_max": 12.03
+    },
+    "tiny_linked_helper": {
+      "source_compile_reduction_min": 14.0,
+      "source_compile_reduction_max": 57.0,
+      "total_cold_cost_regression_min": 1.11,
+      "total_cold_cost_regression_max": 1.45,
+      "render_regression_16_primitives_min": 3.81,
+      "render_regression_16_primitives_max": 4.97,
+      "distance_failures": 0,
+      "gradient_failures": 0,
+      "validation_samples": 1048576
+    }
+  }
+}
