@@ -17,8 +17,14 @@ use std::path::{Path, PathBuf};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const METALLIB_BYTES: &[u8] = include_bytes!(env!("FPT_METALLIB_PATH"));
+const BUILTIN_METALLIB_BYTES: &[u8] = include_bytes!(env!("FPT_BUILTIN_METALLIB_PATH"));
+const CAGE_METALLIB_BYTES: &[u8] = include_bytes!(env!("FPT_CAGE_METALLIB_PATH"));
+const TOWER_METALLIB_BYTES: &[u8] = include_bytes!(env!("FPT_TOWER_METALLIB_PATH"));
 const STITCH_METALLIB_BYTES: &[u8] = include_bytes!(env!("FPT_STITCH_METALLIB_PATH"));
 const METALLIB_SHA: &str = env!("FPT_METALLIB_SHA");
+const BUILTIN_METALLIB_SHA: &str = env!("FPT_BUILTIN_METALLIB_SHA");
+const CAGE_METALLIB_SHA: &str = env!("FPT_CAGE_METALLIB_SHA");
+const TOWER_METALLIB_SHA: &str = env!("FPT_TOWER_METALLIB_SHA");
 const STITCH_METALLIB_SHA: &str = env!("FPT_STITCH_METALLIB_SHA");
 const METAL_COMPILER_IDENTITY: &str = env!("FPT_METAL_COMPILER_IDENTITY");
 const METAL_SOURCE_BYTES: &[u8] = include_bytes!("../shaders/Shaders.metal");
@@ -154,6 +160,22 @@ fn default_metallib_path() -> Result<PathBuf> {
     materialize_metallib(METALLIB_BYTES, "Shaders", METALLIB_SHA)
 }
 
+fn default_builtin_metallib_path() -> Result<PathBuf> {
+    materialize_metallib(
+        BUILTIN_METALLIB_BYTES,
+        "ShadersBuiltin",
+        BUILTIN_METALLIB_SHA,
+    )
+}
+
+fn default_cage_metallib_path() -> Result<PathBuf> {
+    materialize_metallib(CAGE_METALLIB_BYTES, "ShadersCage", CAGE_METALLIB_SHA)
+}
+
+fn default_tower_metallib_path() -> Result<PathBuf> {
+    materialize_metallib(TOWER_METALLIB_BYTES, "ShadersTower", TOWER_METALLIB_SHA)
+}
+
 fn default_stitch_metallib_path() -> Result<PathBuf> {
     materialize_metallib(
         STITCH_METALLIB_BYTES,
@@ -197,11 +219,36 @@ fn stitch_archive_path(config: &FptRenderConfig) -> Result<Option<PathBuf>> {
     Ok(Some(directory.join(format!("{key}.metallibarchive"))))
 }
 
-fn metallib_path(args: &RenderArgs) -> Result<PathBuf> {
-    args.metallib
-        .clone()
-        .map(Ok)
-        .unwrap_or_else(default_metallib_path)
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PrecompiledMetallib {
+    Full,
+    Builtin,
+    Cage,
+    Tower,
+}
+
+fn precompiled_metallib(config: &FptRenderConfig) -> PrecompiledMetallib {
+    if config.renderer_backend != RENDERER_SDF || config.sdf_id == SDF_PROGRAM {
+        PrecompiledMetallib::Full
+    } else if config.sdf_id == SDF_CAGE_FRACTAL {
+        PrecompiledMetallib::Cage
+    } else if config.sdf_id == SDF_TOWER_FRACTAL {
+        PrecompiledMetallib::Tower
+    } else {
+        PrecompiledMetallib::Builtin
+    }
+}
+
+fn metallib_path(args: &RenderArgs, config: &FptRenderConfig) -> Result<PathBuf> {
+    if let Some(path) = &args.metallib {
+        return Ok(path.clone());
+    }
+    match precompiled_metallib(config) {
+        PrecompiledMetallib::Full => default_metallib_path(),
+        PrecompiledMetallib::Builtin => default_builtin_metallib_path(),
+        PrecompiledMetallib::Cage => default_cage_metallib_path(),
+        PrecompiledMetallib::Tower => default_tower_metallib_path(),
+    }
 }
 
 fn direct_evaluator_name(config: &FptRenderConfig) -> &'static str {
@@ -1349,7 +1396,7 @@ fn render(args: &RenderArgs) -> Result<()> {
     }
     fs::create_dir_all(&args.out_dir)?;
     let output = output_path(args, &loaded.output_name);
-    let metallib = metallib_path(args)?;
+    let metallib = metallib_path(args, &loaded.config)?;
     let stitch_metallib = default_stitch_metallib_path()?;
     let backend_selection = if args.sdf_function_stitching == SdfFunctionStitching::Auto {
         let selection_start = Instant::now();
@@ -1418,7 +1465,7 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
     apply_optimization_args(&mut loaded.config, args);
     fs::create_dir_all(&args.out_dir)?;
     let output = output_path(args, &loaded.output_name);
-    let metallib_c = c_path(&metallib_path(args)?)?;
+    let metallib_c = c_path(&metallib_path(args, &loaded.config)?)?;
     let output_c = c_path(&output)?;
     let diagnostic = FptDiagnosticConfig {
         mode: args.diagnostic_mode as u32,
@@ -1482,7 +1529,14 @@ fn preview(args: &RenderArgs) -> Result<()> {
         loaded.config.height = loaded.config.height.min(800);
     }
     let (scenes, selected) = preview_scene_list(args, &loaded.config)?;
-    let metallib_c = c_path(&metallib_path(args)?)?;
+    // Preview can cycle between built-in and typed-program scenes, so it keeps
+    // the full-capacity library unless the caller explicitly supplies one.
+    let preview_metallib = args
+        .metallib
+        .clone()
+        .map(Ok)
+        .unwrap_or_else(default_metallib_path)?;
+    let metallib_c = c_path(&preview_metallib)?;
     let stitch_metallib_c = c_path(&default_stitch_metallib_path()?)?;
     let stitch_archive_paths = scenes
         .iter()
@@ -1676,6 +1730,29 @@ mod tests {
         config.sdf_id = SDF_TOWER_FRACTAL;
         config.samples = 17;
         assert_eq!(effective_accumulation(&config), "chunked");
+    }
+
+    #[test]
+    fn precompiled_metallib_matches_the_sdf_family() {
+        let mut config = FptRenderConfig {
+            renderer_backend: RENDERER_SDF,
+            sdf_id: SDF_CAGE_FRACTAL,
+            ..Default::default()
+        };
+        assert_eq!(precompiled_metallib(&config), PrecompiledMetallib::Cage);
+
+        config.sdf_id = SDF_TOWER_FRACTAL;
+        assert_eq!(precompiled_metallib(&config), PrecompiledMetallib::Tower);
+
+        config.sdf_id = SDF_BALL_FRACTAL;
+        assert_eq!(precompiled_metallib(&config), PrecompiledMetallib::Builtin);
+
+        config.sdf_id = SDF_PROGRAM;
+        assert_eq!(precompiled_metallib(&config), PrecompiledMetallib::Full);
+
+        config.sdf_id = SDF_CAGE_FRACTAL;
+        config.renderer_backend = RENDERER_VOXEL;
+        assert_eq!(precompiled_metallib(&config), PrecompiledMetallib::Full);
     }
 
     #[test]

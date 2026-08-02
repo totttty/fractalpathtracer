@@ -52,7 +52,11 @@ enum {
 };
 
 constant uint FPT_SDF_PROGRAM_MAX_OPS = 64u;
+#if defined(FPT_BUILTIN_CONFIG)
+constant uint FPT_SDF_FLAT_UNION_MAX_PRIMITIVES = 1u;
+#else
 constant uint FPT_SDF_FLAT_UNION_MAX_PRIMITIVES = 64u;
+#endif
 constant uint FPT_SDF_GRADIENT_MAX_STOPS = 16u;
 
 enum {
@@ -3231,6 +3235,11 @@ static SDFResult userSdf(float3 p, constant FptRenderConfig &cfg) {
 }
 
 static float distanceSdf(float3 p, constant FptRenderConfig &cfg) {
+#if defined(FPT_BUILTIN_CAGE_ONLY)
+    return deCage(p, cfg).d;
+#elif defined(FPT_BUILTIN_TOWER_ONLY)
+    return deTower(p, cfg).d;
+#else
     if (cfg.sdf_id == SDF_PROGRAM && cfg.sdf_program_count > 0u) {
 #if defined(FPT_TOPOLOGY_RUNTIME_SOURCE)
         return deTopologySpecializedDistance(p, cfg);
@@ -3267,6 +3276,7 @@ static float distanceSdf(float3 p, constant FptRenderConfig &cfg) {
         case SDF_TREE_FRACTAL: return deTree(p, cfg).d;
         default: return 1000.0f;
     }
+#endif
 }
 
 static float mapSdf(float3 p, constant FptRenderConfig &cfg) {
@@ -3388,14 +3398,18 @@ static float3 normalAt(float3 p, constant FptRenderConfig &cfg) {
         }
     }
     if (cfg.sdf_normal_mode == 1u) {
+        // Match the radial sampling distance of the six-axis central stencil.
+        // Each tetrahedral corner has length sqrt(3), so scale its offset down
+        // by the reciprocal before evaluating the four-point gradient.
+        float tetra_e = e * 0.57735026919f;
         float3 k0 = float3(1.0f, -1.0f, -1.0f);
         float3 k1 = float3(-1.0f, -1.0f, 1.0f);
         float3 k2 = float3(-1.0f, 1.0f, -1.0f);
         float3 k3 = float3(1.0f, 1.0f, 1.0f);
-        float3 n4 = k0 * mapSdf(p + k0 * e, cfg)
-                  + k1 * mapSdf(p + k1 * e, cfg)
-                  + k2 * mapSdf(p + k2 * e, cfg)
-                  + k3 * mapSdf(p + k3 * e, cfg);
+        float3 n4 = k0 * mapSdf(p + k0 * tetra_e, cfg)
+                  + k1 * mapSdf(p + k1 * tetra_e, cfg)
+                  + k2 * mapSdf(p + k2 * tetra_e, cfg)
+                  + k3 * mapSdf(p + k3 * tetra_e, cfg);
         if (dot(n4, n4) < 1.0e-12f || !isfinite(n4.x) || !isfinite(n4.y) || !isfinite(n4.z)) return float3(0.0f, 1.0f, 0.0f);
         return normalize(n4);
     }

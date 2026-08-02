@@ -202,6 +202,53 @@ Across 12 affine conditions at 1080p/4K, one/eight bounces, and three material
 classes, canonical direct evaluation won 12/12 with a 2.16x mean speedup and a
 1.57-3.56x range. Minimum SSIM was `0.999994`.
 
+### Built-in Cage and Tower specialization
+
+The typed-program compiler enlarged `FptRenderConfig` from 6,692 to 30,388
+bytes. Although the built-in Cage and Tower estimators do not consume the
+typed-program arrays, including those arrays in the Metal constant structure
+caused a roughly fourfold render regression through shader compiler/register
+pressure. Compiling the built-in kernels with a one-entry typed capacity
+reduced the Metal-side structure to 9,220 bytes and restored the earlier
+performance. A direct cross-library control was pixel-exact.
+
+The production binary now embeds separate libraries for:
+
+- the full typed-program renderer;
+- compact generic built-in SDFs;
+- a compact Cage-only distance entry point; and
+- a compact Tower-only distance entry point.
+
+Offline render and diagnostic commands select the appropriate library from the
+loaded scene. Preview retains the full library because it can cycle between
+built-in and typed-program scenes. An explicit `--metallib` continues to
+override automatic selection.
+
+At native `960x540`, one spp, and default six-sample central normals, four
+interleaved runs after warm-up measured:
+
+| Scene | Merge-base median | Specialized median | Speedup |
+| --- | ---: | ---: | ---: |
+| Render005, Cage | 114.5 ms | 102.4 ms | 1.12x |
+| Render0ad03, Tower | 66.0 ms | 51.6 ms | 1.28x |
+| Glass, Cage | 114.5 ms | 97.7 ms | 1.17x |
+
+At the README's native 112 spp, Render005 and Glass were pixel-exact against
+the merge-base renderer. Render0ad03 remained within the strict gate with MAE
+`1.17967`, SSIM `0.971728`, and low-frequency SSIM `0.999932`.
+
+Two related controls clarified the boundary:
+
+- Duplicating explicit distance-only Cage/Tower estimators did not produce a
+  stable broad win. Metal already eliminates unused orbit output when only
+  `.d` is consumed, so the duplicated implementation was removed.
+- The existing four-query tetrahedral normal mode was corrected to use
+  `e / sqrt(3)` offsets, matching the radial sample distance of the six-query
+  central stencil. It improved the generic central-normal path by
+  approximately 1.20-1.35x in the 32 spp matrix and passed the strict image
+  gate, but remains opt-in because central normals best preserve the current
+  README appearance.
+
 ## 4. Generated Metal and JIT experiments
 
 ### Topology-specialized generated MSL
@@ -380,7 +427,7 @@ Final local validation completed successfully:
 
 - `cargo fmt --check`;
 - `cargo clippy --all-targets -- -D warnings`;
-- `cargo test` (39 passed);
+- `cargo test` (40 passed);
 - `cargo build --release`;
 - `git diff --check`; and
 - shell syntax validation for every `scripts/*.sh` runner.

@@ -21,6 +21,49 @@
       "maximum_speedup": 3.56,
       "minimum_ssim": 0.999994
     },
+    "builtin_fractal_specialization": {
+      "device": "Apple M1 Max",
+      "width": 960,
+      "height": 540,
+      "samples": 1,
+      "measured_runs": 4,
+      "baseline_commit": "2233b5e",
+      "normal_mode": "central",
+      "scenes": {
+        "Render005": {
+          "baseline_median_ms": 114.51,
+          "specialized_median_ms": 102.375,
+          "speedup": 1.1185
+        },
+        "Render0ad03": {
+          "baseline_median_ms": 65.95,
+          "specialized_median_ms": 51.555,
+          "speedup": 1.2792
+        },
+        "Glass": {
+          "baseline_median_ms": 114.455,
+          "specialized_median_ms": 97.665,
+          "speedup": 1.1719
+        }
+      },
+      "native_112_spp_parity": {
+        "Render005": {
+          "mae": 0.0,
+          "ssim": 1.0,
+          "low_frequency_ssim": 1.0
+        },
+        "Render0ad03": {
+          "mae": 1.17967,
+          "ssim": 0.971728,
+          "low_frequency_ssim": 0.999932
+        },
+        "Glass": {
+          "mae": 0.0,
+          "ssim": 1.0,
+          "low_frequency_ssim": 1.0
+        }
+      }
+    },
     "generated_surface_28_primitives": {
       "speedup_vs_typed_soa": 2.175462363182555,
       "speedup_vs_generated_distance": 1.0999562522322985,

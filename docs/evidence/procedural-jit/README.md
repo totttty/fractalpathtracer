@@ -15,6 +15,7 @@ show representative parity controls rather than every tested condition.
 | Basic global optimizer | 12 to 7 instructions; 1.527x speedup |
 | Typed SoA direct evaluator | 2.61-5.15x faster than optimized bytecode |
 | Canonical affine direct evaluator | 12/12 wins; 2.16x mean; 1.57-3.56x range |
+| Built-in Cage/Tower specialization | 1.12-1.28x at native 960x540; central normals remain the default |
 | Generated analytic surface at 28 primitives | 2.18x over typed SoA; 1.10x over generated distance; 1.20x over stitching |
 | Selector v8 controls | Specialized backend selected in 5/5; cached decisions reused in 5/5 |
 | Generated field validator | 1,048,576 points; zero distance or gradient failures |

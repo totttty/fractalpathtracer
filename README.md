@@ -85,15 +85,31 @@ FPT_README_SAMPLES=32 scripts/run_readme_reproductions.sh
 
 ## Performance
 
-Measured on an **Apple M1 Max** at one sample per pixel, using each featured
-scene's native resolution. Values are the median of four measured runs after an
-uncounted warm-up, timed around the Metal command buffers.
+Measured on an **Apple M1 Max** at one sample per pixel and each featured
+scene's native `960x540` resolution. Values are the median of four interleaved
+measured runs after an uncounted warm-up, timed around the Metal command
+buffers. The baseline is merge commit `2233b5e`; both paths use the default
+six-sample central-difference normals.
 
-| Scene | Render time (1 spp) | FPS (1 spp) |
-| --- | ---: | ---: |
-| Render005, Cage (`960x540`) | **120.0 ms** | **8.33** |
-| Render0ad03, Tower (`720x720`) | **57.5 ms** | **17.39** |
-| Glass, Cage (`960x540`) | **109.0 ms** | **9.18** |
+| Scene | Baseline | Specialized | Speedup | FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Render005, Cage | 114.5 ms | **102.4 ms** | **1.12x** | **9.77** |
+| Render0ad03, Tower | 66.0 ms | **51.6 ms** | **1.28x** | **19.40** |
+| Glass, Cage | 114.5 ms | **97.7 ms** | **1.17x** | **10.24** |
+
+Built-in SDF scenes automatically use compact precompiled Metal libraries that
+omit the large typed-program payload. Cage and Tower additionally use
+scene-family-specialized distance entry points, while accepting all ordinary
+scene parameters from the JSON file. At the README's native 112 spp,
+Render005 and Glass were pixel-exact against the baseline. Render0ad03 passed
+the strict image gate with MAE `1.180`, SSIM `0.9717`, and low-frequency SSIM
+`0.99993`; its small delta comes from specialized fast-math code generation.
+
+Central differences remain the default. `--sdf-normal-mode tetra` is an
+explicit faster-quality option that evaluates four normalized tetrahedral
+offsets instead of six axis offsets. In the controlled 32 spp matrix it added
+another `1.20-1.35x` over the generic central-normal path and passed the strict
+image gate, but it is not selected automatically.
 
 Generated typed SDF normals use analytic derivatives rather than six finite
 differences per hit:
