@@ -103,6 +103,23 @@ differences per hit:
 | Folded box + subtractive sphere | 109.3 ms | **84.9 ms** | **1.29x** | SSIM `0.9986` |
 | Sphere fixture | 126.0 ms | **69.0 ms** | **1.83x** | SSIM `0.999995` |
 
+The exact typed-program renderer also includes a procedural compiler and
+measured Metal backend selector. These figures come from separate controlled
+matrices and should be read as backend-relative results rather than one shared
+scene benchmark:
+
+| Compiler result | Measurement | Correctness |
+| --- | ---: | --- |
+| Basic global optimizer | 12 to 7 instructions; **1.53x** | SSIM `1` |
+| Typed SoA direct evaluator | **2.61-5.15x** over optimized bytecode | Maximum MAE `0.0000347` |
+| Canonical affine direct evaluator | **2.16x mean**, `1.57-3.56x`; 12/12 wins | Minimum SSIM `0.999994` |
+| Generated analytic surface, 28 primitives | **2.18x** over typed SoA; `1.10x` over generated distance | 1,048,576 samples; zero field/gradient failures |
+| Selector v8 control | Specialized backend selected and cached in **5/5** scenes | Pixel-exact final PNGs |
+
+See the [optimization investigation summary](docs/optimization-investigation-summary.md)
+and [compact evidence package](docs/evidence/procedural-jit/README.md) for the
+experiment boundaries, negative controls, and reproduction details.
+
 Re-run the benchmarks:
 
 ```sh
@@ -199,14 +216,19 @@ target/release/fpt-metal render scenes/readme/09-Glass.json \
 The build kernel samples `distanceSdf` at each cell centre, marks cells within
 the configured surface band, evaluates `userSdf` once for occupied-cell
 material data, and packs colour, roughness, specular, translucency, IOR, and
-emission. The host compacts occupied `4x4x4` bricks behind a dense page table;
+emission. The default staging path compacts occupied `4x4x4` bricks behind a
+dense page table; `--voxel-build direct` instead constructs sparse bricks on the
+GPU and falls back to staging if its capacity is exceeded. Conservative brick
+rejection is available through `--voxel-brick-rejection`, and
 `--voxel-storage dense` retains the complete field as a correctness reference.
 Rays intersect the field bounds and use exact grid DDA to find the first packed
 cell before continuing through the shared path-tracing and postprocess stages.
 
 Resolutions up to `512` remain available as an opt-in offline quality mode, but
-`256` is the recommended balance. The current builder creates a dense staging
-field before sparse compaction, so a `512^3` Tower build peaks near `1.8 GiB`.
+`256` is the recommended balance. The staging builder creates a dense field
+before sparse compaction and can peak near `1.8 GiB` for a `512^3` Tower build.
+The direct builder avoids that dense staging field and caps its `512^3` sparse
+allocation at approximately 480 MiB.
 
 ## Generated SDF Programs
 
@@ -235,6 +257,13 @@ physical material properties:
 Analytic normals are selected automatically for typed programs. Use
 `--sdf-normal-mode central` to compare with finite differences. Programs are
 bounded to 64 operations and 16 gradient stops.
+
+For stable typed topologies, `--sdf-backend probe` benchmarks the optimized
+direct, generated-distance, and generated-analytic-surface candidates with
+identical deterministic probes and caches the qualifying decision.
+`--sdf-backend auto` reuses that decision; on a one-shot cache miss it renders
+directly instead of paying cold JIT discovery cost. Interactive preview keeps
+the direct evaluator active while specialization is compiled asynchronously.
 
 Radiance RGBE `.hdr` environments are supported through `world.hdri`, using an
 absolute path or a path relative to the scene JSON.
