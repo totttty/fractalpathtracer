@@ -29,21 +29,79 @@ pub enum SdfNormalMode {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SdfProgramOptimization {
+    Off = 0,
+    Basic = 1,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SdfFunctionStitching {
+    Off = 0,
+    Normal = 1,
+    AlwaysInline = 2,
+    Auto = 3,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SdfStitchFusion {
+    Off = 0,
+    OnePair = 1,
+    Pairs = 2,
+    DoublePairs = 3,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RendererBackend {
     Sdf = RENDERER_SDF as isize,
     Voxel = RENDERER_VOXEL as isize,
+    BoundGrid = RENDERER_BOUND_GRID as isize,
+    Regional = RENDERER_REGIONAL as isize,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VoxelNormalMode {
     Face = VOXEL_NORMAL_FACE as isize,
     Smooth = VOXEL_NORMAL_SMOOTH as isize,
+    Exact = VOXEL_NORMAL_EXACT as isize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VoxelMaterialMode {
+    Stored = VOXEL_MATERIAL_STORED as isize,
+    Exact = VOXEL_MATERIAL_EXACT as isize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VoxelOffsetMode {
+    Legacy = VOXEL_OFFSET_LEGACY as isize,
+    Precision = VOXEL_OFFSET_PRECISION as isize,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VoxelStorageMode {
     Dense = VOXEL_STORAGE_DENSE as isize,
     SparseBricks = VOXEL_STORAGE_SPARSE_BRICKS as isize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VoxelCoverageMode {
+    Legacy = VOXEL_COVERAGE_LEGACY as isize,
+    Lipschitz = VOXEL_COVERAGE_LIPSCHITZ as isize,
+    Interval = VOXEL_COVERAGE_INTERVAL as isize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VoxelBuildMode {
+    Staging = VOXEL_BUILD_STAGING as isize,
+    Direct = VOXEL_BUILD_DIRECT as isize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VoxelLeafRefinement {
+    None = VOXEL_LEAF_REFINEMENT_NONE as isize,
+    SecantBisection = VOXEL_LEAF_REFINEMENT_SECANT_BISECTION as isize,
+    RestrictedTrace = VOXEL_LEAF_REFINEMENT_RESTRICTED_TRACE as isize,
+    FixedDe = VOXEL_LEAF_REFINEMENT_FIXED_DE as isize,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -77,11 +135,44 @@ pub struct RenderArgs {
     pub sdf_bounce_cap: Option<u32>,
     pub sdf_russian_roulette: bool,
     pub sdf_normal_mode: SdfNormalMode,
+    pub sdf_program_optimization: SdfProgramOptimization,
+    pub sdf_geometry_split: bool,
+    pub sdf_canonical_ir: bool,
+    pub sdf_topology_specialization: bool,
+    pub sdf_canonical_topology_specialization: bool,
+    pub sdf_compact_canonical_topology_specialization: bool,
+    pub sdf_shared_transform_topology_specialization: bool,
+    pub sdf_affine_index_topology_specialization: bool,
+    pub sdf_runtime_source_bytecode: bool,
+    pub sdf_dual_generated_library: bool,
+    pub sdf_tiny_linked_helper: bool,
+    pub sdf_function_stitching: SdfFunctionStitching,
+    pub sdf_backend_probe: bool,
+    pub sdf_stitched_surface: bool,
+    pub sdf_stitch_validation: bool,
+    pub sdf_stitch_distance_only: bool,
+    pub sdf_stitch_split_graph: bool,
+    pub sdf_stitch_fusion: SdfStitchFusion,
+    pub sdf_flat_union: bool,
+    pub sdf_typed_soa: bool,
     pub renderer_backend: RendererBackend,
     pub voxel_resolution: Option<u32>,
     pub voxel_normal_mode: VoxelNormalMode,
     pub voxel_storage_mode: Option<VoxelStorageMode>,
     pub voxel_surface_band: Option<f32>,
+    pub voxel_coverage_mode: Option<VoxelCoverageMode>,
+    pub voxel_build_mode: Option<VoxelBuildMode>,
+    pub voxel_brick_rejection: bool,
+    pub voxel_leaf_refinement: Option<VoxelLeafRefinement>,
+    pub voxel_material_mode: Option<VoxelMaterialMode>,
+    pub voxel_offset_mode: Option<VoxelOffsetMode>,
+    pub bound_grid_resolution: Option<u32>,
+    pub bound_grid_profile: bool,
+    pub bound_grid_profile_stride: u32,
+    pub bound_grid_cage_bounds: bool,
+    pub bound_grid_directional: bool,
+    pub bound_grid_fp16: bool,
+    pub regional_program_resolution: u32,
     pub sdf_rr_start: f32,
     pub sdf_rr_min_prob: f32,
     pub sdf_bounce_index: u32,
@@ -107,11 +198,44 @@ impl RenderArgs {
             sdf_bounce_cap: None,
             sdf_russian_roulette: false,
             sdf_normal_mode: SdfNormalMode::Auto,
+            sdf_program_optimization: SdfProgramOptimization::Basic,
+            sdf_geometry_split: true,
+            sdf_canonical_ir: true,
+            sdf_topology_specialization: false,
+            sdf_canonical_topology_specialization: false,
+            sdf_compact_canonical_topology_specialization: false,
+            sdf_shared_transform_topology_specialization: false,
+            sdf_affine_index_topology_specialization: false,
+            sdf_runtime_source_bytecode: false,
+            sdf_dual_generated_library: false,
+            sdf_tiny_linked_helper: false,
+            sdf_function_stitching: SdfFunctionStitching::Off,
+            sdf_backend_probe: false,
+            sdf_stitched_surface: true,
+            sdf_stitch_validation: false,
+            sdf_stitch_distance_only: false,
+            sdf_stitch_split_graph: false,
+            sdf_stitch_fusion: SdfStitchFusion::Off,
+            sdf_flat_union: false,
+            sdf_typed_soa: false,
             renderer_backend: RendererBackend::Sdf,
             voxel_resolution: None,
             voxel_normal_mode: VoxelNormalMode::Face,
             voxel_storage_mode: None,
             voxel_surface_band: None,
+            voxel_coverage_mode: None,
+            voxel_build_mode: None,
+            voxel_brick_rejection: false,
+            voxel_leaf_refinement: None,
+            voxel_material_mode: None,
+            voxel_offset_mode: None,
+            bound_grid_resolution: None,
+            bound_grid_profile: false,
+            bound_grid_profile_stride: 4,
+            bound_grid_cage_bounds: false,
+            bound_grid_directional: false,
+            bound_grid_fp16: false,
+            regional_program_resolution: 16,
             sdf_rr_start: 3.0,
             sdf_rr_min_prob: 0.2,
             sdf_bounce_index: 0,
@@ -148,8 +272,39 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                 out.renderer_backend = match next_value(args, &mut i, "--renderer")? {
                     "sdf" => RendererBackend::Sdf,
                     "voxel" => RendererBackend::Voxel,
+                    "bound-grid" => RendererBackend::BoundGrid,
+                    "regional" => RendererBackend::Regional,
                     value => bail!("invalid renderer: {value}"),
                 }
+            }
+            "--bound-grid-resolution" => {
+                let resolution = next_value(args, &mut i, "--bound-grid-resolution")?.parse()?;
+                ensure!(
+                    matches!(resolution, 32 | 64),
+                    "bound-grid resolution must be 32 or 64"
+                );
+                out.bound_grid_resolution = Some(resolution);
+            }
+            "--bound-grid-profile" => out.bound_grid_profile = true,
+            "--bound-grid-cage-bounds" => out.bound_grid_cage_bounds = true,
+            "--bound-grid-directional" => out.bound_grid_directional = true,
+            "--bound-grid-fp16" => out.bound_grid_fp16 = true,
+            "--regional-program-resolution" => {
+                let resolution =
+                    next_value(args, &mut i, "--regional-program-resolution")?.parse()?;
+                ensure!(
+                    matches!(resolution, 16 | 32),
+                    "regional program resolution must be 16 or 32"
+                );
+                out.regional_program_resolution = resolution;
+            }
+            "--bound-grid-profile-stride" => {
+                let stride = next_value(args, &mut i, "--bound-grid-profile-stride")?.parse()?;
+                ensure!(
+                    (1..=16).contains(&stride),
+                    "bound-grid profile stride must be 1..16"
+                );
+                out.bound_grid_profile_stride = stride;
             }
             "--voxel-resolution" => {
                 let resolution = next_value(args, &mut i, "--voxel-resolution")?.parse()?;
@@ -163,6 +318,7 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                 out.voxel_normal_mode = match next_value(args, &mut i, "--voxel-normal")? {
                     "face" => VoxelNormalMode::Face,
                     "smooth" => VoxelNormalMode::Smooth,
+                    "exact" => VoxelNormalMode::Exact,
                     value => bail!("invalid voxel normal mode: {value}"),
                 }
             }
@@ -180,6 +336,48 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                     "voxel surface band must be 0.25..4"
                 );
                 out.voxel_surface_band = Some(band);
+            }
+            "--voxel-coverage" => {
+                out.voxel_coverage_mode =
+                    Some(match next_value(args, &mut i, "--voxel-coverage")? {
+                        "legacy" => VoxelCoverageMode::Legacy,
+                        "lipschitz" => VoxelCoverageMode::Lipschitz,
+                        "interval" => VoxelCoverageMode::Interval,
+                        value => bail!("invalid voxel coverage mode: {value}"),
+                    });
+            }
+            "--voxel-build" => {
+                out.voxel_build_mode = Some(match next_value(args, &mut i, "--voxel-build")? {
+                    "staging" => VoxelBuildMode::Staging,
+                    "direct" => VoxelBuildMode::Direct,
+                    value => bail!("invalid voxel build mode: {value}"),
+                });
+            }
+            "--voxel-brick-rejection" => out.voxel_brick_rejection = true,
+            "--voxel-leaf-refinement" => {
+                out.voxel_leaf_refinement =
+                    Some(match next_value(args, &mut i, "--voxel-leaf-refinement")? {
+                        "none" => VoxelLeafRefinement::None,
+                        "secant-bisection" => VoxelLeafRefinement::SecantBisection,
+                        "restricted-trace" => VoxelLeafRefinement::RestrictedTrace,
+                        "fixed-de" => VoxelLeafRefinement::FixedDe,
+                        value => bail!("invalid voxel leaf refinement: {value}"),
+                    });
+            }
+            "--voxel-material" => {
+                out.voxel_material_mode =
+                    Some(match next_value(args, &mut i, "--voxel-material")? {
+                        "stored" => VoxelMaterialMode::Stored,
+                        "exact" => VoxelMaterialMode::Exact,
+                        value => bail!("invalid voxel material mode: {value}"),
+                    });
+            }
+            "--voxel-offset" => {
+                out.voxel_offset_mode = Some(match next_value(args, &mut i, "--voxel-offset")? {
+                    "legacy" => VoxelOffsetMode::Legacy,
+                    "precision" => VoxelOffsetMode::Precision,
+                    value => bail!("invalid voxel offset mode: {value}"),
+                });
             }
             "--out" => out.out_dir = next_value(args, &mut i, "--out")?.into(),
             "--fpt-root" => out.fpt_root = next_value(args, &mut i, "--fpt-root")?.into(),
@@ -229,6 +427,79 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                     value => bail!("invalid SDF normal mode: {value}"),
                 }
             }
+            "--sdf-program-optimization" => {
+                out.sdf_program_optimization =
+                    match next_value(args, &mut i, "--sdf-program-optimization")? {
+                        "off" => SdfProgramOptimization::Off,
+                        "basic" => SdfProgramOptimization::Basic,
+                        value => bail!("invalid SDF program optimization: {value}"),
+                    }
+            }
+            "--sdf-geometry-split" => out.sdf_geometry_split = true,
+            "--no-sdf-geometry-split" => out.sdf_geometry_split = false,
+            "--no-sdf-canonical-ir" => out.sdf_canonical_ir = false,
+            "--sdf-topology-specialization" => out.sdf_topology_specialization = true,
+            "--sdf-canonical-topology-specialization" => {
+                out.sdf_topology_specialization = true;
+                out.sdf_canonical_topology_specialization = true;
+            }
+            "--sdf-compact-canonical-topology-specialization" => {
+                out.sdf_topology_specialization = true;
+                out.sdf_compact_canonical_topology_specialization = true;
+            }
+            "--sdf-shared-transform-topology-specialization" => {
+                out.sdf_topology_specialization = true;
+                out.sdf_shared_transform_topology_specialization = true;
+            }
+            "--sdf-affine-index-topology-specialization" => {
+                out.sdf_topology_specialization = true;
+                out.sdf_affine_index_topology_specialization = true;
+            }
+            "--sdf-runtime-source-bytecode" => out.sdf_runtime_source_bytecode = true,
+            "--sdf-dual-generated-library" => out.sdf_dual_generated_library = true,
+            "--sdf-tiny-linked-helper" => out.sdf_tiny_linked_helper = true,
+            "--sdf-backend" => match next_value(args, &mut i, "--sdf-backend")? {
+                "auto" => {
+                    out.sdf_function_stitching = SdfFunctionStitching::Auto;
+                    out.sdf_backend_probe = false;
+                }
+                "probe" => {
+                    out.sdf_function_stitching = SdfFunctionStitching::Auto;
+                    out.sdf_backend_probe = true;
+                }
+                value => bail!("invalid automatic SDF backend mode: {value}"),
+            },
+            "--sdf-function-stitching" => {
+                out.sdf_function_stitching =
+                    match next_value(args, &mut i, "--sdf-function-stitching")? {
+                        "normal" => SdfFunctionStitching::Normal,
+                        "inline" => SdfFunctionStitching::AlwaysInline,
+                        "auto" => {
+                            out.sdf_backend_probe = true;
+                            SdfFunctionStitching::Auto
+                        }
+                        value => bail!("invalid SDF function-stitching mode: {value}"),
+                    }
+            }
+            "--no-sdf-stitched-surface" | "--no-sdf-generated-surface" => {
+                out.sdf_stitched_surface = false
+            }
+            "--sdf-stitch-validation" | "--sdf-program-validation" => {
+                out.sdf_stitch_validation = true
+            }
+            "--sdf-stitch-distance-only" => out.sdf_stitch_distance_only = true,
+            "--sdf-stitch-split-graph" => out.sdf_stitch_split_graph = true,
+            "--sdf-stitch-fusion" => {
+                out.sdf_stitch_fusion = match next_value(args, &mut i, "--sdf-stitch-fusion")? {
+                    "off" => SdfStitchFusion::Off,
+                    "one-pair" => SdfStitchFusion::OnePair,
+                    "pairs" => SdfStitchFusion::Pairs,
+                    "double-pairs" => SdfStitchFusion::DoublePairs,
+                    value => bail!("invalid SDF stitch-fusion mode: {value}"),
+                }
+            }
+            "--sdf-flat-union" => out.sdf_flat_union = true,
+            "--sdf-typed-soa" => out.sdf_typed_soa = true,
             "--glass-mode" => {
                 out.glass_mode = match next_value(args, &mut i, "--glass-mode")? {
                     "analytic" => GlassMode::Analytic,
@@ -267,6 +538,41 @@ pub fn apply_optimization_args(config: &mut FptRenderConfig, args: &RenderArgs) 
     config.sdf_rr_start = args.sdf_rr_start;
     config.sdf_rr_min_prob = args.sdf_rr_min_prob;
     config.sdf_chunk_samples = args.sdf_chunk_samples;
+    config.sdf_topology_specialization = if args.sdf_affine_index_topology_specialization {
+        5
+    } else if args.sdf_shared_transform_topology_specialization {
+        4
+    } else if args.sdf_compact_canonical_topology_specialization {
+        3
+    } else if args.sdf_canonical_topology_specialization {
+        2
+    } else {
+        u32::from(args.sdf_topology_specialization)
+    };
+    config.sdf_runtime_source_bytecode = if args.sdf_tiny_linked_helper {
+        3
+    } else if args.sdf_dual_generated_library {
+        2
+    } else {
+        u32::from(args.sdf_runtime_source_bytecode)
+    };
+    config.sdf_function_stitching = args.sdf_function_stitching as u32;
+    config.sdf_stitched_surface = u32::from(
+        args.sdf_stitched_surface
+            && !args.sdf_shared_transform_topology_specialization
+            && !args.sdf_affine_index_topology_specialization
+            && !args.sdf_stitch_distance_only
+            && !args.sdf_stitch_split_graph,
+    );
+    config.sdf_stitch_validation = u32::from(args.sdf_stitch_validation);
+    config.sdf_stitch_distance_only =
+        if args.sdf_stitch_distance_only || args.sdf_stitch_split_graph {
+            SDF_STITCH_STATE_LEAN
+        } else {
+            SDF_STITCH_STATE_FULL
+        };
+    config.sdf_stitch_split_graph = u32::from(args.sdf_stitch_split_graph);
+    config.sdf_stitch_fusion = args.sdf_stitch_fusion as u32;
     config.renderer_backend = args.renderer_backend as u32;
     config.voxel_normal_mode = args.voxel_normal_mode as u32;
     if let Some(storage) = args.voxel_storage_mode {
@@ -278,6 +584,31 @@ pub fn apply_optimization_args(config: &mut FptRenderConfig, args: &RenderArgs) 
     if let Some(surface_band) = args.voxel_surface_band {
         config.voxel_surface_band = surface_band;
     }
+    if let Some(coverage) = args.voxel_coverage_mode {
+        config.voxel_coverage_mode = coverage as u32;
+    }
+    if let Some(build) = args.voxel_build_mode {
+        config.voxel_build_mode = build as u32;
+    }
+    config.voxel_brick_rejection = u32::from(args.voxel_brick_rejection);
+    if let Some(refinement) = args.voxel_leaf_refinement {
+        config.voxel_leaf_refinement = refinement as u32;
+    }
+    if let Some(material) = args.voxel_material_mode {
+        config.voxel_material_mode = material as u32;
+    }
+    if let Some(offset) = args.voxel_offset_mode {
+        config.voxel_offset_mode = offset as u32;
+    }
+    if let Some(resolution) = args.bound_grid_resolution {
+        config.bound_grid_resolution = resolution;
+    }
+    config.bound_grid_profile = u32::from(args.bound_grid_profile);
+    config.bound_grid_profile_stride = args.bound_grid_profile_stride;
+    config.bound_grid_cage_bounds = u32::from(args.bound_grid_cage_bounds);
+    config.bound_grid_directional = u32::from(args.bound_grid_directional);
+    config.bound_grid_fp16 = u32::from(args.bound_grid_fp16);
+    config.regional_program_resolution = args.regional_program_resolution;
 }
 
 pub fn default_config() -> FptRenderConfig {
@@ -307,6 +638,8 @@ pub fn default_config() -> FptRenderConfig {
         voxel_bounds_min: [-4.0, -4.0, -4.0],
         voxel_surface_band: 1.0,
         voxel_bounds_max: [4.0, 4.0, 4.0],
+        bound_grid_resolution: 32,
+        bound_grid_profile_stride: 4,
         ..Default::default()
     };
     cfg.focus_distance = 0.0;
@@ -555,6 +888,515 @@ fn apply_sdf_program(config: &mut FptRenderConfig, value: &Value) -> Result<()> 
     Ok(())
 }
 
+fn same_instruction_metadata(a: &FptSdfInstruction, b: &FptSdfInstruction) -> bool {
+    a.flags == b.flags && a.material_index == b.material_index && a._pad0 == b._pad0
+}
+
+fn same_instruction_data(a: &FptSdfInstruction, b: &FptSdfInstruction) -> bool {
+    a.data
+        .iter()
+        .zip(b.data)
+        .all(|(left, right)| left.to_bits() == right.to_bits())
+}
+
+fn is_noop_instruction(instruction: &FptSdfInstruction) -> bool {
+    match instruction.opcode {
+        SDF_OP_TRANSLATE => instruction.data[..3].iter().all(|value| *value == 0.0),
+        SDF_OP_SCALE => instruction.data[0] == 1.0 || instruction.data[0].abs() <= 1.0e-6,
+        SDF_OP_ROTATE_X | SDF_OP_ROTATE_Y | SDF_OP_ROTATE_Z => instruction.data[0] == 0.0,
+        SDF_OP_ORBIT_ADD => {
+            instruction.data[3] == 0.0 || instruction.data[..3].iter().all(|value| *value == 0.0)
+        }
+        _ => false,
+    }
+}
+
+fn fold_adjacent_transform(
+    previous: &mut FptSdfInstruction,
+    instruction: &FptSdfInstruction,
+) -> bool {
+    if previous.opcode != instruction.opcode || !same_instruction_metadata(previous, instruction) {
+        return false;
+    }
+    match instruction.opcode {
+        SDF_OP_TRANSLATE => {
+            if previous.data[3].to_bits() != instruction.data[3].to_bits() {
+                return false;
+            }
+            let folded = [
+                previous.data[0] + instruction.data[0],
+                previous.data[1] + instruction.data[1],
+                previous.data[2] + instruction.data[2],
+            ];
+            if folded.iter().all(|value| value.is_finite()) {
+                previous.data[..3].copy_from_slice(&folded);
+                true
+            } else {
+                false
+            }
+        }
+        SDF_OP_SCALE => {
+            if !previous.data[1..]
+                .iter()
+                .zip(instruction.data[1..].iter())
+                .all(|(left, right)| left.to_bits() == right.to_bits())
+            {
+                return false;
+            }
+            let folded = previous.data[0] * instruction.data[0];
+            if folded.is_finite() && folded.abs() > 1.0e-6 {
+                previous.data[0] = folded;
+                true
+            } else {
+                false
+            }
+        }
+        SDF_OP_ROTATE_X | SDF_OP_ROTATE_Y | SDF_OP_ROTATE_Z => {
+            if !previous.data[1..]
+                .iter()
+                .zip(instruction.data[1..].iter())
+                .all(|(left, right)| left.to_bits() == right.to_bits())
+            {
+                return false;
+            }
+            let folded = previous.data[0] + instruction.data[0];
+            if folded.is_finite() {
+                previous.data[0] = folded;
+                true
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
+}
+
+fn is_redundant_adjacent_primitive(
+    previous: &FptSdfInstruction,
+    instruction: &FptSdfInstruction,
+) -> bool {
+    if previous.opcode != instruction.opcode
+        || !matches!(
+            instruction.opcode,
+            SDF_OP_SPHERE | SDF_OP_BOX | SDF_OP_PLANE
+        )
+        || !same_instruction_metadata(previous, instruction)
+        || !same_instruction_data(previous, instruction)
+        || !matches!(instruction.flags, 0 | 1)
+    {
+        return false;
+    }
+    instruction.opcode == SDF_OP_PLANE || instruction.data[3] == 0.0
+}
+
+fn optimize_sdf_program(config: &mut FptRenderConfig) {
+    let mut optimized: Vec<FptSdfInstruction> =
+        Vec::with_capacity(config.sdf_program_count as usize);
+    for instruction in config
+        .sdf_program
+        .iter()
+        .take(config.sdf_program_count as usize)
+        .copied()
+    {
+        if is_noop_instruction(&instruction) {
+            continue;
+        }
+        if let Some(previous) = optimized.last_mut() {
+            if (instruction.opcode == SDF_OP_ABS || instruction.opcode == SDF_OP_SORT_DESC)
+                && previous.opcode == instruction.opcode
+            {
+                continue;
+            }
+            if is_redundant_adjacent_primitive(previous, &instruction) {
+                continue;
+            }
+            if fold_adjacent_transform(previous, &instruction) {
+                if is_noop_instruction(previous) {
+                    optimized.pop();
+                }
+                continue;
+            }
+        }
+        optimized.push(instruction);
+    }
+    config.sdf_program.fill(FptSdfInstruction::default());
+    config.sdf_program[..optimized.len()].copy_from_slice(&optimized);
+    config.sdf_program_count = optimized.len() as u32;
+}
+
+fn split_sdf_geometry_program(config: &mut FptRenderConfig, enabled: bool) {
+    config
+        .sdf_shading_program
+        .fill(FptSdfInstruction::default());
+    let full_count = (config.sdf_program_count as usize).min(SDF_PROGRAM_MAX_OPS);
+    config.sdf_shading_program[..full_count].copy_from_slice(&config.sdf_program[..full_count]);
+    config.sdf_shading_program_count = full_count as u32;
+    config.sdf_geometry_split = u32::from(enabled);
+    if !enabled {
+        return;
+    }
+
+    let geometry: Vec<FptSdfInstruction> = config.sdf_program[..full_count]
+        .iter()
+        .copied()
+        .filter(|instruction| {
+            !matches!(
+                instruction.opcode,
+                SDF_OP_ORBIT_ADD | SDF_OP_UNION | SDF_OP_INTERSECTION | SDF_OP_SUBTRACT
+            )
+        })
+        .collect();
+    config.sdf_program.fill(FptSdfInstruction::default());
+    config.sdf_program[..geometry.len()].copy_from_slice(&geometry);
+    config.sdf_program_count = geometry.len() as u32;
+}
+
+fn rotate_affine_rows(rows: &mut [[f32; 4]; 3], first: usize, second: usize, angle: f32) {
+    let (sine, cosine) = angle.sin_cos();
+    let old_first = rows[first];
+    let old_second = rows[second];
+    for column in 0..4 {
+        rows[first][column] = cosine * old_first[column] - sine * old_second[column];
+        rows[second][column] = sine * old_first[column] + cosine * old_second[column];
+    }
+}
+
+fn same_canonical_primitive(left: &FptPrimitiveInstance, right: &FptPrimitiveInstance) -> bool {
+    left.opcode == right.opcode
+        && left.distance_scale.to_bits() == right.distance_scale.to_bits()
+        && left
+            .transform
+            .iter()
+            .zip(right.transform)
+            .all(|(a, b)| a.to_bits() == b.to_bits())
+        && left
+            .data
+            .iter()
+            .zip(right.data)
+            .all(|(a, b)| a.to_bits() == b.to_bits())
+}
+
+fn compile_canonical_geometry_program(config: &mut FptRenderConfig) -> bool {
+    config.sdf_canonical_count = 0;
+    config.sdf_canonical_source_count = 0;
+    config.sdf_canonical_transform_count = 0;
+    config
+        .sdf_canonical_primitives
+        .fill(FptPrimitiveInstance::default());
+    config
+        .sdf_canonical_transforms
+        .fill(FptAffineTransform::default());
+    config
+        .sdf_indexed_primitives
+        .fill(FptIndexedPrimitive::default());
+    if config.sdf_id != SDF_PROGRAM || config.sdf_program_count == 0 {
+        return false;
+    }
+
+    let mut rows = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+    ];
+    let mut distance_scale = 1.0_f32;
+    let mut primitives: Vec<FptPrimitiveInstance> = Vec::new();
+    for (source_instruction, instruction) in config
+        .sdf_program
+        .iter()
+        .take(config.sdf_program_count as usize)
+        .enumerate()
+    {
+        if !instruction.data.iter().all(|value| value.is_finite()) {
+            return false;
+        }
+        match instruction.opcode {
+            SDF_OP_TRANSLATE => {
+                for (axis, row) in rows.iter_mut().enumerate() {
+                    row[3] -= instruction.data[axis];
+                }
+            }
+            SDF_OP_SCALE => {
+                let scale = if instruction.data[0].abs() > 1.0e-6 {
+                    instruction.data[0]
+                } else {
+                    1.0
+                };
+                for row in &mut rows {
+                    for value in row {
+                        *value *= scale;
+                    }
+                }
+                distance_scale *= scale.abs();
+            }
+            SDF_OP_ROTATE_X => rotate_affine_rows(&mut rows, 1, 2, instruction.data[0]),
+            SDF_OP_ROTATE_Y => rotate_affine_rows(&mut rows, 0, 2, instruction.data[0]),
+            SDF_OP_ROTATE_Z => rotate_affine_rows(&mut rows, 0, 1, instruction.data[0]),
+            SDF_OP_SPHERE | SDF_OP_BOX | SDF_OP_PLANE => {
+                if instruction.flags > 2 || primitives.len() >= SDF_FLAT_UNION_MAX_PRIMITIVES {
+                    return false;
+                }
+                config.sdf_canonical_source_count += 1;
+                let mut data = instruction.data;
+                if instruction.opcode == SDF_OP_PLANE {
+                    let length = (data[0] * data[0] + data[1] * data[1] + data[2] * data[2]).sqrt();
+                    if length <= 1.0e-8 {
+                        return false;
+                    }
+                    data[0] /= length;
+                    data[1] /= length;
+                    data[2] /= length;
+                }
+                let primitive = FptPrimitiveInstance {
+                    transform: [
+                        rows[0][0], rows[0][1], rows[0][2], rows[0][3], rows[1][0], rows[1][1],
+                        rows[1][2], rows[1][3], rows[2][0], rows[2][1], rows[2][2], rows[2][3],
+                    ],
+                    data,
+                    opcode: instruction.opcode,
+                    distance_scale,
+                    source_instruction: source_instruction as u32,
+                    _pad0: if primitives.is_empty() {
+                        0
+                    } else {
+                        instruction.flags
+                    },
+                };
+                let associative_duplicate = if instruction.flags == 0 {
+                    primitives.iter().skip(1).all(|value| value._pad0 == 0)
+                        && primitives
+                            .iter()
+                            .any(|value| same_canonical_primitive(value, &primitive))
+                } else if instruction.flags == 1 {
+                    primitives.iter().skip(1).all(|value| value._pad0 == 1)
+                        && primitives
+                            .iter()
+                            .any(|value| same_canonical_primitive(value, &primitive))
+                } else {
+                    false
+                };
+                if !associative_duplicate {
+                    primitives.push(primitive);
+                }
+            }
+            SDF_OP_UNION | SDF_OP_INTERSECTION | SDF_OP_SUBTRACT | SDF_OP_ORBIT_ADD => {}
+            _ => return false,
+        }
+        if !distance_scale.is_finite() || !rows.iter().flatten().all(|value| value.is_finite()) {
+            return false;
+        }
+    }
+    if primitives.is_empty() {
+        return false;
+    }
+    config.sdf_canonical_primitives[..primitives.len()].copy_from_slice(&primitives);
+    config.sdf_canonical_count = primitives.len() as u32;
+    let mut transforms: Vec<FptAffineTransform> = Vec::new();
+    let mut indexed_primitives: Vec<FptIndexedPrimitive> = Vec::with_capacity(primitives.len());
+    for primitive in &primitives {
+        let transform_index = transforms
+            .iter()
+            .position(|candidate| {
+                primitive.distance_scale.to_bits() == candidate.distance_scale.to_bits()
+                    && primitive
+                        .transform
+                        .iter()
+                        .zip(candidate.transform)
+                        .all(|(left, right)| left.to_bits() == right.to_bits())
+            })
+            .unwrap_or_else(|| {
+                transforms.push(FptAffineTransform {
+                    transform: primitive.transform,
+                    distance_scale: primitive.distance_scale,
+                    _pad0: [0; 3],
+                });
+                transforms.len() - 1
+            });
+        indexed_primitives.push(FptIndexedPrimitive {
+            data: primitive.data,
+            opcode: primitive.opcode,
+            transform_index: transform_index as u32,
+            source_instruction: primitive.source_instruction,
+            combine_mode: primitive._pad0,
+        });
+    }
+    config.sdf_canonical_transform_count = transforms.len() as u32;
+    config.sdf_canonical_transforms[..transforms.len()].copy_from_slice(&transforms);
+    config.sdf_indexed_primitives[..indexed_primitives.len()].copy_from_slice(&indexed_primitives);
+    true
+}
+
+fn lower_flat_union_program(config: &mut FptRenderConfig) -> bool {
+    config.sdf_flat_union_count = 0;
+    config
+        .sdf_flat_union_instances
+        .fill(FptPrimitiveInstance::default());
+    if config.sdf_id != SDF_PROGRAM || config.sdf_program_count == 0 {
+        return false;
+    }
+
+    let mut rows = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+    ];
+    let mut distance_scale = 1.0_f32;
+    let mut instances = Vec::new();
+    for (source_instruction, instruction) in config
+        .sdf_program
+        .iter()
+        .take(config.sdf_program_count as usize)
+        .enumerate()
+    {
+        if !instruction.data.iter().all(|value| value.is_finite()) {
+            return false;
+        }
+        match instruction.opcode {
+            SDF_OP_TRANSLATE => {
+                for (axis, row) in rows.iter_mut().enumerate() {
+                    row[3] -= instruction.data[axis];
+                }
+            }
+            SDF_OP_SCALE => {
+                let scale = if instruction.data[0].abs() > 1.0e-6 {
+                    instruction.data[0]
+                } else {
+                    1.0
+                };
+                for row in &mut rows {
+                    for value in row {
+                        *value *= scale;
+                    }
+                }
+                distance_scale *= scale.abs();
+            }
+            SDF_OP_ROTATE_X => rotate_affine_rows(&mut rows, 1, 2, instruction.data[0]),
+            SDF_OP_ROTATE_Y => rotate_affine_rows(&mut rows, 0, 2, instruction.data[0]),
+            SDF_OP_ROTATE_Z => rotate_affine_rows(&mut rows, 0, 1, instruction.data[0]),
+            SDF_OP_SPHERE | SDF_OP_BOX | SDF_OP_PLANE => {
+                if instruction.flags != 0 || instances.len() >= SDF_FLAT_UNION_MAX_PRIMITIVES {
+                    return false;
+                }
+                let mut data = instruction.data;
+                if instruction.opcode == SDF_OP_PLANE {
+                    let length = (data[0] * data[0] + data[1] * data[1] + data[2] * data[2]).sqrt();
+                    if !length.is_finite() || length <= 1.0e-8 {
+                        return false;
+                    }
+                    data[0] /= length;
+                    data[1] /= length;
+                    data[2] /= length;
+                }
+                instances.push(FptPrimitiveInstance {
+                    transform: [
+                        rows[0][0], rows[0][1], rows[0][2], rows[0][3], rows[1][0], rows[1][1],
+                        rows[1][2], rows[1][3], rows[2][0], rows[2][1], rows[2][2], rows[2][3],
+                    ],
+                    data,
+                    opcode: instruction.opcode,
+                    distance_scale,
+                    source_instruction: source_instruction as u32,
+                    _pad0: 0,
+                });
+            }
+            SDF_OP_ORBIT_ADD | SDF_OP_UNION => {}
+            _ => return false,
+        }
+        if !distance_scale.is_finite() || !rows.iter().flatten().all(|value| value.is_finite()) {
+            return false;
+        }
+    }
+    if instances.is_empty() {
+        return false;
+    }
+    config.sdf_flat_union_instances[..instances.len()].copy_from_slice(&instances);
+    config.sdf_flat_union_count = instances.len() as u32;
+    true
+}
+
+fn lower_typed_soa_program(config: &mut FptRenderConfig) -> bool {
+    config.sdf_typed_soa = FptTypedSoAProgram::default();
+    if config.sdf_id != SDF_PROGRAM || config.sdf_program_count == 0 {
+        return false;
+    }
+
+    let mut translation = [0.0_f32; 3];
+    let mut primitive_count = 0_usize;
+    for (source_instruction, instruction) in config
+        .sdf_program
+        .iter()
+        .take(config.sdf_program_count as usize)
+        .enumerate()
+    {
+        if !instruction.data.iter().all(|value| value.is_finite()) {
+            return false;
+        }
+        match instruction.opcode {
+            SDF_OP_TRANSLATE => {
+                for (current, delta) in translation.iter_mut().zip(instruction.data) {
+                    *current += delta;
+                }
+            }
+            SDF_OP_SPHERE => {
+                if instruction.flags != 0 || primitive_count >= SDF_FLAT_UNION_MAX_PRIMITIVES {
+                    return false;
+                }
+                let index = config.sdf_typed_soa.sphere_count as usize;
+                config.sdf_typed_soa.sphere_x[index] = translation[0];
+                config.sdf_typed_soa.sphere_y[index] = translation[1];
+                config.sdf_typed_soa.sphere_z[index] = translation[2];
+                config.sdf_typed_soa.sphere_radius[index] = instruction.data[0];
+                config.sdf_typed_soa.sphere_source[index] = source_instruction as u32;
+                config.sdf_typed_soa.sphere_count += 1;
+                primitive_count += 1;
+            }
+            SDF_OP_BOX => {
+                if instruction.flags != 0 || primitive_count >= SDF_FLAT_UNION_MAX_PRIMITIVES {
+                    return false;
+                }
+                let index = config.sdf_typed_soa.box_count as usize;
+                config.sdf_typed_soa.box_x[index] = translation[0];
+                config.sdf_typed_soa.box_y[index] = translation[1];
+                config.sdf_typed_soa.box_z[index] = translation[2];
+                config.sdf_typed_soa.box_half_x[index] = instruction.data[0].abs();
+                config.sdf_typed_soa.box_half_y[index] = instruction.data[1].abs();
+                config.sdf_typed_soa.box_half_z[index] = instruction.data[2].abs();
+                config.sdf_typed_soa.box_source[index] = source_instruction as u32;
+                config.sdf_typed_soa.box_count += 1;
+                primitive_count += 1;
+            }
+            SDF_OP_PLANE => {
+                if instruction.flags != 0 || primitive_count >= SDF_FLAT_UNION_MAX_PRIMITIVES {
+                    return false;
+                }
+                let length = (instruction.data[0] * instruction.data[0]
+                    + instruction.data[1] * instruction.data[1]
+                    + instruction.data[2] * instruction.data[2])
+                    .sqrt();
+                if !length.is_finite() || length <= 1.0e-8 {
+                    return false;
+                }
+                let index = config.sdf_typed_soa.plane_count as usize;
+                config.sdf_typed_soa.plane_x[index] = instruction.data[0];
+                config.sdf_typed_soa.plane_y[index] = instruction.data[1];
+                config.sdf_typed_soa.plane_z[index] = instruction.data[2];
+                config.sdf_typed_soa.plane_center_x[index] = translation[0];
+                config.sdf_typed_soa.plane_center_y[index] = translation[1];
+                config.sdf_typed_soa.plane_center_z[index] = translation[2];
+                config.sdf_typed_soa.plane_offset[index] = instruction.data[3];
+                config.sdf_typed_soa.plane_source[index] = source_instruction as u32;
+                config.sdf_typed_soa.plane_count += 1;
+                primitive_count += 1;
+            }
+            SDF_OP_ORBIT_ADD | SDF_OP_UNION => {}
+            _ => return false,
+        }
+        if !translation.iter().all(|value| value.is_finite()) {
+            return false;
+        }
+    }
+    primitive_count > 0
+}
+
 fn append_program_op(config: &mut FptRenderConfig, opcode: u32, data: [f32; 4]) -> Result<()> {
     ensure!(
         (config.sdf_program_count as usize) < SDF_PROGRAM_MAX_OPS,
@@ -777,6 +1619,50 @@ pub fn load_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
         );
+        if let Some(coverage) = voxel.get("coverage").and_then(Value::as_str) {
+            config.voxel_coverage_mode = match coverage {
+                "legacy" => VOXEL_COVERAGE_LEGACY,
+                "lipschitz" => VOXEL_COVERAGE_LIPSCHITZ,
+                "interval" => VOXEL_COVERAGE_INTERVAL,
+                value => bail!("invalid voxel coverage mode: {value}"),
+            };
+        }
+        if let Some(build) = voxel.get("build").and_then(Value::as_str) {
+            config.voxel_build_mode = match build {
+                "staging" => VOXEL_BUILD_STAGING,
+                "direct" => VOXEL_BUILD_DIRECT,
+                value => bail!("invalid voxel build mode: {value}"),
+            };
+        }
+        config.voxel_brick_rejection = u32::from(
+            voxel
+                .get("brick_rejection")
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+        );
+        if let Some(refinement) = voxel.get("leaf_refinement").and_then(Value::as_str) {
+            config.voxel_leaf_refinement = match refinement {
+                "none" => VOXEL_LEAF_REFINEMENT_NONE,
+                "secant-bisection" => VOXEL_LEAF_REFINEMENT_SECANT_BISECTION,
+                "restricted-trace" => VOXEL_LEAF_REFINEMENT_RESTRICTED_TRACE,
+                "fixed-de" => VOXEL_LEAF_REFINEMENT_FIXED_DE,
+                value => bail!("invalid voxel leaf refinement: {value}"),
+            };
+        }
+        if let Some(material) = voxel.get("material").and_then(Value::as_str) {
+            config.voxel_material_mode = match material {
+                "stored" => VOXEL_MATERIAL_STORED,
+                "exact" => VOXEL_MATERIAL_EXACT,
+                value => bail!("invalid voxel material mode: {value}"),
+            };
+        }
+        if let Some(offset) = voxel.get("offset").and_then(Value::as_str) {
+            config.voxel_offset_mode = match offset {
+                "legacy" => VOXEL_OFFSET_LEGACY,
+                "precision" => VOXEL_OFFSET_PRECISION,
+                value => bail!("invalid voxel offset mode: {value}"),
+            };
+        }
     }
     ensure!(
         config
@@ -789,6 +1675,144 @@ pub fn load_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
     load_fpt_settings(&preset_path, &mut config)?;
     if let Some(value) = object.get("sdf_program") {
         apply_sdf_program(&mut config, value)?;
+    }
+    config.sdf_program_source_count = config.sdf_program_count;
+    config.sdf_program_optimization = args.sdf_program_optimization as u32;
+    if config.sdf_id == SDF_PROGRAM
+        && args.sdf_program_optimization == SdfProgramOptimization::Basic
+    {
+        optimize_sdf_program(&mut config);
+    }
+    if config.sdf_id == SDF_PROGRAM {
+        split_sdf_geometry_program(&mut config, args.sdf_geometry_split);
+        if args.sdf_canonical_ir {
+            compile_canonical_geometry_program(&mut config);
+        }
+    }
+    ensure!(
+        !args.sdf_topology_specialization || args.renderer_backend == RendererBackend::Sdf,
+        "topology specialization currently requires the direct SDF renderer"
+    );
+    ensure!(
+        !args.sdf_runtime_source_bytecode || args.renderer_backend == RendererBackend::Sdf,
+        "runtime-source bytecode currently requires the direct SDF renderer"
+    );
+    ensure!(
+        !args.sdf_dual_generated_library || args.renderer_backend == RendererBackend::Sdf,
+        "dual generated libraries currently require the direct SDF renderer"
+    );
+    ensure!(
+        !args.sdf_tiny_linked_helper || args.renderer_backend == RendererBackend::Sdf,
+        "tiny linked helpers currently require the direct SDF renderer"
+    );
+    ensure!(
+        !args.sdf_dual_generated_library
+            || args.sdf_topology_specialization
+            || args.sdf_function_stitching == SdfFunctionStitching::Auto,
+        "dual generated libraries require topology specialization or automatic backend probing"
+    );
+    ensure!(
+        !args.sdf_tiny_linked_helper || args.sdf_topology_specialization,
+        "tiny linked helpers require topology specialization"
+    );
+    ensure!(
+        !args.sdf_tiny_linked_helper || !args.sdf_dual_generated_library,
+        "tiny linked helpers and dual generated libraries are separate experiments"
+    );
+    ensure!(
+        !args.sdf_typed_soa || args.renderer_backend == RendererBackend::Sdf,
+        "typed-SoA lowering currently requires the direct SDF renderer"
+    );
+    ensure!(
+        !args.sdf_topology_specialization || !args.sdf_runtime_source_bytecode,
+        "topology specialization and runtime-source bytecode are separate compiler controls"
+    );
+    ensure!(
+        args.sdf_function_stitching == SdfFunctionStitching::Off
+            || args.renderer_backend == RendererBackend::Sdf,
+        "function stitching currently requires the direct SDF renderer"
+    );
+    ensure!(
+        args.sdf_function_stitching == SdfFunctionStitching::Off
+            || (!args.sdf_topology_specialization && !args.sdf_runtime_source_bytecode),
+        "function stitching and runtime-source compilation are separate compiler controls"
+    );
+    ensure!(
+        args.sdf_function_stitching == SdfFunctionStitching::Off || !args.sdf_flat_union,
+        "function stitching and flat-union lowering are separate evaluator modes"
+    );
+    ensure!(
+        args.sdf_function_stitching == SdfFunctionStitching::Off || !args.sdf_typed_soa,
+        "function stitching and typed-SoA lowering are separate evaluator modes"
+    );
+    ensure!(
+        !args.sdf_stitch_validation
+            || args.sdf_function_stitching != SdfFunctionStitching::Off
+            || args.sdf_topology_specialization,
+        "program validation requires function stitching or topology-specialized MSL"
+    );
+    ensure!(
+        !args.sdf_stitch_distance_only
+            || matches!(
+                args.sdf_function_stitching,
+                SdfFunctionStitching::Normal | SdfFunctionStitching::AlwaysInline
+            ),
+        "lean distance-only stitching requires an explicit normal or inline stitching mode"
+    );
+    ensure!(
+        !args.sdf_stitch_split_graph
+            || matches!(
+                args.sdf_function_stitching,
+                SdfFunctionStitching::Normal | SdfFunctionStitching::AlwaysInline
+            ),
+        "split-graph stitching requires an explicit normal or inline stitching mode"
+    );
+    ensure!(
+        !args.sdf_stitch_split_graph || !args.sdf_stitch_distance_only,
+        "split-graph stitching already selects the lean distance state"
+    );
+    ensure!(
+        args.sdf_stitch_fusion == SdfStitchFusion::Off
+            || matches!(
+                args.sdf_function_stitching,
+                SdfFunctionStitching::Normal | SdfFunctionStitching::AlwaysInline
+            ),
+        "stitch fusion requires an explicit normal or inline stitching mode"
+    );
+    ensure!(
+        args.sdf_stitch_fusion == SdfStitchFusion::Off
+            || (!args.sdf_stitch_distance_only && !args.sdf_stitch_split_graph),
+        "stitch fusion currently requires the full stitched surface state"
+    );
+    ensure!(
+        !args.sdf_topology_specialization || !args.sdf_flat_union,
+        "topology specialization and flat-union lowering are separate evaluator modes"
+    );
+    ensure!(
+        !args.sdf_topology_specialization || !args.sdf_typed_soa,
+        "topology specialization and typed-SoA lowering are separate evaluator modes"
+    );
+    ensure!(
+        !args.sdf_flat_union || !args.sdf_typed_soa,
+        "flat-union and typed-SoA lowering are separate evaluator modes"
+    );
+    ensure!(
+        args.sdf_function_stitching != SdfFunctionStitching::Auto
+            || (!args.sdf_flat_union && !args.sdf_typed_soa),
+        "automatic SDF backend selection owns the direct evaluator choice"
+    );
+    if args.sdf_flat_union {
+        lower_flat_union_program(&mut config);
+    }
+    if args.sdf_typed_soa {
+        ensure!(
+            lower_typed_soa_program(&mut config),
+            "typed-SoA lowering requires a translation-only hard union of spheres, boxes, or planes"
+        );
+    } else if args.sdf_function_stitching == SdfFunctionStitching::Auto {
+        // Auto selection compares both generated-MSL variants against the
+        // strongest direct evaluator. Unsupported programs retain bytecode.
+        lower_typed_soa_program(&mut config);
     }
     ensure!(
         config.sdf_id != SDF_PROGRAM || config.sdf_program_count > 0,
@@ -916,6 +1940,452 @@ mod tests {
     }
 
     #[test]
+    fn typed_program_optimization_argument_parses() {
+        let defaults = parse_render_args(&["scene.json".to_owned()]).unwrap();
+        assert_eq!(
+            defaults.sdf_program_optimization,
+            SdfProgramOptimization::Basic
+        );
+        assert!(defaults.sdf_geometry_split);
+        assert!(!defaults.sdf_topology_specialization);
+        assert!(!defaults.sdf_runtime_source_bytecode);
+        assert!(!defaults.sdf_dual_generated_library);
+        assert!(!defaults.sdf_tiny_linked_helper);
+        assert_eq!(defaults.sdf_function_stitching, SdfFunctionStitching::Off);
+        assert!(!defaults.sdf_flat_union);
+        assert!(!defaults.sdf_typed_soa);
+        assert_eq!(defaults.renderer_backend, RendererBackend::Sdf);
+        let args = vec![
+            "scene.json".to_owned(),
+            "--sdf-program-optimization".to_owned(),
+            "basic".to_owned(),
+            "--sdf-geometry-split".to_owned(),
+            "--sdf-topology-specialization".to_owned(),
+            "--sdf-runtime-source-bytecode".to_owned(),
+            "--sdf-function-stitching".to_owned(),
+            "inline".to_owned(),
+            "--sdf-flat-union".to_owned(),
+            "--sdf-typed-soa".to_owned(),
+        ];
+        let parsed = parse_render_args(&args).unwrap();
+        assert_eq!(
+            parsed.sdf_program_optimization,
+            SdfProgramOptimization::Basic
+        );
+        assert!(parsed.sdf_geometry_split);
+        assert!(parsed.sdf_topology_specialization);
+        assert!(parsed.sdf_runtime_source_bytecode);
+        assert_eq!(
+            parsed.sdf_function_stitching,
+            SdfFunctionStitching::AlwaysInline
+        );
+        assert!(parsed.sdf_flat_union);
+        assert!(parsed.sdf_typed_soa);
+
+        let canonical = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-canonical-topology-specialization".to_owned(),
+        ])
+        .unwrap();
+        assert!(canonical.sdf_topology_specialization);
+        assert!(canonical.sdf_canonical_topology_specialization);
+
+        let compact = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-compact-canonical-topology-specialization".to_owned(),
+        ])
+        .unwrap();
+        assert!(compact.sdf_topology_specialization);
+        assert!(compact.sdf_compact_canonical_topology_specialization);
+
+        let shared = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-shared-transform-topology-specialization".to_owned(),
+        ])
+        .unwrap();
+        assert!(shared.sdf_topology_specialization);
+        assert!(shared.sdf_shared_transform_topology_specialization);
+
+        let indexed = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-affine-index-topology-specialization".to_owned(),
+        ])
+        .unwrap();
+        assert!(indexed.sdf_topology_specialization);
+        assert!(indexed.sdf_affine_index_topology_specialization);
+
+        let automatic = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-function-stitching".to_owned(),
+            "auto".to_owned(),
+        ])
+        .unwrap();
+        assert_eq!(automatic.sdf_function_stitching, SdfFunctionStitching::Auto);
+        assert!(automatic.sdf_backend_probe);
+        let automatic_backend = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-backend".to_owned(),
+            "auto".to_owned(),
+        ])
+        .unwrap();
+        assert_eq!(
+            automatic_backend.sdf_function_stitching,
+            SdfFunctionStitching::Auto
+        );
+        assert!(!automatic_backend.sdf_backend_probe);
+        let probing_backend = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-backend".to_owned(),
+            "probe".to_owned(),
+        ])
+        .unwrap();
+        assert_eq!(
+            probing_backend.sdf_function_stitching,
+            SdfFunctionStitching::Auto
+        );
+        assert!(probing_backend.sdf_backend_probe);
+
+        let dual_library = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-topology-specialization".to_owned(),
+            "--sdf-dual-generated-library".to_owned(),
+        ])
+        .unwrap();
+        assert!(dual_library.sdf_dual_generated_library);
+
+        let tiny_helper = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-topology-specialization".to_owned(),
+            "--sdf-tiny-linked-helper".to_owned(),
+        ])
+        .unwrap();
+        assert!(tiny_helper.sdf_tiny_linked_helper);
+
+        let lean = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-function-stitching".to_owned(),
+            "inline".to_owned(),
+            "--sdf-stitch-distance-only".to_owned(),
+        ])
+        .unwrap();
+        assert!(lean.sdf_stitch_distance_only);
+
+        let split = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--sdf-function-stitching".to_owned(),
+            "normal".to_owned(),
+            "--sdf-stitch-split-graph".to_owned(),
+        ])
+        .unwrap();
+        assert!(split.sdf_stitch_split_graph);
+        assert!(!split.sdf_stitch_distance_only);
+
+        let unsplit = parse_render_args(&[
+            "scene.json".to_owned(),
+            "--no-sdf-geometry-split".to_owned(),
+        ])
+        .unwrap();
+        assert!(!unsplit.sdf_geometry_split);
+
+        let invalid = vec![
+            "scene.json".to_owned(),
+            "--sdf-program-optimization".to_owned(),
+            "aggressive".to_owned(),
+        ];
+        assert!(parse_render_args(&invalid).is_err());
+    }
+
+    #[test]
+    fn basic_program_optimizer_folds_local_identities() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, 2.0, 3.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [4.0, 5.0, 6.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_ABS, [0.0; 4]).unwrap();
+        append_program_op(&mut config, SDF_OP_ABS, [0.0; 4]).unwrap();
+        append_program_op(&mut config, SDF_OP_ROTATE_X, [0.0; 4]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.0]).unwrap();
+
+        optimize_sdf_program(&mut config);
+
+        assert_eq!(config.sdf_program_count, 3);
+        assert_eq!(config.sdf_program[0].opcode, SDF_OP_TRANSLATE);
+        assert_eq!(config.sdf_program[0].data, [5.0, 7.0, 9.0, 0.0]);
+        assert_eq!(config.sdf_program[1].opcode, SDF_OP_ABS);
+        assert_eq!(config.sdf_program[2].opcode, SDF_OP_SPHERE);
+    }
+
+    #[test]
+    fn basic_program_optimizer_preserves_orbit_and_subtraction_operations() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 1.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 1.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_BOX, [1.0, 1.0, 1.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_BOX, [1.0, 1.0, 1.0, 0.0]).unwrap();
+        config.sdf_program[3].flags = 2;
+
+        optimize_sdf_program(&mut config);
+
+        assert_eq!(config.sdf_program_count, 4);
+        assert_eq!(config.sdf_program[0].data[3], 1.0);
+        assert_eq!(config.sdf_program[1].data[3], 1.0);
+        assert_eq!(config.sdf_program[3].flags, 2);
+    }
+
+    #[test]
+    fn basic_program_optimizer_does_not_fold_across_geometry() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, 0.0, 0.0, 0.0]).unwrap();
+
+        optimize_sdf_program(&mut config);
+
+        assert_eq!(config.sdf_program_count, 3);
+        assert_eq!(config.sdf_program[0].opcode, SDF_OP_TRANSLATE);
+        assert_eq!(config.sdf_program[1].opcode, SDF_OP_SPHERE);
+        assert_eq!(config.sdf_program[2].opcode, SDF_OP_TRANSLATE);
+    }
+
+    #[test]
+    fn geometry_split_preserves_full_shading_program() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, 2.0, 3.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_ORBIT_ADD, [0.5, 0.25, 0.75, 0.8]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.6]).unwrap();
+        append_program_op(&mut config, SDF_OP_UNION, [0.0; 4]).unwrap();
+
+        split_sdf_geometry_program(&mut config, true);
+
+        assert_eq!(config.sdf_geometry_split, 1);
+        assert_eq!(config.sdf_shading_program_count, 4);
+        assert_eq!(config.sdf_shading_program[1].opcode, SDF_OP_ORBIT_ADD);
+        assert_eq!(config.sdf_shading_program[2].data[3], 0.6);
+        assert_eq!(config.sdf_program_count, 2);
+        assert_eq!(config.sdf_program[0].opcode, SDF_OP_TRANSLATE);
+        assert_eq!(config.sdf_program[1].opcode, SDF_OP_SPHERE);
+        assert_eq!(config.sdf_program[1].data[3], 0.6);
+    }
+
+    #[test]
+    fn flat_union_lowering_composes_affine_transforms() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, 2.0, 3.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SCALE, [2.0, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.0]).unwrap();
+
+        assert!(lower_flat_union_program(&mut config));
+        assert_eq!(config.sdf_flat_union_count, 1);
+        let instance = config.sdf_flat_union_instances[0];
+        assert_eq!(instance.opcode, SDF_OP_SPHERE);
+        assert_eq!(instance.distance_scale, 2.0);
+        assert_eq!(instance.source_instruction, 2);
+        assert_eq!(
+            instance.transform,
+            [
+                2.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0, -4.0, 0.0, 0.0, 2.0, -6.0,
+            ]
+        );
+    }
+
+    #[test]
+    fn flat_union_lowering_rejects_nonlinear_and_non_union_programs() {
+        let mut repeated = default_config();
+        repeated.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut repeated, SDF_OP_REPEAT, [2.0, 2.0, 2.0, 0.0]).unwrap();
+        append_program_op(&mut repeated, SDF_OP_SPHERE, [0.5, 0.0, 0.0, 0.0]).unwrap();
+        assert!(!lower_flat_union_program(&mut repeated));
+
+        let mut intersected = default_config();
+        intersected.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut intersected, SDF_OP_SPHERE, [0.8, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut intersected, SDF_OP_BOX, [0.5, 0.5, 0.5, 0.0]).unwrap();
+        intersected.sdf_program[1].flags = 1;
+        assert!(!lower_flat_union_program(&mut intersected));
+    }
+
+    #[test]
+    fn canonical_geometry_compiler_composes_affine_transforms() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, 2.0, 3.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_ROTATE_Z, [0.5, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SCALE, [2.0, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_BOX, [0.75, 0.5, 0.25, 0.0]).unwrap();
+
+        assert!(compile_canonical_geometry_program(&mut config));
+        assert_eq!(config.sdf_canonical_source_count, 1);
+        assert_eq!(config.sdf_canonical_count, 1);
+        assert_eq!(config.sdf_canonical_transform_count, 1);
+        let primitive = config.sdf_canonical_primitives[0];
+        assert_eq!(primitive.opcode, SDF_OP_BOX);
+        assert_eq!(primitive.distance_scale, 2.0);
+        assert_eq!(primitive.source_instruction, 3);
+        assert!(primitive.transform.iter().all(|value| value.is_finite()));
+        assert_ne!(
+            primitive.transform,
+            [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+        );
+        let indexed = config.sdf_indexed_primitives[0];
+        assert_eq!(indexed.opcode, SDF_OP_BOX);
+        assert_eq!(indexed.transform_index, 0);
+        assert_eq!(indexed.source_instruction, 3);
+        assert_eq!(indexed.combine_mode, 0);
+        assert_eq!(indexed.data, [0.75, 0.5, 0.25, 0.0]);
+        assert_eq!(
+            config.sdf_canonical_transforms[0].transform,
+            primitive.transform
+        );
+        assert_eq!(config.sdf_canonical_transforms[0].distance_scale, 2.0);
+    }
+
+    #[test]
+    fn canonical_geometry_compiler_eliminates_nonadjacent_union_duplicates() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [-1.0, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.0]).unwrap();
+
+        assert!(compile_canonical_geometry_program(&mut config));
+        assert_eq!(config.sdf_canonical_source_count, 3);
+        assert_eq!(config.sdf_canonical_count, 2);
+        assert_eq!(config.sdf_canonical_transform_count, 2);
+        assert_eq!(config.sdf_canonical_primitives[0].source_instruction, 0);
+        assert_eq!(config.sdf_canonical_primitives[1].source_instruction, 2);
+        assert_eq!(config.sdf_indexed_primitives[0].transform_index, 0);
+        assert_eq!(config.sdf_indexed_primitives[1].transform_index, 1);
+    }
+
+    #[test]
+    fn canonical_geometry_compiler_rejects_nonlinear_programs() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_REPEAT, [2.0, 2.0, 2.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.5, 0.0, 0.0, 0.0]).unwrap();
+
+        assert!(!compile_canonical_geometry_program(&mut config));
+        assert_eq!(config.sdf_canonical_count, 0);
+    }
+
+    #[test]
+    fn canonical_geometry_compiler_normalizes_plane_normal_not_offset() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_PLANE, [0.0, 2.0, 0.0, 2.8]).unwrap();
+
+        assert!(compile_canonical_geometry_program(&mut config));
+        assert_eq!(
+            config.sdf_canonical_primitives[0].data,
+            [0.0, 1.0, 0.0, 2.8]
+        );
+    }
+
+    #[test]
+    fn typed_soa_lowering_separates_types_and_bakes_translation() {
+        let mut config = default_config();
+        config.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, 2.0, 3.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_SPHERE, [0.75, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_TRANSLATE, [1.0, -1.0, 0.5, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_BOX, [0.5, 0.4, 0.3, 0.0]).unwrap();
+        append_program_op(&mut config, SDF_OP_PLANE, [0.0, 2.0, 0.0, 4.0]).unwrap();
+
+        assert!(lower_typed_soa_program(&mut config));
+        assert_eq!(config.sdf_typed_soa.sphere_count, 1);
+        assert_eq!(config.sdf_typed_soa.box_count, 1);
+        assert_eq!(config.sdf_typed_soa.plane_count, 1);
+        assert_eq!(config.sdf_typed_soa.sphere_x[0], 1.0);
+        assert_eq!(config.sdf_typed_soa.sphere_y[0], 2.0);
+        assert_eq!(config.sdf_typed_soa.sphere_z[0], 3.0);
+        assert_eq!(config.sdf_typed_soa.sphere_radius[0], 0.75);
+        assert_eq!(config.sdf_typed_soa.sphere_source[0], 1);
+        assert_eq!(config.sdf_typed_soa.box_x[0], 2.0);
+        assert_eq!(config.sdf_typed_soa.box_y[0], 1.0);
+        assert_eq!(config.sdf_typed_soa.box_z[0], 3.5);
+        assert_eq!(config.sdf_typed_soa.box_source[0], 3);
+        assert_eq!(config.sdf_typed_soa.plane_y[0], 2.0);
+        assert_eq!(config.sdf_typed_soa.plane_center_x[0], 2.0);
+        assert_eq!(config.sdf_typed_soa.plane_center_y[0], 1.0);
+        assert_eq!(config.sdf_typed_soa.plane_center_z[0], 3.5);
+        assert_eq!(config.sdf_typed_soa.plane_offset[0], 4.0);
+        assert_eq!(config.sdf_typed_soa.plane_source[0], 4);
+    }
+
+    #[test]
+    fn typed_soa_lowering_rejects_non_translation_and_non_union_programs() {
+        let mut scaled = default_config();
+        scaled.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut scaled, SDF_OP_SCALE, [2.0, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut scaled, SDF_OP_SPHERE, [0.5, 0.0, 0.0, 0.0]).unwrap();
+        assert!(!lower_typed_soa_program(&mut scaled));
+
+        let mut intersected = default_config();
+        intersected.sdf_id = SDF_PROGRAM;
+        append_program_op(&mut intersected, SDF_OP_SPHERE, [0.8, 0.0, 0.0, 0.0]).unwrap();
+        append_program_op(&mut intersected, SDF_OP_BOX, [0.5, 0.5, 0.5, 0.0]).unwrap();
+        intersected.sdf_program[1].flags = 1;
+        assert!(!lower_typed_soa_program(&mut intersected));
+    }
+
+    #[test]
+    fn bound_grid_backend_arguments_parse() {
+        let args = vec![
+            "scene.json".to_owned(),
+            "--renderer".to_owned(),
+            "bound-grid".to_owned(),
+            "--bound-grid-resolution".to_owned(),
+            "64".to_owned(),
+            "--bound-grid-profile".to_owned(),
+            "--bound-grid-cage-bounds".to_owned(),
+            "--bound-grid-directional".to_owned(),
+            "--bound-grid-fp16".to_owned(),
+        ];
+        let parsed = parse_render_args(&args).unwrap();
+        assert_eq!(parsed.renderer_backend, RendererBackend::BoundGrid);
+        assert_eq!(parsed.bound_grid_resolution, Some(64));
+        assert!(parsed.bound_grid_profile);
+        assert!(parsed.bound_grid_cage_bounds);
+        assert!(parsed.bound_grid_directional);
+        assert!(parsed.bound_grid_fp16);
+
+        let invalid = vec![
+            "scene.json".to_owned(),
+            "--bound-grid-resolution".to_owned(),
+            "48".to_owned(),
+        ];
+        assert!(parse_render_args(&invalid).is_err());
+    }
+
+    #[test]
+    fn regional_backend_arguments_parse() {
+        let args = vec![
+            "scene.json".to_owned(),
+            "--renderer".to_owned(),
+            "regional".to_owned(),
+            "--regional-program-resolution".to_owned(),
+            "32".to_owned(),
+        ];
+        let parsed = parse_render_args(&args).unwrap();
+        assert_eq!(parsed.renderer_backend, RendererBackend::Regional);
+        assert_eq!(parsed.regional_program_resolution, 32);
+
+        let invalid = vec![
+            "scene.json".to_owned(),
+            "--regional-program-resolution".to_owned(),
+            "24".to_owned(),
+        ];
+        assert!(parse_render_args(&invalid).is_err());
+    }
+
+    #[test]
     fn sample_count_accepts_one_and_rejects_zero() {
         let one = vec![
             "scene.json".to_owned(),
@@ -946,6 +2416,17 @@ mod tests {
             "dense".to_owned(),
             "--voxel-surface-band".to_owned(),
             "1.25".to_owned(),
+            "--voxel-coverage".to_owned(),
+            "interval".to_owned(),
+            "--voxel-build".to_owned(),
+            "direct".to_owned(),
+            "--voxel-brick-rejection".to_owned(),
+            "--voxel-leaf-refinement".to_owned(),
+            "secant-bisection".to_owned(),
+            "--voxel-material".to_owned(),
+            "exact".to_owned(),
+            "--voxel-offset".to_owned(),
+            "precision".to_owned(),
         ];
         let parsed = parse_render_args(&args).unwrap();
         assert_eq!(parsed.renderer_backend, RendererBackend::Voxel);
@@ -953,6 +2434,18 @@ mod tests {
         assert_eq!(parsed.voxel_normal_mode, VoxelNormalMode::Smooth);
         assert_eq!(parsed.voxel_storage_mode, Some(VoxelStorageMode::Dense));
         assert_eq!(parsed.voxel_surface_band, Some(1.25));
+        assert_eq!(
+            parsed.voxel_coverage_mode,
+            Some(VoxelCoverageMode::Interval)
+        );
+        assert_eq!(parsed.voxel_build_mode, Some(VoxelBuildMode::Direct));
+        assert!(parsed.voxel_brick_rejection);
+        assert_eq!(
+            parsed.voxel_leaf_refinement,
+            Some(VoxelLeafRefinement::SecantBisection)
+        );
+        assert_eq!(parsed.voxel_material_mode, Some(VoxelMaterialMode::Exact));
+        assert_eq!(parsed.voxel_offset_mode, Some(VoxelOffsetMode::Precision));
     }
 
     #[test]

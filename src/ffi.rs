@@ -14,6 +14,7 @@ pub const SDF_README_CORNELL: u32 = 10;
 pub const SDF_README_GLASS: u32 = 11;
 
 pub const SDF_PROGRAM_MAX_OPS: usize = 64;
+pub const SDF_FLAT_UNION_MAX_PRIMITIVES: usize = 64;
 pub const SDF_GRADIENT_MAX_STOPS: usize = 16;
 pub const HDRI_PATH_CAPACITY: usize = 256;
 pub const HDRI_LUT_WIDTH: usize = 32;
@@ -30,6 +31,9 @@ pub const SDF_OP_SORT_DESC: u32 = 8;
 pub const SDF_OP_SPHERE: u32 = 16;
 pub const SDF_OP_BOX: u32 = 17;
 pub const SDF_OP_PLANE: u32 = 18;
+pub const SDF_OP_UNION: u32 = 24;
+pub const SDF_OP_INTERSECTION: u32 = 25;
+pub const SDF_OP_SUBTRACT: u32 = 26;
 pub const SDF_OP_ORBIT_ADD: u32 = 32;
 
 pub const SDF_ACCUMULATION_AUTO: u32 = 0;
@@ -37,12 +41,31 @@ pub const SDF_ACCUMULATION_PER_SAMPLE: u32 = 1;
 pub const SDF_ACCUMULATION_BATCH: u32 = 2;
 pub const SDF_ACCUMULATION_CHUNKED: u32 = 3;
 
+pub const SDF_STITCH_STATE_FULL: u32 = 0;
+pub const SDF_STITCH_STATE_LEAN: u32 = 1;
+
 pub const RENDERER_SDF: u32 = 0;
 pub const RENDERER_VOXEL: u32 = 1;
+pub const RENDERER_BOUND_GRID: u32 = 2;
+pub const RENDERER_REGIONAL: u32 = 3;
 pub const VOXEL_NORMAL_FACE: u32 = 0;
 pub const VOXEL_NORMAL_SMOOTH: u32 = 1;
+pub const VOXEL_NORMAL_EXACT: u32 = 2;
+pub const VOXEL_MATERIAL_STORED: u32 = 0;
+pub const VOXEL_MATERIAL_EXACT: u32 = 1;
+pub const VOXEL_OFFSET_LEGACY: u32 = 0;
+pub const VOXEL_OFFSET_PRECISION: u32 = 1;
 pub const VOXEL_STORAGE_DENSE: u32 = 0;
 pub const VOXEL_STORAGE_SPARSE_BRICKS: u32 = 1;
+pub const VOXEL_COVERAGE_LEGACY: u32 = 0;
+pub const VOXEL_COVERAGE_LIPSCHITZ: u32 = 1;
+pub const VOXEL_COVERAGE_INTERVAL: u32 = 2;
+pub const VOXEL_BUILD_STAGING: u32 = 0;
+pub const VOXEL_BUILD_DIRECT: u32 = 1;
+pub const VOXEL_LEAF_REFINEMENT_NONE: u32 = 0;
+pub const VOXEL_LEAF_REFINEMENT_SECANT_BISECTION: u32 = 1;
+pub const VOXEL_LEAF_REFINEMENT_RESTRICTED_TRACE: u32 = 2;
+pub const VOXEL_LEAF_REFINEMENT_FIXED_DE: u32 = 3;
 
 pub const DIAGNOSTIC_DEPTH: u32 = 0;
 pub const DIAGNOSTIC_NORMAL: u32 = 1;
@@ -65,6 +88,71 @@ pub struct FptSdfInstruction {
     pub material_index: u32,
     pub _pad0: u32,
     pub data: [f32; 4],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+pub struct FptPrimitiveInstance {
+    pub transform: [f32; 12],
+    pub data: [f32; 4],
+    pub opcode: u32,
+    pub distance_scale: f32,
+    pub source_instruction: u32,
+    pub _pad0: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+pub struct FptAffineTransform {
+    pub transform: [f32; 12],
+    pub distance_scale: f32,
+    pub _pad0: [u32; 3],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+pub struct FptIndexedPrimitive {
+    pub data: [f32; 4],
+    pub opcode: u32,
+    pub transform_index: u32,
+    pub source_instruction: u32,
+    pub combine_mode: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct FptTypedSoAProgram {
+    pub sphere_count: u32,
+    pub box_count: u32,
+    pub plane_count: u32,
+    pub _pad0: u32,
+    pub sphere_x: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub sphere_y: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub sphere_z: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub sphere_radius: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub sphere_source: [u32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub box_x: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub box_y: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub box_z: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub box_half_x: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub box_half_y: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub box_half_z: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub box_source: [u32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub plane_x: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub plane_y: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub plane_z: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub plane_center_x: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub plane_center_y: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub plane_center_z: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub plane_offset: [f32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub plane_source: [u32; SDF_FLAT_UNION_MAX_PRIMITIVES],
+}
+
+impl Default for FptTypedSoAProgram {
+    fn default() -> Self {
+        // Plain-old-data shared with C++ and Metal.
+        unsafe { std::mem::zeroed() }
+    }
 }
 
 #[repr(C)]
@@ -121,6 +209,143 @@ pub struct FptRenderConfig {
     pub voxel_surface_band: f32,
     pub voxel_bounds_max: [f32; 3],
     pub voxel_fill_interior: u32,
+    pub voxel_coverage_mode: u32,
+    pub voxel_build_mode: u32,
+    pub voxel_brick_rejection: u32,
+    pub voxel_leaf_refinement: u32,
+    pub voxel_material_mode: u32,
+    pub voxel_offset_mode: u32,
+    pub bound_grid_resolution: u32,
+    pub bound_grid_profile: u32,
+    pub bound_grid_profile_stride: u32,
+    pub bound_grid_cage_bounds: u32,
+    pub bound_grid_directional: u32,
+    pub sdf_program_source_count: u32,
+    pub sdf_program_optimization: u32,
+    pub regional_program_resolution: u32,
+    pub bound_grid_fp16: u32,
+    pub sdf_flat_union_count: u32,
+    pub sdf_flat_union_instances: [FptPrimitiveInstance; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub sdf_shading_program_count: u32,
+    pub sdf_geometry_split: u32,
+    pub sdf_shading_program: [FptSdfInstruction; SDF_PROGRAM_MAX_OPS],
+    pub sdf_topology_specialization: u32,
+    pub sdf_runtime_source_bytecode: u32,
+    pub sdf_function_stitching: u32,
+    pub sdf_stitched_surface: u32,
+    pub sdf_stitch_validation: u32,
+    pub sdf_stitch_distance_only: u32,
+    pub sdf_stitch_split_graph: u32,
+    pub sdf_stitch_fusion: u32,
+    pub sdf_canonical_count: u32,
+    pub sdf_canonical_source_count: u32,
+    pub sdf_canonical_primitives: [FptPrimitiveInstance; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub sdf_canonical_transform_count: u32,
+    pub _pad_canonical_indexed: [u32; 3],
+    pub sdf_canonical_transforms: [FptAffineTransform; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub sdf_indexed_primitives: [FptIndexedPrimitive; SDF_FLAT_UNION_MAX_PRIMITIVES],
+    pub sdf_typed_soa: FptTypedSoAProgram,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+pub struct FptBoundGridStats {
+    pub macro_cells: [u64; 3],
+    pub certified_skips: [u64; 3],
+    pub candidate_intervals: [u64; 3],
+    pub candidate_misses: [u64; 3],
+    pub candidate_hits: [u64; 3],
+    pub unknown_intervals: [u64; 3],
+    pub field_evaluations: [u64; 3],
+    pub directional_steps: [u64; 3],
+    pub cell_exit_clamps: [u64; 3],
+    pub unknown_derivative_intervals: [u64; 3],
+    pub profiled_paths: u64,
+    pub certified_cells: u64,
+    pub unknown_cells: u64,
+    pub sampled_bound_failures: u64,
+    pub sampled_false_skips: u64,
+    pub certified_derivative_cells: u64,
+    pub unknown_derivative_cells: u64,
+    pub sampled_derivative_failures: u64,
+    pub regional_cells: u64,
+    pub regional_fallback_cells: u64,
+    pub regional_unique_programs: u64,
+    pub regional_retained_instructions: u64,
+    pub regional_sampled_distance_failures: u64,
+    pub regional_profiled_paths: u64,
+    pub regional_distance_evaluations: [u64; 3],
+    pub regional_atlas_evaluations: [u64; 3],
+    pub regional_full_program_evaluations: [u64; 3],
+    pub regional_cell_entries: [u64; 3],
+    pub regional_same_cell_reuses: [u64; 3],
+    pub regional_same_program_reuses: [u64; 3],
+    pub regional_program_id_loads: [u64; 3],
+    pub regional_header_loads: [u64; 3],
+    pub regional_dynamic_instructions: [u64; 3],
+    pub regional_pruned_cells: u64,
+    pub regional_pruned_primitives: u64,
+    pub regional_repeat_seam_fallback_cells: u64,
+    pub regional_unsupported_fallback_cells: u64,
+    pub regional_no_dominance_cells: u64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+pub struct FptStitchValidationStats {
+    pub sample_count: u64,
+    pub distance_failures: u64,
+    pub gradient_failures: u64,
+    pub max_distance_error: f32,
+    pub max_gradient_error: f32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default, Debug)]
+pub struct FptStitchPipelineStats {
+    pub instruction_count: u32,
+    pub transform_instruction_count: u32,
+    pub primitive_instruction_count: u32,
+    pub primitive_type_runs: u32,
+    pub union_count: u32,
+    pub intersection_count: u32,
+    pub subtraction_count: u32,
+    pub thread_execution_width: u32,
+    pub max_total_threads_per_threadgroup: u32,
+    pub graph_node_count: u32,
+    pub static_threadgroup_memory_bytes: u64,
+    pub runtime_source_bytes: u64,
+    pub runtime_library_compile_ms: f64,
+    pub runtime_pipeline_link_ms: f64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default, Debug)]
+pub struct FptSdfProfileStats {
+    pub primary_steps: u64,
+    pub secondary_steps: u64,
+    pub shadow_steps: u64,
+    pub normal_evals: u64,
+    pub bounces: u64,
+    pub pixels: u64,
+    pub primary_ms_estimate: f64,
+    pub secondary_ms_estimate: f64,
+    pub shadow_ms_estimate: f64,
+    pub normal_ms_estimate: f64,
+    pub bounce_ms_estimate: f64,
+}
+
+#[repr(C)]
+#[cfg(test)]
+#[derive(Clone, Copy, Default, Debug)]
+pub struct FptAsyncJitStats {
+    pub fallback_render_ms: f64,
+    pub jit_build_ms: f64,
+    pub stitched_render_ms: f64,
+    pub cache_status: u32,
+    pub fallback_completed_before_jit: u32,
+    pub max_absolute_error: f32,
+    pub _pad0: u32,
 }
 
 impl Default for FptRenderConfig {
@@ -142,12 +367,25 @@ pub struct FptDiagnosticConfig {
 unsafe extern "C" {
     pub fn fpt_metal_render(
         metallib_path: *const c_char,
+        stitch_metallib_path: *const c_char,
+        stitch_archive_path: *const c_char,
         output_path: *const c_char,
+        shader_source: *const c_char,
+        shader_source_len: usize,
         config: *const FptRenderConfig,
         build_ms: *mut f64,
         elapsed_ms: *mut f64,
         voxel_memory_bytes: *mut u64,
         voxel_active_bricks: *mut u32,
+        voxel_active_cells: *mut u64,
+        voxel_rejected_bricks: *mut u32,
+        bound_grid_stats: *mut FptBoundGridStats,
+        stitch_cache_status: *mut u32,
+        stitch_validation_stats: *mut FptStitchValidationStats,
+        stitch_pipeline_stats: *mut FptStitchPipelineStats,
+        sdf_profile_stats: *mut FptSdfProfileStats,
+        linear_output: *mut f32,
+        linear_output_len: usize,
         error: *mut c_char,
         error_len: usize,
     ) -> c_int;
@@ -168,8 +406,36 @@ unsafe extern "C" {
         error_len: usize,
     ) -> c_int;
     pub fn fpt_metal_device_name(name: *mut c_char, name_len: usize) -> c_int;
+    #[cfg(test)]
+    pub fn fpt_test_voxel_dda(
+        metallib_path: *const c_char,
+        error: *mut c_char,
+        error_len: usize,
+    ) -> c_int;
+    #[cfg(test)]
+    pub fn fpt_test_async_stitch_context(
+        metallib_path: *const c_char,
+        stitch_metallib_path: *const c_char,
+        stitch_archive_path: *const c_char,
+        config: *const FptRenderConfig,
+        stats: *mut FptAsyncJitStats,
+        error: *mut c_char,
+        error_len: usize,
+    ) -> c_int;
+    #[cfg(test)]
+    pub fn fpt_test_typed_soa(
+        metallib_path: *const c_char,
+        config: *const FptRenderConfig,
+        stats: *mut FptStitchValidationStats,
+        error: *mut c_char,
+        error_len: usize,
+    ) -> c_int;
     pub fn fpt_metal_preview(
         metallib_path: *const c_char,
+        stitch_metallib_path: *const c_char,
+        stitch_archive_paths: *const *const c_char,
+        shader_source: *const c_char,
+        shader_source_len: usize,
         config: *const FptRenderConfig,
         scene_configs: *const FptRenderConfig,
         scene_config_count: u32,
@@ -186,7 +452,26 @@ mod tests {
     #[test]
     fn rust_layout_matches_c_bridge() {
         assert_eq!(std::mem::size_of::<FptSdfInstruction>(), 32);
-        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 6692);
+        assert_eq!(std::mem::size_of::<FptPrimitiveInstance>(), 80);
+        assert_eq!(std::mem::size_of::<FptAffineTransform>(), 64);
+        assert_eq!(std::mem::size_of::<FptIndexedPrimitive>(), 32);
+        assert_eq!(std::mem::size_of::<FptTypedSoAProgram>(), 5136);
+        assert_eq!(std::mem::size_of::<FptStitchPipelineStats>(), 72);
+        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 30388);
+        assert_eq!(std::mem::size_of::<FptSdfProfileStats>(), 88);
         assert_eq!(std::mem::size_of::<FptDiagnosticConfig>(), 16);
+        assert_eq!(std::mem::size_of::<FptAsyncJitStats>(), 40);
+    }
+
+    #[test]
+    fn voxel_dda_contract_holds_on_metal() {
+        let metallib = std::ffi::CString::new(env!("FPT_METALLIB_PATH")).unwrap();
+        let mut error = [0_i8; 512];
+        let status =
+            unsafe { fpt_test_voxel_dda(metallib.as_ptr(), error.as_mut_ptr(), error.len()) };
+        if status != 0 {
+            let message = unsafe { std::ffi::CStr::from_ptr(error.as_ptr()) }.to_string_lossy();
+            panic!("{message}");
+        }
     }
 }

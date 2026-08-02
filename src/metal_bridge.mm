@@ -16,10 +16,19 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace {
+
+static_assert(sizeof(FptAffineTransform) == 64u,
+              "FptAffineTransform layout must match Rust and Metal");
+static_assert(sizeof(FptIndexedPrimitive) == 32u,
+              "FptIndexedPrimitive layout must match Rust and Metal");
+static_assert(sizeof(FptRenderConfig) == 30388u,
+              "FptRenderConfig layout must match Rust and Metal");
 
 void set_error(char *error, size_t error_len, const char *fmt, ...) {
     if (!error || error_len == 0) return;
@@ -27,6 +36,1346 @@ void set_error(char *error, size_t error_len, const char *fmt, ...) {
     va_start(args, fmt);
     vsnprintf(error, error_len, fmt, args);
     va_end(args);
+}
+
+MTLCompileOptions *runtime_compile_options() {
+    MTLCompileOptions *options = [MTLCompileOptions new];
+    options.languageVersion = MTLLanguageVersion2_4;
+    if (@available(macOS 15.0, *)) {
+        options.mathMode = MTLMathModeFast;
+    } else {
+        options.fastMathEnabled = YES;
+    }
+    return options;
+}
+
+NSCache<NSString *, id<MTLLibrary>> *runtime_source_library_cache() {
+    static NSCache<NSString *, id<MTLLibrary>> *cache = nil;
+    static dispatch_once_t once_token;
+    dispatch_once(&once_token, ^{
+        cache = [NSCache new];
+        cache.name = @"com.fpt-metal.runtime-source-libraries";
+        cache.countLimit = 32u;
+        cache.totalCostLimit = 64u * 1024u * 1024u;
+    });
+    return cache;
+}
+
+id<MTLLibrary> compile_runtime_source_library(
+    id<MTLDevice> device,
+    NSString *metal_source,
+    bool *cache_hit,
+    NSError **error) {
+    if (cache_hit) *cache_hit = false;
+    NSString *cache_key = [NSString stringWithFormat:@"%llu:%@",
+        device.registryID, metal_source];
+    NSCache<NSString *, id<MTLLibrary>> *cache = runtime_source_library_cache();
+    id<MTLLibrary> library = [cache objectForKey:cache_key];
+    if (library) {
+        if (cache_hit) *cache_hit = true;
+        return library;
+    }
+    library = [device newLibraryWithSource:metal_source
+                                   options:runtime_compile_options()
+                                     error:error];
+    if (library) {
+        [cache setObject:library
+                  forKey:cache_key
+                    cost:metal_source.length * sizeof(unichar)];
+    }
+    return library;
+}
+
+void salt_runtime_source_for_benchmark(std::string &source) {
+    const char *salt = std::getenv("FPT_RUNTIME_SOURCE_CACHE_SALT");
+    if (!salt || salt[0] == '\0') return;
+    source += "\n// FPT_RUNTIME_SOURCE_CACHE_SALT: ";
+    source += salt;
+    source += "\n";
+}
+
+bool build_topology_stitched_library(
+    id<MTLDevice> device,
+    id<MTLLibrary> stitch_host_library,
+    const char *archive_path,
+    const FptRenderConfig &config,
+    id<MTLLibrary> __strong *stitched_library,
+    id<MTLFunction> __strong *stitched_function,
+    id<MTLFunction> __strong *stitched_surface_function,
+    id<MTLBinaryArchive> __strong *binary_archive,
+    bool *populate_binary_archive,
+    std::string &failure) {
+    if (@available(macOS 12.0, *)) {
+        const uint32_t instruction_count = std::min<uint32_t>(
+            config.sdf_program_count, FPT_SDF_PROGRAM_MAX_OPS);
+        if (config.sdf_id != FPT_SDF_PROGRAM || instruction_count == 0u) {
+            failure = "function stitching requires a typed geometry program";
+            return false;
+        }
+
+        NSMutableArray<id<MTLFunction>> *functions = [NSMutableArray array];
+        NSMutableArray<NSString *> *instruction_names = [NSMutableArray array];
+        NSMutableArray<MTLFunctionStitchingFunctionNode *> *nodes =
+            [NSMutableArray array];
+        MTLFunctionStitchingInputNode *source_input =
+            [[MTLFunctionStitchingInputNode alloc] initWithArgumentIndex:0u];
+        MTLFunctionStitchingInputNode *config_input =
+            [[MTLFunctionStitchingInputNode alloc] initWithArgumentIndex:1u];
+
+        const bool lean_distance_state =
+            config.sdf_stitch_distance_only != FPT_SDF_STITCH_STATE_FULL;
+        const bool split_distance_graph =
+            config.sdf_stitch_split_graph != 0u;
+        const uint32_t fusion_mode = config.sdf_stitch_fusion;
+        if (fusion_mode != 0u && lean_distance_state) {
+            failure = "stitch fusion requires the full surface state";
+            return false;
+        }
+        NSString *init_function_name = lean_distance_state
+            ? @"fpt_stitch_distance_init" : @"fpt_stitch_init";
+        NSString *finish_function_name = lean_distance_state
+            ? @"fpt_stitch_distance_finish" : @"fpt_stitch_finish";
+        NSString *surface_function_name = lean_distance_state
+            ? @"fpt_stitch_interpreted_surface"
+            : @"fpt_stitch_finish_surface";
+        id<MTLFunction> init_function = [stitch_host_library
+            newFunctionWithName:init_function_name];
+        id<MTLFunction> finish_function = [stitch_host_library
+            newFunctionWithName:finish_function_name];
+        id<MTLFunction> finish_surface_function = [stitch_host_library
+            newFunctionWithName:surface_function_name];
+        id<MTLFunction> split_barrier_function = split_distance_graph
+            ? [stitch_host_library
+                newFunctionWithName:@"fpt_stitch_distance_barrier"]
+            : nil;
+        if (!init_function || !finish_function || !finish_surface_function) {
+            failure = "stitch-host init or finish function is missing";
+            return false;
+        }
+        if (split_distance_graph && !split_barrier_function) {
+            failure = "stitch-host split barrier function is missing";
+            return false;
+        }
+        [functions addObject:init_function];
+        [functions addObject:finish_function];
+        [functions addObject:finish_surface_function];
+        if (split_barrier_function) [functions addObject:split_barrier_function];
+        MTLFunctionStitchingFunctionNode *current =
+            [[MTLFunctionStitchingFunctionNode alloc]
+                initWithName:init_function_name
+                   arguments:@[source_input]
+         controlDependencies:@[]];
+        [nodes addObject:current];
+
+        auto is_translated_sphere_union = [&](uint32_t index) {
+            return index + 1u < instruction_count &&
+                config.sdf_program[index].opcode == FPT_SDF_OP_TRANSLATE &&
+                config.sdf_program[index + 1u].opcode == FPT_SDF_OP_SPHERE &&
+                config.sdf_program[index + 1u].flags == 0u;
+        };
+        bool fused_one_pair = false;
+        for (uint32_t index = 0u; index < instruction_count;) {
+            uint32_t consumed = 1u;
+            std::string function_name;
+            const bool fuse_double = fusion_mode == 3u &&
+                is_translated_sphere_union(index) &&
+                is_translated_sphere_union(index + 2u);
+            const bool fuse_pair = is_translated_sphere_union(index) &&
+                (fusion_mode == 2u ||
+                 (fusion_mode == 1u && !fused_one_pair));
+            if (fuse_double) {
+                function_name = "fpt_stitch_two_translated_sphere_unions_" +
+                    std::to_string(index);
+                consumed = 4u;
+            } else if (fuse_pair) {
+                function_name = "fpt_stitch_translated_sphere_union_" +
+                    std::to_string(index);
+                consumed = 2u;
+                fused_one_pair = true;
+            }
+            const FptSdfInstruction &instruction = config.sdf_program[index];
+            if (function_name.empty()) {
+                function_name = lean_distance_state
+                    ? "fpt_stitch_distance_" : "fpt_stitch_";
+                switch (instruction.opcode) {
+                    case FPT_SDF_OP_ABS:
+                        function_name += "abs_";
+                        break;
+                    case FPT_SDF_OP_TRANSLATE:
+                        function_name += "translate_";
+                        break;
+                    case FPT_SDF_OP_SCALE:
+                        function_name += "scale_";
+                        break;
+                    case FPT_SDF_OP_ROTATE_X:
+                        function_name += "rotate_x_";
+                        break;
+                    case FPT_SDF_OP_ROTATE_Y:
+                        function_name += "rotate_y_";
+                        break;
+                    case FPT_SDF_OP_ROTATE_Z:
+                        function_name += "rotate_z_";
+                        break;
+                    case FPT_SDF_OP_REPEAT:
+                        function_name += "repeat_";
+                        break;
+                    case FPT_SDF_OP_SORT_DESC:
+                        function_name += "sort_desc_";
+                        break;
+                    case FPT_SDF_OP_SPHERE:
+                        function_name += "sphere_";
+                        break;
+                    case FPT_SDF_OP_BOX:
+                        function_name += "box_";
+                        break;
+                    case FPT_SDF_OP_PLANE:
+                        function_name += "plane_";
+                        break;
+                    default:
+                        failure = "function stitching does not support geometry opcode " +
+                            std::to_string(instruction.opcode) + " at instruction " +
+                            std::to_string(index);
+                        return false;
+                }
+                if (instruction.opcode == FPT_SDF_OP_SPHERE ||
+                    instruction.opcode == FPT_SDF_OP_BOX ||
+                    instruction.opcode == FPT_SDF_OP_PLANE) {
+                    if (instruction.flags > 2u) {
+                        failure = "function stitching does not support combine mode " +
+                            std::to_string(instruction.flags) + " at instruction " +
+                            std::to_string(index);
+                        return false;
+                    }
+                    constexpr const char *combine_names[] = {
+                        "union_", "intersection_", "subtract_"};
+                    function_name += combine_names[instruction.flags];
+                }
+                function_name += std::to_string(index);
+            }
+            NSString *name = [NSString stringWithUTF8String:function_name.c_str()];
+            id<MTLFunction> function =
+                [stitch_host_library newFunctionWithName:name];
+            if (!function) {
+                failure = "stitch-host function is missing: " + function_name;
+                return false;
+            }
+            [functions addObject:function];
+            [instruction_names addObject:name];
+            current = [[MTLFunctionStitchingFunctionNode alloc]
+                initWithName:name
+                   arguments:@[current, config_input]
+         controlDependencies:@[]];
+            [nodes addObject:current];
+            index += consumed;
+        }
+
+        MTLFunctionStitchingFunctionNode *finish =
+            [[MTLFunctionStitchingFunctionNode alloc]
+                initWithName:finish_function_name
+                   arguments:@[current]
+         controlDependencies:@[]];
+        NSArray<id<MTLFunctionStitchingAttribute>> *attributes =
+            config.sdf_function_stitching == 2u
+                ? @[[MTLFunctionStitchingAttributeAlwaysInline new]]
+                : @[];
+        MTLStitchedLibraryDescriptor *descriptor = nil;
+        if (split_distance_graph) {
+            const uint32_t split_index = instruction_count / 2u;
+            if (split_index == 0u || split_index == instruction_count) {
+                failure = "split stitching requires at least two instructions";
+                return false;
+            }
+
+            MTLFunctionStitchingInputNode *prefix_source =
+                [[MTLFunctionStitchingInputNode alloc] initWithArgumentIndex:0u];
+            MTLFunctionStitchingInputNode *prefix_config =
+                [[MTLFunctionStitchingInputNode alloc] initWithArgumentIndex:1u];
+            NSMutableArray<MTLFunctionStitchingFunctionNode *> *prefix_nodes =
+                [NSMutableArray array];
+            MTLFunctionStitchingFunctionNode *prefix_current =
+                [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:init_function_name
+                       arguments:@[prefix_source]
+             controlDependencies:@[]];
+            [prefix_nodes addObject:prefix_current];
+            for (uint32_t index = 0u; index < split_index; ++index) {
+                prefix_current = [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:instruction_names[index]
+                       arguments:@[prefix_current, prefix_config]
+             controlDependencies:@[]];
+                [prefix_nodes addObject:prefix_current];
+            }
+            MTLFunctionStitchingFunctionNode *prefix_barrier =
+                [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:@"fpt_stitch_distance_barrier"
+                       arguments:@[prefix_current]
+             controlDependencies:@[]];
+
+            MTLFunctionStitchingInputNode *suffix_state =
+                [[MTLFunctionStitchingInputNode alloc] initWithArgumentIndex:0u];
+            MTLFunctionStitchingInputNode *suffix_config =
+                [[MTLFunctionStitchingInputNode alloc] initWithArgumentIndex:1u];
+            NSMutableArray<MTLFunctionStitchingFunctionNode *> *suffix_nodes =
+                [NSMutableArray array];
+            MTLFunctionStitchingFunctionNode *suffix_current = nil;
+            id<MTLFunctionStitchingNode> suffix_argument = suffix_state;
+            for (uint32_t index = split_index; index < instruction_count; ++index) {
+                suffix_current = [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:instruction_names[index]
+                       arguments:@[suffix_argument, suffix_config]
+             controlDependencies:@[]];
+                [suffix_nodes addObject:suffix_current];
+                suffix_argument = suffix_current;
+            }
+
+            MTLFunctionStitchingGraph *prefix_graph =
+                [[MTLFunctionStitchingGraph alloc]
+                    initWithFunctionName:@"fpt_stitch_distance_prefix"
+                                   nodes:prefix_nodes
+                              outputNode:prefix_barrier
+                              attributes:@[]];
+            MTLFunctionStitchingGraph *suffix_graph =
+                [[MTLFunctionStitchingGraph alloc]
+                    initWithFunctionName:@"fpt_stitch_distance_suffix"
+                                   nodes:suffix_nodes
+                              outputNode:suffix_current
+                              attributes:@[]];
+            MTLStitchedLibraryDescriptor *segment_descriptor =
+                [MTLStitchedLibraryDescriptor new];
+            segment_descriptor.functions = functions;
+            segment_descriptor.functionGraphs = @[prefix_graph, suffix_graph];
+            NSError *segment_error = nil;
+            id<MTLLibrary> segment_library = [device
+                newLibraryWithStitchedDescriptor:segment_descriptor
+                                           error:&segment_error];
+            if (!segment_library) {
+                failure = "Metal split-segment stitching failed: " + std::string(
+                    segment_error.localizedDescription.UTF8String ?: "unknown error");
+                return false;
+            }
+            id<MTLFunction> prefix_function = [segment_library
+                newFunctionWithName:@"fpt_stitch_distance_prefix"];
+            id<MTLFunction> suffix_function = [segment_library
+                newFunctionWithName:@"fpt_stitch_distance_suffix"];
+            if (!prefix_function || !suffix_function) {
+                failure = "split stitched segment function is missing";
+                return false;
+            }
+
+            MTLFunctionStitchingInputNode *outer_source =
+                [[MTLFunctionStitchingInputNode alloc] initWithArgumentIndex:0u];
+            MTLFunctionStitchingInputNode *outer_config =
+                [[MTLFunctionStitchingInputNode alloc] initWithArgumentIndex:1u];
+            MTLFunctionStitchingFunctionNode *prefix_call =
+                [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:@"fpt_stitch_distance_prefix"
+                       arguments:@[outer_source, outer_config]
+             controlDependencies:@[]];
+            MTLFunctionStitchingFunctionNode *suffix_call =
+                [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:@"fpt_stitch_distance_suffix"
+                       arguments:@[prefix_call, outer_config]
+             controlDependencies:@[]];
+            MTLFunctionStitchingFunctionNode *outer_finish =
+                [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:finish_function_name
+                       arguments:@[suffix_call]
+             controlDependencies:@[]];
+            MTLFunctionStitchingGraph *distance_graph =
+                [[MTLFunctionStitchingGraph alloc]
+                    initWithFunctionName:@"deTopologyStitchedDistance"
+                                   nodes:@[prefix_call, suffix_call]
+                              outputNode:outer_finish
+                              attributes:attributes];
+            MTLFunctionStitchingFunctionNode *finish_surface =
+                [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:surface_function_name
+                       arguments:@[outer_source, outer_config]
+             controlDependencies:@[]];
+            MTLFunctionStitchingGraph *surface_graph =
+                [[MTLFunctionStitchingGraph alloc]
+                    initWithFunctionName:@"deTopologyStitchedSurface"
+                                   nodes:@[finish_surface]
+                              outputNode:finish_surface
+                              attributes:attributes];
+            descriptor = [MTLStitchedLibraryDescriptor new];
+            descriptor.functions = @[
+                prefix_function, suffix_function, finish_function,
+                finish_surface_function];
+            descriptor.functionGraphs = @[distance_graph, surface_graph];
+        } else {
+            MTLFunctionStitchingGraph *distance_graph =
+                [[MTLFunctionStitchingGraph alloc]
+                    initWithFunctionName:@"deTopologyStitchedDistance"
+                                   nodes:nodes
+                              outputNode:finish
+                              attributes:attributes];
+            MTLFunctionStitchingFunctionNode *finish_surface = lean_distance_state
+                ? [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:surface_function_name
+                       arguments:@[source_input, config_input]
+             controlDependencies:@[]]
+                : [[MTLFunctionStitchingFunctionNode alloc]
+                    initWithName:surface_function_name
+                       arguments:@[current]
+             controlDependencies:@[]];
+            NSArray<MTLFunctionStitchingFunctionNode *> *surface_nodes =
+                lean_distance_state ? @[finish_surface] : nodes;
+            MTLFunctionStitchingGraph *surface_graph =
+                [[MTLFunctionStitchingGraph alloc]
+                    initWithFunctionName:@"deTopologyStitchedSurface"
+                                   nodes:surface_nodes
+                              outputNode:finish_surface
+                              attributes:attributes];
+            descriptor = [MTLStitchedLibraryDescriptor new];
+            descriptor.functions = functions;
+            descriptor.functionGraphs = @[distance_graph, surface_graph];
+        }
+
+        NSError *ns_error = nil;
+        id<MTLBinaryArchive> archive = nil;
+        bool archive_loaded = false;
+        if (@available(macOS 15.0, *)) {
+            if (archive_path && archive_path[0] != '\0') {
+                NSURL *archive_url = [NSURL fileURLWithPath:
+                    [NSString stringWithUTF8String:archive_path]];
+                MTLBinaryArchiveDescriptor *archive_descriptor =
+                    [MTLBinaryArchiveDescriptor new];
+                if ([[NSFileManager defaultManager]
+                        fileExistsAtPath:archive_url.path]) {
+                    archive_descriptor.url = archive_url;
+                    archive = [device
+                        newBinaryArchiveWithDescriptor:archive_descriptor
+                                                 error:&ns_error];
+                    archive_loaded = archive != nil;
+                    if (!archive) {
+                        [[NSFileManager defaultManager]
+                            removeItemAtURL:archive_url error:nil];
+                        ns_error = nil;
+                    }
+                }
+                if (!archive) {
+                    archive_descriptor.url = nil;
+                    archive = [device
+                        newBinaryArchiveWithDescriptor:archive_descriptor
+                                                 error:&ns_error];
+                    if (!archive) {
+                        failure = "failed to create Metal binary archive: " +
+                            std::string(ns_error.localizedDescription.UTF8String ?:
+                                        "unknown error");
+                        return false;
+                    }
+                    if (![archive addLibraryWithDescriptor:descriptor
+                                                     error:&ns_error]) {
+                        failure = "failed to populate stitched-library archive: " +
+                            std::string(ns_error.localizedDescription.UTF8String ?:
+                                        "unknown error");
+                        return false;
+                    }
+                }
+                descriptor.binaryArchives = @[archive];
+            }
+        }
+        *stitched_library =
+            [device newLibraryWithStitchedDescriptor:descriptor error:&ns_error];
+        if (!*stitched_library) {
+            failure = "Metal function stitching failed: " + std::string(
+                ns_error.localizedDescription.UTF8String ?: "unknown error");
+            return false;
+        }
+        *stitched_function = [*stitched_library
+            newFunctionWithName:@"deTopologyStitchedDistance"];
+        *stitched_surface_function = [*stitched_library
+            newFunctionWithName:@"deTopologyStitchedSurface"];
+        if (!*stitched_function || !*stitched_surface_function) {
+            failure = "stitched distance or surface function is missing from library";
+            return false;
+        }
+        if (binary_archive) *binary_archive = archive;
+        if (populate_binary_archive) {
+            *populate_binary_archive = archive != nil && !archive_loaded;
+        }
+        return true;
+    }
+    failure = "Metal function stitching requires macOS 12 or newer";
+    return false;
+}
+
+id<MTLComputePipelineState> new_compute_pipeline(
+    id<MTLDevice> device,
+    id<MTLFunction> function,
+    NSArray<id<MTLFunction>> *private_functions,
+    id<MTLBinaryArchive> binary_archive,
+    bool populate_binary_archive,
+    NSError **error) {
+    if (private_functions.count == 0u && !binary_archive) {
+        return [device newComputePipelineStateWithFunction:function error:error];
+    }
+    MTLComputePipelineDescriptor *descriptor =
+        [MTLComputePipelineDescriptor new];
+    descriptor.computeFunction = function;
+    if (private_functions.count > 0u) {
+        MTLLinkedFunctions *linked = [MTLLinkedFunctions linkedFunctions];
+        linked.privateFunctions = private_functions;
+        descriptor.linkedFunctions = linked;
+    }
+    if (binary_archive) descriptor.binaryArchives = @[binary_archive];
+    if (populate_binary_archive &&
+        ![binary_archive addComputePipelineFunctionsWithDescriptor:descriptor
+                                                              error:error]) {
+        return nil;
+    }
+    return [device newComputePipelineStateWithDescriptor:descriptor
+                                                 options:MTLPipelineOptionNone
+                                              reflection:nil
+                                                   error:error];
+}
+
+id<MTLFunction> new_topology_runtime_function(
+    id<MTLLibrary> library,
+    NSString *name,
+    bool dual_generated_library,
+    bool analytic_surface,
+    NSError **error) {
+    if (!dual_generated_library) return [library newFunctionWithName:name];
+    bool enabled = analytic_surface;
+    MTLFunctionConstantValues *constants = [MTLFunctionConstantValues new];
+    [constants setConstantValue:&enabled type:MTLDataTypeBool atIndex:0u];
+    return [library newFunctionWithName:name
+                         constantValues:constants
+                                  error:error];
+}
+
+bool generate_topology_specialized_source(
+    const char *shader_source,
+    size_t shader_source_len,
+    const FptRenderConfig &config,
+    std::string &specialized_source,
+    std::string &failure) {
+    if (!shader_source || shader_source_len == 0u) {
+        failure = "embedded Metal source is unavailable";
+        return false;
+    }
+    const uint32_t instruction_count = std::min<uint32_t>(
+        config.sdf_program_count, FPT_SDF_PROGRAM_MAX_OPS);
+    if (config.sdf_id != FPT_SDF_PROGRAM || instruction_count == 0u) {
+        failure = "topology specialization requires a typed geometry program";
+        return false;
+    }
+
+    auto install_bodies = [&](const std::string &distance_body,
+                              const std::string &surface_body) {
+        constexpr const char *marker =
+            "    // FPT_TOPOLOGY_SPECIALIZED_BODY\n"
+            "    return deProgramDistance(source, cfg);";
+        specialized_source.assign(shader_source, shader_source_len);
+        specialized_source.insert(
+            0u, "#define FPT_TOPOLOGY_RUNTIME_SOURCE 1\n");
+        if ((config.sdf_topology_specialization == 3u ||
+             config.sdf_topology_specialization == 4u ||
+             config.sdf_topology_specialization == 5u) &&
+            config.sdf_stitched_surface == 0u) {
+            specialized_source.insert(
+                0u, "#define FPT_TOPOLOGY_CANONICAL_RUNTIME_SURFACE 1\n");
+        }
+        if (config.sdf_stitched_surface != 0u) {
+            specialized_source.insert(
+                0u, "#define FPT_TOPOLOGY_GENERATED_SURFACE 1\n");
+        }
+        const size_t position = specialized_source.find(marker);
+        if (position == std::string::npos) {
+            failure = "topology specialization marker is missing from Metal source";
+            return false;
+        }
+        specialized_source.replace(position, std::strlen(marker), distance_body);
+        if (config.sdf_stitched_surface != 0u) {
+            constexpr const char *surface_marker =
+                "    // FPT_TOPOLOGY_SPECIALIZED_SURFACE_BODY\n"
+                "    return programSurfaceInterpreted(source, cfg);";
+            const size_t surface_position =
+                specialized_source.find(surface_marker);
+            if (surface_position == std::string::npos) {
+                failure = "topology-specialized surface marker is missing from Metal source";
+                return false;
+            }
+            specialized_source.replace(
+                surface_position, std::strlen(surface_marker), surface_body);
+        }
+        return true;
+    };
+
+    const uint32_t canonical_count = std::min<uint32_t>(
+        config.sdf_canonical_count, FPT_SDF_FLAT_UNION_MAX_PRIMITIVES);
+    if (config.sdf_topology_specialization == 2u && canonical_count > 0u) {
+        std::string body = "    float distance = inf;\n";
+        std::string surface_body =
+            "    ProgramSurface surface = {inf, float3(0.0f)};\n";
+        for (uint32_t index = 0u; index < canonical_count; ++index) {
+            const FptPrimitiveInstance &primitive =
+                config.sdf_canonical_primitives[index];
+            if (primitive.opcode != FPT_SDF_OP_SPHERE &&
+                primitive.opcode != FPT_SDF_OP_BOX &&
+                primitive.opcode != FPT_SDF_OP_PLANE) {
+                failure = "canonical IR contains unsupported primitive opcode " +
+                    std::to_string(primitive.opcode);
+                return false;
+            }
+            if (index > 0u && primitive._pad0 > 2u) {
+                failure = "canonical IR contains unsupported combine mode " +
+                    std::to_string(primitive._pad0);
+                return false;
+            }
+            const std::string i = std::to_string(index);
+            const std::string instance =
+                "cfg.sdf_canonical_primitives[" + i + "]";
+            body += "    float candidate" + i +
+                " = flatUnionPrimitiveDistance(source, " + instance + ");\n";
+            surface_body += "    ProgramSurface candidate" + i +
+                " = canonicalPrimitiveSurface(source, " + instance + ");\n";
+            if (index == 0u) {
+                body += "    distance = candidate" + i + ";\n";
+                surface_body += "    surface = candidate" + i + ";\n";
+            } else if (primitive._pad0 == 1u) {
+                body += "    distance = max(distance, candidate" + i + ");\n";
+                surface_body += "    if (candidate" + i +
+                    ".distance > surface.distance) surface = candidate" + i + ";\n";
+            } else if (primitive._pad0 == 2u) {
+                body += "    distance = max(distance, -candidate" + i + ");\n";
+                surface_body += "    if (-candidate" + i +
+                    ".distance > surface.distance) { surface.distance = -candidate" + i +
+                    ".distance; surface.gradient = -candidate" + i + ".gradient; }\n";
+            } else {
+                body += "    distance = min(distance, candidate" + i + ");\n";
+                surface_body += "    if (candidate" + i +
+                    ".distance < surface.distance) surface = candidate" + i + ";\n";
+            }
+        }
+        body += "    return distance;";
+        surface_body += "    return surface;";
+        return install_bodies(body, surface_body);
+    }
+
+    if (config.sdf_topology_specialization == 3u && canonical_count > 0u) {
+        std::string body = "    float distance = inf;\n";
+        std::string surface_body =
+            "    ProgramSurface surface = {inf, float3(0.0f)};\n";
+        for (uint32_t index = 0u; index < canonical_count; ++index) {
+            const FptPrimitiveInstance &primitive =
+                config.sdf_canonical_primitives[index];
+            if (primitive.opcode != FPT_SDF_OP_SPHERE &&
+                primitive.opcode != FPT_SDF_OP_BOX &&
+                primitive.opcode != FPT_SDF_OP_PLANE) {
+                failure = "compact canonical IR contains unsupported primitive opcode " +
+                    std::to_string(primitive.opcode);
+                return false;
+            }
+            if (index > 0u && primitive._pad0 > 2u) {
+                failure = "compact canonical IR contains unsupported combine mode " +
+                    std::to_string(primitive._pad0);
+                return false;
+            }
+            const std::string i = std::to_string(index);
+            const std::string instance =
+                "cfg.sdf_canonical_primitives[" + i + "]";
+            auto transform_value = [&](uint32_t component) {
+                return instance + ".transform[" +
+                    std::to_string(component) + "]";
+            };
+            auto data_value = [&](uint32_t component) {
+                return instance + ".data[" + std::to_string(component) + "]";
+            };
+            const std::string row0 = "float3(" + transform_value(0u) + ", " +
+                transform_value(1u) + ", " + transform_value(2u) + ")";
+            const std::string row1 = "float3(" + transform_value(4u) + ", " +
+                transform_value(5u) + ", " + transform_value(6u) + ")";
+            const std::string row2 = "float3(" + transform_value(8u) + ", " +
+                transform_value(9u) + ", " + transform_value(10u) + ")";
+            const std::string point = "float3(dot(" + row0 +
+                ", source) + " + transform_value(3u) + ", dot(" + row1 +
+                ", source) + " + transform_value(7u) + ", dot(" + row2 +
+                ", source) + " + transform_value(11u) + ")";
+            const std::string divisor =
+                "max(" + instance + ".distance_scale, 1.0e-6f)";
+
+            body += "    {\n";
+            body += "      float3 p = " + point + ";\n";
+            body += "      float divisor = " + divisor + ";\n";
+            if (primitive.opcode == FPT_SDF_OP_SPHERE) {
+                body += "      float candidate = (length(p) - " +
+                    data_value(0u) + ") / divisor;\n";
+            } else if (primitive.opcode == FPT_SDF_OP_BOX) {
+                body += "      float3 q = abs(p) - abs(float3(" +
+                    data_value(0u) + ", " + data_value(1u) + ", " +
+                    data_value(2u) + "));\n";
+                body += "      float candidate = (min(max(q.x, max(q.y, q.z)), "
+                        "0.0f) + length(max(q, float3(0.0f)))) / divisor;\n";
+            } else {
+                body += "      float candidate = (dot(p, float3(" +
+                    data_value(0u) + ", " + data_value(1u) + ", " +
+                    data_value(2u) + ")) + " + data_value(3u) +
+                    ") / divisor;\n";
+            }
+            if (index == 0u) {
+                body += "      distance = candidate;\n";
+            } else if (primitive._pad0 == 1u) {
+                body += "      distance = max(distance, candidate);\n";
+            } else if (primitive._pad0 == 2u) {
+                body += "      distance = max(distance, -candidate);\n";
+            } else {
+                body += "      distance = min(distance, candidate);\n";
+            }
+            body += "    }\n";
+
+            surface_body += "    {\n";
+            surface_body += "      float3 row0 = " + row0 + ";\n";
+            surface_body += "      float3 row1 = " + row1 + ";\n";
+            surface_body += "      float3 row2 = " + row2 + ";\n";
+            surface_body += "      float3 p = float3(dot(row0, source) + " +
+                transform_value(3u) + ", dot(row1, source) + " +
+                transform_value(7u) + ", dot(row2, source) + " +
+                transform_value(11u) + ");\n";
+            surface_body += "      float divisor = " + divisor + ";\n";
+            if (primitive.opcode == FPT_SDF_OP_SPHERE) {
+                surface_body += "      float radius = length(p);\n";
+                surface_body += "      float candidate = (radius - " +
+                    data_value(0u) + ") / divisor;\n";
+                surface_body += "      float3 local_gradient = radius > 1.0e-8f "
+                    "? p / radius : float3(0.0f, 1.0f, 0.0f);\n";
+            } else if (primitive.opcode == FPT_SDF_OP_BOX) {
+                surface_body += "      float3 q = abs(p) - abs(float3(" +
+                    data_value(0u) + ", " + data_value(1u) + ", " +
+                    data_value(2u) + "));\n";
+                surface_body += "      float3 outside = max(q, float3(0.0f));\n";
+                surface_body += "      float outside_length = length(outside);\n";
+                surface_body += "      float candidate = (min(max(q.x, max(q.y, "
+                    "q.z)), 0.0f) + outside_length) / divisor;\n";
+                surface_body += "      float3 local_gradient;\n";
+                surface_body += "      if (outside_length > 1.0e-8f) "
+                    "local_gradient = sign(p) * outside / outside_length;\n";
+                surface_body += "      else if (q.x >= q.y && q.x >= q.z) "
+                    "local_gradient = float3(sign(p.x), 0.0f, 0.0f);\n";
+                surface_body += "      else if (q.y >= q.z) local_gradient = "
+                    "float3(0.0f, sign(p.y), 0.0f);\n";
+                surface_body += "      else local_gradient = "
+                    "float3(0.0f, 0.0f, sign(p.z));\n";
+            } else {
+                surface_body += "      float3 local_gradient = float3(" +
+                    data_value(0u) + ", " + data_value(1u) + ", " +
+                    data_value(2u) + ");\n";
+                surface_body += "      float candidate = (dot(p, local_gradient) + " +
+                    data_value(3u) + ") / divisor;\n";
+            }
+            surface_body += "      float3 candidate_gradient = "
+                "(local_gradient.x * row0 + local_gradient.y * row1 + "
+                "local_gradient.z * row2) / divisor;\n";
+            if (index == 0u) {
+                surface_body += "      surface.distance = candidate; "
+                    "surface.gradient = candidate_gradient;\n";
+            } else if (primitive._pad0 == 1u) {
+                surface_body += "      if (candidate > surface.distance) { "
+                    "surface.distance = candidate; surface.gradient = "
+                    "candidate_gradient; }\n";
+            } else if (primitive._pad0 == 2u) {
+                surface_body += "      if (-candidate > surface.distance) { "
+                    "surface.distance = -candidate; surface.gradient = "
+                    "-candidate_gradient; }\n";
+            } else {
+                surface_body += "      if (candidate < surface.distance) { "
+                    "surface.distance = candidate; surface.gradient = "
+                    "candidate_gradient; }\n";
+            }
+            surface_body += "    }\n";
+        }
+        body += "    return distance;";
+        surface_body += "    return surface;";
+        return install_bodies(body, surface_body);
+    }
+
+    if (config.sdf_topology_specialization == 4u && canonical_count > 0u) {
+        std::vector<uint32_t> transform_representatives;
+        std::vector<uint32_t> transform_ids(canonical_count, 0u);
+        auto same_transform = [](const FptPrimitiveInstance &left,
+                                 const FptPrimitiveInstance &right) {
+            if (std::memcmp(left.transform, right.transform,
+                            sizeof(left.transform)) != 0) {
+                return false;
+            }
+            return std::memcmp(&left.distance_scale, &right.distance_scale,
+                               sizeof(left.distance_scale)) == 0;
+        };
+        for (uint32_t index = 0u; index < canonical_count; ++index) {
+            const FptPrimitiveInstance &primitive =
+                config.sdf_canonical_primitives[index];
+            if (primitive.opcode != FPT_SDF_OP_SPHERE &&
+                primitive.opcode != FPT_SDF_OP_BOX &&
+                primitive.opcode != FPT_SDF_OP_PLANE) {
+                failure = "shared-transform DAG contains unsupported primitive opcode " +
+                    std::to_string(primitive.opcode);
+                return false;
+            }
+            if (index > 0u && primitive._pad0 > 2u) {
+                failure = "shared-transform DAG contains unsupported combine mode " +
+                    std::to_string(primitive._pad0);
+                return false;
+            }
+            uint32_t transform_id = static_cast<uint32_t>(transform_representatives.size());
+            for (uint32_t candidate = 0u;
+                 candidate < transform_representatives.size(); ++candidate) {
+                if (same_transform(
+                        primitive,
+                        config.sdf_canonical_primitives[
+                            transform_representatives[candidate]])) {
+                    transform_id = candidate;
+                    break;
+                }
+            }
+            if (transform_id == transform_representatives.size()) {
+                transform_representatives.push_back(index);
+            }
+            transform_ids[index] = transform_id;
+        }
+
+        std::string body = "    float distance = inf;\n";
+        for (uint32_t transform_id = 0u;
+             transform_id < transform_representatives.size(); ++transform_id) {
+            const std::string t = std::to_string(transform_id);
+            const std::string representative = std::to_string(
+                transform_representatives[transform_id]);
+            const std::string instance =
+                "cfg.sdf_canonical_primitives[" + representative + "]";
+            auto transform_value = [&](uint32_t component) {
+                return instance + ".transform[" +
+                    std::to_string(component) + "]";
+            };
+            const std::string row0 = "float3(" + transform_value(0u) + ", " +
+                transform_value(1u) + ", " + transform_value(2u) + ")";
+            const std::string row1 = "float3(" + transform_value(4u) + ", " +
+                transform_value(5u) + ", " + transform_value(6u) + ")";
+            const std::string row2 = "float3(" + transform_value(8u) + ", " +
+                transform_value(9u) + ", " + transform_value(10u) + ")";
+            body += "    float3 sharedPoint" + t + " = float3(dot(" + row0 +
+                ", source) + " + transform_value(3u) + ", dot(" + row1 +
+                ", source) + " + transform_value(7u) + ", dot(" + row2 +
+                ", source) + " + transform_value(11u) + ");\n";
+            body += "    float sharedDivisor" + t + " = max(" + instance +
+                ".distance_scale, 1.0e-6f);\n";
+        }
+        for (uint32_t index = 0u; index < canonical_count; ++index) {
+            const FptPrimitiveInstance &primitive =
+                config.sdf_canonical_primitives[index];
+            const std::string i = std::to_string(index);
+            const std::string t = std::to_string(transform_ids[index]);
+            const std::string instance =
+                "cfg.sdf_canonical_primitives[" + i + "]";
+            auto data_value = [&](uint32_t component) {
+                return instance + ".data[" + std::to_string(component) + "]";
+            };
+            body += "    {\n";
+            if (primitive.opcode == FPT_SDF_OP_SPHERE) {
+                body += "      float candidate = (length(sharedPoint" + t +
+                    ") - " + data_value(0u) + ") / sharedDivisor" + t + ";\n";
+            } else if (primitive.opcode == FPT_SDF_OP_BOX) {
+                body += "      float3 q = abs(sharedPoint" + t +
+                    ") - abs(float3(" + data_value(0u) + ", " +
+                    data_value(1u) + ", " + data_value(2u) + "));\n";
+                body += "      float candidate = (min(max(q.x, max(q.y, q.z)), "
+                        "0.0f) + length(max(q, float3(0.0f)))) / sharedDivisor" +
+                    t + ";\n";
+            } else {
+                body += "      float candidate = (dot(sharedPoint" + t +
+                    ", float3(" + data_value(0u) + ", " + data_value(1u) +
+                    ", " + data_value(2u) + ")) + " + data_value(3u) +
+                    ") / sharedDivisor" + t + ";\n";
+            }
+            if (index == 0u) {
+                body += "      distance = candidate;\n";
+            } else if (primitive._pad0 == 1u) {
+                body += "      distance = max(distance, candidate);\n";
+            } else if (primitive._pad0 == 2u) {
+                body += "      distance = max(distance, -candidate);\n";
+            } else {
+                body += "      distance = min(distance, candidate);\n";
+            }
+            body += "    }\n";
+        }
+        body += "    return distance;";
+        return install_bodies(body, std::string());
+    }
+
+    if (config.sdf_topology_specialization == 5u && canonical_count > 0u) {
+        const uint32_t transform_count = std::min<uint32_t>(
+            config.sdf_canonical_transform_count,
+            FPT_SDF_FLAT_UNION_MAX_PRIMITIVES);
+        if (transform_count == 0u) {
+            failure = "affine-index lowering contains no transform records";
+            return false;
+        }
+        std::string body = "    float distance = inf;\n";
+        uint32_t index = 0u;
+        while (index < canonical_count) {
+            const FptIndexedPrimitive &first =
+                config.sdf_indexed_primitives[index];
+            if (first.transform_index >= transform_count) {
+                failure = "affine-index lowering contains an invalid transform index " +
+                    std::to_string(first.transform_index);
+                return false;
+            }
+            uint32_t run_end = index + 1u;
+            while (run_end < canonical_count &&
+                   config.sdf_indexed_primitives[run_end].transform_index ==
+                       first.transform_index) {
+                ++run_end;
+            }
+
+            const std::string transform_id =
+                std::to_string(first.transform_index);
+            const std::string transform =
+                "cfg.sdf_canonical_transforms[" + transform_id + "]";
+            auto transform_value = [&](uint32_t component) {
+                return transform + ".transform[" +
+                    std::to_string(component) + "]";
+            };
+            const std::string row0 = "float3(" + transform_value(0u) + ", " +
+                transform_value(1u) + ", " + transform_value(2u) + ")";
+            const std::string row1 = "float3(" + transform_value(4u) + ", " +
+                transform_value(5u) + ", " + transform_value(6u) + ")";
+            const std::string row2 = "float3(" + transform_value(8u) + ", " +
+                transform_value(9u) + ", " + transform_value(10u) + ")";
+            body += "    {\n";
+            body += "      float3 p = float3(dot(" + row0 +
+                ", source) + " + transform_value(3u) + ", dot(" + row1 +
+                ", source) + " + transform_value(7u) + ", dot(" + row2 +
+                ", source) + " + transform_value(11u) + ");\n";
+            body += "      float divisor = max(" + transform +
+                ".distance_scale, 1.0e-6f);\n";
+
+            for (uint32_t leaf_index = index; leaf_index < run_end;
+                 ++leaf_index) {
+                const FptIndexedPrimitive &primitive =
+                    config.sdf_indexed_primitives[leaf_index];
+                if (primitive.opcode != FPT_SDF_OP_SPHERE &&
+                    primitive.opcode != FPT_SDF_OP_BOX &&
+                    primitive.opcode != FPT_SDF_OP_PLANE) {
+                    failure = "affine-index lowering contains unsupported primitive opcode " +
+                        std::to_string(primitive.opcode);
+                    return false;
+                }
+                if (leaf_index > 0u && primitive.combine_mode > 2u) {
+                    failure = "affine-index lowering contains unsupported combine mode " +
+                        std::to_string(primitive.combine_mode);
+                    return false;
+                }
+                const std::string leaf = std::to_string(leaf_index);
+                const std::string instance =
+                    "cfg.sdf_indexed_primitives[" + leaf + "]";
+                auto data_value = [&](uint32_t component) {
+                    return instance + ".data[" +
+                        std::to_string(component) + "]";
+                };
+                if (primitive.opcode == FPT_SDF_OP_SPHERE) {
+                    body += "      float candidate" + leaf +
+                        " = (length(p) - " + data_value(0u) +
+                        ") / divisor;\n";
+                } else if (primitive.opcode == FPT_SDF_OP_BOX) {
+                    body += "      float3 q" + leaf + " = abs(p) - abs(float3(" +
+                        data_value(0u) + ", " + data_value(1u) + ", " +
+                        data_value(2u) + "));\n";
+                    body += "      float candidate" + leaf +
+                        " = (min(max(q" + leaf + ".x, max(q" + leaf +
+                        ".y, q" + leaf + ".z)), 0.0f) + length(max(q" + leaf +
+                        ", float3(0.0f)))) / divisor;\n";
+                } else {
+                    body += "      float candidate" + leaf +
+                        " = (dot(p, float3(" + data_value(0u) + ", " +
+                        data_value(1u) + ", " + data_value(2u) + ")) + " +
+                        data_value(3u) + ") / divisor;\n";
+                }
+                const std::string candidate = "candidate" + leaf;
+                if (leaf_index == 0u) {
+                    body += "      distance = " + candidate + ";\n";
+                } else if (primitive.combine_mode == 1u) {
+                    body += "      distance = max(distance, " + candidate + ");\n";
+                } else if (primitive.combine_mode == 2u) {
+                    body += "      distance = max(distance, -" + candidate + ");\n";
+                } else {
+                    body += "      distance = min(distance, " + candidate + ");\n";
+                }
+            }
+            body += "    }\n";
+            index = run_end;
+        }
+        body += "    return distance;";
+        return install_bodies(body, std::string());
+    }
+
+    std::string body;
+    body += "    float3 p = source;\n";
+    body += "    float distance_scale = 1.0f;\n";
+    body += "    float distance = inf;\n";
+    body += "    float4 data;\n";
+    body += "    float candidate;\n";
+    bool has_primitive = false;
+    for (uint32_t index = 0u; index < instruction_count; ++index) {
+        const FptSdfInstruction &instruction = config.sdf_program[index];
+        const std::string i = std::to_string(index);
+        body += "    data = float4(cfg.sdf_program[" + i + "].data[0], "
+                "cfg.sdf_program[" + i + "].data[1], cfg.sdf_program[" + i +
+                "].data[2], cfg.sdf_program[" + i + "].data[3]);\n";
+        switch (instruction.opcode) {
+            case FPT_SDF_OP_ABS:
+                body += "    p = abs(p);\n";
+                break;
+            case FPT_SDF_OP_TRANSLATE:
+                body += "    p -= data.xyz;\n";
+                break;
+            case FPT_SDF_OP_SCALE:
+                body += "    { float scale = abs(data.x) > 1.0e-6f ? "
+                        "data.x : 1.0f; p *= scale; distance_scale *= "
+                        "abs(scale); }\n";
+                break;
+            case FPT_SDF_OP_ROTATE_X:
+                body += "    p.yz = rot2(p.yz, data.x);\n";
+                break;
+            case FPT_SDF_OP_ROTATE_Y:
+                body += "    p.xz = rot2(p.xz, data.x);\n";
+                break;
+            case FPT_SDF_OP_ROTATE_Z:
+                body += "    p.xy = rot2(p.xy, data.x);\n";
+                break;
+            case FPT_SDF_OP_REPEAT:
+                body += "    { float3 period = max(abs(data.xyz), "
+                        "float3(1.0e-5f)); p -= period * floor(p / period + "
+                        "0.5f); }\n";
+                break;
+            case FPT_SDF_OP_SORT_DESC:
+                body += "    if (p.x < p.z) p.xz = p.zx;\n";
+                body += "    if (p.y < p.z) p.yz = p.zy;\n";
+                body += "    if (p.x < p.y) p.xy = p.yx;\n";
+                break;
+            case FPT_SDF_OP_SPHERE:
+                body += "    candidate = (length(p) - data.x) / "
+                        "max(distance_scale, 1.0e-6f);\n";
+                break;
+            case FPT_SDF_OP_BOX:
+                body += "    { float3 q = abs(p) - abs(data.xyz); "
+                        "candidate = (min(max(q.x, max(q.y, q.z)), 0.0f) + "
+                        "length(max(q, float3(0.0f)))) / "
+                        "max(distance_scale, 1.0e-6f); }\n";
+                break;
+            case FPT_SDF_OP_PLANE:
+                body += "    candidate = (dot(p, normalize(data.xyz)) + "
+                        "data.w) / max(distance_scale, 1.0e-6f);\n";
+                break;
+            default:
+                failure = "unsupported geometry opcode " +
+                    std::to_string(instruction.opcode) + " at instruction " + i;
+                return false;
+        }
+        if (instruction.opcode == FPT_SDF_OP_SPHERE ||
+            instruction.opcode == FPT_SDF_OP_BOX ||
+            instruction.opcode == FPT_SDF_OP_PLANE) {
+            if (!has_primitive) {
+                body += "    distance = candidate;\n";
+                has_primitive = true;
+            } else if (instruction.flags == 1u) {
+                body += "    distance = max(distance, candidate);\n";
+            } else if (instruction.flags == 2u) {
+                body += "    distance = max(distance, -candidate);\n";
+            } else if (instruction.flags == 0u) {
+                body += "    distance = min(distance, candidate);\n";
+            } else {
+                failure = "unsupported combine mode " +
+                    std::to_string(instruction.flags) + " at instruction " + i;
+                return false;
+            }
+        }
+    }
+    if (!has_primitive) {
+        failure = "topology specialization found no geometry primitive";
+        return false;
+    }
+    body += "    return distance;";
+
+    std::string surface_body;
+    surface_body += "    float3 p = source;\n";
+    surface_body += "    float3 jx = float3(1.0f, 0.0f, 0.0f);\n";
+    surface_body += "    float3 jy = float3(0.0f, 1.0f, 0.0f);\n";
+    surface_body += "    float3 jz = float3(0.0f, 0.0f, 1.0f);\n";
+    surface_body += "    float distance_scale = 1.0f;\n";
+    surface_body += "    ProgramSurface surface = {inf, float3(0.0f)};\n";
+    surface_body += "    float4 data;\n";
+    surface_body += "    float candidate;\n";
+    surface_body += "    float3 local_gradient;\n";
+    surface_body += "    float3 candidate_gradient;\n";
+    bool surface_has_primitive = false;
+    for (uint32_t index = 0u; index < instruction_count; ++index) {
+        const FptSdfInstruction &instruction = config.sdf_program[index];
+        const std::string i = std::to_string(index);
+        surface_body += "    data = float4(cfg.sdf_program[" + i + "].data[0], "
+            "cfg.sdf_program[" + i + "].data[1], cfg.sdf_program[" + i +
+            "].data[2], cfg.sdf_program[" + i + "].data[3]);\n";
+        switch (instruction.opcode) {
+            case FPT_SDF_OP_ABS:
+                surface_body += "    jx *= sign(p.x); jy *= sign(p.y); "
+                    "jz *= sign(p.z); p = abs(p);\n";
+                break;
+            case FPT_SDF_OP_TRANSLATE:
+                surface_body += "    p -= data.xyz;\n";
+                break;
+            case FPT_SDF_OP_SCALE:
+                surface_body += "    { float s = abs(data.x) > 1.0e-6f ? "
+                    "data.x : 1.0f; p *= s; jx *= s; jy *= s; jz *= s; "
+                    "distance_scale *= abs(s); }\n";
+                break;
+            case FPT_SDF_OP_ROTATE_X:
+                surface_body += "    { float s = sin(data.x), c = cos(data.x); "
+                    "float py = p.y; float3 old_jy = jy; "
+                    "p.y = c * py - s * p.z; p.z = s * py + c * p.z; "
+                    "jy = c * old_jy - s * jz; jz = s * old_jy + c * jz; }\n";
+                break;
+            case FPT_SDF_OP_ROTATE_Y:
+                surface_body += "    { float s = sin(data.x), c = cos(data.x); "
+                    "float px = p.x; float3 old_jx = jx; "
+                    "p.x = c * px - s * p.z; p.z = s * px + c * p.z; "
+                    "jx = c * old_jx - s * jz; jz = s * old_jx + c * jz; }\n";
+                break;
+            case FPT_SDF_OP_ROTATE_Z:
+                surface_body += "    { float s = sin(data.x), c = cos(data.x); "
+                    "float px = p.x; float3 old_jx = jx; "
+                    "p.x = c * px - s * p.y; p.y = s * px + c * p.y; "
+                    "jx = c * old_jx - s * jy; jy = s * old_jx + c * jy; }\n";
+                break;
+            case FPT_SDF_OP_REPEAT:
+                surface_body += "    { float3 period = max(abs(data.xyz), "
+                    "float3(1.0e-5f)); p -= period * "
+                    "floor(p / period + 0.5f); }\n";
+                break;
+            case FPT_SDF_OP_SORT_DESC:
+                surface_body += "    if (p.x < p.z) { p.xz = p.zx; "
+                    "float3 swap = jx; jx = jz; jz = swap; }\n";
+                surface_body += "    if (p.y < p.z) { p.yz = p.zy; "
+                    "float3 swap = jy; jy = jz; jz = swap; }\n";
+                surface_body += "    if (p.x < p.y) { p.xy = p.yx; "
+                    "float3 swap = jx; jx = jy; jy = swap; }\n";
+                break;
+            case FPT_SDF_OP_SPHERE:
+                surface_body += "    { float scale = max(distance_scale, "
+                    "1.0e-6f); float radius = length(p); "
+                    "candidate = (radius - data.x) / scale; "
+                    "local_gradient = radius > 1.0e-8f ? p / radius : "
+                    "float3(0.0f, 1.0f, 0.0f); "
+                    "candidate_gradient = (local_gradient.x * jx + "
+                    "local_gradient.y * jy + local_gradient.z * jz) / scale;\n";
+                break;
+            case FPT_SDF_OP_BOX:
+                surface_body += "    { float scale = max(distance_scale, "
+                    "1.0e-6f); float3 q = abs(p) - abs(data.xyz); "
+                    "float3 outside = max(q, float3(0.0f)); "
+                    "float outside_length = length(outside); "
+                    "candidate = (min(max(q.x, max(q.y, q.z)), 0.0f) + "
+                    "outside_length) / scale; "
+                    "if (outside_length > 1.0e-8f) local_gradient = "
+                    "sign(p) * outside / outside_length; "
+                    "else if (q.x >= q.y && q.x >= q.z) local_gradient = "
+                    "float3(sign(p.x), 0.0f, 0.0f); "
+                    "else if (q.y >= q.z) local_gradient = "
+                    "float3(0.0f, sign(p.y), 0.0f); "
+                    "else local_gradient = float3(0.0f, 0.0f, sign(p.z)); "
+                    "candidate_gradient = (local_gradient.x * jx + "
+                    "local_gradient.y * jy + local_gradient.z * jz) / scale;\n";
+                break;
+            case FPT_SDF_OP_PLANE:
+                surface_body += "    { float scale = max(distance_scale, "
+                    "1.0e-6f); local_gradient = normalize(data.xyz); "
+                    "candidate = (dot(p, local_gradient) + data.w) / scale; "
+                    "candidate_gradient = (local_gradient.x * jx + "
+                    "local_gradient.y * jy + local_gradient.z * jz) / scale;\n";
+                break;
+            default:
+                failure = "unsupported surface geometry opcode " +
+                    std::to_string(instruction.opcode) + " at instruction " + i;
+                return false;
+        }
+        const bool primitive = instruction.opcode == FPT_SDF_OP_SPHERE ||
+            instruction.opcode == FPT_SDF_OP_BOX ||
+            instruction.opcode == FPT_SDF_OP_PLANE;
+        if (!primitive) continue;
+        if (!surface_has_primitive) {
+            surface_body += "      surface.distance = candidate; "
+                "surface.gradient = candidate_gradient; }\n";
+            surface_has_primitive = true;
+        } else if (instruction.flags == 0u) {
+            surface_body += "      if (candidate < surface.distance) { "
+                "surface.distance = candidate; "
+                "surface.gradient = candidate_gradient; } }\n";
+        } else if (instruction.flags == 1u) {
+            surface_body += "      if (candidate > surface.distance) { "
+                "surface.distance = candidate; "
+                "surface.gradient = candidate_gradient; } }\n";
+        } else if (instruction.flags == 2u) {
+            surface_body += "      if (-candidate > surface.distance) { "
+                "surface.distance = -candidate; "
+                "surface.gradient = -candidate_gradient; } }\n";
+        } else {
+            failure = "unsupported surface combine mode " +
+                std::to_string(instruction.flags) + " at instruction " + i;
+            return false;
+        }
+    }
+    surface_body += "    return surface;";
+
+    constexpr const char *marker =
+        "    // FPT_TOPOLOGY_SPECIALIZED_BODY\n"
+        "    return deProgramDistance(source, cfg);";
+    specialized_source.assign(shader_source, shader_source_len);
+    specialized_source.insert(
+        0u, "#define FPT_TOPOLOGY_RUNTIME_SOURCE 1\n");
+    if (config.sdf_stitched_surface != 0u) {
+        specialized_source.insert(
+            0u, "#define FPT_TOPOLOGY_GENERATED_SURFACE 1\n");
+    }
+    const size_t position = specialized_source.find(marker);
+    if (position == std::string::npos) {
+        failure = "topology specialization marker is missing from Metal source";
+        return false;
+    }
+    specialized_source.replace(position, std::strlen(marker), body);
+    if (config.sdf_stitched_surface != 0u) {
+        constexpr const char *surface_marker =
+            "    // FPT_TOPOLOGY_SPECIALIZED_SURFACE_BODY\n"
+            "    return programSurfaceInterpreted(source, cfg);";
+        const size_t surface_position = specialized_source.find(surface_marker);
+        if (surface_position == std::string::npos) {
+            failure = "topology-specialized surface marker is missing from Metal source";
+            return false;
+        }
+        specialized_source.replace(
+            surface_position, std::strlen(surface_marker), surface_body);
+    }
+    return true;
+}
+
+bool generate_dual_topology_specialized_source(
+    const char *shader_source,
+    size_t shader_source_len,
+    const FptRenderConfig &source_config,
+    std::string &specialized_source,
+    std::string &failure) {
+    FptRenderConfig generated = source_config;
+    generated.sdf_stitched_surface = 1u;
+    if (!generate_topology_specialized_source(
+            shader_source, shader_source_len, generated,
+            specialized_source, failure)) {
+        return false;
+    }
+    const std::string single = "#define FPT_TOPOLOGY_GENERATED_SURFACE 1\n";
+    const size_t macro = specialized_source.find(single);
+    if (macro == std::string::npos) {
+        failure = "dual topology source is missing the generated-surface macro";
+        return false;
+    }
+    specialized_source.replace(
+        macro, single.size(), "#define FPT_TOPOLOGY_DUAL_SURFACE 1\n");
+    return true;
+}
+
+bool extract_metal_braced_block(
+    const std::string &source,
+    size_t declaration,
+    std::string &block,
+    std::string &failure) {
+    const size_t open = source.find('{', declaration);
+    if (open == std::string::npos) {
+        failure = "generated Metal declaration has no body";
+        return false;
+    }
+    uint32_t depth = 0u;
+    for (size_t index = open; index < source.size(); ++index) {
+        if (source[index] == '{') {
+            ++depth;
+        } else if (source[index] == '}' && --depth == 0u) {
+            block = source.substr(open, index - open + 1u);
+            return true;
+        }
+    }
+    failure = "generated Metal declaration has an unterminated body";
+    return false;
+}
+
+bool generate_tiny_linked_topology_source(
+    const char *shader_source,
+    size_t shader_source_len,
+    const FptRenderConfig &source_config,
+    std::string &tiny_source,
+    std::string &failure) {
+    // Reuse the production code generator, then retain only its two evaluator
+    // bodies plus the ABI types needed by the precompiled stitch host. This
+    // deliberately excludes all kernels, integrators, materials, and voxel
+    // code from the runtime compilation unit.
+    FptRenderConfig generated = source_config;
+    const bool analytic_surface = generated.sdf_stitched_surface != 0u;
+    std::string full_source;
+    if (!generate_topology_specialized_source(
+            shader_source, shader_source_len, generated,
+            full_source, failure)) {
+        return false;
+    }
+
+    const std::string source_text(shader_source, shader_source_len);
+    const size_t config_declaration = source_text.find("struct FptRenderConfig");
+    std::string config_block;
+    if (config_declaration == std::string::npos ||
+        !extract_metal_braced_block(
+            source_text, config_declaration, config_block, failure)) {
+        if (failure.empty()) failure = "FptRenderConfig is missing from Metal source";
+        return false;
+    }
+    const size_t config_open = source_text.find('{', config_declaration);
+    const size_t config_end = source_text.find(';',
+        config_open + config_block.size());
+    if (config_end == std::string::npos) {
+        failure = "FptRenderConfig declaration is unterminated";
+        return false;
+    }
+
+    const size_t distance_declaration = full_source.find(
+        "static float deTopologySpecializedDistance(");
+    std::string distance_body;
+    if (distance_declaration == std::string::npos ||
+        !extract_metal_braced_block(
+            full_source, distance_declaration, distance_body, failure)) {
+        if (failure.empty()) failure = "generated distance helper is missing";
+        return false;
+    }
+
+    std::string surface_body;
+    if (analytic_surface) {
+        const size_t surface_declaration = full_source.find(
+            "ProgramSurface deTopologySpecializedSurface(");
+        if (surface_declaration == std::string::npos ||
+            !extract_metal_braced_block(
+                full_source, surface_declaration, surface_body, failure)) {
+            if (failure.empty()) failure = "generated surface helper is missing";
+            return false;
+        }
+    }
+
+    tiny_source.assign(source_text, 0u, config_end + 1u);
+    tiny_source += "\nstruct ProgramSurface { float distance; float3 gradient; };\n";
+    tiny_source += "[[visible]] float deTopologyStitchedDistance("
+        "float3 source, constant FptRenderConfig &cfg) ";
+    tiny_source += distance_body;
+    tiny_source += "\n[[visible]] ProgramSurface deTopologyStitchedSurface("
+        "float3 source, constant FptRenderConfig &cfg) ";
+    if (analytic_surface) {
+        tiny_source += surface_body;
+    } else {
+        tiny_source += "{ ProgramSurface surface = {"
+            "deTopologyStitchedDistance(source, cfg), float3(0.0f)}; "
+            "return surface; }";
+    }
+    tiny_source += "\n";
+    return true;
 }
 
 NSString *ns_string(const char *path) {
@@ -55,10 +1404,198 @@ MTLSize groups_for_extent(uint32_t width, uint32_t height, MTLSize threads) {
                        1u);
 }
 
+bool render_preview_buffer(id<MTLCommandQueue> queue,
+                           id<MTLComputePipelineState> pipeline,
+                           id<MTLBuffer> output,
+                           id<MTLBuffer> config,
+                           uint32_t width,
+                           uint32_t height,
+                           double *elapsed_ms,
+                           std::string &failure) {
+    NSDate *start = [NSDate date];
+    id<MTLCommandBuffer> command = [queue commandBuffer];
+    id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
+    if (!command || !encoder) {
+        failure = "failed to create preview validation command encoder";
+        return false;
+    }
+    [encoder setComputePipelineState:pipeline];
+    [encoder setBuffer:output offset:0 atIndex:0];
+    [encoder setBuffer:config offset:0 atIndex:1];
+    MTLSize threads = threadgroup_for_pipeline(pipeline);
+    MTLSize groups = groups_for_extent(width, height, threads);
+    [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads];
+    [encoder endEncoding];
+    [command commit];
+    [command waitUntilCompleted];
+    if (command.status == MTLCommandBufferStatusError) {
+        failure = "preview validation render failed: " + std::string(
+            command.error.localizedDescription.UTF8String ?: "unknown error");
+        return false;
+    }
+    if (elapsed_ms) {
+        const double gpu_ms = command_buffer_gpu_ms(command);
+        *elapsed_ms = gpu_ms > 0.0 ? gpu_ms : -[start timeIntervalSinceNow] * 1000.0;
+    }
+    return true;
+}
+
+double median_time(std::vector<double> values) {
+    std::sort(values.begin(), values.end());
+    return values[values.size() / 2u];
+}
+
+FptRenderConfig generated_topology_config(
+    const FptRenderConfig &source,
+    bool analytic_surface) {
+    FptRenderConfig generated = source;
+    generated.sdf_typed_soa = {};
+    generated.sdf_flat_union_count = 0u;
+    generated.sdf_function_stitching = 0u;
+    generated.sdf_topology_specialization = 1u;
+    generated.sdf_runtime_source_bytecode = 0u;
+    generated.sdf_stitched_surface = analytic_surface ? 1u : 0u;
+    generated.sdf_stitch_validation = 0u;
+    generated.sdf_stitch_distance_only = FPT_SDF_STITCH_STATE_FULL;
+    generated.sdf_stitch_split_graph = 0u;
+    generated.sdf_stitch_fusion = 0u;
+    return generated;
+}
+
+NSData *procedural_topology_key(const FptRenderConfig &config,
+                                NSString *function_name) {
+    NSMutableData *key = [NSMutableData data];
+    const char tag[] = "fpt-metal-preview-topology-v8";
+    [key appendBytes:tag length:sizeof(tag)];
+    const uint32_t header[] = {
+        config.sdf_id,
+        config.sdf_program_count,
+        config.sdf_topology_specialization,
+        config.sdf_function_stitching,
+        config.sdf_stitched_surface,
+        config.sdf_stitch_distance_only,
+        config.sdf_stitch_split_graph,
+        config.sdf_stitch_fusion,
+        config.sdf_geometry_split,
+    };
+    [key appendBytes:header length:sizeof(header)];
+    const uint32_t instruction_count = std::min<uint32_t>(
+        config.sdf_program_count, FPT_SDF_PROGRAM_MAX_OPS);
+    for (uint32_t index = 0u; index < instruction_count; ++index) {
+        const uint32_t topology[] = {
+            config.sdf_program[index].opcode,
+            config.sdf_program[index].flags,
+        };
+        [key appendBytes:topology length:sizeof(topology)];
+    }
+    NSData *function_data = [function_name dataUsingEncoding:NSUTF8StringEncoding];
+    if (function_data) [key appendData:function_data];
+    return key;
+}
+
+NSData *procedural_workload_key(const FptRenderConfig &config) {
+    NSMutableData *key = [NSMutableData data];
+    const char tag[] = "fpt-metal-preview-workload-v8";
+    [key appendBytes:tag length:sizeof(tag)];
+    // FptRenderConfig is zero-initialized POD. The complete snapshot is a
+    // deliberately conservative workload identity: it includes material,
+    // bounce, roulette, camera, lighting, and numeric geometry state.
+    [key appendBytes:&config length:sizeof(config)];
+    return key;
+}
+
+bool build_generated_topology_pipeline(
+    id<MTLDevice> device,
+    const std::string &shader_source,
+    const FptRenderConfig &config,
+    NSString *function_name,
+    id<MTLComputePipelineState> __strong *pipeline,
+    bool *cache_hit,
+    std::string &failure) {
+    std::string generated_source;
+    if (!generate_topology_specialized_source(
+            shader_source.data(), shader_source.size(), config,
+            generated_source, failure)) {
+        return false;
+    }
+    NSString *metal_source = [[NSString alloc]
+        initWithBytes:generated_source.data()
+               length:generated_source.size()
+             encoding:NSUTF8StringEncoding];
+    if (!metal_source) {
+        failure = "failed to decode generated Metal source";
+        return false;
+    }
+    NSError *library_error = nil;
+    id<MTLLibrary> library = compile_runtime_source_library(
+        device, metal_source, cache_hit, &library_error);
+    if (!library) {
+        failure = "generated Metal compilation failed: " + std::string(
+            library_error.localizedDescription.UTF8String ?: "unknown error");
+        return false;
+    }
+    id<MTLFunction> function = [library newFunctionWithName:function_name];
+    NSError *pipeline_error = nil;
+    *pipeline = function
+        ? [device newComputePipelineStateWithFunction:function error:&pipeline_error]
+        : nil;
+    if (!*pipeline) {
+        failure = "generated Metal pipeline failed: " + std::string(
+            pipeline_error.localizedDescription.UTF8String ?: "kernel missing");
+        return false;
+    }
+    return true;
+}
+
 struct FptAccumulationChunkCpp {
     uint32_t start_sample;
     uint32_t sample_count;
 };
+
+struct RegionalProgramHeaderCpp {
+    uint32_t instruction_offset;
+    uint32_t instruction_count;
+    uint32_t primitive_offset;
+    uint32_t primitive_count;
+};
+
+struct RegionalProgramValidationCountsCpp {
+    uint32_t sampled_distance_failures;
+};
+
+struct RegionalProgramProofCpp {
+    uint32_t flags;
+    uint32_t pruned_primitives;
+};
+
+struct RegionalProgramLocalStatsCpp {
+    uint32_t distance_evaluations[3];
+    uint32_t atlas_evaluations[3];
+    uint32_t full_program_evaluations[3];
+    uint32_t cell_entries[3];
+    uint32_t same_cell_reuses[3];
+    uint32_t same_program_reuses[3];
+    uint32_t program_id_loads[3];
+    uint32_t header_loads[3];
+    uint32_t dynamic_instructions[3];
+    uint32_t profiled_paths;
+};
+
+enum RegionalProgramProofFlagCpp : uint32_t {
+    RegionalProofStrictDominanceCpp = 1u << 0u,
+    RegionalProofRepeatSeamFallbackCpp = 1u << 1u,
+    RegionalProofUnsupportedFallbackCpp = 1u << 2u,
+    RegionalProofInvalidPrimitiveFallbackCpp = 1u << 3u,
+    RegionalProofNoPrimitiveFallbackCpp = 1u << 4u,
+    RegionalProofNoDominanceCpp = 1u << 5u,
+};
+
+static_assert(sizeof(RegionalProgramHeaderCpp) == 16u,
+              "RegionalProgramHeader layout must match Metal");
+static_assert(sizeof(RegionalProgramProofCpp) == 8u,
+              "RegionalProgramProof layout must match Metal");
+static_assert(sizeof(RegionalProgramLocalStatsCpp) == 112u,
+              "RegionalProgramLocalStats layout must match Metal");
 
 struct VoxelCellCpp {
     uint32_t packed_color;
@@ -72,8 +1609,20 @@ struct VoxelStorageResult {
     __strong id<MTLBuffer> cells = nil;
     __strong id<MTLBuffer> page_table = nil;
     uint32_t active_bricks = 0u;
+    uint64_t active_cells = 0u;
     uint64_t resident_bytes = 0u;
+    uint32_t rejected_bricks = 0u;
+    bool overflow = false;
 };
+
+struct VoxelBuildStateCpp {
+    uint32_t next_page;
+    uint32_t overflow;
+    uint32_t active_cells;
+    uint32_t rejected_bricks;
+};
+
+static_assert(sizeof(VoxelBuildStateCpp) == 16u, "VoxelBuildState layout must match Metal");
 
 VoxelStorageResult finalize_voxel_storage(id<MTLDevice> device,
                                           const FptRenderConfig &config,
@@ -87,6 +1636,11 @@ VoxelStorageResult finalize_voxel_storage(id<MTLDevice> device,
                                                 length:sizeof(zero)
                                                options:MTLResourceStorageModeShared];
         result.resident_bytes = dense_cells.length + result.page_table.length;
+        const auto *dense = static_cast<const VoxelCellCpp *>(dense_cells.contents);
+        const size_t cell_count = static_cast<size_t>(resolution) * resolution * resolution;
+        for (size_t index = 0u; index < cell_count; ++index) {
+            result.active_cells += (dense[index].packed_color & 0x80000000u) != 0u ? 1u : 0u;
+        }
         return result;
     }
 
@@ -157,12 +1711,66 @@ VoxelStorageResult finalize_voxel_storage(id<MTLDevice> device,
                                                        static_cast<size_t>(z) * resolution * resolution;
                             const size_t local = lx + ly * brick_size + lz * brick_size * brick_size;
                             compact[(static_cast<size_t>(compact_page) - 1u) * brick_voxels + local] = dense[dense_index];
+                            result.active_cells +=
+                                (dense[dense_index].packed_color & 0x80000000u) != 0u ? 1u : 0u;
                         }
                     }
                 }
             }
         }
     }
+    result.resident_bytes = result.cells.length + result.page_table.length;
+    return result;
+}
+
+VoxelStorageResult build_direct_voxel_storage(id<MTLDevice> device,
+                                              id<MTLCommandQueue> queue,
+                                              id<MTLComputePipelineState> pipeline,
+                                              id<MTLBuffer> config_buffer,
+                                              const FptRenderConfig &config) {
+    VoxelStorageResult result;
+    constexpr uint64_t brick_bytes = 64u * sizeof(VoxelCellCpp);
+    const uint32_t brick_grid = (config.voxel_resolution + 3u) / 4u;
+    const uint64_t page_count = static_cast<uint64_t>(brick_grid) * brick_grid * brick_grid;
+    const uint64_t page_bytes = page_count * sizeof(uint32_t);
+    const uint64_t memory_budget = config.voxel_resolution >= 512u
+        ? 480u * 1024u * 1024u
+        : page_bytes + page_count * brick_bytes;
+    const uint64_t available = memory_budget > page_bytes ? memory_budget - page_bytes : brick_bytes;
+    const uint32_t page_capacity = static_cast<uint32_t>(std::max<uint64_t>(
+        1u, std::min<uint64_t>(page_count, available / brick_bytes)));
+
+    result.cells = [device newBufferWithLength:static_cast<size_t>(page_capacity) * brick_bytes
+                                       options:MTLResourceStorageModeShared];
+    result.page_table = [device newBufferWithLength:static_cast<size_t>(page_bytes)
+                                            options:MTLResourceStorageModeShared];
+    const VoxelBuildStateCpp zero_state = {};
+    id<MTLBuffer> state_buffer = [device newBufferWithBytes:&zero_state
+                                                     length:sizeof(zero_state)
+                                                    options:MTLResourceStorageModeShared];
+    if (!result.cells || !result.page_table || !state_buffer) return {};
+    std::memset(result.page_table.contents, 0, result.page_table.length);
+
+    id<MTLCommandBuffer> command = [queue commandBuffer];
+    id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
+    [encoder setComputePipelineState:pipeline];
+    [encoder setBuffer:result.cells offset:0 atIndex:0];
+    [encoder setBuffer:result.page_table offset:0 atIndex:1];
+    [encoder setBuffer:state_buffer offset:0 atIndex:2];
+    [encoder setBuffer:config_buffer offset:0 atIndex:3];
+    [encoder setBytes:&page_capacity length:sizeof(page_capacity) atIndex:4];
+    [encoder dispatchThreadgroups:MTLSizeMake(brick_grid, brick_grid, brick_grid)
+             threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+    [encoder endEncoding];
+    [command commit];
+    [command waitUntilCompleted];
+    if (command.status == MTLCommandBufferStatusError) return {};
+
+    const auto *state = static_cast<const VoxelBuildStateCpp *>(state_buffer.contents);
+    result.overflow = state->overflow != 0u || state->next_page > page_capacity;
+    result.active_bricks = std::min(state->next_page, page_capacity);
+    result.active_cells = state->active_cells;
+    result.rejected_bricks = state->rejected_bricks;
     result.resident_bytes = result.cells.length + result.page_table.length;
     return result;
 }
@@ -262,32 +1870,64 @@ struct FptSdfProfileConfigCpp {
 
 struct FptSdfProfileCountsCpp {
     uint32_t primary_steps;
+    uint32_t secondary_steps;
     uint32_t shadow_steps;
     uint32_t normal_evals;
     uint32_t bounces;
     uint32_t pixels;
 };
 
+struct BoundGridLocalStatsCpp {
+    uint32_t macro_cells[3];
+    uint32_t certified_skips[3];
+    uint32_t candidate_intervals[3];
+    uint32_t candidate_misses[3];
+    uint32_t candidate_hits[3];
+    uint32_t unknown_intervals[3];
+    uint32_t field_evaluations[3];
+    uint32_t directional_steps[3];
+    uint32_t cell_exit_clamps[3];
+    uint32_t unknown_derivative_intervals[3];
+    uint32_t profiled_paths;
+};
+
+struct BoundGridValidationCountsCpp {
+    uint32_t certified_cells;
+    uint32_t unknown_cells;
+    uint32_t sampled_bound_failures;
+    uint32_t sampled_false_skips;
+    uint32_t certified_derivative_cells;
+    uint32_t unknown_derivative_cells;
+    uint32_t sampled_derivative_failures;
+};
+
+static_assert(sizeof(BoundGridLocalStatsCpp) == 124u,
+              "Metal/C++ bound-grid profile layout mismatch");
+
 NSString *format_sdf_work_breakdown(const FptSdfProfileCountsCpp &counts,
                                     double sample_gpu_ms,
                                     const FptRenderConfig &config) {
     const double primary_units = static_cast<double>(counts.primary_steps);
+    const double secondary_units = static_cast<double>(counts.secondary_steps);
     const double shadow_units = static_cast<double>(counts.shadow_steps);
     const bool program_gradient = config.sdf_id == FPT_SDF_PROGRAM &&
                                   (config.sdf_normal_mode == 0u || config.sdf_normal_mode == 2u);
     const double normal_cost = program_gradient ? 1.0 : (config.sdf_normal_mode == 1u ? 4.0 : 6.0);
     const double normal_units = static_cast<double>(counts.normal_evals) * normal_cost;
     const double bounce_units = static_cast<double>(counts.bounces);
-    const double total_units = primary_units + shadow_units + normal_units + bounce_units;
+    const double total_units = primary_units + secondary_units + shadow_units +
+                               normal_units + bounce_units;
     if (sample_gpu_ms <= 0.0 || total_units <= 0.0 || counts.pixels == 0u) {
         return @"SDF work est: profiling...";
     }
     const double primary_ms = sample_gpu_ms * primary_units / total_units;
+    const double secondary_ms = sample_gpu_ms * secondary_units / total_units;
     const double shadow_ms = sample_gpu_ms * shadow_units / total_units;
     const double normal_ms = sample_gpu_ms * normal_units / total_units;
     const double bounce_ms = sample_gpu_ms * bounce_units / total_units;
-    return [NSString stringWithFormat:@"SDF est: primary %.2f ms, shadow %.2f ms, normal %.2f ms, bounce %.2f ms",
+    return [NSString stringWithFormat:@"SDF est: primary %.2f ms, secondary %.2f ms, shadow %.2f ms, normal %.2f ms, bounce %.2f ms",
             primary_ms,
+            secondary_ms,
             shadow_ms,
             normal_ms,
             bounce_ms];
@@ -723,14 +2363,22 @@ double low_frequency_luminance_ssim(const Image &baseline, const Image &candidat
 @interface FPTPreviewController : NSObject <NSWindowDelegate> {
 @public
     std::vector<FptRenderConfig> _sceneConfigs;
+    std::vector<std::string> _stitchArchivePaths;
+    std::string _shaderSource;
     uint32_t _sceneIndex;
+    uint64_t _jitGeneration;
     CVDisplayLinkRef _displayLink;
     std::atomic_bool _displayTickPending;
 }
 @property(nonatomic) struct FptRenderConfig config;
 @property(nonatomic, strong) id<MTLDevice> device;
 @property(nonatomic, strong) id<MTLCommandQueue> queue;
+@property(nonatomic, strong) id<MTLLibrary> fallbackLibrary;
+@property(nonatomic, strong) id<MTLLibrary> stitchHostLibrary;
+@property(nonatomic, strong) id<MTLComputePipelineState> fallbackPipeline;
 @property(nonatomic, strong) id<MTLComputePipelineState> pipeline;
+@property(nonatomic, strong) NSCache<NSData *, id<MTLComputePipelineState>> *sceneJitPipelineCache;
+@property(nonatomic, strong) NSCache<NSData *, NSString *> *sceneJitLabelCache;
 @property(nonatomic, strong) id<MTLComputePipelineState> presentPipeline;
 @property(nonatomic, strong) id<MTLComputePipelineState> profilePipeline;
 @property(nonatomic, strong) id<MTLComputePipelineState> voxelBuildPipeline;
@@ -748,6 +2396,9 @@ double low_frequency_luminance_ssim(const Image &baseline, const Image &candidat
 @property(nonatomic) BOOL needsRender;
 @property(nonatomic) BOOL accumulationComplete;
 @property(nonatomic, copy) NSString *sdfWorkBreakdown;
+@property(nonatomic, copy) NSString *jitStatus;
+@property(nonatomic) double jitBuildMs;
+@property(nonatomic, strong) dispatch_queue_t jitQueue;
 @property(nonatomic) double voxelBuildMs;
 @property(nonatomic) uint32_t voxelActiveBricks;
 @property(nonatomic) uint64_t voxelResidentBytes;
@@ -764,6 +2415,10 @@ double low_frequency_luminance_ssim(const Image &baseline, const Image &candidat
                     sceneCount:(uint32_t)sceneCount
                     sceneIndex:(uint32_t)sceneIndex
                       metallib:(NSString *)metallib
+               stitchMetallib:(NSString *)stitchMetallib
+            stitchArchivePaths:(const char *const *)stitchArchivePaths
+                  shaderSource:(const char *)shaderSource
+            shaderSourceLength:(size_t)shaderSourceLength
                          error:(NSError **)error;
 - (void)run;
 - (BOOL)setMovementKey:(unichar)key down:(BOOL)down;
@@ -773,6 +2428,7 @@ double low_frequency_luminance_ssim(const Image &baseline, const Image &candidat
 - (void)displayLinkTick;
 - (void)renderFrame;
 - (BOOL)rebuildVoxelField;
+- (void)requestProceduralPipeline;
 - (void)updateSdfProfileWithConfigBuffer:(id<MTLBuffer>)cfgBuffer
                            sampleGpuTime:(double)sampleGpuMs
                                     frame:(uint32_t)frame
@@ -863,16 +2519,31 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
                     sceneCount:(uint32_t)sceneCount
                     sceneIndex:(uint32_t)sceneIndex
                       metallib:(NSString *)metallib
+               stitchMetallib:(NSString *)stitchMetallib
+            stitchArchivePaths:(const char *const *)stitchArchivePaths
+                  shaderSource:(const char *)shaderSource
+            shaderSourceLength:(size_t)shaderSourceLength
                          error:(NSError **)error {
     self = [super init];
     if (!self) return nil;
     _displayLink = nullptr;
     _displayTickPending.store(false);
+    _jitGeneration = 0u;
+    _jitQueue = dispatch_queue_create("com.fpt-metal.procedural-jit",
+                                      DISPATCH_QUEUE_SERIAL);
     _needsRender = YES;
     _accumulationComplete = NO;
     _config = *config;
+    if (shaderSource && shaderSourceLength > 0u) {
+        _shaderSource.assign(shaderSource, shaderSourceLength);
+    }
     if (sceneConfigs && sceneCount > 0u) {
         _sceneConfigs.assign(sceneConfigs, sceneConfigs + sceneCount);
+        _stitchArchivePaths.reserve(sceneCount);
+        for (uint32_t index = 0u; index < sceneCount; ++index) {
+            const char *path = stitchArchivePaths ? stitchArchivePaths[index] : nullptr;
+            _stitchArchivePaths.emplace_back(path ? path : "");
+        }
         char hdriError[512] = {};
         for (FptRenderConfig &sceneConfig : _sceneConfigs) {
             if (!hydrate_hdri_config(sceneConfig, hdriError, sizeof(hdriError))) {
@@ -889,6 +2560,8 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
             return nil;
         }
         _sceneConfigs.push_back(_config);
+        const char *path = stitchArchivePaths ? stitchArchivePaths[0] : nullptr;
+        _stitchArchivePaths.emplace_back(path ? path : "");
         _sceneIndex = 0u;
     }
     _device = MTLCreateSystemDefaultDevice();
@@ -898,6 +2571,7 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
     }
     id<MTLLibrary> library = [_device newLibraryWithURL:[NSURL fileURLWithPath:metallib] error:error];
     if (!library) return nil;
+    _fallbackLibrary = library;
     const bool useVoxels = _config.renderer_backend == FPT_RENDERER_VOXEL;
     NSString *functionName = useVoxels
         ? (_config.preview ? @"voxel_preview_linear_kernel" : @"voxel_accumulate_kernel")
@@ -907,8 +2581,20 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
         if (error) *error = [NSError errorWithDomain:@"FPTMetal" code:2 userInfo:@{NSLocalizedDescriptionKey: @"preview compute kernel not found"}];
         return nil;
     }
-    _pipeline = [_device newComputePipelineStateWithFunction:function error:error];
-    if (!_pipeline) return nil;
+    _fallbackPipeline = [_device newComputePipelineStateWithFunction:function error:error];
+    if (!_fallbackPipeline) return nil;
+    _pipeline = _fallbackPipeline;
+    _sceneJitPipelineCache = [NSCache new];
+    _sceneJitPipelineCache.countLimit = 32u;
+    _sceneJitLabelCache = [NSCache new];
+    _sceneJitLabelCache.countLimit = 32u;
+    if (_config.sdf_function_stitching == 1u ||
+        _config.sdf_function_stitching == 2u) {
+        _stitchHostLibrary = [_device
+            newLibraryWithURL:[NSURL fileURLWithPath:stitchMetallib]
+                        error:error];
+        if (!_stitchHostLibrary) return nil;
+    }
     id<MTLFunction> presentFunction = [library newFunctionWithName:@"present_kernel"];
     if (!presentFunction) {
         if (error) *error = [NSError errorWithDomain:@"FPTMetal" code:4 userInfo:@{NSLocalizedDescriptionKey: @"present_kernel not found"}];
@@ -967,7 +2653,332 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
     _sdfWorkBreakdown = useVoxels
         ? @"Voxel field: persistent"
         : (_config.sdf_profile != 0u ? @"SDF est: profiling..." : @"SDF profile: disabled (--sdf-profile)");
+    _jitStatus = _config.sdf_function_stitching != 0u
+        ? @"Procedural JIT: queued; optimized bytecode active"
+        : @"Procedural JIT: disabled";
+    [self requestProceduralPipeline];
     return self;
+}
+
+- (void)requestProceduralPipeline {
+    _jitGeneration += 1u;
+    const uint64_t generation = _jitGeneration;
+    self.pipeline = self.fallbackPipeline;
+    self.jitBuildMs = 0.0;
+
+    const FptRenderConfig requested = self.config;
+    const bool automatic = requested.sdf_function_stitching == 3u;
+    const bool generated = requested.sdf_topology_specialization != 0u;
+    const bool stitched = requested.sdf_function_stitching == 1u ||
+        requested.sdf_function_stitching == 2u;
+    if (requested.renderer_backend != FPT_RENDERER_SDF ||
+        (!automatic && !generated && !stitched)) {
+        self.jitStatus = @"Procedural JIT: disabled; optimized bytecode active";
+        return;
+    }
+    if (requested.sdf_id != FPT_SDF_PROGRAM ||
+        requested.sdf_program_count == 0u) {
+        self.jitStatus = @"Procedural JIT: unsupported scene; optimized bytecode active";
+        return;
+    }
+    if (!self.jitQueue || ((automatic || generated) && _shaderSource.empty()) ||
+        (stitched && !self.stitchHostLibrary)) {
+        self.jitStatus = @"Procedural JIT: unavailable; optimized bytecode active";
+        return;
+    }
+    NSString *functionName = requested.preview != 0u
+        ? @"preview_linear_kernel" : @"accumulate_kernel";
+    NSData *requestKey = automatic
+        ? procedural_workload_key(requested)
+        : procedural_topology_key(requested, functionName);
+    id<MTLComputePipelineState> cachedPipeline =
+        [self.sceneJitPipelineCache objectForKey:requestKey];
+    if (cachedPipeline) {
+        NSString *cachedLabel = [self.sceneJitLabelCache objectForKey:requestKey]
+            ?: @"specialized";
+        self.pipeline = cachedPipeline;
+        self.jitStatus = [NSString stringWithFormat:
+            @"Procedural JIT: context cache hit; %@ pipeline active",
+            cachedLabel];
+        return;
+    }
+
+    const std::string archivePath = _sceneIndex < _stitchArchivePaths.size()
+        ? _stitchArchivePaths[_sceneIndex] : std::string();
+    id<MTLDevice> device = self.device;
+    id<MTLLibrary> stitchHostLibrary = self.stitchHostLibrary;
+    id<MTLComputePipelineState> fallbackPipeline = self.fallbackPipeline;
+    id<MTLCommandQueue> commandQueue = self.queue;
+    const std::string shaderSource = _shaderSource;
+    dispatch_queue_t jitQueue = self.jitQueue;
+    __weak FPTPreviewController *weakSelf = self;
+    self.jitStatus = @"Procedural JIT: compiling; optimized bytecode active";
+
+    dispatch_async(jitQueue, ^{
+        @autoreleasepool {
+            NSDate *start = [NSDate date];
+            std::string failure;
+            NSError *pipelineError = nil;
+            id<MTLComputePipelineState> pipeline = nil;
+            NSString *selectedBackend = nil;
+            bool cacheHit = false;
+            bool populateArchive = false;
+
+            if (automatic || generated) {
+                FptRenderConfig distanceConfig = generated_topology_config(
+                    requested, false);
+                FptRenderConfig surfaceConfig = generated_topology_config(
+                    requested, true);
+                id<MTLComputePipelineState> distancePipeline = nil;
+                id<MTLComputePipelineState> surfacePipeline = nil;
+                bool distanceCacheHit = false;
+                bool surfaceCacheHit = false;
+                if (generated) {
+                    const bool analyticSurface =
+                        requested.sdf_stitched_surface != 0u;
+                    const bool built = build_generated_topology_pipeline(
+                        device, shaderSource,
+                        analyticSurface ? surfaceConfig : distanceConfig,
+                        functionName, &pipeline, &cacheHit, failure);
+                    if (built) {
+                        selectedBackend = analyticSurface
+                            ? @"generated surface" : @"generated distance";
+                    }
+                } else {
+                    const bool distanceBuilt = build_generated_topology_pipeline(
+                        device, shaderSource, distanceConfig, functionName,
+                        &distancePipeline, &distanceCacheHit, failure);
+                    const bool surfaceBuilt = distanceBuilt &&
+                        build_generated_topology_pipeline(
+                            device, shaderSource, surfaceConfig, functionName,
+                            &surfacePipeline, &surfaceCacheHit, failure);
+                    cacheHit = distanceCacheHit && surfaceCacheHit;
+                    if (distanceBuilt && surfaceBuilt && requested.preview != 0u) {
+                    FptRenderConfig probeConfig = requested;
+                    probeConfig.preview = 1u;
+                    probeConfig.width = std::min<uint32_t>(requested.width, 1920u);
+                    probeConfig.height = std::max<uint32_t>(1u,
+                        static_cast<uint32_t>(
+                            static_cast<uint64_t>(requested.height) *
+                            probeConfig.width /
+                            std::max<uint32_t>(requested.width, 1u)));
+                    distanceConfig.width = probeConfig.width;
+                    distanceConfig.height = probeConfig.height;
+                    distanceConfig.preview = 1u;
+                    surfaceConfig.width = probeConfig.width;
+                    surfaceConfig.height = probeConfig.height;
+                    surfaceConfig.preview = 1u;
+                    const size_t outputBytes = static_cast<size_t>(
+                        probeConfig.width) * probeConfig.height * 4u * sizeof(float);
+                    id<MTLBuffer> directOutput = [device
+                        newBufferWithLength:outputBytes
+                                     options:MTLResourceStorageModeShared];
+                    id<MTLBuffer> distanceOutput = [device
+                        newBufferWithLength:outputBytes
+                                     options:MTLResourceStorageModeShared];
+                    id<MTLBuffer> surfaceOutput = [device
+                        newBufferWithLength:outputBytes
+                                     options:MTLResourceStorageModeShared];
+                    id<MTLBuffer> directConfig = [device
+                        newBufferWithBytes:&probeConfig
+                                    length:sizeof(probeConfig)
+                                   options:MTLResourceStorageModeShared];
+                    id<MTLBuffer> distanceConfigBuffer = [device
+                        newBufferWithBytes:&distanceConfig
+                                    length:sizeof(distanceConfig)
+                                   options:MTLResourceStorageModeShared];
+                    id<MTLBuffer> surfaceConfigBuffer = [device
+                        newBufferWithBytes:&surfaceConfig
+                                    length:sizeof(surfaceConfig)
+                                   options:MTLResourceStorageModeShared];
+                    if (!directOutput || !distanceOutput || !surfaceOutput ||
+                        !directConfig || !distanceConfigBuffer ||
+                        !surfaceConfigBuffer) {
+                        failure = "failed to allocate automatic JIT probe buffers";
+                    } else {
+                        std::vector<double> directTimes;
+                        std::vector<double> distanceTimes;
+                        std::vector<double> surfaceTimes;
+                        bool probePassed = true;
+                        auto renderBackend = [&](uint32_t backend, bool record) {
+                            double elapsed = 0.0;
+                            id<MTLComputePipelineState> backendPipeline = backend == 0u
+                                ? fallbackPipeline
+                                : (backend == 1u ? distancePipeline : surfacePipeline);
+                            id<MTLBuffer> backendOutput = backend == 0u
+                                ? directOutput
+                                : (backend == 1u ? distanceOutput : surfaceOutput);
+                            id<MTLBuffer> backendConfig = backend == 0u
+                                ? directConfig
+                                : (backend == 1u ? distanceConfigBuffer : surfaceConfigBuffer);
+                            probePassed = render_preview_buffer(
+                                commandQueue, backendPipeline, backendOutput,
+                                backendConfig, probeConfig.width, probeConfig.height,
+                                &elapsed, failure);
+                            if (probePassed && record) {
+                                (backend == 0u ? directTimes
+                                    : (backend == 1u ? distanceTimes : surfaceTimes))
+                                    .push_back(elapsed);
+                            }
+                        };
+                        for (uint32_t backend = 0u;
+                             backend < 3u && probePassed; ++backend) {
+                            renderBackend(backend, false);
+                        }
+                        const uint32_t latinOrder[3][3] = {
+                            {0u, 1u, 2u}, {2u, 0u, 1u}, {1u, 2u, 0u}};
+                        for (uint32_t run = 0u; run < 3u && probePassed; ++run) {
+                            for (uint32_t slot = 0u; slot < 3u && probePassed; ++slot) {
+                                renderBackend(latinOrder[run % 3u][slot], true);
+                            }
+                        }
+                        const size_t components = outputBytes / sizeof(float);
+                        struct PreviewParity {
+                            double mean;
+                            float maximum;
+                            double outlier_fraction;
+                        };
+                        const auto parityError = [components](id<MTLBuffer> lhs,
+                                                              id<MTLBuffer> rhs) {
+                            const float *a = static_cast<const float *>(lhs.contents);
+                            const float *b = static_cast<const float *>(rhs.contents);
+                            double mean = 0.0;
+                            float maximum = 0.0f;
+                            size_t outliers = 0u;
+                            for (size_t index = 0u; index < components; ++index) {
+                                const float difference = std::abs(a[index] - b[index]);
+                                if (!std::isfinite(difference)) {
+                                    return PreviewParity{INFINITY, INFINITY, 1.0};
+                                }
+                                mean += difference;
+                                maximum = std::max(maximum, difference);
+                                outliers += difference > 1.0e-3f ? 1u : 0u;
+                            }
+                            return PreviewParity{
+                                mean / std::max<size_t>(components, 1u), maximum,
+                                static_cast<double>(outliers) /
+                                    std::max<size_t>(components, 1u)};
+                        };
+                        if (probePassed) {
+                            double directMs = median_time(directTimes);
+                            double distanceMs = median_time(distanceTimes);
+                            double surfaceMs = median_time(surfaceTimes);
+                            const auto nearGate = [](double ratio, double gate) {
+                                return std::abs(ratio / gate - 1.0) <= 0.05;
+                            };
+                            const bool adaptive =
+                                nearGate(directMs / distanceMs, 1.0 / 0.85) ||
+                                nearGate(directMs / surfaceMs, 1.0 / 0.85) ||
+                                nearGate(std::min(directMs, distanceMs) / surfaceMs,
+                                         1.10);
+                            if (adaptive) {
+                                for (uint32_t run = 3u;
+                                     run < 7u && probePassed; ++run) {
+                                    for (uint32_t slot = 0u;
+                                         slot < 3u && probePassed; ++slot) {
+                                        renderBackend(latinOrder[run % 3u][slot], true);
+                                    }
+                                }
+                                directMs = median_time(directTimes);
+                                distanceMs = median_time(distanceTimes);
+                                surfaceMs = median_time(surfaceTimes);
+                            }
+                            const auto distanceParity = parityError(
+                                directOutput, distanceOutput);
+                            const auto surfaceParity = parityError(
+                                directOutput, surfaceOutput);
+                            const bool distanceQualified =
+                                distanceParity.mean <= 1.0e-6 &&
+                                distanceParity.outlier_fraction <= 1.0e-5 &&
+                                directMs / distanceMs >= 1.0 / 0.85;
+                            const bool surfaceQualified =
+                                surfaceParity.mean <= 1.0e-6 &&
+                                surfaceParity.outlier_fraction <= 1.0e-5 &&
+                                directMs / surfaceMs >= 1.0 / 0.85;
+                            if (surfaceQualified &&
+                                (!distanceQualified ||
+                                 distanceMs / surfaceMs >= 1.10)) {
+                                pipeline = surfacePipeline;
+                                selectedBackend = @"generated surface";
+                            } else if (distanceQualified) {
+                                pipeline = distancePipeline;
+                                selectedBackend = @"generated distance";
+                            } else {
+                                pipeline = fallbackPipeline;
+                                selectedBackend = @"direct";
+                            }
+                        }
+                    }
+                    } else if (requested.preview == 0u) {
+                        failure = "automatic JIT probing requires viewport preview mode";
+                    }
+                }
+            } else {
+                id<MTLLibrary> stitchedLibrary = nil;
+                id<MTLFunction> distanceFunction = nil;
+                id<MTLFunction> surfaceFunction = nil;
+                id<MTLBinaryArchive> binaryArchive = nil;
+                bool built = build_topology_stitched_library(
+                    device, stitchHostLibrary, archivePath.c_str(), requested,
+                    &stitchedLibrary, &distanceFunction, &surfaceFunction,
+                    &binaryArchive, &populateArchive, failure);
+                if (built) {
+                    id<MTLFunction> function = [stitchHostLibrary
+                        newFunctionWithName:functionName];
+                    NSArray<id<MTLFunction>> *privateFunctions = @[
+                        distanceFunction, surfaceFunction];
+                    pipeline = function ? new_compute_pipeline(
+                        device, function, privateFunctions, binaryArchive,
+                        populateArchive, &pipelineError) : nil;
+                    selectedBackend = @"stitched";
+                    if (!pipeline && !pipelineError) {
+                        failure = "stitched preview kernel is missing";
+                    }
+                }
+                if (pipeline && populateArchive && binaryArchive &&
+                    !archivePath.empty()) {
+                    NSURL *archiveURL = [NSURL fileURLWithPath:
+                        [NSString stringWithUTF8String:archivePath.c_str()]];
+                    if (![binaryArchive serializeToURL:archiveURL
+                                                 error:&pipelineError]) {
+                        pipeline = nil;
+                    }
+                }
+            }
+            const double buildMs = -[start timeIntervalSinceNow] * 1000.0;
+            NSString *failureMessage = pipelineError
+                ? pipelineError.localizedDescription
+                : (failure.empty() ? @"unknown error" :
+                    [NSString stringWithUTF8String:failure.c_str()]);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                FPTPreviewController *controller = weakSelf;
+                if (!controller || controller->_jitGeneration != generation) return;
+                controller.jitBuildMs = buildMs;
+                if (!pipeline) {
+                    controller.pipeline = controller.fallbackPipeline;
+                    controller.jitStatus = [NSString stringWithFormat:
+                        @"Procedural JIT: failed (%@); optimized bytecode active",
+                        failureMessage];
+                    controller.needsRender = YES;
+                    return;
+                }
+                controller.pipeline = pipeline;
+                [controller.sceneJitPipelineCache setObject:pipeline
+                                                     forKey:requestKey];
+                [controller.sceneJitLabelCache
+                    setObject:(selectedBackend ?: @"specialized")
+                       forKey:requestKey];
+                controller.frameIndex = 0u;
+                controller.needsRender = YES;
+                controller.accumulationComplete = NO;
+                controller.jitStatus = [NSString stringWithFormat:
+                    @"Procedural JIT: %@ in %.2f ms; %@ pipeline active",
+                    (cacheHit || (stitched && !populateArchive))
+                        ? @"cache hit" : @"compiled",
+                    buildMs, selectedBackend ?: @"specialized"];
+            });
+        }
+    });
 }
 
 - (BOOL)rebuildVoxelField {
@@ -1100,6 +3111,7 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
     } else {
         self.sdfWorkBreakdown = self.config.sdf_profile != 0u ? @"SDF est: profiling..." : @"SDF profile: disabled (--sdf-profile)";
     }
+    [self requestProceduralPipeline];
     self.window.title = [NSString stringWithFormat:@"%@ - %@",
                          self.config.preview ? @"FPT Metal Preview" : @"FPT Metal Pathtrace Preview",
                          sdf_scene_name(self.config.sdf_id)];
@@ -1380,6 +3392,9 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
         : (self.config.sdf_profile != 0u
             ? [NSString stringWithFormat:@"%@\nBottleneck: %@", self.sdfWorkBreakdown ?: @"SDF est: profiling...", sdf_bottleneck_label(self.config)]
             : [NSString stringWithFormat:@"Bottleneck: %@", sdf_bottleneck_label(self.config)]));
+    if (self.config.renderer_backend != FPT_RENDERER_VOXEL && self.jitStatus) {
+        detail = [NSString stringWithFormat:@"%@\n%@", self.jitStatus, detail];
+    }
     self.hudLabel.stringValue = format_perf_hud(renderer,
                                                 breakdown,
                                                 format_cpu_breakdown(encode_ms, wait_ms, image_ms),
@@ -1411,13 +3426,516 @@ extern "C" int fpt_metal_device_name(char *name, size_t name_len) {
     }
 }
 
+extern "C" int fpt_test_voxel_dda(const char *metallib_path,
+                                   char *error,
+                                   size_t error_len) {
+    @autoreleasepool {
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        if (!device) {
+            set_error(error, error_len, "Metal is unavailable on this machine");
+            return 1;
+        }
+        NSError *ns_error = nil;
+        id<MTLLibrary> library = [device newLibraryWithURL:[NSURL fileURLWithPath:ns_string(metallib_path)]
+                                                     error:&ns_error];
+        if (!library) {
+            set_error(error, error_len, "failed to load DDA test metallib: %s",
+                      ns_error.localizedDescription.UTF8String);
+            return 1;
+        }
+        id<MTLFunction> function = [library newFunctionWithName:@"voxel_dda_contract_test"];
+        if (!function) {
+            set_error(error, error_len, "voxel_dda_contract_test not found in metallib");
+            return 1;
+        }
+        id<MTLComputePipelineState> pipeline = [device newComputePipelineStateWithFunction:function
+                                                                                       error:&ns_error];
+        if (!pipeline) {
+            set_error(error, error_len, "failed to create DDA test pipeline: %s",
+                      ns_error.localizedDescription.UTF8String);
+            return 1;
+        }
+        const uint32_t initial_mask = UINT32_MAX;
+        id<MTLBuffer> result = [device newBufferWithBytes:&initial_mask
+                                                   length:sizeof(initial_mask)
+                                                  options:MTLResourceStorageModeShared];
+        FptRenderConfig program_configs[12] = {};
+        for (FptRenderConfig &config : program_configs) {
+            config.sdf_id = FPT_SDF_PROGRAM;
+            config.voxel_surface_band = 0.5f;
+        }
+        auto append = [](FptRenderConfig &config, uint32_t opcode, uint32_t flags,
+                         float x, float y, float z, float w) {
+            FptSdfInstruction &instruction = config.sdf_program[config.sdf_program_count++];
+            instruction.opcode = opcode;
+            instruction.flags = flags;
+            instruction.data[0] = x;
+            instruction.data[1] = y;
+            instruction.data[2] = z;
+            instruction.data[3] = w;
+        };
+        append(program_configs[0], FPT_SDF_OP_SPHERE, 0u, 1.0f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[1], FPT_SDF_OP_BOX, 0u, 0.8f, 0.6f, 0.4f, 0.0f);
+        append(program_configs[2], FPT_SDF_OP_PLANE, 0u, 1.0f, 2.0f, -0.5f, 0.2f);
+        append(program_configs[3], FPT_SDF_OP_REPEAT, 0u, 4.0f, 4.0f, 4.0f, 0.0f);
+        append(program_configs[3], FPT_SDF_OP_SPHERE, 0u, 1.0f, 0.0f, 0.0f, 0.0f);
+
+        append(program_configs[4], FPT_SDF_OP_ABS, 0u, 0.0f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[4], FPT_SDF_OP_ROTATE_X, 0u, 0.31f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[4], FPT_SDF_OP_ROTATE_Y, 0u, -0.47f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[4], FPT_SDF_OP_ROTATE_Z, 0u, 0.19f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[4], FPT_SDF_OP_SCALE, 0u, 1.25f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[4], FPT_SDF_OP_TRANSLATE, 0u, 0.2f, -0.1f, 0.3f, 0.0f);
+        append(program_configs[4], FPT_SDF_OP_BOX, 0u, 1.0f, 0.8f, 0.6f, 0.0f);
+        append(program_configs[4], FPT_SDF_OP_SPHERE, 2u, 0.35f, 0.0f, 0.0f, 0.0f);
+
+        append(program_configs[5], FPT_SDF_OP_SPHERE, 0u, 1.0f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[5], FPT_SDF_OP_TRANSLATE, 0u, 0.5f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[5], FPT_SDF_OP_BOX, 1u, 0.7f, 0.7f, 0.7f, 0.0f);
+
+        append(program_configs[6], FPT_SDF_OP_SPHERE, 0u, 0.7f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[6], FPT_SDF_OP_TRANSLATE, 0u, 0.9f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[6], FPT_SDF_OP_SPHERE, 0u, 0.7f, 0.0f, 0.0f, 0.0f);
+
+        append(program_configs[7], FPT_SDF_OP_SORT_DESC, 0u, 0.0f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[7], FPT_SDF_OP_SPHERE, 0u, 1.0f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[8], FPT_SDF_OP_SORT_DESC, 0u, 0.0f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[8], FPT_SDF_OP_BOX, 0u, 0.9f, 0.55f, 0.3f, 0.0f);
+        program_configs[9].sdf_id = FPT_SDF_CAGE_FRACTAL;
+        program_configs[9].bound_grid_cage_bounds = 1u;
+        program_configs[9].set_values[2] = 0.25f;
+        program_configs[9].set_values[3] = 0.5f;
+        program_configs[9].set_values[4] = 0.2f;
+        program_configs[9].set_values[5] = 4.0f;
+        append(program_configs[10], FPT_SDF_OP_ROTATE_X, 0u, 0.31f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[10], FPT_SDF_OP_ROTATE_Y, 0u, -0.47f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[10], FPT_SDF_OP_ROTATE_Z, 0u, 0.19f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[10], FPT_SDF_OP_SCALE, 0u, -1.25f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[10], FPT_SDF_OP_TRANSLATE, 0u, 0.2f, -0.1f, 0.3f, 0.0f);
+        append(program_configs[10], FPT_SDF_OP_SPHERE, 0u, 0.9f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[10], FPT_SDF_OP_BOX, 2u, 0.25f, 0.35f, 0.2f, 0.0f);
+        append(program_configs[11], FPT_SDF_OP_ABS, 0u, 0.0f, 0.0f, 0.0f, 0.0f);
+        append(program_configs[11], FPT_SDF_OP_TRANSLATE, 0u, 0.65f, 0.35f, 0.2f, 0.0f);
+        append(program_configs[11], FPT_SDF_OP_SPHERE, 0u, 0.42f, 0.0f, 0.0f, 0.0f);
+        id<MTLBuffer> program_config_buffer =
+            [device newBufferWithBytes:program_configs
+                                length:sizeof(program_configs)
+                               options:MTLResourceStorageModeShared];
+        id<MTLCommandQueue> queue = [device newCommandQueue];
+        if (!result || !program_config_buffer || !queue) {
+            set_error(error, error_len, "failed to allocate DDA test resources");
+            return 1;
+        }
+        id<MTLCommandBuffer> command = [queue commandBuffer];
+        id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
+        [encoder setComputePipelineState:pipeline];
+        [encoder setBuffer:result offset:0 atIndex:0];
+        [encoder setBuffer:program_config_buffer offset:0 atIndex:1];
+        [encoder dispatchThreads:MTLSizeMake(1u, 1u, 1u)
+            threadsPerThreadgroup:MTLSizeMake(1u, 1u, 1u)];
+        [encoder endEncoding];
+        [command commit];
+        [command waitUntilCompleted];
+        if (command.status == MTLCommandBufferStatusError) {
+            set_error(error, error_len, "DDA contract command failed: %s",
+                      command.error.localizedDescription.UTF8String);
+            return 1;
+        }
+        const uint32_t failure_mask = *static_cast<const uint32_t *>(result.contents);
+        if (failure_mask != 0u) {
+            set_error(error, error_len, "DDA contract failure mask: 0x%08x", failure_mask);
+            return 1;
+        }
+
+        FptRenderConfig parity_config = program_configs[0];
+        parity_config.voxel_resolution = 32u;
+        parity_config.voxel_storage = FPT_VOXEL_STORAGE_SPARSE_BRICKS;
+        parity_config.voxel_coverage_mode = FPT_VOXEL_COVERAGE_INTERVAL;
+        parity_config.voxel_brick_rejection = 1u;
+        parity_config.voxel_bounds_min[0] = -2.0f;
+        parity_config.voxel_bounds_min[1] = -2.0f;
+        parity_config.voxel_bounds_min[2] = -2.0f;
+        parity_config.voxel_bounds_max[0] = 2.0f;
+        parity_config.voxel_bounds_max[1] = 2.0f;
+        parity_config.voxel_bounds_max[2] = 2.0f;
+        id<MTLBuffer> parity_config_buffer =
+            [device newBufferWithBytes:&parity_config
+                                length:sizeof(parity_config)
+                               options:MTLResourceStorageModeShared];
+        const size_t parity_cell_count = 32u * 32u * 32u;
+        id<MTLBuffer> dense_cells =
+            [device newBufferWithLength:parity_cell_count * sizeof(VoxelCellCpp)
+                                options:MTLResourceStorageModeShared];
+        id<MTLFunction> staging_function = [library newFunctionWithName:@"voxel_build_kernel"];
+        id<MTLFunction> direct_function =
+            [library newFunctionWithName:@"voxel_build_sparse_direct_kernel"];
+        id<MTLComputePipelineState> staging_pipeline = staging_function
+            ? [device newComputePipelineStateWithFunction:staging_function error:&ns_error]
+            : nil;
+        id<MTLComputePipelineState> direct_pipeline = direct_function
+            ? [device newComputePipelineStateWithFunction:direct_function error:&ns_error]
+            : nil;
+        if (!parity_config_buffer || !dense_cells || !staging_pipeline || !direct_pipeline) {
+            set_error(error, error_len, "failed to allocate direct-build parity resources");
+            return 1;
+        }
+        id<MTLCommandBuffer> parity_command = [queue commandBuffer];
+        id<MTLComputeCommandEncoder> parity_encoder = [parity_command computeCommandEncoder];
+        [parity_encoder setComputePipelineState:staging_pipeline];
+        [parity_encoder setBuffer:dense_cells offset:0 atIndex:0];
+        [parity_encoder setBuffer:parity_config_buffer offset:0 atIndex:1];
+        [parity_encoder dispatchThreads:MTLSizeMake(32u, 32u, 32u)
+                threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+        [parity_encoder endEncoding];
+        [parity_command commit];
+        [parity_command waitUntilCompleted];
+        if (parity_command.status == MTLCommandBufferStatusError) {
+            set_error(error, error_len, "staging parity build failed: %s",
+                      parity_command.error.localizedDescription.UTF8String);
+            return 1;
+        }
+        VoxelStorageResult staging_storage =
+            finalize_voxel_storage(device, parity_config, dense_cells);
+        VoxelStorageResult direct_storage =
+            build_direct_voxel_storage(device, queue, direct_pipeline,
+                                       parity_config_buffer, parity_config);
+        if (!staging_storage.cells || !direct_storage.cells || direct_storage.overflow ||
+            staging_storage.active_bricks != direct_storage.active_bricks ||
+            staging_storage.active_cells != direct_storage.active_cells) {
+            set_error(error, error_len, "direct-build occupancy totals differ from staging");
+            return 1;
+        }
+        const auto *staging_pages =
+            static_cast<const uint32_t *>(staging_storage.page_table.contents);
+        const auto *direct_pages =
+            static_cast<const uint32_t *>(direct_storage.page_table.contents);
+        const auto *staging_cells =
+            static_cast<const VoxelCellCpp *>(staging_storage.cells.contents);
+        const auto *direct_cells =
+            static_cast<const VoxelCellCpp *>(direct_storage.cells.contents);
+        const VoxelCellCpp empty_cell = {};
+        for (uint32_t z = 0u; z < 32u; ++z) {
+            for (uint32_t y = 0u; y < 32u; ++y) {
+                for (uint32_t x = 0u; x < 32u; ++x) {
+                    const uint32_t page_index = x / 4u + (y / 4u) * 8u + (z / 4u) * 64u;
+                    const uint32_t local = x % 4u + (y % 4u) * 4u + (z % 4u) * 16u;
+                    const uint32_t staging_page = staging_pages[page_index];
+                    const uint32_t direct_page = direct_pages[page_index];
+                    const VoxelCellCpp *staging_cell = staging_page == 0u
+                        ? &empty_cell
+                        : &staging_cells[(staging_page - 1u) * 64u + local];
+                    const VoxelCellCpp *direct_cell = direct_page == 0u
+                        ? &empty_cell
+                        : &direct_cells[(direct_page - 1u) * 64u + local];
+                    if (std::memcmp(staging_cell, direct_cell, sizeof(VoxelCellCpp)) != 0) {
+                        set_error(error, error_len,
+                                  "direct-build cell mismatch at (%u,%u,%u)", x, y, z);
+                        return 1;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+}
+
+extern "C" int fpt_test_async_stitch_context(
+    const char *metallib_path,
+    const char *stitch_metallib_path,
+    const char *stitch_archive_path,
+    const struct FptRenderConfig *config,
+    struct FptAsyncJitStats *stats,
+    char *error,
+    size_t error_len) {
+    @autoreleasepool {
+        if (!config || !stats) {
+            set_error(error, error_len, "missing async JIT validation input");
+            return 1;
+        }
+        std::memset(stats, 0, sizeof(*stats));
+        if (config->width == 0u || config->height == 0u ||
+            config->sdf_id != FPT_SDF_PROGRAM ||
+            config->sdf_program_count == 0u ||
+            config->sdf_function_stitching == 0u) {
+            set_error(error, error_len,
+                      "async JIT validation requires a non-empty stitched typed program");
+            return 1;
+        }
+
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        if (!device) {
+            set_error(error, error_len, "Metal is unavailable on this machine");
+            return 1;
+        }
+        NSError *ns_error = nil;
+        id<MTLLibrary> fallback_library = [device
+            newLibraryWithURL:[NSURL fileURLWithPath:ns_string(metallib_path)]
+                        error:&ns_error];
+        if (!fallback_library) {
+            set_error(error, error_len, "failed to load fallback metallib: %s",
+                      ns_error.localizedDescription.UTF8String);
+            return 1;
+        }
+        id<MTLLibrary> stitch_host_library = [device
+            newLibraryWithURL:[NSURL fileURLWithPath:ns_string(stitch_metallib_path)]
+                        error:&ns_error];
+        if (!stitch_host_library) {
+            set_error(error, error_len, "failed to load stitch-host metallib: %s",
+                      ns_error.localizedDescription.UTF8String);
+            return 1;
+        }
+        id<MTLFunction> fallback_function = [fallback_library
+            newFunctionWithName:@"preview_linear_kernel"];
+        id<MTLComputePipelineState> fallback_pipeline = fallback_function
+            ? [device newComputePipelineStateWithFunction:fallback_function
+                                                    error:&ns_error]
+            : nil;
+        if (!fallback_pipeline) {
+            set_error(error, error_len, "failed to create fallback preview pipeline: %s",
+                      ns_error.localizedDescription.UTF8String ?: "kernel missing");
+            return 1;
+        }
+        id<MTLCommandQueue> command_queue = [device newCommandQueue];
+        id<MTLBuffer> config_buffer = [device
+            newBufferWithBytes:config
+                        length:sizeof(*config)
+                       options:MTLResourceStorageModeShared];
+        const size_t component_count = static_cast<size_t>(config->width) *
+            config->height * 4u;
+        const size_t output_bytes = component_count * sizeof(float);
+        id<MTLBuffer> fallback_output = [device
+            newBufferWithLength:output_bytes options:MTLResourceStorageModeShared];
+        id<MTLBuffer> stitched_output = [device
+            newBufferWithLength:output_bytes options:MTLResourceStorageModeShared];
+        if (!command_queue || !config_buffer || !fallback_output || !stitched_output) {
+            set_error(error, error_len, "failed to allocate async JIT validation resources");
+            return 1;
+        }
+
+        __block id<MTLComputePipelineState> stitched_pipeline = nil;
+        __block NSString *jit_failure = nil;
+        __block double jit_build_ms = 0.0;
+        __block uint32_t cache_status = 0u;
+        auto jit_done = std::make_shared<std::atomic_bool>(false);
+        dispatch_queue_t jit_queue = dispatch_queue_create(
+            "com.fpt-metal.procedural-jit-test", DISPATCH_QUEUE_SERIAL);
+        dispatch_group_t jit_group = dispatch_group_create();
+        dispatch_semaphore_t jit_started = dispatch_semaphore_create(0);
+        const FptRenderConfig requested = *config;
+        const std::string archive_path = stitch_archive_path
+            ? stitch_archive_path : "";
+
+        dispatch_group_async(jit_group, jit_queue, ^{
+            @autoreleasepool {
+                NSDate *start = [NSDate date];
+                dispatch_semaphore_signal(jit_started);
+                id<MTLLibrary> stitched_library = nil;
+                id<MTLFunction> distance_function = nil;
+                id<MTLFunction> surface_function = nil;
+                id<MTLBinaryArchive> binary_archive = nil;
+                bool populate_archive = false;
+                std::string failure;
+                bool built = build_topology_stitched_library(
+                    device, stitch_host_library, archive_path.c_str(), requested,
+                    &stitched_library, &distance_function, &surface_function,
+                    &binary_archive, &populate_archive, failure);
+                NSError *pipeline_error = nil;
+                if (built) {
+                    id<MTLFunction> function = [stitch_host_library
+                        newFunctionWithName:@"preview_linear_kernel"];
+                    NSArray<id<MTLFunction>> *private_functions = @[
+                        distance_function, surface_function];
+                    stitched_pipeline = function ? new_compute_pipeline(
+                        device, function, private_functions, binary_archive,
+                        populate_archive, &pipeline_error) : nil;
+                    if (!stitched_pipeline && !pipeline_error) {
+                        failure = "stitched preview kernel is missing";
+                    }
+                }
+                if (stitched_pipeline && populate_archive && binary_archive &&
+                    !archive_path.empty()) {
+                    NSURL *archive_url = [NSURL fileURLWithPath:
+                        [NSString stringWithUTF8String:archive_path.c_str()]];
+                    if (![binary_archive serializeToURL:archive_url
+                                                  error:&pipeline_error]) {
+                        stitched_pipeline = nil;
+                    }
+                }
+                jit_build_ms = -[start timeIntervalSinceNow] * 1000.0;
+                cache_status = populate_archive ? 1u : 2u;
+                if (!stitched_pipeline) {
+                    jit_failure = pipeline_error
+                        ? pipeline_error.localizedDescription
+                        : (failure.empty() ? @"unknown error" :
+                            [NSString stringWithUTF8String:failure.c_str()]);
+                }
+                jit_done->store(true, std::memory_order_release);
+            }
+        });
+
+        dispatch_semaphore_wait(jit_started, DISPATCH_TIME_FOREVER);
+        std::string render_failure;
+        if (!render_preview_buffer(command_queue, fallback_pipeline,
+                                   fallback_output, config_buffer,
+                                   config->width, config->height,
+                                   &stats->fallback_render_ms, render_failure)) {
+            dispatch_group_wait(jit_group, DISPATCH_TIME_FOREVER);
+            set_error(error, error_len, "%s", render_failure.c_str());
+            return 1;
+        }
+        stats->fallback_completed_before_jit =
+            jit_done->load(std::memory_order_acquire) ? 0u : 1u;
+        dispatch_group_wait(jit_group, DISPATCH_TIME_FOREVER);
+        stats->jit_build_ms = jit_build_ms;
+        stats->cache_status = cache_status;
+        if (!stitched_pipeline) {
+            set_error(error, error_len, "async stitched pipeline failed: %s",
+                      jit_failure.UTF8String ?: "unknown error");
+            return 1;
+        }
+        if (!render_preview_buffer(command_queue, stitched_pipeline,
+                                   stitched_output, config_buffer,
+                                   config->width, config->height,
+                                   &stats->stitched_render_ms, render_failure)) {
+            set_error(error, error_len, "%s", render_failure.c_str());
+            return 1;
+        }
+
+        const auto *fallback_pixels = static_cast<const float *>(
+            fallback_output.contents);
+        const auto *stitched_pixels = static_cast<const float *>(
+            stitched_output.contents);
+        float max_error = 0.0f;
+        for (size_t index = 0u; index < component_count; ++index) {
+            const float lhs = fallback_pixels[index];
+            const float rhs = stitched_pixels[index];
+            if (lhs == rhs) continue;
+            if (!std::isfinite(lhs) || !std::isfinite(rhs)) {
+                max_error = INFINITY;
+                break;
+            }
+            max_error = std::max(max_error, std::abs(lhs - rhs));
+        }
+        stats->max_absolute_error = max_error;
+        if (max_error > 1.0e-4f) {
+            set_error(error, error_len,
+                      "fallback/stitched preview mismatch: max absolute error %.9g",
+                      max_error);
+            return 1;
+        }
+        return 0;
+    }
+}
+
+extern "C" int fpt_test_typed_soa(
+    const char *metallib_path,
+    const struct FptRenderConfig *config,
+    struct FptStitchValidationStats *stats,
+    char *error,
+    size_t error_len) {
+    @autoreleasepool {
+        if (!config || !stats) {
+            set_error(error, error_len, "missing typed-SoA validation input");
+            return 1;
+        }
+        std::memset(stats, 0, sizeof(*stats));
+        const uint32_t primitive_count = config->sdf_typed_soa.sphere_count +
+            config->sdf_typed_soa.box_count + config->sdf_typed_soa.plane_count;
+        if (config->sdf_id != FPT_SDF_PROGRAM || primitive_count == 0u) {
+            set_error(error, error_len,
+                      "typed-SoA validation requires a lowered typed program");
+            return 1;
+        }
+
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        NSError *ns_error = nil;
+        id<MTLLibrary> library = device ? [device
+            newLibraryWithURL:[NSURL fileURLWithPath:ns_string(metallib_path)]
+                        error:&ns_error] : nil;
+        id<MTLFunction> function = library
+            ? [library newFunctionWithName:@"typed_soa_validation_kernel"] : nil;
+        id<MTLComputePipelineState> pipeline = function
+            ? [device newComputePipelineStateWithFunction:function error:&ns_error]
+            : nil;
+        id<MTLCommandQueue> queue = device ? [device newCommandQueue] : nil;
+        struct ExactValidationCountsCpp {
+            uint32_t distance_failures;
+            uint32_t gradient_failures;
+            uint32_t max_distance_error_bits;
+            uint32_t max_gradient_error_bits;
+        } initial_counts = {};
+        id<MTLBuffer> counts_buffer = device ? [device
+            newBufferWithBytes:&initial_counts
+                        length:sizeof(initial_counts)
+                       options:MTLResourceStorageModeShared] : nil;
+        id<MTLBuffer> config_buffer = device ? [device
+            newBufferWithBytes:config
+                        length:sizeof(*config)
+                       options:MTLResourceStorageModeShared] : nil;
+        if (!pipeline || !queue || !counts_buffer || !config_buffer) {
+            set_error(error, error_len, "failed to create typed-SoA validation resources: %s",
+                      ns_error.localizedDescription.UTF8String ?: "Metal unavailable");
+            return 1;
+        }
+
+        constexpr NSUInteger sample_count = 1u << 20u;
+        id<MTLCommandBuffer> command = [queue commandBuffer];
+        id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
+        [encoder setComputePipelineState:pipeline];
+        [encoder setBuffer:counts_buffer offset:0 atIndex:0];
+        [encoder setBuffer:config_buffer offset:0 atIndex:1];
+        NSUInteger group_width = std::min<NSUInteger>(
+            pipeline.maxTotalThreadsPerThreadgroup, 256u);
+        [encoder dispatchThreads:MTLSizeMake(sample_count, 1u, 1u)
+           threadsPerThreadgroup:MTLSizeMake(group_width, 1u, 1u)];
+        [encoder endEncoding];
+        [command commit];
+        [command waitUntilCompleted];
+        if (command.status == MTLCommandBufferStatusError) {
+            set_error(error, error_len, "typed-SoA validation dispatch failed: %s",
+                      command.error.localizedDescription.UTF8String);
+            return 1;
+        }
+
+        const auto *counts = static_cast<const ExactValidationCountsCpp *>(
+            counts_buffer.contents);
+        stats->sample_count = sample_count;
+        stats->distance_failures = counts->distance_failures;
+        stats->gradient_failures = counts->gradient_failures;
+        std::memcpy(&stats->max_distance_error,
+                    &counts->max_distance_error_bits, sizeof(float));
+        std::memcpy(&stats->max_gradient_error,
+                    &counts->max_gradient_error_bits, sizeof(float));
+        if (counts->distance_failures != 0u || counts->gradient_failures != 0u) {
+            set_error(error, error_len,
+                      "typed-SoA validation failed: %u distance, %u gradient",
+                      counts->distance_failures, counts->gradient_failures);
+            return 1;
+        }
+        return 0;
+    }
+}
+
 extern "C" int fpt_metal_render(const char *metallib_path,
+                                 const char *stitch_metallib_path,
+                                 const char *stitch_archive_path,
                                  const char *output_path,
+                                 const char *shader_source,
+                                 size_t shader_source_len,
                                  const struct FptRenderConfig *config,
                                  double *build_ms,
                                  double *elapsed_ms,
                                  uint64_t *voxel_memory_bytes,
                                  uint32_t *voxel_active_bricks,
+                                 uint64_t *voxel_active_cells,
+                                 uint32_t *voxel_rejected_bricks,
+                                 struct FptBoundGridStats *bound_grid_stats,
+                                 uint32_t *stitch_cache_status,
+                                 struct FptStitchValidationStats *stitch_validation_stats,
+                                 struct FptStitchPipelineStats *stitch_pipeline_stats,
+                                 struct FptSdfProfileStats *sdf_profile_stats,
+                                 float *linear_output,
+                                 size_t linear_output_len,
                                  char *error,
                                 size_t error_len) {
     @autoreleasepool {
@@ -1445,9 +3963,192 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             set_error(error, error_len, "failed to load metallib %s: %s", metallib_path, ns_error.localizedDescription.UTF8String);
             return 1;
         }
+        id<MTLLibrary> render_library = library;
+        id<MTLLibrary> stitched_library = nil;
+        id<MTLFunction> stitched_distance_function = nil;
+        id<MTLFunction> stitched_surface_function = nil;
+        NSArray<id<MTLFunction>> *stitched_private_functions = @[];
+        id<MTLBinaryArchive> stitch_binary_archive = nil;
+        bool populate_stitch_binary_archive = false;
+        if (stitch_cache_status) *stitch_cache_status = 0u;
+        if (stitch_validation_stats) {
+            *stitch_validation_stats = {};
+        }
+        if (stitch_pipeline_stats) {
+            *stitch_pipeline_stats = {};
+        }
+        if (sdf_profile_stats) {
+            *sdf_profile_stats = {};
+        }
+        NSDate *runtime_source_build_start = nil;
+        double runtime_source_build_elapsed_ms = 0.0;
+        const bool tiny_linked_helper =
+            config->sdf_topology_specialization != 0u &&
+            config->sdf_runtime_source_bytecode == 3u;
+        if (config->sdf_function_stitching != 0u && !tiny_linked_helper) {
+            if (config->renderer_backend != FPT_RENDERER_SDF) {
+                set_error(error, error_len,
+                          "function stitching requires the direct SDF renderer");
+                return 1;
+            }
+            id<MTLLibrary> stitch_host_library = [device
+                newLibraryWithURL:[NSURL fileURLWithPath:
+                    ns_string(stitch_metallib_path)] error:&ns_error];
+            if (!stitch_host_library) {
+                set_error(error, error_len,
+                          "failed to load stitch-host metallib %s: %s",
+                          stitch_metallib_path,
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+            runtime_source_build_start = [NSDate date];
+            std::string stitching_failure;
+            if (!build_topology_stitched_library(
+                    device, stitch_host_library, stitch_archive_path, *config,
+                    &stitched_library, &stitched_distance_function,
+                    &stitched_surface_function, &stitch_binary_archive,
+                    &populate_stitch_binary_archive, stitching_failure)) {
+                set_error(error, error_len, "%s", stitching_failure.c_str());
+                return 1;
+            }
+            if (stitch_cache_status) {
+                *stitch_cache_status = populate_stitch_binary_archive ? 1u : 2u;
+            }
+            stitched_private_functions = @[
+                stitched_distance_function, stitched_surface_function];
+            render_library = stitch_host_library;
+        }
+        if (tiny_linked_helper) {
+            if (config->renderer_backend != FPT_RENDERER_SDF) {
+                set_error(error, error_len,
+                          "tiny linked helpers require the direct SDF renderer");
+                return 1;
+            }
+            id<MTLLibrary> stitch_host_library = [device
+                newLibraryWithURL:[NSURL fileURLWithPath:
+                    ns_string(stitch_metallib_path)] error:&ns_error];
+            if (!stitch_host_library) {
+                set_error(error, error_len,
+                          "failed to load tiny-link host metallib %s: %s",
+                          stitch_metallib_path,
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+            std::string tiny_source;
+            std::string generation_failure;
+            if (!generate_tiny_linked_topology_source(
+                    shader_source, shader_source_len, *config,
+                    tiny_source, generation_failure)) {
+                set_error(error, error_len, "%s", generation_failure.c_str());
+                return 1;
+            }
+            salt_runtime_source_for_benchmark(tiny_source);
+            if (stitch_pipeline_stats) {
+                stitch_pipeline_stats->runtime_source_bytes = tiny_source.size();
+            }
+            NSString *metal_source = [[NSString alloc]
+                initWithBytes:tiny_source.data()
+                       length:tiny_source.size()
+                     encoding:NSUTF8StringEncoding];
+            if (!metal_source) {
+                set_error(error, error_len,
+                          "failed to decode tiny linked Metal source");
+                return 1;
+            }
+            runtime_source_build_start = [NSDate date];
+            bool runtime_source_cache_hit = false;
+            id<MTLLibrary> helper_library = compile_runtime_source_library(
+                device, metal_source, &runtime_source_cache_hit, &ns_error);
+            if (stitch_pipeline_stats) {
+                stitch_pipeline_stats->runtime_library_compile_ms =
+                    -[runtime_source_build_start timeIntervalSinceNow] * 1000.0;
+            }
+            if (!helper_library) {
+                set_error(error, error_len,
+                          "tiny linked Metal compilation failed: %s",
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+            stitched_distance_function = [helper_library
+                newFunctionWithName:@"deTopologyStitchedDistance"];
+            stitched_surface_function = [helper_library
+                newFunctionWithName:@"deTopologyStitchedSurface"];
+            if (!stitched_distance_function || !stitched_surface_function) {
+                set_error(error, error_len,
+                          "tiny linked distance or surface helper is missing");
+                return 1;
+            }
+            stitched_private_functions = @[
+                stitched_distance_function, stitched_surface_function];
+            // The precompiled host dispatches its unresolved evaluator calls
+            // through the same stable runtime switch as function stitching.
+            hydrated_config.sdf_function_stitching = 1u;
+            config = &hydrated_config;
+            render_library = stitch_host_library;
+        }
+        const bool use_runtime_source =
+            !tiny_linked_helper &&
+            (config->sdf_topology_specialization != 0u ||
+             config->sdf_runtime_source_bytecode != 0u);
+        if (use_runtime_source) {
+            if (config->renderer_backend != FPT_RENDERER_SDF) {
+                set_error(error, error_len,
+                          "runtime-source compilation requires the direct SDF renderer");
+                return 1;
+            }
+            std::string runtime_source;
+            if (config->sdf_topology_specialization != 0u) {
+                std::string generation_failure;
+                const bool generated = config->sdf_runtime_source_bytecode == 2u
+                    ? generate_dual_topology_specialized_source(
+                        shader_source, shader_source_len, *config,
+                        runtime_source, generation_failure)
+                    : generate_topology_specialized_source(
+                        shader_source, shader_source_len, *config,
+                        runtime_source, generation_failure);
+                if (!generated) {
+                    set_error(error, error_len, "%s", generation_failure.c_str());
+                    return 1;
+                }
+            } else {
+                runtime_source.assign(shader_source, shader_source_len);
+            }
+            salt_runtime_source_for_benchmark(runtime_source);
+            if (stitch_pipeline_stats) {
+                stitch_pipeline_stats->runtime_source_bytes = runtime_source.size();
+            }
+            NSString *metal_source = [[NSString alloc]
+                initWithBytes:runtime_source.data()
+                       length:runtime_source.size()
+                     encoding:NSUTF8StringEncoding];
+            if (!metal_source) {
+                set_error(error, error_len,
+                          "failed to decode runtime Metal source");
+                return 1;
+            }
+            runtime_source_build_start = [NSDate date];
+            bool runtime_source_cache_hit = false;
+            render_library = compile_runtime_source_library(
+                device, metal_source, &runtime_source_cache_hit, &ns_error);
+            if (stitch_pipeline_stats) {
+                stitch_pipeline_stats->runtime_library_compile_ms =
+                    -[runtime_source_build_start timeIntervalSinceNow] * 1000.0;
+            }
+            if (!render_library) {
+                set_error(error, error_len,
+                          "runtime Metal compilation failed: %s",
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+        }
         const bool use_voxels = config->renderer_backend == FPT_RENDERER_VOXEL;
+        const bool use_bound_grid = config->renderer_backend == FPT_RENDERER_BOUND_GRID;
+        const bool use_regional = config->renderer_backend == FPT_RENDERER_REGIONAL;
         if (voxel_memory_bytes) *voxel_memory_bytes = 0u;
         if (voxel_active_bricks) *voxel_active_bricks = 0u;
+        if (voxel_active_cells) *voxel_active_cells = 0u;
+        if (voxel_rejected_bricks) *voxel_rejected_bricks = 0u;
+        if (bound_grid_stats) std::memset(bound_grid_stats, 0, sizeof(*bound_grid_stats));
         const uint32_t requested_samples = std::clamp<uint32_t>(config->samples, 1u, 512u);
         const bool auto_batch_accumulation = requested_samples <= 16u && config->sdf_id != FPT_SDF_CAGE_FRACTAL;
         const bool use_batch_accumulation = !config->preview &&
@@ -1461,20 +4162,129 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             main_function_name = config->preview ? @"voxel_preview_linear_kernel" :
                 (use_batch_accumulation ? @"voxel_accumulate_all_kernel" :
                  (use_chunked_accumulation ? @"voxel_accumulate_chunk_kernel" : @"voxel_accumulate_kernel"));
+        } else if (use_regional && !config->preview) {
+            main_function_name = use_batch_accumulation
+                ? @"regional_accumulate_all_kernel"
+                : (use_chunked_accumulation
+                    ? @"regional_accumulate_chunk_kernel"
+                    : @"regional_accumulate_kernel");
+        } else if (use_bound_grid && !config->preview) {
+            main_function_name = use_batch_accumulation ? @"bound_grid_accumulate_all_kernel" :
+                (use_chunked_accumulation ? @"bound_grid_accumulate_chunk_kernel" :
+                 @"bound_grid_accumulate_kernel");
         } else {
             main_function_name = config->preview ? @"preview_linear_kernel" :
                 (use_batch_accumulation ? @"accumulate_all_kernel" :
                  (use_chunked_accumulation ? @"accumulate_chunk_kernel" : @"accumulate_kernel"));
         }
-        id<MTLFunction> main_function = [library newFunctionWithName:main_function_name];
+        const bool dual_generated_library =
+            config->sdf_topology_specialization != 0u &&
+            config->sdf_runtime_source_bytecode == 2u;
+        id<MTLFunction> main_function = new_topology_runtime_function(
+            render_library, main_function_name, dual_generated_library,
+            config->sdf_stitched_surface != 0u, &ns_error);
         if (!main_function) {
             set_error(error, error_len, "%s not found in metallib", main_function_name.UTF8String);
             return 1;
         }
-        id<MTLComputePipelineState> main_pipeline = [device newComputePipelineStateWithFunction:main_function error:&ns_error];
+        NSDate *runtime_pipeline_start = runtime_source_build_start
+            ? [NSDate date] : nil;
+        id<MTLComputePipelineState> main_pipeline = new_compute_pipeline(
+            device, main_function, stitched_private_functions,
+            stitch_binary_archive, populate_stitch_binary_archive, &ns_error);
+        if (runtime_pipeline_start && stitch_pipeline_stats) {
+            stitch_pipeline_stats->runtime_pipeline_link_ms =
+                -[runtime_pipeline_start timeIntervalSinceNow] * 1000.0;
+        }
         if (!main_pipeline) {
             set_error(error, error_len, "failed to create compute pipeline: %s", ns_error.localizedDescription.UTF8String);
             return 1;
+        }
+        if (stitch_pipeline_stats) {
+            stitch_pipeline_stats->thread_execution_width =
+                static_cast<uint32_t>(main_pipeline.threadExecutionWidth);
+            stitch_pipeline_stats->max_total_threads_per_threadgroup =
+                static_cast<uint32_t>(
+                    main_pipeline.maxTotalThreadsPerThreadgroup);
+            stitch_pipeline_stats->static_threadgroup_memory_bytes =
+                static_cast<uint64_t>(
+                    main_pipeline.staticThreadgroupMemoryLength);
+        }
+        id<MTLComputePipelineState> sdf_profile_pipeline = nil;
+        if (!use_voxels && !use_bound_grid && !use_regional &&
+            config->sdf_profile != 0u) {
+            id<MTLFunction> profile_function = new_topology_runtime_function(
+                render_library, @"sdf_profile_kernel", dual_generated_library,
+                config->sdf_stitched_surface != 0u, &ns_error);
+            sdf_profile_pipeline = profile_function
+                ? new_compute_pipeline(device, profile_function,
+                                       stitched_private_functions,
+                                       stitch_binary_archive,
+                                       populate_stitch_binary_archive, &ns_error)
+                : nil;
+            if (!sdf_profile_pipeline) {
+                set_error(error, error_len,
+                          "failed to create SDF profile pipeline: %s",
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+        }
+        if (stitch_pipeline_stats && config->sdf_function_stitching != 0u) {
+            stitch_pipeline_stats->instruction_count = std::min<uint32_t>(
+                config->sdf_program_count, FPT_SDF_PROGRAM_MAX_OPS);
+            auto is_translated_sphere_union = [&](uint32_t index) {
+                return index + 1u < stitch_pipeline_stats->instruction_count &&
+                    config->sdf_program[index].opcode == FPT_SDF_OP_TRANSLATE &&
+                    config->sdf_program[index + 1u].opcode == FPT_SDF_OP_SPHERE &&
+                    config->sdf_program[index + 1u].flags == 0u;
+            };
+            bool fused_one_pair = false;
+            for (uint32_t index = 0u;
+                 index < stitch_pipeline_stats->instruction_count;) {
+                ++stitch_pipeline_stats->graph_node_count;
+                if (config->sdf_stitch_fusion == 3u &&
+                    is_translated_sphere_union(index) &&
+                    is_translated_sphere_union(index + 2u)) {
+                    index += 4u;
+                } else if (is_translated_sphere_union(index) &&
+                           (config->sdf_stitch_fusion == 2u ||
+                            (config->sdf_stitch_fusion == 1u &&
+                             !fused_one_pair))) {
+                    fused_one_pair = true;
+                    index += 2u;
+                } else {
+                    ++index;
+                }
+            }
+            uint32_t previous_primitive_opcode = 0u;
+            for (uint32_t index = 0u;
+                 index < stitch_pipeline_stats->instruction_count; ++index) {
+                const FptSdfInstruction &instruction = config->sdf_program[index];
+                const bool primitive = instruction.opcode == FPT_SDF_OP_SPHERE ||
+                    instruction.opcode == FPT_SDF_OP_BOX ||
+                    instruction.opcode == FPT_SDF_OP_PLANE;
+                if (!primitive) {
+                    ++stitch_pipeline_stats->transform_instruction_count;
+                    continue;
+                }
+                ++stitch_pipeline_stats->primitive_instruction_count;
+                if (instruction.opcode != previous_primitive_opcode) {
+                    ++stitch_pipeline_stats->primitive_type_runs;
+                    previous_primitive_opcode = instruction.opcode;
+                }
+                switch (instruction.flags) {
+                    case 0u: ++stitch_pipeline_stats->union_count; break;
+                    case 1u: ++stitch_pipeline_stats->intersection_count; break;
+                    case 2u: ++stitch_pipeline_stats->subtraction_count; break;
+                    default: break;
+                }
+            }
+            stitch_pipeline_stats->thread_execution_width =
+                static_cast<uint32_t>(main_pipeline.threadExecutionWidth);
+            stitch_pipeline_stats->max_total_threads_per_threadgroup =
+                static_cast<uint32_t>(main_pipeline.maxTotalThreadsPerThreadgroup);
+            stitch_pipeline_stats->static_threadgroup_memory_bytes =
+                static_cast<uint64_t>(main_pipeline.staticThreadgroupMemoryLength);
         }
         id<MTLFunction> present_function = [library newFunctionWithName:@"present_kernel"];
         if (!present_function) {
@@ -1487,6 +4297,13 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             return 1;
         }
         id<MTLComputePipelineState> voxel_build_pipeline = nil;
+        id<MTLComputePipelineState> direct_voxel_build_pipeline = nil;
+        id<MTLComputePipelineState> bound_grid_build_pipeline = nil;
+        id<MTLComputePipelineState> regional_program_build_pipeline = nil;
+        id<MTLComputePipelineState> regional_program_validate_pipeline = nil;
+        id<MTLComputePipelineState> regional_program_profile_pipeline = nil;
+        id<MTLComputePipelineState> bound_grid_profile_pipeline = nil;
+        id<MTLComputePipelineState> bound_grid_validate_pipeline = nil;
         if (use_voxels) {
             id<MTLFunction> voxel_build_function = [library newFunctionWithName:@"voxel_build_kernel"];
             if (!voxel_build_function) {
@@ -1498,21 +4315,174 @@ extern "C" int fpt_metal_render(const char *metallib_path,
                 set_error(error, error_len, "failed to create voxel build pipeline: %s", ns_error.localizedDescription.UTF8String);
                 return 1;
             }
+            if (config->voxel_build_mode == FPT_VOXEL_BUILD_DIRECT) {
+                if (config->voxel_storage != FPT_VOXEL_STORAGE_SPARSE_BRICKS) {
+                    set_error(error, error_len, "direct voxel build requires sparse-bricks storage");
+                    return 1;
+                }
+                id<MTLFunction> direct_function =
+                    [library newFunctionWithName:@"voxel_build_sparse_direct_kernel"];
+                direct_voxel_build_pipeline = direct_function
+                    ? [device newComputePipelineStateWithFunction:direct_function error:&ns_error]
+                    : nil;
+                if (!direct_voxel_build_pipeline) {
+                    set_error(error, error_len, "failed to create direct voxel build pipeline: %s",
+                              ns_error.localizedDescription.UTF8String);
+                    return 1;
+                }
+            }
+        }
+        if (use_bound_grid) {
+            if (config->bound_grid_resolution != 32u && config->bound_grid_resolution != 64u) {
+                set_error(error, error_len, "bound-grid resolution must be 32 or 64");
+                return 1;
+            }
+            NSString *build_function_name = config->bound_grid_directional != 0u
+                ? (config->bound_grid_fp16 != 0u
+                    ? @"directional_grid_build_fp16_kernel"
+                    : @"directional_grid_build_kernel")
+                : @"bound_grid_build_kernel";
+            id<MTLFunction> build_function =
+                [library newFunctionWithName:build_function_name];
+            bound_grid_build_pipeline = build_function
+                ? [device newComputePipelineStateWithFunction:build_function error:&ns_error]
+                : nil;
+            if (!bound_grid_build_pipeline) {
+                set_error(error, error_len, "failed to create bound-grid build pipeline: %s",
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+            if (config->bound_grid_profile != 0u) {
+                id<MTLFunction> profile_function =
+                    [library newFunctionWithName:@"bound_grid_profile_kernel"];
+                id<MTLFunction> validate_function =
+                    [library newFunctionWithName:@"bound_grid_validate_kernel"];
+                bound_grid_profile_pipeline = profile_function
+                    ? [device newComputePipelineStateWithFunction:profile_function error:&ns_error]
+                    : nil;
+                bound_grid_validate_pipeline = validate_function
+                    ? [device newComputePipelineStateWithFunction:validate_function error:&ns_error]
+                    : nil;
+                if (!bound_grid_profile_pipeline || !bound_grid_validate_pipeline) {
+                    set_error(error, error_len,
+                              "failed to create bound-grid profiling pipelines: %s",
+                              ns_error.localizedDescription.UTF8String);
+                    return 1;
+                }
+            }
+        }
+        if (use_regional) {
+            if (config->sdf_id != FPT_SDF_PROGRAM || config->sdf_program_count == 0u) {
+                set_error(error, error_len,
+                          "regional renderer requires a typed sdf_program");
+                return 1;
+            }
+            if (config->regional_program_resolution != 16u &&
+                config->regional_program_resolution != 32u) {
+                set_error(error, error_len,
+                          "regional program resolution must be 16 or 32");
+                return 1;
+            }
+            id<MTLFunction> regional_build_function =
+                [library newFunctionWithName:@"regional_program_build_kernel"];
+            regional_program_build_pipeline = regional_build_function
+                ? [device newComputePipelineStateWithFunction:regional_build_function
+                                                        error:&ns_error]
+                : nil;
+            if (!regional_program_build_pipeline) {
+                set_error(error, error_len,
+                          "failed to create regional program build pipeline: %s",
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+            if (config->bound_grid_profile != 0u) {
+                id<MTLFunction> regional_validate_function =
+                    [library newFunctionWithName:@"regional_program_validate_kernel"];
+                id<MTLFunction> regional_profile_function =
+                    [library newFunctionWithName:@"regional_program_profile_kernel"];
+                regional_program_validate_pipeline = regional_validate_function
+                    ? [device newComputePipelineStateWithFunction:
+                                  regional_validate_function error:&ns_error]
+                    : nil;
+                regional_program_profile_pipeline = regional_profile_function
+                    ? [device newComputePipelineStateWithFunction:
+                                  regional_profile_function error:&ns_error]
+                    : nil;
+                if (!regional_program_validate_pipeline ||
+                    !regional_program_profile_pipeline) {
+                    set_error(error, error_len,
+                              "failed to create regional profiling pipelines: %s",
+                              ns_error.localizedDescription.UTF8String);
+                    return 1;
+                }
+            }
         }
         id<MTLComputePipelineState> focus_pipeline = nil;
         if (config->focus_distance <= 0.0f) {
-            id<MTLFunction> focus_function = [library newFunctionWithName:use_voxels
+            NSString *focus_function_name = use_voxels
                 ? @"estimate_voxel_focus_distance_kernel"
-                : @"estimate_focus_distance_kernel"];
+                : (use_regional
+                    ? @"estimate_regional_focus_distance_kernel"
+                    : (use_bound_grid
+                    ? @"estimate_bound_grid_focus_distance_kernel"
+                    : @"estimate_focus_distance_kernel"));
+            id<MTLFunction> focus_function =
+                [render_library newFunctionWithName:focus_function_name];
             if (!focus_function) {
                 set_error(error, error_len, "estimate_focus_distance_kernel not found in metallib");
                 return 1;
             }
-            focus_pipeline = [device newComputePipelineStateWithFunction:focus_function error:&ns_error];
+            focus_pipeline = new_compute_pipeline(
+                device, focus_function, stitched_private_functions,
+                stitch_binary_archive, populate_stitch_binary_archive,
+                &ns_error);
             if (!focus_pipeline) {
                 set_error(error, error_len, "failed to create focus pipeline: %s", ns_error.localizedDescription.UTF8String);
                 return 1;
             }
+        }
+        id<MTLComputePipelineState> stitch_validation_pipeline = nil;
+        if (config->sdf_stitch_validation != 0u) {
+            NSString *validation_function_name =
+                config->sdf_topology_specialization != 0u && !tiny_linked_helper
+                    ? @"topology_validation_kernel"
+                    : @"stitched_validation_kernel";
+            id<MTLFunction> validation_function = [render_library
+                newFunctionWithName:validation_function_name];
+            NSArray<id<MTLFunction>> *validation_private_functions =
+                config->sdf_topology_specialization != 0u && !tiny_linked_helper
+                    ? @[] : stitched_private_functions;
+            stitch_validation_pipeline = validation_function
+                ? new_compute_pipeline(
+                    device, validation_function, validation_private_functions,
+                    config->sdf_topology_specialization != 0u && !tiny_linked_helper
+                        ? nil : stitch_binary_archive,
+                    config->sdf_topology_specialization != 0u && !tiny_linked_helper
+                        ? false : populate_stitch_binary_archive,
+                    &ns_error)
+                : nil;
+            if (!stitch_validation_pipeline) {
+                set_error(error, error_len,
+                          "failed to create program validation pipeline: %s",
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+        }
+        if (populate_stitch_binary_archive && stitch_binary_archive &&
+            stitch_archive_path && stitch_archive_path[0] != '\0') {
+            NSURL *archive_url = [NSURL fileURLWithPath:
+                ns_string(stitch_archive_path)];
+            if (![stitch_binary_archive serializeToURL:archive_url
+                                                 error:&ns_error]) {
+                set_error(error, error_len,
+                          "failed to serialize stitched pipeline archive: %s",
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+        }
+        if (runtime_source_build_start) {
+            runtime_source_build_elapsed_ms =
+                -[runtime_source_build_start timeIntervalSinceNow] * 1000.0;
         }
         id<MTLCommandQueue> queue = [device newCommandQueue];
         if (!queue) {
@@ -1521,17 +4491,114 @@ extern "C" int fpt_metal_render(const char *metallib_path,
         }
 
         const size_t pixel_count = static_cast<size_t>(config->width) * config->height;
+        const size_t linear_component_count = pixel_count * 4u;
+        if (linear_output && linear_output_len < linear_component_count) {
+            set_error(error, error_len,
+                      "linear output buffer is too small (%zu < %zu)",
+                      linear_output_len, linear_component_count);
+            return 1;
+        }
         id<MTLBuffer> out_buffer = [device newBufferWithLength:pixel_count * 4 options:MTLResourceStorageModeShared];
         id<MTLBuffer> cfg_buffer = [device newBufferWithBytes:config length:sizeof(FptRenderConfig) options:MTLResourceStorageModeShared];
         id<MTLBuffer> accum_buffer = [device newBufferWithLength:pixel_count * sizeof(float) * 4 options:MTLResourceStorageModePrivate];
+        id<MTLBuffer> linear_output_buffer = linear_output
+            ? [device newBufferWithLength:linear_component_count * sizeof(float)
+                                  options:MTLResourceStorageModeShared]
+            : nil;
         const size_t voxel_count = use_voxels
             ? static_cast<size_t>(config->voxel_resolution) * config->voxel_resolution * config->voxel_resolution
             : 0u;
-        id<MTLBuffer> voxel_buffer = use_voxels
+        const bool use_direct_voxel_build = use_voxels &&
+            config->voxel_build_mode == FPT_VOXEL_BUILD_DIRECT;
+        id<MTLBuffer> voxel_buffer = use_voxels && !use_direct_voxel_build
             ? [device newBufferWithLength:voxel_count * 12u options:MTLResourceStorageModeShared]
             : nil;
         id<MTLBuffer> voxel_page_table_buffer = nil;
+        id<MTLBuffer> regional_mask_buffer = nil;
+        id<MTLBuffer> regional_program_id_buffer = nil;
+        id<MTLBuffer> regional_program_header_buffer = nil;
+        id<MTLBuffer> regional_instruction_pool_buffer = nil;
+        id<MTLBuffer> regional_primitive_pool_buffer = nil;
+        id<MTLBuffer> regional_validation_buffer = nil;
+        id<MTLBuffer> regional_proof_buffer = nil;
+        id<MTLBuffer> regional_profile_buffer = nil;
+        id<MTLTexture> bound_grid_texture = nil;
+        id<MTLTexture> derivative_lower_grid_texture = nil;
+        id<MTLTexture> derivative_upper_grid_texture = nil;
+        if (use_bound_grid) {
+            const NSUInteger resolution = config->bound_grid_resolution;
+            MTLTextureDescriptor *descriptor = [MTLTextureDescriptor new];
+            descriptor.textureType = MTLTextureType3D;
+            descriptor.pixelFormat = config->bound_grid_fp16 != 0u
+                ? MTLPixelFormatRGBA16Float : MTLPixelFormatRG32Float;
+            descriptor.width = resolution;
+            descriptor.height = resolution;
+            descriptor.depth = resolution;
+            descriptor.mipmapLevelCount = 1u;
+            descriptor.storageMode = MTLStorageModePrivate;
+            descriptor.usage = MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
+            bound_grid_texture = [device newTextureWithDescriptor:descriptor];
+
+            MTLTextureDescriptor *derivative_descriptor = [MTLTextureDescriptor new];
+            derivative_descriptor.textureType = MTLTextureType3D;
+            derivative_descriptor.pixelFormat = config->bound_grid_fp16 != 0u
+                ? MTLPixelFormatRGBA16Float : MTLPixelFormatRGBA32Float;
+            const NSUInteger derivative_resolution = config->bound_grid_directional != 0u
+                ? resolution : 1u;
+            derivative_descriptor.width = derivative_resolution;
+            derivative_descriptor.height = derivative_resolution;
+            derivative_descriptor.depth = derivative_resolution;
+            derivative_descriptor.mipmapLevelCount = 1u;
+            derivative_descriptor.storageMode = MTLStorageModePrivate;
+            derivative_descriptor.usage = MTLTextureUsageShaderRead |
+                                          MTLTextureUsageShaderWrite;
+            derivative_lower_grid_texture =
+                [device newTextureWithDescriptor:derivative_descriptor];
+            if (config->bound_grid_fp16 != 0u) {
+                derivative_descriptor.width = 1u;
+                derivative_descriptor.height = 1u;
+                derivative_descriptor.depth = 1u;
+            }
+            derivative_upper_grid_texture =
+                [device newTextureWithDescriptor:derivative_descriptor];
+        }
+        if (use_regional) {
+            const size_t resolution = config->regional_program_resolution;
+            const size_t cell_count = resolution * resolution * resolution;
+            regional_mask_buffer =
+                [device newBufferWithLength:cell_count * sizeof(uint64_t)
+                                    options:MTLResourceStorageModeShared];
+            const size_t proof_count = config->bound_grid_profile != 0u
+                ? cell_count : 1u;
+            regional_proof_buffer =
+                [device newBufferWithLength:proof_count *
+                                            sizeof(RegionalProgramProofCpp)
+                                    options:MTLResourceStorageModeShared];
+            if (config->bound_grid_profile != 0u) {
+                regional_validation_buffer = [device
+                    newBufferWithLength:sizeof(RegionalProgramValidationCountsCpp)
+                                options:MTLResourceStorageModeShared];
+                regional_profile_buffer = [device
+                    newBufferWithLength:pixel_count *
+                                        sizeof(RegionalProgramLocalStatsCpp)
+                                options:MTLResourceStorageModeShared];
+            }
+        }
+        id<MTLBuffer> bound_grid_profile_buffer =
+            use_bound_grid && config->bound_grid_profile != 0u
+                ? [device newBufferWithLength:pixel_count * sizeof(BoundGridLocalStatsCpp)
+                                      options:MTLResourceStorageModeShared]
+                : nil;
+        id<MTLBuffer> bound_grid_validation_buffer =
+            use_bound_grid && config->bound_grid_profile != 0u
+                ? [device newBufferWithLength:sizeof(BoundGridValidationCountsCpp)
+                                      options:MTLResourceStorageModeShared]
+                : nil;
         id<MTLBuffer> focus_buffer = focus_pipeline ? [device newBufferWithLength:sizeof(float) options:MTLResourceStorageModeShared] : nil;
+        id<MTLBuffer> sdf_profile_buffer = sdf_profile_pipeline
+            ? [device newBufferWithLength:sizeof(FptSdfProfileCountsCpp)
+                                  options:MTLResourceStorageModeShared]
+            : nil;
         if (!out_buffer || !cfg_buffer) {
             set_error(error, error_len, "failed to allocate Metal buffers");
             return 1;
@@ -1540,35 +4607,431 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             set_error(error, error_len, "failed to allocate Metal accumulation buffer");
             return 1;
         }
-        if (use_voxels && !voxel_buffer) {
+        if (use_voxels && !use_direct_voxel_build && !voxel_buffer) {
             set_error(error, error_len, "failed to allocate voxel field buffer");
+            return 1;
+        }
+        if (use_bound_grid && (!bound_grid_texture ||
+                               !derivative_lower_grid_texture ||
+                               !derivative_upper_grid_texture)) {
+            set_error(error, error_len, "failed to allocate bound-grid texture");
+            return 1;
+        }
+        if (use_regional && (!regional_mask_buffer || !regional_proof_buffer ||
+            (config->bound_grid_profile != 0u &&
+             (!regional_validation_buffer || !regional_profile_buffer)))) {
+            set_error(error, error_len, "failed to allocate regional program grid");
+            return 1;
+        }
+        if (use_bound_grid && config->bound_grid_profile != 0u &&
+            (!bound_grid_profile_buffer || !bound_grid_validation_buffer)) {
+            set_error(error, error_len, "failed to allocate bound-grid profile buffers");
             return 1;
         }
         if (focus_pipeline && !focus_buffer) {
             set_error(error, error_len, "failed to allocate focus-distance buffer");
             return 1;
         }
+        if (sdf_profile_pipeline && !sdf_profile_buffer) {
+            set_error(error, error_len, "failed to allocate SDF profile buffer");
+            return 1;
+        }
 
-        if (build_ms) *build_ms = 0.0;
-        if (use_voxels) {
-            NSDate *voxel_build_start = [NSDate date];
-            id<MTLCommandBuffer> voxel_build_command = [queue commandBuffer];
-            id<MTLComputeCommandEncoder> voxel_build_encoder = [voxel_build_command computeCommandEncoder];
-            [voxel_build_encoder setComputePipelineState:voxel_build_pipeline];
-            [voxel_build_encoder setBuffer:voxel_buffer offset:0 atIndex:0];
-            [voxel_build_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
-            MTLSize voxel_grid = MTLSizeMake(config->voxel_resolution,
-                                             config->voxel_resolution,
-                                             config->voxel_resolution);
-            [voxel_build_encoder dispatchThreads:voxel_grid threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
-            [voxel_build_encoder endEncoding];
-            [voxel_build_command commit];
-            [voxel_build_command waitUntilCompleted];
-            if (voxel_build_command.status == MTLCommandBufferStatusError) {
-                set_error(error, error_len, "Metal voxel build failed: %s", voxel_build_command.error.localizedDescription.UTF8String);
+        if (stitch_validation_pipeline) {
+            struct StitchValidationCountsCpp {
+                uint32_t distance_failures;
+                uint32_t gradient_failures;
+                uint32_t max_distance_error_bits;
+                uint32_t max_gradient_error_bits;
+            } initial_counts = {};
+            id<MTLBuffer> validation_buffer = [device
+                newBufferWithBytes:&initial_counts
+                            length:sizeof(initial_counts)
+                           options:MTLResourceStorageModeShared];
+            if (!validation_buffer) {
+                set_error(error, error_len,
+                          "failed to allocate program validation buffer");
                 return 1;
             }
-            VoxelStorageResult storage = finalize_voxel_storage(device, *config, voxel_buffer);
+            id<MTLCommandBuffer> validation_command = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> validation_encoder =
+                [validation_command computeCommandEncoder];
+            [validation_encoder setComputePipelineState:stitch_validation_pipeline];
+            [validation_encoder setBuffer:validation_buffer offset:0 atIndex:0];
+            [validation_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            constexpr NSUInteger sample_count = 1u << 20u;
+            NSUInteger group_width = std::min<NSUInteger>(
+                stitch_validation_pipeline.maxTotalThreadsPerThreadgroup, 256u);
+            [validation_encoder dispatchThreads:MTLSizeMake(sample_count, 1u, 1u)
+                           threadsPerThreadgroup:MTLSizeMake(group_width, 1u, 1u)];
+            [validation_encoder endEncoding];
+            [validation_command commit];
+            [validation_command waitUntilCompleted];
+            if (validation_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len, "program validation failed: %s",
+                          validation_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            const auto *counts = static_cast<const StitchValidationCountsCpp *>(
+                validation_buffer.contents);
+            float max_distance_error = 0.0f;
+            float max_gradient_error = 0.0f;
+            std::memcpy(&max_distance_error, &counts->max_distance_error_bits,
+                        sizeof(float));
+            std::memcpy(&max_gradient_error, &counts->max_gradient_error_bits,
+                        sizeof(float));
+            if (stitch_validation_stats) {
+                stitch_validation_stats->sample_count = sample_count;
+                stitch_validation_stats->distance_failures =
+                    counts->distance_failures;
+                stitch_validation_stats->gradient_failures =
+                    counts->gradient_failures;
+                stitch_validation_stats->max_distance_error = max_distance_error;
+                stitch_validation_stats->max_gradient_error = max_gradient_error;
+            }
+            if (counts->distance_failures != 0u ||
+                counts->gradient_failures != 0u) {
+                set_error(error, error_len,
+                          "stitch validation found %u distance and %u gradient "
+                          "failures (max errors %.9g, %.9g)",
+                          counts->distance_failures, counts->gradient_failures,
+                          max_distance_error, max_gradient_error);
+                return 1;
+            }
+        }
+
+        if (build_ms) *build_ms = runtime_source_build_elapsed_ms;
+        if (use_regional) {
+            NSDate *build_start = [NSDate date];
+            id<MTLCommandBuffer> build_command = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> build_encoder =
+                [build_command computeCommandEncoder];
+            [build_encoder setComputePipelineState:regional_program_build_pipeline];
+            [build_encoder setBuffer:regional_mask_buffer offset:0 atIndex:0];
+            [build_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            [build_encoder setBuffer:regional_proof_buffer offset:0 atIndex:2];
+            const NSUInteger resolution = config->regional_program_resolution;
+            [build_encoder dispatchThreads:MTLSizeMake(resolution, resolution,
+                                                       resolution)
+                     threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+            [build_encoder endEncoding];
+            [build_command commit];
+            [build_command waitUntilCompleted];
+            if (build_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len, "regional program build failed: %s",
+                          build_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            const size_t cell_count = static_cast<size_t>(resolution) * resolution *
+                                      resolution;
+            const auto *masks = static_cast<const uint64_t *>(
+                regional_mask_buffer.contents);
+            uint64_t full_mask = 0u;
+            const uint32_t instruction_count =
+                std::min<uint32_t>(config->sdf_program_count,
+                                   FPT_SDF_PROGRAM_MAX_OPS);
+            for (uint32_t instruction = 0u; instruction < instruction_count;
+                 ++instruction) {
+                if (config->sdf_program[instruction].opcode != FPT_SDF_OP_ORBIT_ADD) {
+                    full_mask |= uint64_t{1} << instruction;
+                }
+            }
+            std::unordered_map<uint64_t, uint16_t> program_ids_by_mask;
+            std::vector<uint16_t> program_ids(cell_count);
+            std::vector<RegionalProgramHeaderCpp> program_headers;
+            std::vector<FptSdfInstruction> instruction_pool;
+            std::vector<uint16_t> primitive_pool;
+            const bool use_flat_union_programs =
+                config->sdf_flat_union_count > 0u;
+            uint64_t fallback = 0u;
+            uint64_t retained = 0u;
+            for (size_t cell = 0u; cell < cell_count; ++cell) {
+                const uint64_t mask = masks[cell];
+                auto found = program_ids_by_mask.find(mask);
+                uint16_t program_id = 0u;
+                if (found == program_ids_by_mask.end()) {
+                    if (program_headers.size() >= UINT16_MAX) {
+                        set_error(error, error_len,
+                                  "regional program count exceeds ushort capacity");
+                        return 1;
+                    }
+                    program_id = static_cast<uint16_t>(program_headers.size());
+                    RegionalProgramHeaderCpp header = {
+                        static_cast<uint32_t>(instruction_pool.size()), 0u,
+                        static_cast<uint32_t>(primitive_pool.size()), 0u};
+                    if (use_flat_union_programs) {
+                        const uint32_t primitive_count = std::min<uint32_t>(
+                            config->sdf_flat_union_count,
+                            FPT_SDF_FLAT_UNION_MAX_PRIMITIVES);
+                        for (uint32_t primitive = 0u;
+                             primitive < primitive_count; ++primitive) {
+                            const uint32_t source_instruction =
+                                config->sdf_flat_union_instances[primitive]
+                                    .source_instruction;
+                            if (source_instruction < 64u &&
+                                (mask & (uint64_t{1} << source_instruction)) !=
+                                    0u) {
+                                primitive_pool.push_back(
+                                    static_cast<uint16_t>(primitive));
+                            }
+                        }
+                        header.primitive_count = static_cast<uint32_t>(
+                            primitive_pool.size() - header.primitive_offset);
+                    } else {
+                        std::vector<FptSdfInstruction> regional_instructions;
+                        for (uint32_t instruction = 0u;
+                             instruction < instruction_count; ++instruction) {
+                            if ((mask & (uint64_t{1} << instruction)) != 0u) {
+                                FptSdfInstruction current =
+                                    config->sdf_program[instruction];
+                                if (current.opcode == FPT_SDF_OP_TRANSLATE &&
+                                    !regional_instructions.empty() &&
+                                    regional_instructions.back().opcode ==
+                                        FPT_SDF_OP_TRANSLATE &&
+                                    regional_instructions.back().flags ==
+                                        current.flags &&
+                                    regional_instructions.back().material_index ==
+                                        current.material_index) {
+                                    FptSdfInstruction &previous =
+                                        regional_instructions.back();
+                                    previous.data[0] += current.data[0];
+                                    previous.data[1] += current.data[1];
+                                    previous.data[2] += current.data[2];
+                                    if (previous.data[0] == 0.0f &&
+                                        previous.data[1] == 0.0f &&
+                                        previous.data[2] == 0.0f) {
+                                        regional_instructions.pop_back();
+                                    }
+                                } else {
+                                    regional_instructions.push_back(current);
+                                }
+                            }
+                        }
+                        header.instruction_count = static_cast<uint32_t>(
+                            regional_instructions.size());
+                        instruction_pool.insert(instruction_pool.end(),
+                                                regional_instructions.begin(),
+                                                regional_instructions.end());
+                    }
+                    program_headers.push_back(header);
+                    program_ids_by_mask.emplace(mask, program_id);
+                } else {
+                    program_id = found->second;
+                }
+                program_ids[cell] = program_id;
+                retained += use_flat_union_programs
+                    ? program_headers[program_id].primitive_count
+                    : program_headers[program_id].instruction_count;
+                fallback += mask == full_mask ? 1u : 0u;
+            }
+            regional_program_id_buffer =
+                [device newBufferWithBytes:program_ids.data()
+                                    length:program_ids.size() * sizeof(uint16_t)
+                                   options:MTLResourceStorageModeShared];
+            regional_program_header_buffer =
+                [device newBufferWithBytes:program_headers.data()
+                                    length:program_headers.size() *
+                                           sizeof(RegionalProgramHeaderCpp)
+                                   options:MTLResourceStorageModeShared];
+            if (instruction_pool.empty()) {
+                instruction_pool.push_back(FptSdfInstruction{});
+            }
+            regional_instruction_pool_buffer =
+                [device newBufferWithBytes:instruction_pool.data()
+                                   length:instruction_pool.size() *
+                                           sizeof(FptSdfInstruction)
+                                   options:MTLResourceStorageModeShared];
+            if (primitive_pool.empty()) primitive_pool.push_back(0u);
+            regional_primitive_pool_buffer =
+                [device newBufferWithBytes:primitive_pool.data()
+                                    length:primitive_pool.size() * sizeof(uint16_t)
+                                   options:MTLResourceStorageModeShared];
+            if (!regional_program_id_buffer || !regional_program_header_buffer ||
+                !regional_instruction_pool_buffer ||
+                !regional_primitive_pool_buffer) {
+                set_error(error, error_len,
+                          "failed to allocate compact regional program buffers");
+                return 1;
+            }
+            if (build_ms) *build_ms = -[build_start timeIntervalSinceNow] * 1000.0;
+            if (voxel_memory_bytes) {
+                *voxel_memory_bytes = program_ids.size() * sizeof(uint16_t) +
+                    program_headers.size() * sizeof(RegionalProgramHeaderCpp) +
+                    instruction_pool.size() * sizeof(FptSdfInstruction) +
+                    primitive_pool.size() * sizeof(uint16_t);
+            }
+            if (bound_grid_stats) {
+                bound_grid_stats->regional_cells = cell_count;
+                bound_grid_stats->regional_fallback_cells = fallback;
+                bound_grid_stats->regional_unique_programs = program_headers.size();
+                bound_grid_stats->regional_retained_instructions = retained;
+                if (config->bound_grid_profile != 0u) {
+                    const auto *proofs =
+                        static_cast<const RegionalProgramProofCpp *>(
+                            regional_proof_buffer.contents);
+                    for (size_t cell = 0u; cell < cell_count; ++cell) {
+                        const uint32_t flags = proofs[cell].flags;
+                        if ((flags & RegionalProofStrictDominanceCpp) != 0u) {
+                            bound_grid_stats->regional_pruned_cells++;
+                        }
+                        bound_grid_stats->regional_pruned_primitives +=
+                            proofs[cell].pruned_primitives;
+                        if ((flags & RegionalProofRepeatSeamFallbackCpp) != 0u) {
+                            bound_grid_stats->regional_repeat_seam_fallback_cells++;
+                        }
+                        if ((flags & (RegionalProofUnsupportedFallbackCpp |
+                                      RegionalProofInvalidPrimitiveFallbackCpp |
+                                      RegionalProofNoPrimitiveFallbackCpp)) != 0u) {
+                            bound_grid_stats->regional_unsupported_fallback_cells++;
+                        }
+                        if ((flags & RegionalProofNoDominanceCpp) != 0u) {
+                            bound_grid_stats->regional_no_dominance_cells++;
+                        }
+                    }
+                }
+            }
+            if (config->bound_grid_profile != 0u) {
+                std::memset(regional_validation_buffer.contents, 0,
+                            sizeof(RegionalProgramValidationCountsCpp));
+                id<MTLCommandBuffer> validation_command = [queue commandBuffer];
+                id<MTLComputeCommandEncoder> validation_encoder =
+                    [validation_command computeCommandEncoder];
+                [validation_encoder setComputePipelineState:
+                    regional_program_validate_pipeline];
+                [validation_encoder setBuffer:regional_validation_buffer
+                                        offset:0 atIndex:0];
+                [validation_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+                [validation_encoder setBuffer:regional_program_id_buffer
+                                        offset:0 atIndex:2];
+                [validation_encoder setBuffer:regional_program_header_buffer
+                                        offset:0 atIndex:3];
+                [validation_encoder setBuffer:regional_instruction_pool_buffer
+                                        offset:0 atIndex:4];
+                [validation_encoder setBuffer:regional_primitive_pool_buffer
+                                        offset:0 atIndex:5];
+                [validation_encoder dispatchThreads:
+                    MTLSizeMake(resolution, resolution, resolution)
+                         threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+                [validation_encoder endEncoding];
+                [validation_command commit];
+                [validation_command waitUntilCompleted];
+                if (validation_command.status == MTLCommandBufferStatusError) {
+                    set_error(error, error_len,
+                              "regional program validation failed: %s",
+                              validation_command.error.localizedDescription.UTF8String);
+                    return 1;
+                }
+                if (bound_grid_stats) {
+                    const auto *validation = static_cast<const
+                        RegionalProgramValidationCountsCpp *>(
+                            regional_validation_buffer.contents);
+                    bound_grid_stats->regional_sampled_distance_failures =
+                        validation->sampled_distance_failures;
+                }
+            }
+        }
+        if (use_bound_grid) {
+            NSDate *build_start = [NSDate date];
+            id<MTLCommandBuffer> build_command = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> build_encoder = [build_command computeCommandEncoder];
+            [build_encoder setComputePipelineState:bound_grid_build_pipeline];
+            [build_encoder setTexture:bound_grid_texture atIndex:0];
+            if (config->bound_grid_directional != 0u) {
+                [build_encoder setTexture:derivative_lower_grid_texture atIndex:1];
+                [build_encoder setTexture:derivative_upper_grid_texture atIndex:2];
+            }
+            [build_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            const NSUInteger resolution = config->bound_grid_resolution;
+            [build_encoder dispatchThreads:MTLSizeMake(resolution, resolution, resolution)
+                     threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+            [build_encoder endEncoding];
+            [build_command commit];
+            [build_command waitUntilCompleted];
+            if (build_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len, "Metal bound-grid build failed: %s",
+                          build_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            if (build_ms) *build_ms = -[build_start timeIntervalSinceNow] * 1000.0;
+            if (voxel_memory_bytes) {
+                const uint64_t bytes_per_cell = config->bound_grid_directional == 0u
+                    ? 8u : (config->bound_grid_fp16 != 0u ? 16u : 40u);
+                *voxel_memory_bytes = static_cast<uint64_t>(resolution) * resolution *
+                                      resolution * bytes_per_cell;
+            }
+            if (config->bound_grid_profile != 0u) {
+                std::memset(bound_grid_validation_buffer.contents, 0,
+                            sizeof(BoundGridValidationCountsCpp));
+                id<MTLCommandBuffer> validate_command = [queue commandBuffer];
+                id<MTLComputeCommandEncoder> validate_encoder =
+                    [validate_command computeCommandEncoder];
+                [validate_encoder setComputePipelineState:bound_grid_validate_pipeline];
+                [validate_encoder setBuffer:bound_grid_validation_buffer offset:0 atIndex:0];
+                [validate_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+                [validate_encoder setTexture:bound_grid_texture atIndex:0];
+                [validate_encoder setTexture:derivative_lower_grid_texture atIndex:1];
+                [validate_encoder setTexture:derivative_upper_grid_texture atIndex:2];
+                [validate_encoder dispatchThreads:MTLSizeMake(resolution, resolution, resolution)
+                           threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+                [validate_encoder endEncoding];
+                [validate_command commit];
+                [validate_command waitUntilCompleted];
+                if (validate_command.status == MTLCommandBufferStatusError) {
+                    set_error(error, error_len, "bound-grid validation failed: %s",
+                              validate_command.error.localizedDescription.UTF8String);
+                    return 1;
+                }
+                if (bound_grid_stats) {
+                    const auto *validation = static_cast<const BoundGridValidationCountsCpp *>(
+                        bound_grid_validation_buffer.contents);
+                    bound_grid_stats->certified_cells = validation->certified_cells;
+                    bound_grid_stats->unknown_cells = validation->unknown_cells;
+                    bound_grid_stats->sampled_bound_failures =
+                        validation->sampled_bound_failures;
+                    bound_grid_stats->sampled_false_skips =
+                        validation->sampled_false_skips;
+                    bound_grid_stats->certified_derivative_cells =
+                        validation->certified_derivative_cells;
+                    bound_grid_stats->unknown_derivative_cells =
+                        validation->unknown_derivative_cells;
+                    bound_grid_stats->sampled_derivative_failures =
+                        validation->sampled_derivative_failures;
+                }
+            }
+        }
+        if (use_voxels) {
+            NSDate *voxel_build_start = [NSDate date];
+            VoxelStorageResult storage;
+            if (use_direct_voxel_build) {
+                storage = build_direct_voxel_storage(device, queue, direct_voxel_build_pipeline,
+                                                     cfg_buffer, *config);
+            }
+            if (!use_direct_voxel_build || storage.overflow) {
+                voxel_buffer = [device newBufferWithLength:voxel_count * 12u
+                                                   options:MTLResourceStorageModeShared];
+                if (!voxel_buffer) {
+                    set_error(error, error_len, "failed to allocate voxel staging fallback");
+                    return 1;
+                }
+                id<MTLCommandBuffer> voxel_build_command = [queue commandBuffer];
+                id<MTLComputeCommandEncoder> voxel_build_encoder = [voxel_build_command computeCommandEncoder];
+                [voxel_build_encoder setComputePipelineState:voxel_build_pipeline];
+                [voxel_build_encoder setBuffer:voxel_buffer offset:0 atIndex:0];
+                [voxel_build_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+                MTLSize voxel_grid = MTLSizeMake(config->voxel_resolution,
+                                                 config->voxel_resolution,
+                                                 config->voxel_resolution);
+                [voxel_build_encoder dispatchThreads:voxel_grid threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+                [voxel_build_encoder endEncoding];
+                [voxel_build_command commit];
+                [voxel_build_command waitUntilCompleted];
+                if (voxel_build_command.status == MTLCommandBufferStatusError) {
+                    set_error(error, error_len, "Metal voxel build failed: %s",
+                              voxel_build_command.error.localizedDescription.UTF8String);
+                    return 1;
+                }
+                storage = finalize_voxel_storage(device, *config, voxel_buffer);
+            }
             if (!storage.cells || !storage.page_table) {
                 set_error(error, error_len, "failed to finalize voxel storage");
                 return 1;
@@ -1577,6 +5040,8 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             voxel_page_table_buffer = storage.page_table;
             if (voxel_memory_bytes) *voxel_memory_bytes = storage.resident_bytes;
             if (voxel_active_bricks) *voxel_active_bricks = storage.active_bricks;
+            if (voxel_active_cells) *voxel_active_cells = storage.active_cells;
+            if (voxel_rejected_bricks) *voxel_rejected_bricks = storage.rejected_bricks;
             if (build_ms) *build_ms = -[voxel_build_start timeIntervalSinceNow] * 1000.0;
         }
 
@@ -1589,6 +5054,15 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             [focus_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
             if (use_voxels) [focus_encoder setBuffer:voxel_buffer offset:0 atIndex:2];
             if (use_voxels) [focus_encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:3];
+            if (use_regional) {
+                [focus_encoder setBuffer:regional_program_id_buffer offset:0 atIndex:2];
+                [focus_encoder setBuffer:regional_program_header_buffer offset:0 atIndex:3];
+                [focus_encoder setBuffer:regional_instruction_pool_buffer offset:0 atIndex:4];
+                [focus_encoder setBuffer:regional_primitive_pool_buffer offset:0 atIndex:5];
+            }
+            if (use_bound_grid) [focus_encoder setTexture:bound_grid_texture atIndex:0];
+            if (use_bound_grid) [focus_encoder setTexture:derivative_lower_grid_texture atIndex:1];
+            if (use_bound_grid) [focus_encoder setTexture:derivative_upper_grid_texture atIndex:2];
             [focus_encoder dispatchThreads:MTLSizeMake(1u, 1u, 1u) threadsPerThreadgroup:MTLSizeMake(1u, 1u, 1u)];
             [focus_encoder endEncoding];
             [focus_command_buffer commit];
@@ -1616,6 +5090,15 @@ extern "C" int fpt_metal_render(const char *metallib_path,
                 [encoder setBytes:&chunk length:sizeof(chunk) atIndex:2];
                 if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
                 if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
+                if (use_regional) {
+                    [encoder setBuffer:regional_program_id_buffer offset:0 atIndex:3];
+                    [encoder setBuffer:regional_program_header_buffer offset:0 atIndex:4];
+                    [encoder setBuffer:regional_instruction_pool_buffer offset:0 atIndex:5];
+                    [encoder setBuffer:regional_primitive_pool_buffer offset:0 atIndex:6];
+                }
+                if (use_bound_grid) [encoder setTexture:bound_grid_texture atIndex:0];
+                if (use_bound_grid) [encoder setTexture:derivative_lower_grid_texture atIndex:1];
+                if (use_bound_grid) [encoder setTexture:derivative_upper_grid_texture atIndex:2];
                 [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
                 [encoder endEncoding];
                 [chunk_buffer commit];
@@ -1633,6 +5116,15 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
             if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
             if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
+            if (use_regional) {
+                [encoder setBuffer:regional_program_id_buffer offset:0 atIndex:3];
+                [encoder setBuffer:regional_program_header_buffer offset:0 atIndex:4];
+                [encoder setBuffer:regional_instruction_pool_buffer offset:0 atIndex:5];
+                [encoder setBuffer:regional_primitive_pool_buffer offset:0 atIndex:6];
+            }
+            if (use_bound_grid) [encoder setTexture:bound_grid_texture atIndex:0];
+            if (use_bound_grid) [encoder setTexture:derivative_lower_grid_texture atIndex:1];
+            if (use_bound_grid) [encoder setTexture:derivative_upper_grid_texture atIndex:2];
             [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
             [encoder endEncoding];
         } else {
@@ -1644,6 +5136,15 @@ extern "C" int fpt_metal_render(const char *metallib_path,
                 [encoder setBytes:&frame length:sizeof(frame) atIndex:2];
                 if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
                 if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
+                if (use_regional) {
+                    [encoder setBuffer:regional_program_id_buffer offset:0 atIndex:3];
+                    [encoder setBuffer:regional_program_header_buffer offset:0 atIndex:4];
+                    [encoder setBuffer:regional_instruction_pool_buffer offset:0 atIndex:5];
+                    [encoder setBuffer:regional_primitive_pool_buffer offset:0 atIndex:6];
+                }
+                if (use_bound_grid) [encoder setTexture:bound_grid_texture atIndex:0];
+                if (use_bound_grid) [encoder setTexture:derivative_lower_grid_texture atIndex:1];
+                if (use_bound_grid) [encoder setTexture:derivative_upper_grid_texture atIndex:2];
                 [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
                 [encoder endEncoding];
             }
@@ -1657,12 +5158,212 @@ extern "C" int fpt_metal_render(const char *metallib_path,
         [encoder endEncoding];
         [command_buffer commit];
         [command_buffer waitUntilCompleted];
-        if (elapsed_ms) {
-            *elapsed_ms = -[start_time timeIntervalSinceNow] * 1000.0;
-        }
+        const double render_elapsed_ms =
+            -[start_time timeIntervalSinceNow] * 1000.0;
+        if (elapsed_ms) *elapsed_ms = render_elapsed_ms;
         if (command_buffer.status == MTLCommandBufferStatusError) {
             set_error(error, error_len, "Metal command buffer failed: %s", command_buffer.error.localizedDescription.UTF8String);
             return 1;
+        }
+        if (linear_output) {
+            if (!linear_output_buffer) {
+                set_error(error, error_len,
+                          "failed to allocate linear probe output buffer");
+                return 1;
+            }
+            id<MTLCommandBuffer> copy_command = [queue commandBuffer];
+            id<MTLBlitCommandEncoder> blit = [copy_command blitCommandEncoder];
+            [blit copyFromBuffer:accum_buffer sourceOffset:0
+                       toBuffer:linear_output_buffer destinationOffset:0
+                           size:linear_component_count * sizeof(float)];
+            [blit endEncoding];
+            [copy_command commit];
+            [copy_command waitUntilCompleted];
+            if (copy_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len,
+                          "linear probe readback failed: %s",
+                          copy_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            std::memcpy(linear_output, linear_output_buffer.contents,
+                        linear_component_count * sizeof(float));
+        }
+
+        if (sdf_profile_pipeline && sdf_profile_buffer) {
+            std::memset(sdf_profile_buffer.contents, 0,
+                        sizeof(FptSdfProfileCountsCpp));
+            FptSdfProfileConfigCpp profile = {0u, 4u, 0u, 0u};
+            id<MTLCommandBuffer> profile_command = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> profile_encoder =
+                [profile_command computeCommandEncoder];
+            [profile_encoder setComputePipelineState:sdf_profile_pipeline];
+            [profile_encoder setBuffer:sdf_profile_buffer offset:0 atIndex:0];
+            [profile_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            [profile_encoder setBytes:&profile length:sizeof(profile) atIndex:2];
+            MTLSize profile_threads =
+                threadgroup_for_pipeline(sdf_profile_pipeline);
+            MTLSize profile_groups = groups_for_extent(
+                config->width, config->height, profile_threads);
+            [profile_encoder dispatchThreadgroups:profile_groups
+                             threadsPerThreadgroup:profile_threads];
+            [profile_encoder endEncoding];
+            [profile_command commit];
+            [profile_command waitUntilCompleted];
+            if (profile_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len, "SDF profile failed: %s",
+                          profile_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            if (sdf_profile_stats) {
+                const auto &counts = *static_cast<const FptSdfProfileCountsCpp *>(
+                    sdf_profile_buffer.contents);
+                sdf_profile_stats->primary_steps = counts.primary_steps;
+                sdf_profile_stats->secondary_steps = counts.secondary_steps;
+                sdf_profile_stats->shadow_steps = counts.shadow_steps;
+                sdf_profile_stats->normal_evals = counts.normal_evals;
+                sdf_profile_stats->bounces = counts.bounces;
+                sdf_profile_stats->pixels = counts.pixels;
+                const bool program_gradient = config->sdf_id == FPT_SDF_PROGRAM &&
+                    (config->sdf_normal_mode == 0u ||
+                     config->sdf_normal_mode == 2u);
+                const double normal_cost = program_gradient
+                    ? 1.0 : (config->sdf_normal_mode == 1u ? 4.0 : 6.0);
+                const double units[5] = {
+                    static_cast<double>(counts.primary_steps),
+                    static_cast<double>(counts.secondary_steps),
+                    static_cast<double>(counts.shadow_steps),
+                    static_cast<double>(counts.normal_evals) * normal_cost,
+                    static_cast<double>(counts.bounces)};
+                const double total = units[0] + units[1] + units[2] +
+                                     units[3] + units[4];
+                if (total > 0.0) {
+                    sdf_profile_stats->primary_ms_estimate =
+                        render_elapsed_ms * units[0] / total;
+                    sdf_profile_stats->secondary_ms_estimate =
+                        render_elapsed_ms * units[1] / total;
+                    sdf_profile_stats->shadow_ms_estimate =
+                        render_elapsed_ms * units[2] / total;
+                    sdf_profile_stats->normal_ms_estimate =
+                        render_elapsed_ms * units[3] / total;
+                    sdf_profile_stats->bounce_ms_estimate =
+                        render_elapsed_ms * units[4] / total;
+                }
+            }
+        }
+
+        if (use_regional && config->bound_grid_profile != 0u) {
+            std::memset(regional_profile_buffer.contents, 0,
+                        pixel_count * sizeof(RegionalProgramLocalStatsCpp));
+            id<MTLCommandBuffer> profile_command = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> profile_encoder =
+                [profile_command computeCommandEncoder];
+            [profile_encoder setComputePipelineState:regional_program_profile_pipeline];
+            [profile_encoder setBuffer:regional_profile_buffer offset:0 atIndex:0];
+            [profile_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            [profile_encoder setBuffer:regional_program_id_buffer offset:0 atIndex:2];
+            [profile_encoder setBuffer:regional_program_header_buffer offset:0 atIndex:3];
+            [profile_encoder setBuffer:regional_instruction_pool_buffer offset:0 atIndex:4];
+            [profile_encoder setBuffer:regional_primitive_pool_buffer offset:0 atIndex:5];
+            MTLSize profile_threads =
+                threadgroup_for_pipeline(regional_program_profile_pipeline);
+            MTLSize profile_groups = groups_for_extent(config->width, config->height,
+                                                       profile_threads);
+            [profile_encoder dispatchThreadgroups:profile_groups
+                             threadsPerThreadgroup:profile_threads];
+            [profile_encoder endEncoding];
+            [profile_command commit];
+            [profile_command waitUntilCompleted];
+            if (profile_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len,
+                          "regional-program traversal profile failed: %s",
+                          profile_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            if (bound_grid_stats) {
+                const auto *profile =
+                    static_cast<const RegionalProgramLocalStatsCpp *>(
+                        regional_profile_buffer.contents);
+                for (size_t pixel = 0u; pixel < pixel_count; ++pixel) {
+                    for (uint32_t ray_class = 0u; ray_class < 3u; ++ray_class) {
+                        bound_grid_stats->regional_distance_evaluations[ray_class] +=
+                            profile[pixel].distance_evaluations[ray_class];
+                        bound_grid_stats->regional_atlas_evaluations[ray_class] +=
+                            profile[pixel].atlas_evaluations[ray_class];
+                        bound_grid_stats->regional_full_program_evaluations[ray_class] +=
+                            profile[pixel].full_program_evaluations[ray_class];
+                        bound_grid_stats->regional_cell_entries[ray_class] +=
+                            profile[pixel].cell_entries[ray_class];
+                        bound_grid_stats->regional_same_cell_reuses[ray_class] +=
+                            profile[pixel].same_cell_reuses[ray_class];
+                        bound_grid_stats->regional_same_program_reuses[ray_class] +=
+                            profile[pixel].same_program_reuses[ray_class];
+                        bound_grid_stats->regional_program_id_loads[ray_class] +=
+                            profile[pixel].program_id_loads[ray_class];
+                        bound_grid_stats->regional_header_loads[ray_class] +=
+                            profile[pixel].header_loads[ray_class];
+                        bound_grid_stats->regional_dynamic_instructions[ray_class] +=
+                            profile[pixel].dynamic_instructions[ray_class];
+                    }
+                    bound_grid_stats->regional_profiled_paths +=
+                        profile[pixel].profiled_paths;
+                }
+            }
+        }
+
+        if (use_bound_grid && config->bound_grid_profile != 0u) {
+            std::memset(bound_grid_profile_buffer.contents, 0,
+                        pixel_count * sizeof(BoundGridLocalStatsCpp));
+            id<MTLCommandBuffer> profile_command = [queue commandBuffer];
+            id<MTLComputeCommandEncoder> profile_encoder =
+                [profile_command computeCommandEncoder];
+            [profile_encoder setComputePipelineState:bound_grid_profile_pipeline];
+            [profile_encoder setBuffer:bound_grid_profile_buffer offset:0 atIndex:0];
+            [profile_encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+            [profile_encoder setTexture:bound_grid_texture atIndex:0];
+            [profile_encoder setTexture:derivative_lower_grid_texture atIndex:1];
+            [profile_encoder setTexture:derivative_upper_grid_texture atIndex:2];
+            MTLSize profile_threads = threadgroup_for_pipeline(bound_grid_profile_pipeline);
+            MTLSize profile_groups = groups_for_extent(config->width, config->height,
+                                                       profile_threads);
+            [profile_encoder dispatchThreadgroups:profile_groups
+                             threadsPerThreadgroup:profile_threads];
+            [profile_encoder endEncoding];
+            [profile_command commit];
+            [profile_command waitUntilCompleted];
+            if (profile_command.status == MTLCommandBufferStatusError) {
+                set_error(error, error_len, "bound-grid traversal profile failed: %s",
+                          profile_command.error.localizedDescription.UTF8String);
+                return 1;
+            }
+            if (bound_grid_stats) {
+                const auto *profile = static_cast<const BoundGridLocalStatsCpp *>(
+                    bound_grid_profile_buffer.contents);
+                for (size_t pixel = 0u; pixel < pixel_count; ++pixel) {
+                    for (uint32_t ray_class = 0u; ray_class < 3u; ++ray_class) {
+                        bound_grid_stats->macro_cells[ray_class] +=
+                            profile[pixel].macro_cells[ray_class];
+                        bound_grid_stats->certified_skips[ray_class] +=
+                            profile[pixel].certified_skips[ray_class];
+                        bound_grid_stats->candidate_intervals[ray_class] +=
+                            profile[pixel].candidate_intervals[ray_class];
+                        bound_grid_stats->candidate_misses[ray_class] +=
+                            profile[pixel].candidate_misses[ray_class];
+                        bound_grid_stats->candidate_hits[ray_class] +=
+                            profile[pixel].candidate_hits[ray_class];
+                        bound_grid_stats->unknown_intervals[ray_class] +=
+                            profile[pixel].unknown_intervals[ray_class];
+                        bound_grid_stats->field_evaluations[ray_class] +=
+                            profile[pixel].field_evaluations[ray_class];
+                        bound_grid_stats->directional_steps[ray_class] +=
+                            profile[pixel].directional_steps[ray_class];
+                        bound_grid_stats->cell_exit_clamps[ray_class] +=
+                            profile[pixel].cell_exit_clamps[ray_class];
+                        bound_grid_stats->unknown_derivative_intervals[ray_class] +=
+                            profile[pixel].unknown_derivative_intervals[ray_class];
+                    }
+                    bound_grid_stats->profiled_paths += profile[pixel].profiled_paths;
+                }
+            }
         }
 
         std::vector<uint8_t> rgba(pixel_count * 4);
@@ -1797,6 +5498,10 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
 }
 
 extern "C" int fpt_metal_preview(const char *metallib_path,
+                                  const char *stitch_metallib_path,
+                                  const char *const *stitch_archive_paths,
+                                  const char *shader_source,
+                                  size_t shader_source_len,
                                   const struct FptRenderConfig *config,
                                   const struct FptRenderConfig *scene_configs,
                                   uint32_t scene_config_count,
@@ -1814,6 +5519,10 @@ extern "C" int fpt_metal_preview(const char *metallib_path,
                                                                             sceneCount:scene_config_count
                                                                             sceneIndex:scene_config_index
                                                                                metallib:ns_string(metallib_path)
+                                                                        stitchMetallib:ns_string(stitch_metallib_path)
+                                                                     stitchArchivePaths:stitch_archive_paths
+                                                                          shaderSource:shader_source
+                                                                    shaderSourceLength:shader_source_len
                                                                                   error:&ns_error];
         if (!controller) {
             set_error(error, error_len, "failed to start preview: %s", ns_error.localizedDescription.UTF8String);
