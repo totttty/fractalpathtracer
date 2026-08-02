@@ -1,0 +1,68 @@
+{
+  "preset": "../readme/presets/Cage_Fractal.fpt",
+  "output": "Exact_Tie.png",
+  "width": 64,
+  "height": 36,
+  "samples": 1,
+  "camera": {
+    "position": [2.0, 0.0, -4.0],
+    "yaw_pitch": [0.0, 0.0],
+    "fov": 52,
+    "dof": 0,
+    "focus_distance": 4.0
+  },
+  "render": {
+    "bounces": 1,
+    "marching_steps": 180,
+    "normal_epsilon": 0.0008,
+    "min_distance": 0.0008,
+    "max_distance": 30,
+    "adaptive_marching": 0.18,
+    "error_protection": 0,
+    "random_mode": 0
+  },
+  "world": {
+    "mode": 3,
+    "light_size": 1,
+    "rotation": 0,
+    "elevation": 0,
+    "power": 0.2,
+    "contrast": 1,
+    "gradient_background": 0,
+    "one_color": [0.025, 0.035, 0.055]
+  },
+  "sun": {
+    "enabled": 1,
+    "rotation": 40,
+    "elevation": 42,
+    "power": 2.5,
+    "softness": 0.05,
+    "color": [1.0, 0.84, 0.68]
+  },
+  "post": {
+    "tone_map": 3,
+    "exposure": 1.1,
+    "brightness": 0,
+    "saturation": 1.0,
+    "contrast": 1.05,
+    "chromatic_aberration": 0,
+    "highlights": 0.04
+  },
+  "voxel": {
+    "bounds_min": [-1.0, -1.0, -1.0],
+    "bounds_max": [1.0, 1.0, 1.0]
+  },
+  "sdf_program": {
+    "operations": [
+      {"op": "sphere", "radius": 1.0},
+      {"op": "plane", "data": [1.0, 0.0, 0.0, 0.0], "combine": "intersection"},
+      {"op": "plane", "data": [-1.0, 0.0, 0.0, 0.0], "combine": "intersection"},
+      {"op": "translate", "value": [2.0, 0.0, 0.0]},
+      {"op": "sphere", "radius": 0.8}
+    ],
+    "material": {
+      "mode": "solid",
+      "color": [0.2, 0.7, 0.9]
+    }
+  }
+}
