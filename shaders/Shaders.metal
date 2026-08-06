@@ -21,11 +21,18 @@ enum {
     SDF_PROGRAM = 9,
     SDF_README_CORNELL = 10,
     SDF_README_GLASS = 11,
+    SDF_MANDELBULBER = 12,
 };
 
 enum {
     VOXEL_BUILD_STAGING = 0,
     VOXEL_BUILD_DIRECT = 1,
+};
+
+enum {
+    VOXEL_STORAGE_DENSE = 0,
+    VOXEL_STORAGE_SPARSE_BRICKS = 1,
+    VOXEL_STORAGE_TEMPLATE_BRICKS = 3,
 };
 
 enum {
@@ -153,6 +160,7 @@ struct FptRenderConfig {
 
     float camera_position[3];
     float camera_yaw_pitch[2];
+    float camera_roll;
     float camera_fov;
     float camera_dof;
     float focus_distance;
@@ -165,7 +173,7 @@ struct FptRenderConfig {
     float background_gradient[6];
     float post[7];
     float set_values[40];
-    float vset_values[120];
+    float vset_values[133];
     uint sdf_program_count;
     uint gradient_count;
     uint material_mode;
@@ -235,10 +243,14 @@ enum {
     FPT_DIAGNOSTIC_DEPTH = 0,
     FPT_DIAGNOSTIC_NORMAL = 1,
     FPT_DIAGNOSTIC_MATERIAL = 2,
+    FPT_DIAGNOSTIC_HIT_MASK = 3,
     FPT_DIAGNOSTIC_PATH_DIRECT = 4,
     FPT_DIAGNOSTIC_PATH_ENVIRONMENT = 5,
     FPT_DIAGNOSTIC_PATH_THROUGHPUT = 6,
     FPT_DIAGNOSTIC_PATH_FINAL = 7,
+    FPT_DIAGNOSTIC_DIFFUSE_NORMAL = 8,
+    FPT_DIAGNOSTIC_MANDEL_COLOR_INDEX = 9,
+    FPT_DIAGNOSTIC_MANDEL_PALETTE_POSITION = 10,
     FPT_DIAGNOSTIC_SDF_PRIMARY_STEPS = 11,
     FPT_DIAGNOSTIC_SDF_SHADOW_STEPS = 12,
     FPT_DIAGNOSTIC_SDF_NORMAL_EVALS = 13,
@@ -251,6 +263,7 @@ struct FptDiagnosticConfig {
     uint _pad0;
     float max_distance;
     float normal_mix;
+    uint2 dispatch_origin;
 };
 
 struct FptSdfProfileConfig {
@@ -265,6 +278,10 @@ struct FptAccumulationChunk {
     uint sample_count;
 };
 
+struct FptAccumulationTile {
+    uint2 dispatch_origin;
+};
+
 struct FptSdfProfileCounts {
     atomic_uint primary_steps;
     atomic_uint secondary_steps;
@@ -272,6 +289,17 @@ struct FptSdfProfileCounts {
     atomic_uint normal_evals;
     atomic_uint bounces;
     atomic_uint pixels;
+    atomic_uint distance_evals;
+    atomic_uint march_orbit_iterations;
+    atomic_uint refinement_steps;
+    atomic_uint normal_field_evals;
+    atomic_uint material_evals;
+    atomic_uint max_ray_steps;
+    atomic_uint max_pixel_steps;
+    atomic_uint distance_evals_by_phase[4];
+    atomic_uint orbit_iterations_by_phase[4];
+    atomic_uint formula_slot_iterations[9];
+    atomic_uint refinement_distance_evals;
 };
 
 struct Material {
@@ -411,6 +439,17 @@ static float pow5(float x) {
     return x2 * x2 * x;
 }
 
+// OpenCL's length/division path stays inside the inverse-trig domain for the
+// bundled formulas. Metal fast-math can round a normalized component a few
+// ulps past either endpoint, so generated formulas use these guarded forms.
+static float mandelSafeAsin(float value) {
+    return asin(clamp(value, -1.0f, 1.0f));
+}
+
+static float mandelSafeAcos(float value) {
+    return acos(clamp(value, -1.0f, 1.0f));
+}
+
 static float2 rot2(float2 p, float a) {
     float s = sin(a);
     float c = cos(a);
@@ -423,6 +462,51 @@ static float3 rotateCamera(float3 v, float2 cam_yp) {
     v = float3(v.x, v.z * sin(pitch) + v.y * cos(pitch), v.z * cos(pitch) - v.y * sin(pitch));
     v = float3(v.x * cos(yaw) + v.z * sin(yaw), v.y, -v.x * sin(yaw) + v.z * cos(yaw));
     return v;
+}
+
+static float3 rotateCamera(float3 v, float2 cam_yp, float roll) {
+    v.xy = rot2(v.xy, roll);
+    return rotateCamera(v, cam_yp);
+}
+
+static bool mandelbulberProjectionVisible(float2 xy,
+                                          constant FptRenderConfig &cfg) {
+    if (cfg.vset_values[107] < 2.5f || cfg.vset_values[107] > 3.5f) {
+        return true;
+    }
+    float internal_fov = cfg.camera_fov * pi / 180.0f;
+    return length(xy) <= (0.5f * pi / max(internal_fov, 1.0e-6f));
+}
+
+static float3 mandelbulberCameraRay(float2 xy,
+                                    constant FptRenderConfig &cfg) {
+    float projection = cfg.vset_values[107];
+    float internal_fov = cfg.camera_fov * pi / 180.0f;
+    float3 local_direction;
+    if (projection > 0.5f && projection < 1.5f ||
+        projection > 2.5f && projection < 3.5f) {
+        float radius = length(xy);
+        if (radius <= 1.0e-8f) {
+            local_direction = float3(0.0f, 0.0f, 1.0f);
+        } else {
+            float radial_sine = sin(radius * internal_fov) / radius;
+            local_direction = float3(xy.x * radial_sine,
+                                     xy.y * radial_sine,
+                                     cos(radius * internal_fov));
+        }
+    } else if (projection > 1.5f && projection < 2.5f) {
+        float aspect = float(cfg.width) / float(cfg.height);
+        float2 normalized_screen = float2(xy.x * (2.0f / aspect), xy.y);
+        float2 angular = normalized_screen * (0.5f * internal_fov);
+        local_direction = float3(sin(angular.x) * cos(angular.y),
+                                 sin(angular.y),
+                                 cos(angular.x) * cos(angular.y));
+    } else {
+        float focal_length = 1.0f / tan(0.5f * internal_fov);
+        local_direction = normalize(float3(xy, focal_length));
+    }
+    return rotateCamera(normalize(local_direction),
+                        cameraYawPitch(cfg), cfg.camera_roll);
 }
 
 static float3 rotateIFS(float3 z, float AngPFXY, float AngPFYZ, float AngPFXZ) {
@@ -696,6 +780,199 @@ static DeResult deMenger(float3 p, constant FptRenderConfig &cfg) {
     r.d = sdf;
     r.orbit = 1.0f;
     return r;
+}
+
+// Mandelbulber's SetRotation3 order is Rz(rotation.x) * Ry(rotation.y) *
+// Rx(rotation.z). Apply it explicitly to avoid matrix-layout ambiguity.
+static float3 mandelbulberRotation3(float3 value, float3 rotation) {
+    float sx = sin(rotation.z);
+    float cx = cos(rotation.z);
+    value.yz = float2(value.y * cx - value.z * sx,
+                      value.y * sx + value.z * cx);
+    float sy = sin(rotation.y);
+    float cy = cos(rotation.y);
+    value.xz = float2(value.x * cy + value.z * sy,
+                      -value.x * sy + value.z * cy);
+    float sz = sin(rotation.x);
+    float cz = cos(rotation.x);
+    value.xy = float2(value.x * cz - value.y * sz,
+                      value.x * sz + value.y * cz);
+    return value;
+}
+
+// Mandelbulber's global fractal transform uses SetRotation2:
+// Rz(rotation.z) * Ry(rotation.y) * Rx(rotation.x).
+static float3 mandelbulberRotation2(float3 value, float3 rotation) {
+    float sx = sin(rotation.x);
+    float cx = cos(rotation.x);
+    value.yz = float2(value.y * cx - value.z * sx,
+                      value.y * sx + value.z * cx);
+    float sy = sin(rotation.y);
+    float cy = cos(rotation.y);
+    value.xz = float2(value.x * cy + value.z * sy,
+                      -value.x * sy + value.z * cy);
+    float sz = sin(rotation.z);
+    float cz = cos(rotation.z);
+    value.xy = float2(value.x * cz - value.y * sz,
+                      value.x * sz + value.y * cz);
+    return value;
+}
+
+static float mandelbulberRepeatCoordinate(float value, float period) {
+    if (!(period > 0.0f)) return value;
+    return value - period * floor((value + 0.5f * period) / period);
+}
+
+static float3 mandelbulberGlobalPoint(float3 p,
+                                     constant FptRenderConfig &cfg) {
+    float world_scale = max(setv(cfg, 0), 1.0f);
+    float3 point = float3(p.x, p.z, p.y) / world_scale;
+    point -= float3(cfg.vset_values[120], cfg.vset_values[121],
+                    cfg.vset_values[122]);
+    point = mandelbulberRotation2(
+        point,
+        float3(cfg.vset_values[123], cfg.vset_values[124],
+               cfg.vset_values[125]));
+    float3 repeat = float3(cfg.vset_values[126], cfg.vset_values[127],
+                           cfg.vset_values[128]);
+    point = float3(mandelbulberRepeatCoordinate(point.x, repeat.x),
+                   mandelbulberRepeatCoordinate(point.y, repeat.y),
+                   mandelbulberRepeatCoordinate(point.z, repeat.z));
+    return float3(point.x, point.z, point.y) * world_scale;
+}
+
+struct MandelFormulaIterationCounts {
+    uint slots[9];
+};
+
+static float mandelInteractiveIterationScale(constant FptRenderConfig &cfg) {
+#if defined(FPT_MANDEL_INTERACTIVE_REFINEMENT)
+    float state = cfg.vset_values[131];
+    if (state < 0.0f) return clamp(-state, 0.125f, 1.0f);
+#else
+    (void)cfg;
+#endif
+    return 1.0f;
+}
+
+// FPT_MANDELBULBER_GENERATED_INSERTION_POINT
+
+#ifndef FPT_MANDEL_GENERATED_FIELD
+static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
+    int completed_iterations) {
+    MandelFormulaIterationCounts counts = {};
+    counts.slots[0] = uint(max(completed_iterations, 0));
+    return counts;
+}
+
+// Exact procedural port of Mandelbulber's Kaleidoscopic IFS (formula ID 10).
+// The uniform world scale is a similarity transform used only to keep this
+// tiny reference scene in Metal-FPT's normal numerical range.
+static float4 mandelbulberFieldSample(float3 p,
+                                      constant FptRenderConfig &cfg,
+                                      int iteration_multiplier) {
+    p = mandelbulberGlobalPoint(p, cfg);
+    float world_scale = max(setv(cfg, 0), 1.0f);
+    float3 scaled = p / world_scale;
+    float3 z = float3(scaled.x, scaled.z, scaled.y);
+    float derivative = 1.0f;
+    float radius = length(z);
+    int completed_iterations = 0;
+    bool escaped = false;
+    int max_iterations = clamp(int(setv(cfg, 1)) * iteration_multiplier, 1, 4096);
+    float bailout = max(setv(cfg, 2), 1.0f);
+    float ifs_scale = max(setv(cfg, 3), 1.000001f);
+    uint abs_mask = uint(round(setv(cfg, 4)));
+    uint enabled_mask = uint(round(setv(cfg, 5)));
+    float3 offset = float3(setv(cfg, 6), setv(cfg, 7), setv(cfg, 8));
+    float3 rotation = float3(setv(cfg, 9), setv(cfg, 10), setv(cfg, 11));
+
+    for (int iteration = 0; iteration < max_iterations; ++iteration) {
+        if ((abs_mask & 1u) != 0u) z.x = abs(z.x);
+        if ((abs_mask & 2u) != 0u) z.y = abs(z.y);
+        if ((abs_mask & 4u) != 0u) z.z = abs(z.z);
+
+        for (uint plane = 0u; plane < 9u; ++plane) {
+            if ((enabled_mask & (1u << plane)) == 0u) continue;
+            uint base = 12u + plane * 3u;
+            float3 direction = float3(setv(cfg, base), setv(cfg, base + 1u),
+                                      setv(cfg, base + 2u));
+            float projection = dot(z, direction);
+            if (projection < 0.0f) z -= direction * (2.0f * projection);
+        }
+
+        z = mandelbulberRotation3(z - offset, rotation) + offset;
+        z = z * ifs_scale - offset * (ifs_scale - 1.0f);
+        derivative *= abs(ifs_scale);
+        radius = length(z);
+        completed_iterations = iteration + 1;
+        if (radius > bailout) {
+            escaped = true;
+            break;
+        }
+    }
+
+    float distance = (radius - 2.0f) /
+        max(abs(derivative), 1.0e-30f) * world_scale;
+    float iteration_state = escaped
+        ? -float(completed_iterations)
+        : float(completed_iterations);
+    return float4(distance, radius, derivative, iteration_state);
+}
+#else
+static float4 mandelbulberFieldSample(float3 p,
+                                      constant FptRenderConfig &cfg,
+                                      int iteration_multiplier) {
+    return mandelbulberGeneratedFieldSample(
+        mandelbulberGlobalPoint(p, cfg), cfg, iteration_multiplier);
+}
+#endif
+
+static float mandelbulberNormalDistance(float3 p,
+                                        constant FptRenderConfig &cfg) {
+    int iteration_multiplier = cfg.vset_values[115] > 1.5f ? 5 : 1;
+    return mandelbulberFieldSample(p, cfg, iteration_multiplier).x;
+}
+
+static float mandelbulberNormalOrbitRadius(float3 p,
+                                           constant FptRenderConfig &cfg) {
+    int iteration_multiplier = cfg.vset_values[115] > 1.5f ? 5 : 1;
+    float radius = mandelbulberFieldSample(p, cfg, iteration_multiplier).y;
+    return log(max(abs(radius), 1.0e-30f));
+}
+
+static DeResult deMandelbulber(float3 p,
+                              constant FptRenderConfig &cfg) {
+    float4 sample = mandelbulberFieldSample(p, cfg, 1);
+    DeResult result;
+    result.d = sample.x;
+    // Mandelbulber's iteration-threshold mode treats points which reach the
+    // configured iteration limit as interior. Escaped points are kept just
+    // outside the current pixel-sized threshold so they cannot become false
+    // hits as the threshold grows with camera distance.
+    if (cfg.vset_values[115] > 1.5f) {
+        float threshold = clamp(
+            length(cameraPos(cfg) - p) * cfg.vset_values[116],
+            cfg.vset_values[118], cfg.vset_values[119]);
+        bool reached_iteration_limit = sample.w > 0.0f;
+        if (reached_iteration_limit) {
+            result.d = 0.0f;
+        } else if (result.d < threshold) {
+            result.d = threshold * 1.01f;
+        }
+    }
+    result.orbit = abs(sample.w) / max(setv(cfg, 1), 1.0f);
+    return result;
+}
+
+kernel void mandelbulber_field_sample_kernel(
+    device const float4 *points [[buffer(0)]],
+    device float4 *samples [[buffer(1)]],
+    constant FptRenderConfig &cfg [[buffer(2)]],
+    uint gid [[thread_position_in_grid]]) {
+    float4 sample = mandelbulberFieldSample(points[gid].xyz, cfg, 1);
+    sample.w = abs(sample.w);
+    samples[gid] = sample;
 }
 
 static DeResult deTower(float3 p, constant FptRenderConfig &cfg) {
@@ -3176,6 +3453,16 @@ static SDFResult userSdf(float3 p, constant FptRenderConfig &cfg) {
     SDFResult r;
     r.material = defaultMaterial();
     r.distance = inf;
+#if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    DeResult mandel_de = deMandelbulber(p, cfg);
+    r.distance = mandel_de.d;
+#if defined(FPT_MANDEL_GENERATED_MATERIAL)
+    r.material = mandelbulberGeneratedMaterial(p, cfg);
+#else
+    r.material = fractalMaterial(mandel_de.orbit, cfg, false);
+#endif
+    return r;
+#endif
     if (cfg.sdf_id == SDF_PROGRAM && cfg.sdf_program_count > 0u) {
         DeResult program = deShadingProgram(p, cfg);
         r.distance = program.d;
@@ -3227,9 +3514,16 @@ static SDFResult userSdf(float3 p, constant FptRenderConfig &cfg) {
         case SDF_MENGER_SPONGE: de = deMenger(p, cfg); menger = true; break;
         case SDF_TOWER_FRACTAL: de = deTower(p, cfg); break;
         case SDF_TREE_FRACTAL: de = deTree(p, cfg); break;
+        case SDF_MANDELBULBER: de = deMandelbulber(p, cfg); break;
         default: de.d = 1000.0f; de.orbit = 0.0f; break;
     }
     r.distance = de.d;
+#if defined(FPT_MANDEL_GENERATED_MATERIAL)
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        r.material = mandelbulberGeneratedMaterial(p, cfg);
+        return r;
+    }
+#endif
     r.material = fractalMaterial(de.orbit, cfg, menger);
     return r;
 }
@@ -3239,6 +3533,8 @@ static float distanceSdf(float3 p, constant FptRenderConfig &cfg) {
     return deCage(p, cfg).d;
 #elif defined(FPT_BUILTIN_TOWER_ONLY)
     return deTower(p, cfg).d;
+#elif defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    return deMandelbulber(p, cfg).d;
 #else
     if (cfg.sdf_id == SDF_PROGRAM && cfg.sdf_program_count > 0u) {
 #if defined(FPT_TOPOLOGY_RUNTIME_SOURCE)
@@ -3274,6 +3570,7 @@ static float distanceSdf(float3 p, constant FptRenderConfig &cfg) {
         case SDF_MENGER_SPONGE: return deMenger(p, cfg).d;
         case SDF_TOWER_FRACTAL: return deTower(p, cfg).d;
         case SDF_TREE_FRACTAL: return deTree(p, cfg).d;
+        case SDF_MANDELBULBER: return deMandelbulber(p, cfg).d;
         default: return 1000.0f;
     }
 #endif
@@ -3285,30 +3582,171 @@ static float mapSdf(float3 p, constant FptRenderConfig &cfg) {
 }
 
 static bool sdfHasTranslucentSurfaces(constant FptRenderConfig &cfg) {
+#if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    return false;
+#else
     return cfg.sdf_id == SDF_GLASS_BALL || cfg.sdf_id == SDF_README_GLASS ||
            (cfg.sdf_id == SDF_PROGRAM && cfg.program_material[5] > 0.0f);
+#endif
+}
+
+static int sdfMarchIterationLimit(int requested,
+                                  constant FptRenderConfig &cfg) {
+#if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    return min(requested, 10000);
+#else
+    return min(requested, cfg.sdf_id == SDF_MANDELBULBER ? 10000 : 360);
+#endif
+}
+
+static float mandelbulberMarchThreshold(float3 position,
+                                        constant FptRenderConfig &cfg) {
+    float threshold = cfg.vset_values[115] > 0.5f
+        ? length(cameraPos(cfg) - position) * cfg.vset_values[116]
+        : cfg.vset_values[117];
+    return clamp(threshold, cfg.vset_values[118], cfg.vset_values[119]);
+}
+
+static float sdfMarchStep(float distance,
+                          float threshold,
+                          constant FptRenderConfig &cfg) {
+#if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    float step = max(distance - 0.5f * threshold, 0.0f) *
+                 cfg.vset_values[113];
+    if (cfg.vset_values[108] > 0.5f) {
+        step = clamp(step, cfg.vset_values[109], cfg.vset_values[110]);
+        if (threshold > cfg.vset_values[109]) {
+            step = clamp(step,
+                         cfg.vset_values[111] * threshold,
+                         cfg.vset_values[112] * threshold);
+        }
+    } else {
+        step = min(step, cfg.vset_values[110]);
+    }
+    return step;
+#else
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        float step = max(distance - 0.5f * threshold, 0.0f) *
+                     cfg.vset_values[113];
+        if (cfg.vset_values[108] > 0.5f) {
+            step = clamp(step, cfg.vset_values[109], cfg.vset_values[110]);
+            if (threshold > cfg.vset_values[109]) {
+                step = clamp(step,
+                             cfg.vset_values[111] * threshold,
+                             cfg.vset_values[112] * threshold);
+            }
+        } else {
+            // The ordinary Mandelbulber marcher still caps every step at
+            // three fractal units. Loose analytic estimators rely on this cap
+            // to avoid jumping over compact 4D and Amazing Box surfaces.
+            step = min(step, cfg.vset_values[110]);
+        }
+        return step;
+    }
+    return abs(distance) * 0.99f;
+#endif
+}
+
+static bool sdfMarchConverged(float distance,
+                              float step,
+                              float threshold,
+                              constant FptRenderConfig &cfg) {
+#if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    return distance < threshold;
+#else
+    if (cfg.sdf_id == SDF_MANDELBULBER) return distance < threshold;
+    return step < threshold;
+#endif
+}
+
+struct MandelbulberMarchResult {
+    float3 position;
+    bool found;
+};
+
+static MandelbulberMarchResult marchMandelbulber(float3 direction,
+                                                  float3 position,
+                                                  int iteration_count,
+                                                  constant FptRenderConfig &cfg) {
+    float3 start = position;
+    float distance = 0.0f;
+    float threshold = mandelbulberMarchThreshold(position, cfg);
+    float step = 0.0f;
+    bool found = false;
+    int maximum_iterations = sdfMarchIterationLimit(iteration_count, cfg);
+    for (int iteration = 0; iteration < maximum_iterations; ++iteration) {
+        threshold = mandelbulberMarchThreshold(position, cfg);
+        distance = mapSdf(position, cfg);
+        if (!isfinite(distance)) break;
+        // Mandelbulber's full OpenCL ray recursion accepts the whole
+        // distance < threshold band. The 0.95 factor is used only to bracket
+        // the boundary during the subsequent refinement search.
+        if (distance < threshold) {
+            found = true;
+            break;
+        }
+        step = sdfMarchStep(distance, threshold, cfg);
+        float3 next_position = position + direction * step;
+        // Once fp32 can no longer represent the requested displacement, every
+        // remaining iteration evaluates the exact same point and returns the
+        // same final position. Stop that provably redundant fixed-point loop.
+        if (all(next_position == position)) break;
+        position = next_position;
+        if (length(position - start) >= cfg.render[4]) break;
+    }
+    if (!found) return MandelbulberMarchResult{position, false};
+
+    // Mandelbulber's full OpenCL engine brackets the threshold boundary with
+    // up to thirty half-steps. Its accepted band scales with detail_level.
+    float search_limit = 1.0f - 0.001f * max(cfg.vset_values[129], 0.0f);
+    step *= 0.5f;
+    for (int refinement = 0; refinement < 30; ++refinement) {
+        if (distance < threshold && distance > threshold * search_limit) break;
+        if (distance > threshold) {
+            float3 next_position = position + direction * step;
+            if (all(next_position == position)) break;
+            position = next_position;
+        } else if (distance < threshold * search_limit) {
+            float3 next_position = position - direction * step;
+            if (all(next_position == position)) break;
+            position = next_position;
+        }
+        distance = mapSdf(position, cfg);
+        step *= 0.5f;
+    }
+    return MandelbulberMarchResult{position, true};
 }
 
 static float3 march(float3 dr, float3 rp, int ni, float min_dist, float lod_falloff, constant FptRenderConfig &cfg) {
+#if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    return marchMandelbulber(dr, rp, ni, cfg).position;
+#else
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        return marchMandelbulber(dr, rp, ni, cfg).position;
+    }
     float3 cam_pos = rp;
-    int max_iter = min(ni, 360);
+    int max_iter = sdfMarchIterationLimit(ni, cfg);
     bool check_translucency = sdfHasTranslucentSurfaces(cfg);
     for (int i = 0; i < max_iter; i++) {
         float d = mapSdf(rp, cfg);
         if (!isfinite(d)) break;
-        float o = abs(d) * 0.99f;
+        float threshold = cfg.sdf_id == SDF_MANDELBULBER
+            ? mandelbulberMarchThreshold(rp, cfg)
+            : min_dist;
+        float o = sdfMarchStep(d, threshold, cfg);
         rp += dr * o;
-        float lod = min_dist;
+        float lod = threshold;
         if (lod_falloff > 0.00001f) {
             float fog_lod = dot(cam_pos - rp, cam_pos - rp);
             lod = mix(lod, 0.1f, fog_lod * lod_falloff);
-            lod = mix(min_dist, lod, cfg.render[5]);
+            lod = mix(threshold, lod, cfg.render[5]);
         }
         if (check_translucency && userSdf(rp, cfg).material.translucency > 0.0f) lod = 0.0001f;
-        if (o < lod) break;
+        if (sdfMarchConverged(d, o, lod, cfg)) break;
         if (cfg.render[4] < o) break;
     }
     return rp;
+#endif
 }
 
 static float3 marchRegionalProgram(float3 direction,
@@ -3389,8 +3827,46 @@ static float3 marchRegionalProgramTracked(
     return position;
 }
 
+static float3 normalizeFiniteDifference(float3 gradient) {
+    float magnitude_scale = max(abs(gradient.x), max(abs(gradient.y), abs(gradient.z)));
+    if (!(magnitude_scale > 0.0f) || !isfinite(magnitude_scale)) {
+        return float3(0.0f, 1.0f, 0.0f);
+    }
+    return normalize(gradient / magnitude_scale);
+}
+
 static float3 normalAt(float3 p, constant FptRenderConfig &cfg) {
-    float e = max(cfg.render[2], 0.0002f);
+    if (cfg.sdf_id == SDF_MANDELBULBER && cfg.render[7] > 0.0f) {
+        // Mandelbulber's slow-shading mode estimates the normal from the
+        // iteration-count field rather than differentiating the DE. Preserve
+        // its 11^3 binary central-difference stencil for presets which request
+        // that deliberately smoother (and much more expensive) normal.
+        float delta = length(cameraPos(cfg) - p) * cfg.render[7] *
+                      cfg.vset_values[114];
+        float max_iterations = cfg.set_values[1];
+        float3 slow_normal = float3(0.0f);
+        for (int ix = -5; ix <= 5; ++ix) {
+            for (int iy = -5; iy <= 5; ++iy) {
+                for (int iz = -5; iz <= 5; ++iz) {
+                    float3 sample_direction = float3(float(ix), float(iy),
+                                                     float(iz)) * 0.2f;
+                    float4 sample = mandelbulberFieldSample(
+                        p + sample_direction * delta, cfg, 1);
+                    float pseudo_distance = 1.0f + max_iterations - abs(sample.w);
+                    slow_normal += sample_direction * pseudo_distance;
+                }
+            }
+        }
+        float magnitude_scale = max(abs(slow_normal.x),
+                                    max(abs(slow_normal.y), abs(slow_normal.z)));
+        if (!(magnitude_scale > 0.0f) || !isfinite(magnitude_scale)) {
+            return float3(1.0f, 0.0f, 0.0f);
+        }
+        return normalize(slow_normal / magnitude_scale);
+    }
+    float e = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberMarchThreshold(p, cfg) * cfg.vset_values[114]
+        : max(cfg.render[2], 0.0002f);
     if ((cfg.sdf_normal_mode == 0u || cfg.sdf_normal_mode == 2u) && cfg.sdf_id == SDF_PROGRAM && cfg.sdf_program_count > 0u) {
         float3 gradient = programSurface(p, cfg).gradient;
         if (dot(gradient, gradient) >= 1.0e-12f && isfinite(gradient.x) && isfinite(gradient.y) && isfinite(gradient.z)) {
@@ -3406,20 +3882,59 @@ static float3 normalAt(float3 p, constant FptRenderConfig &cfg) {
         float3 k1 = float3(-1.0f, -1.0f, 1.0f);
         float3 k2 = float3(-1.0f, 1.0f, -1.0f);
         float3 k3 = float3(1.0f, 1.0f, 1.0f);
-        float3 n4 = k0 * mapSdf(p + k0 * tetra_e, cfg)
-                  + k1 * mapSdf(p + k1 * tetra_e, cfg)
-                  + k2 * mapSdf(p + k2 * tetra_e, cfg)
-                  + k3 * mapSdf(p + k3 * tetra_e, cfg);
-        if (dot(n4, n4) < 1.0e-12f || !isfinite(n4.x) || !isfinite(n4.y) || !isfinite(n4.z)) return float3(0.0f, 1.0f, 0.0f);
-        return normalize(n4);
+        float d0 = cfg.sdf_id == SDF_MANDELBULBER
+            ? mandelbulberNormalDistance(p + k0 * tetra_e, cfg)
+            : mapSdf(p + k0 * tetra_e, cfg);
+        float d1 = cfg.sdf_id == SDF_MANDELBULBER
+            ? mandelbulberNormalDistance(p + k1 * tetra_e, cfg)
+            : mapSdf(p + k1 * tetra_e, cfg);
+        float d2 = cfg.sdf_id == SDF_MANDELBULBER
+            ? mandelbulberNormalDistance(p + k2 * tetra_e, cfg)
+            : mapSdf(p + k2 * tetra_e, cfg);
+        float d3 = cfg.sdf_id == SDF_MANDELBULBER
+            ? mandelbulberNormalDistance(p + k3 * tetra_e, cfg)
+            : mapSdf(p + k3 * tetra_e, cfg);
+        float3 n4 = k0 * d0 + k1 * d1 + k2 * d2 + k3 * d3;
+        return normalizeFiniteDifference(n4);
     }
-    float3 n = float3(
-        mapSdf(p + float3(e, 0.0f, 0.0f), cfg) - mapSdf(p - float3(e, 0.0f, 0.0f), cfg),
-        mapSdf(p + float3(0.0f, e, 0.0f), cfg) - mapSdf(p - float3(0.0f, e, 0.0f), cfg),
-        mapSdf(p + float3(0.0f, 0.0f, e), cfg) - mapSdf(p - float3(0.0f, 0.0f, e), cfg)
-    );
-    if (dot(n, n) < 1.0e-12f || !isfinite(n.x) || !isfinite(n.y) || !isfinite(n.z)) return float3(0.0f, 1.0f, 0.0f);
-    return normalize(n);
+    float3 x_offset = float3(e, 0.0f, 0.0f);
+    float3 y_offset = float3(0.0f, e, 0.0f);
+    float3 z_offset = float3(0.0f, 0.0f, e);
+    float xp = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberNormalDistance(p + x_offset, cfg)
+        : mapSdf(p + x_offset, cfg);
+    float xn = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberNormalDistance(p - x_offset, cfg)
+        : mapSdf(p - x_offset, cfg);
+    float yp = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberNormalDistance(p + y_offset, cfg)
+        : mapSdf(p + y_offset, cfg);
+    float yn = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberNormalDistance(p - y_offset, cfg)
+        : mapSdf(p - y_offset, cfg);
+    float zp = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberNormalDistance(p + z_offset, cfg)
+        : mapSdf(p + z_offset, cfg);
+    float zn = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberNormalDistance(p - z_offset, cfg)
+        : mapSdf(p - z_offset, cfg);
+    float3 n = float3(xp - xn, yp - yn, zp - zn);
+    if (cfg.sdf_id == SDF_MANDELBULBER &&
+        !(max(abs(n.x), max(abs(n.y), abs(n.z))) > 0.0f)) {
+        // Very deep analytic orbits can produce representable distances whose
+        // six float samples nevertheless collapse to one value. The orbit
+        // radius remains well-conditioned and has the same local level-set
+        // orientation, so use its logarithmic gradient as a precision fallback
+        // instead of returning a constant normal over the entire surface.
+        n = float3(
+            mandelbulberNormalOrbitRadius(p + x_offset, cfg) -
+                mandelbulberNormalOrbitRadius(p - x_offset, cfg),
+            mandelbulberNormalOrbitRadius(p + y_offset, cfg) -
+                mandelbulberNormalOrbitRadius(p - y_offset, cfg),
+            mandelbulberNormalOrbitRadius(p + z_offset, cfg) -
+                mandelbulberNormalOrbitRadius(p - z_offset, cfg));
+    }
+    return normalizeFiniteDifference(n);
 }
 
 struct VoxelCell {
@@ -3496,7 +4011,8 @@ static Material unpackVoxelMaterial(VoxelCell cell) {
 }
 
 static Material voxelMaterialAtHit(VoxelHit hit, constant FptRenderConfig &cfg) {
-    if (cfg.voxel_material_mode == VOXEL_MATERIAL_EXACT) {
+    if (cfg.voxel_material_mode == VOXEL_MATERIAL_EXACT ||
+        cfg.voxel_storage == VOXEL_STORAGE_TEMPLATE_BRICKS) {
         return userSdf(hit.position, cfg).material;
     }
     return hit.material;
@@ -3994,10 +4510,27 @@ static VoxelHit traceVoxel(float3 origin,
         voxel.packed_color = 0u;
         voxel.packed_properties = 0u;
         voxel.emission = 0.0f;
-        if (cfg.voxel_storage == 1u) {
+        uint sparse_page = 0u;
+        if (cfg.voxel_storage == VOXEL_STORAGE_TEMPLATE_BRICKS) {
+            uint brick_grid = (resolution + 3u) >> 2u;
+            uint3 brick = coordinate >> 2u;
+            uint page = page_table[brick.x + brick.y * brick_grid +
+                                   brick.z * brick_grid * brick_grid];
+            sparse_page = page;
+            if (page != 0u) {
+                uint3 local = coordinate & 3u;
+                uint local_index = local.x + local.y * 4u + local.z * 16u;
+                device const ulong *templates =
+                    reinterpret_cast<device const ulong *>(cells);
+                if ((templates[page - 1u] & (1ul << local_index)) != 0ul) {
+                    voxel.packed_color = 0x80000000u;
+                }
+            }
+        } else if (cfg.voxel_storage != VOXEL_STORAGE_DENSE) {
             uint brick_grid = (resolution + 3u) >> 2u;
             uint3 brick = coordinate >> 2u;
             uint page = page_table[brick.x + brick.y * brick_grid + brick.z * brick_grid * brick_grid];
+            sparse_page = page;
             if (page != 0u) {
                 uint3 local = coordinate & 3u;
                 uint local_index = local.x + local.y * 4u + local.z * 16u;
@@ -4039,7 +4572,6 @@ static VoxelHit traceVoxel(float3 origin,
             result.steps = step + 1u;
             return result;
         }
-
         if (!voxelAdvanceDda(cell, step_direction, next_t, delta_t,
                              entry_t, entry_normal)) break;
     }
@@ -4164,9 +4696,9 @@ static float directionalDerivativeMagnitude(float3 direction,
 static void readDirectionalGridCell(
     uint3 coordinate,
     constant FptRenderConfig &cfg,
-    texture3d<float, access::read> bound_grid,
-    texture3d<float, access::read> derivative_lower_grid,
-    texture3d<float, access::read> derivative_upper_grid,
+    texture3d<float, access::sample> bound_grid,
+    texture3d<float, access::sample> derivative_lower_grid,
+    texture3d<float, access::sample> derivative_upper_grid,
     thread float2 &range,
     thread float3 &derivative_lower,
     thread float3 &derivative_upper,
@@ -4273,9 +4805,9 @@ static float3 marchBoundGridTracked(float3 direction,
                                     float min_distance,
                                     float lod_falloff,
                                     constant FptRenderConfig &cfg,
-                                    texture3d<float, access::read> bound_grid,
-                                    texture3d<float, access::read> derivative_lower_grid,
-                                    texture3d<float, access::read> derivative_upper_grid,
+                                    texture3d<float, access::sample> bound_grid,
+                                    texture3d<float, access::sample> derivative_lower_grid,
+                                    texture3d<float, access::sample> derivative_upper_grid,
                                     uint ray_class,
                                     thread BoundGridLocalStats &stats) {
     // Unsupported procedural programs are deliberately not classified by an
@@ -4405,9 +4937,9 @@ static float3 marchBoundGrid(float3 direction,
                              float min_distance,
                              float lod_falloff,
                              constant FptRenderConfig &cfg,
-                             texture3d<float, access::read> bound_grid,
-                             texture3d<float, access::read> derivative_lower_grid,
-                             texture3d<float, access::read> derivative_upper_grid) {
+                             texture3d<float, access::sample> bound_grid,
+                             texture3d<float, access::sample> derivative_lower_grid,
+                             texture3d<float, access::sample> derivative_upper_grid) {
     BoundGridLocalStats unused_stats = emptyBoundGridLocalStats();
     return marchBoundGridTracked(direction, origin, iterations, min_distance,
                                  lod_falloff, cfg, bound_grid,
@@ -5046,9 +5578,9 @@ struct BoundGridValidationCounts {
 kernel void bound_grid_validate_kernel(
     device BoundGridValidationCounts *counts [[buffer(0)]],
     constant FptRenderConfig &cfg [[buffer(1)]],
-    texture3d<float, access::read> bound_grid [[texture(0)]],
-    texture3d<float, access::read> derivative_lower_grid [[texture(1)]],
-    texture3d<float, access::read> derivative_upper_grid [[texture(2)]],
+    texture3d<float, access::sample> bound_grid [[texture(0)]],
+    texture3d<float, access::sample> derivative_lower_grid [[texture(1)]],
+    texture3d<float, access::sample> derivative_upper_grid [[texture(2)]],
     uint3 gid [[thread_position_in_grid]]) {
     uint resolution = max(cfg.bound_grid_resolution, 1u);
     if (any(gid >= uint3(resolution))) return;
@@ -5303,7 +5835,7 @@ static float3 sunContribution(float3 rp, float2 xy, float seed, constant FptRend
 
 static float estimateFocusDistance(constant FptRenderConfig &cfg) {
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
-    float3 dr = rotateCamera(normalize(float3(0.0f, 0.0f, focal_length)), cameraYawPitch(cfg));
+    float3 dr = rotateCamera(normalize(float3(0.0f, 0.0f, focal_length)), cameraYawPitch(cfg), cfg.camera_roll);
     float3 hit = march(dr, cameraPos(cfg), 120, 0.001f, 0.001f, cfg);
     float d = length(hit - cameraPos(cfg));
     if (!isfinite(d) || d <= 0.001f || d > cfg.render[4] * 0.99f) {
@@ -5329,7 +5861,7 @@ kernel void estimate_regional_focus_distance_kernel(
     if (gid != 0u) return;
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
     float3 direction = rotateCamera(
-        normalize(float3(0.0f, 0.0f, focal_length)), cameraYawPitch(cfg));
+        normalize(float3(0.0f, 0.0f, focal_length)), cameraYawPitch(cfg), cfg.camera_roll);
     float3 position = marchRegionalProgram(direction, cameraPos(cfg), 120,
                                            0.001f, 0.001f, cfg,
                                            program_ids, program_headers,
@@ -5342,14 +5874,14 @@ kernel void estimate_regional_focus_distance_kernel(
 kernel void estimate_bound_grid_focus_distance_kernel(
     device float *focus_distance [[buffer(0)]],
     constant FptRenderConfig &cfg [[buffer(1)]],
-    texture3d<float, access::read> bound_grid [[texture(0)]],
-    texture3d<float, access::read> derivative_lower_grid [[texture(1)]],
-    texture3d<float, access::read> derivative_upper_grid [[texture(2)]],
+    texture3d<float, access::sample> bound_grid [[texture(0)]],
+    texture3d<float, access::sample> derivative_lower_grid [[texture(1)]],
+    texture3d<float, access::sample> derivative_upper_grid [[texture(2)]],
     uint gid [[thread_position_in_grid]]) {
     if (gid != 0u) return;
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
     float3 direction = rotateCamera(normalize(float3(0.0f, 0.0f, focal_length)),
-                                    cameraYawPitch(cfg));
+                                    cameraYawPitch(cfg), cfg.camera_roll);
     float3 hit = marchBoundGrid(direction, cameraPos(cfg), 120, 0.001f, 0.001f,
                                 cfg, bound_grid, derivative_lower_grid,
                                 derivative_upper_grid);
@@ -5362,15 +5894,33 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
     float frame = float(sample_idx);
     float3 cam_pos = cameraPos(cfg);
     float3 rp = cam_pos;
-    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
     float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
-    float3 dr = normalize(float3(xy + randomPoint(aa_strength, xy, frame), focal_length));
-    dr = rotateCamera(dr, cameraYawPitch(cfg));
-    float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateFocusDistance(cfg);
-    float3 fp = rp + dr * focus;
-    float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-    rp += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
-    dr = normalize(fp - rp);
+    float2 camera_sample = xy + randomPoint(aa_strength, xy, frame);
+#if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    if (!mandelbulberProjectionVisible(camera_sample, cfg)) {
+        return float3(0.0f);
+    }
+    float3 dr = mandelbulberCameraRay(camera_sample, cfg);
+#else
+    if (cfg.sdf_id == SDF_MANDELBULBER &&
+        !mandelbulberProjectionVisible(camera_sample, cfg)) {
+        return float3(0.0f);
+    }
+    float3 dr = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberCameraRay(camera_sample, cfg)
+        : rotateCamera(
+              normalize(float3(
+                  camera_sample,
+                  1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f))),
+              cameraYawPitch(cfg), cfg.camera_roll);
+#endif
+    if (cfg.camera_dof > 0.0f) {
+        float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateFocusDistance(cfg);
+        float3 fp = rp + dr * focus;
+        float2 lens = randomPoint(cfg.camera_dof, xy, frame);
+        rp += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg), cfg.camera_roll);
+        dr = normalize(fp - rp);
+    }
 
     int local_ni = int(cfg.render[1]);
     float side = 1.0f;
@@ -5489,11 +6039,11 @@ static float3 renderRegionalProgramPath(float2 xy,
     float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
     float3 direction = normalize(float3(xy + randomPoint(aa_strength, xy, frame),
                                         focal_length));
-    direction = rotateCamera(direction, cameraYawPitch(cfg));
+    direction = rotateCamera(direction, cameraYawPitch(cfg), cfg.camera_roll);
     float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : 5.0f;
     float3 focus_point = position + direction * focus;
     float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
+    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg), cfg.camera_roll);
     direction = normalize(focus_point - position);
 
     int local_iterations = int(cfg.render[1]);
@@ -5601,11 +6151,11 @@ static RegionalProgramLocalStats profileRegionalProgramPath(
     float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
     float3 direction = normalize(float3(xy + randomPoint(aa_strength, xy, frame),
                                         focal_length));
-    direction = rotateCamera(direction, cameraYawPitch(cfg));
+    direction = rotateCamera(direction, cameraYawPitch(cfg), cfg.camera_roll);
     float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : 5.0f;
     float3 focus_point = position + direction * focus;
     float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
+    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg), cfg.camera_roll);
     direction = normalize(focus_point - position);
 
     int local_iterations = int(cfg.render[1]);
@@ -5686,9 +6236,9 @@ static float3 boundGridSunContributionWithSurface(
     Material material,
     float3 normal,
     constant FptRenderConfig &cfg,
-    texture3d<float, access::read> bound_grid,
-    texture3d<float, access::read> derivative_lower_grid,
-    texture3d<float, access::read> derivative_upper_grid) {
+    texture3d<float, access::sample> bound_grid,
+    texture3d<float, access::sample> derivative_lower_grid,
+    texture3d<float, access::sample> derivative_upper_grid) {
     float3 light_direction = rotateCamera(
         float3(0.0f, 0.0f, 1.0f),
         float2(cfg.sun[1] * pi / 180.0f, cfg.sun[2] * pi / 180.0f));
@@ -5713,22 +6263,25 @@ static float3 boundGridSunContributionWithSurface(
 static float3 renderBoundGridPath(float2 xy,
                                   uint sample_index,
                                   constant FptRenderConfig &cfg,
-                                  texture3d<float, access::read> bound_grid,
-                                  texture3d<float, access::read> derivative_lower_grid,
-                                  texture3d<float, access::read> derivative_upper_grid) {
+                                  texture3d<float, access::sample> bound_grid,
+                                  texture3d<float, access::sample> derivative_lower_grid,
+                                  texture3d<float, access::sample> derivative_upper_grid) {
     float frame = float(sample_index);
     float3 camera_position = cameraPos(cfg);
     float3 position = camera_position;
-    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
     float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
-    float3 direction = normalize(float3(xy + randomPoint(aa_strength, xy, frame),
-                                        focal_length));
-    direction = rotateCamera(direction, cameraYawPitch(cfg));
-    float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : 5.0f;
-    float3 focus_point = position + direction * focus;
-    float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
-    direction = normalize(focus_point - position);
+    float2 camera_sample = xy + randomPoint(aa_strength, xy, frame);
+    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+    float3 direction = rotateCamera(normalize(float3(camera_sample, focal_length)),
+                                    cameraYawPitch(cfg), cfg.camera_roll);
+    if (cfg.camera_dof > 0.0f) {
+        float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : 5.0f;
+        float3 focus_point = position + direction * focus;
+        float2 lens = randomPoint(cfg.camera_dof, xy, frame);
+        position += rotateCamera(float3(lens.x, lens.y, 0.0f),
+                                 cameraYawPitch(cfg), cfg.camera_roll);
+        direction = normalize(focus_point - position);
+    }
 
     int local_iterations = int(cfg.render[1]);
     float side = 1.0f;
@@ -5815,23 +6368,23 @@ static float3 renderBoundGridPath(float2 xy,
 static BoundGridLocalStats profileBoundGridPath(
     float2 xy,
     constant FptRenderConfig &cfg,
-    texture3d<float, access::read> bound_grid,
-    texture3d<float, access::read> derivative_lower_grid,
-    texture3d<float, access::read> derivative_upper_grid) {
+    texture3d<float, access::sample> bound_grid,
+    texture3d<float, access::sample> derivative_lower_grid,
+    texture3d<float, access::sample> derivative_upper_grid) {
     BoundGridLocalStats stats = emptyBoundGridLocalStats();
     stats.profiled_paths = 1u;
     float frame = 0.0f;
     float3 camera_position = cameraPos(cfg);
     float3 position = camera_position;
-    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
     float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
-    float3 direction = normalize(float3(xy + randomPoint(aa_strength, xy, frame),
-                                        focal_length));
-    direction = rotateCamera(direction, cameraYawPitch(cfg));
+    float2 camera_sample = xy + randomPoint(aa_strength, xy, frame);
+    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+    float3 direction = rotateCamera(normalize(float3(camera_sample, focal_length)),
+                                    cameraYawPitch(cfg), cfg.camera_roll);
     float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : 5.0f;
     float3 focus_point = position + direction * focus;
     float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
+    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg), cfg.camera_roll);
     direction = normalize(focus_point - position);
 
     int local_iterations = int(cfg.render[1]);
@@ -5932,7 +6485,7 @@ static float estimateVoxelFocusDistance(constant FptRenderConfig &cfg,
                                         device const VoxelCell *cells,
                                         device const uint *page_table) {
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
-    float3 direction = rotateCamera(normalize(float3(0.0f, 0.0f, focal_length)), cameraYawPitch(cfg));
+    float3 direction = rotateCamera(normalize(float3(0.0f, 0.0f, focal_length)), cameraYawPitch(cfg), cfg.camera_roll);
     VoxelHit hit = traceVoxel(cameraPos(cfg), direction, cfg, cells, page_table);
     return hit.hit && hit.surface_distance > 0.001f ? hit.surface_distance : 5.0f;
 }
@@ -5947,11 +6500,11 @@ static float3 renderVoxelPath(float2 xy,
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
     float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
     float3 direction = normalize(float3(xy + randomPoint(aa_strength, xy, frame), focal_length));
-    direction = rotateCamera(direction, cameraYawPitch(cfg));
+    direction = rotateCamera(direction, cameraYawPitch(cfg), cfg.camera_roll);
     float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateVoxelFocusDistance(cfg, cells, page_table);
     float3 focus_point = position + direction * focus;
     float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
+    position += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg), cfg.camera_roll);
     direction = normalize(focus_point - position);
 
     float3 pixel_light = float3(0.0f);
@@ -6081,7 +6634,7 @@ static float3 renderGlassAnalytic(float2 xy, uint sample_idx, constant FptRender
     float aa = 0.18f / max(float(cfg.width), float(cfg.height));
     float2 jitter = randomPoint(aa, xy, float(sample_idx));
     float3 ro = cameraPos(cfg);
-    float3 rd = rotateCamera(normalize(float3(xy + jitter, focal_length)), cameraYawPitch(cfg));
+    float3 rd = rotateCamera(normalize(float3(xy + jitter, focal_length)), cameraYawPitch(cfg), cfg.camera_roll);
 
     float3 center = float3(0.0f, -0.22f, 0.35f);
     float radius = 0.50f;
@@ -6120,30 +6673,11 @@ static float3 renderGlassAnalytic(float2 xy, uint sample_idx, constant FptRender
     return min(col, float3(8.0f));
 }
 
-static float3 viewport(float2 xy, constant FptRenderConfig &cfg) {
-    float3 rp = cameraPos(cfg);
-    float f = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
-    float3 dr = rotateCamera(normalize(float3(xy, f)), cameraYawPitch(cfg));
-    float3 cam_pos = rp;
-    float min_dist = 0.001f;
-    float lod_falloff = 0.0002f;
-    bool hit = false;
-    float travel = 0.0f;
-    float hit_lod = min_dist;
-    for (int i = 0; i < 160; i++) {
-        float d = mapSdf(rp, cfg);
-        if (!isfinite(d)) break;
-        float o = abs(d) * 0.99f;
-        float lod = min_dist;
-        float fog_lod = dot(cam_pos - rp, cam_pos - rp);
-        lod = mix(lod, 0.1f, fog_lod * lod_falloff);
-        hit_lod = lod;
-        if (o < lod && travel > min_dist * 8.0f) { hit = true; break; }
-        if (travel > cfg.render[4]) break;
-        float step_len = clamp(o, min_dist, 1.5f);
-        rp += dr * step_len;
-        travel += step_len;
-    }
+static float3 viewportShade(float3 rp,
+                            float3 dr,
+                            bool hit,
+                            float hit_lod,
+                            constant FptRenderConfig &cfg) {
     float3 sky_col = clamp(environment(dr, cfg), 0.0f, 1.0f);
     if (cfg.world[6] == 1.0f) sky_col = backgroundGradient(dr, cfg);
     if (!hit) return sky_col;
@@ -6159,12 +6693,39 @@ static float3 viewport(float2 xy, constant FptRenderConfig &cfg) {
     return mix(sky_col, col, confidence);
 }
 
+static float3 viewport(float2 xy, constant FptRenderConfig &cfg) {
+    float3 rp = cameraPos(cfg);
+    float f = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+    float3 dr = rotateCamera(normalize(float3(xy, f)), cameraYawPitch(cfg), cfg.camera_roll);
+    float3 cam_pos = rp;
+    float min_dist = 0.001f;
+    float lod_falloff = 0.0002f;
+    bool hit = false;
+    float travel = 0.0f;
+    float hit_lod = min_dist;
+    for (int i = 0; i < 160; i++) {
+        float d = mapSdf(rp, cfg);
+        if (!isfinite(d)) break;
+        float o = sdfMarchStep(d, min_dist, cfg);
+        float lod = min_dist;
+        float fog_lod = dot(cam_pos - rp, cam_pos - rp);
+        lod = mix(lod, 0.1f, fog_lod * lod_falloff);
+        hit_lod = lod;
+        if (o < lod && travel > min_dist * 8.0f) { hit = true; break; }
+        if (travel > cfg.render[4]) break;
+        float step_len = clamp(o, min_dist, 1.5f);
+        rp += dr * step_len;
+        travel += step_len;
+    }
+    return viewportShade(rp, dr, hit, hit_lod, cfg);
+}
+
 static float3 voxelViewport(float2 xy,
                             constant FptRenderConfig &cfg,
                             device const VoxelCell *cells,
                             device const uint *page_table) {
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
-    float3 direction = rotateCamera(normalize(float3(xy, focal_length)), cameraYawPitch(cfg));
+    float3 direction = rotateCamera(normalize(float3(xy, focal_length)), cameraYawPitch(cfg), cfg.camera_roll);
     VoxelHit hit = traceVoxel(cameraPos(cfg), direction, cfg, cells, page_table);
     float3 sky_color = cfg.world[6] == 1.0f
         ? backgroundGradient(direction, cfg)
@@ -6250,25 +6811,38 @@ static float3 diagnosticEncodeScalar(float value, float scale) {
     return float3(v, v, v);
 }
 
+static float2 sdfScreenUv(uint2 gid, constant FptRenderConfig &cfg) {
+    float2 pixel_offset = cfg.sdf_id == SDF_MANDELBULBER
+        ? float2(0.0f, 1.0f)
+        : float2(0.5f);
+    float2 uv = (float2(gid) + pixel_offset) /
+                    float2(float(cfg.width), float(cfg.height)) - 0.5f;
+    uv.x *= float(cfg.width) / float(cfg.height);
+    return uv;
+}
+
 static uint marchStepCount(float3 dr, float3 rp, int ni, float min_dist, float lod_falloff, constant FptRenderConfig &cfg) {
     float3 cam_pos = rp;
-    int max_iter = min(ni, 360);
+    int max_iter = sdfMarchIterationLimit(ni, cfg);
     uint count = 0u;
     bool check_translucency = sdfHasTranslucentSurfaces(cfg);
     for (int i = 0; i < max_iter; i++) {
         count++;
         float d = mapSdf(rp, cfg);
         if (!isfinite(d)) break;
-        float o = abs(d) * 0.99f;
+        float threshold = cfg.sdf_id == SDF_MANDELBULBER
+            ? mandelbulberMarchThreshold(rp, cfg)
+            : min_dist;
+        float o = sdfMarchStep(d, threshold, cfg);
         rp += dr * o;
-        float lod = min_dist;
+        float lod = threshold;
         if (lod_falloff > 0.00001f) {
             float fog_lod = dot(cam_pos - rp, cam_pos - rp);
             lod = mix(lod, 0.1f, fog_lod * lod_falloff);
-            lod = mix(min_dist, lod, cfg.render[5]);
+            lod = mix(threshold, lod, cfg.render[5]);
         }
         if (check_translucency && userSdf(rp, cfg).material.translucency > 0.0f) lod = 0.0001f;
-        if (o < lod) break;
+        if (sdfMarchConverged(d, o, lod, cfg)) break;
         if (cfg.render[4] < o) break;
     }
     return count;
@@ -6276,22 +6850,25 @@ static uint marchStepCount(float3 dr, float3 rp, int ni, float min_dist, float l
 
 static float3 marchCounted(float3 dr, float3 rp, int ni, float min_dist, float lod_falloff, constant FptRenderConfig &cfg, thread uint &steps) {
     float3 cam_pos = rp;
-    int max_iter = min(ni, 360);
+    int max_iter = sdfMarchIterationLimit(ni, cfg);
     bool check_translucency = sdfHasTranslucentSurfaces(cfg);
     for (int i = 0; i < max_iter; i++) {
         steps++;
         float d = mapSdf(rp, cfg);
         if (!isfinite(d)) break;
-        float o = abs(d) * 0.99f;
+        float threshold = cfg.sdf_id == SDF_MANDELBULBER
+            ? mandelbulberMarchThreshold(rp, cfg)
+            : min_dist;
+        float o = sdfMarchStep(d, threshold, cfg);
         rp += dr * o;
-        float lod = min_dist;
+        float lod = threshold;
         if (lod_falloff > 0.00001f) {
             float fog_lod = dot(cam_pos - rp, cam_pos - rp);
             lod = mix(lod, 0.1f, fog_lod * lod_falloff);
-            lod = mix(min_dist, lod, cfg.render[5]);
+            lod = mix(threshold, lod, cfg.render[5]);
         }
         if (check_translucency && userSdf(rp, cfg).material.translucency > 0.0f) lod = 0.0001f;
-        if (o < lod) break;
+        if (sdfMarchConverged(d, o, lod, cfg)) break;
         if (cfg.render[4] < o) break;
     }
     return rp;
@@ -6319,12 +6896,14 @@ static float3 sdfPathCostDiagnostic(float2 xy, constant FptRenderConfig &cfg, co
         float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
         float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
         float3 dr = normalize(float3(xy + randomPoint(aa_strength, xy, frame), focal_length));
-        dr = rotateCamera(dr, cameraYawPitch(cfg));
-        float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateFocusDistance(cfg);
-        float3 fp = rp + dr * focus;
-        float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-        rp += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
-        dr = normalize(fp - rp);
+        dr = rotateCamera(dr, cameraYawPitch(cfg), cfg.camera_roll);
+        if (cfg.camera_dof > 0.0f) {
+            float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateFocusDistance(cfg);
+            float3 fp = rp + dr * focus;
+            float2 lens = randomPoint(cfg.camera_dof, xy, frame);
+            rp += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg), cfg.camera_roll);
+            dr = normalize(fp - rp);
+        }
 
         int local_ni = int(cfg.render[1]);
         int bounces = min(int(cfg.render[0]), 8);
@@ -6372,26 +6951,171 @@ static float3 sdfPathCostDiagnostic(float2 xy, constant FptRenderConfig &cfg, co
     return diagnosticEncodeScalar(total_bounces * inv_samples, max(cfg.render[0], 1.0f));
 }
 
+struct SdfProfileLocalStats {
+    uint primary_steps;
+    uint secondary_steps;
+    uint shadow_steps;
+    uint normal_evals;
+    uint bounces;
+    uint distance_evals;
+    uint march_orbit_iterations;
+    uint refinement_steps;
+    uint normal_field_evals;
+    uint material_evals;
+    uint max_ray_steps;
+    uint phase;
+    uint distance_evals_by_phase[4];
+    uint orbit_iterations_by_phase[4];
+    uint formula_slot_iterations[9];
+    uint refinement_distance_evals;
+};
+
+static float mandelbulberProfileDistance(float3 position,
+                                         constant FptRenderConfig &cfg,
+                                         thread SdfProfileLocalStats &stats) {
+    float4 sample = mandelbulberFieldSample(position, cfg, 1);
+    stats.distance_evals += 1u;
+    uint completed_iterations = uint(abs(sample.w));
+    MandelFormulaIterationCounts formula_iterations =
+        mandelbulberProfileFormulaIterations(int(completed_iterations));
+    uint actual_orbit_iterations = 0u;
+    for (uint slot = 0u; slot < 9u; ++slot) {
+        uint iterations = formula_iterations.slots[slot];
+        stats.formula_slot_iterations[slot] += iterations;
+        actual_orbit_iterations += iterations;
+    }
+    if (actual_orbit_iterations == 0u) {
+        actual_orbit_iterations = completed_iterations;
+    }
+    uint phase = min(stats.phase, 3u);
+    stats.distance_evals_by_phase[phase] += 1u;
+    stats.orbit_iterations_by_phase[phase] += actual_orbit_iterations;
+    stats.march_orbit_iterations += actual_orbit_iterations;
+    float distance = sample.x;
+    if (cfg.vset_values[115] > 1.5f) {
+        float threshold = clamp(
+            length(cameraPos(cfg) - position) * cfg.vset_values[116],
+            cfg.vset_values[118], cfg.vset_values[119]);
+        if (sample.w > 0.0f) {
+            distance = 0.0f;
+        } else if (distance < threshold) {
+            distance = threshold * 1.01f;
+        }
+    }
+    return mix(distance, distance * 0.5f, cfg.render[6]);
+}
+
+static float3 marchMandelbulberProfiled(float3 direction,
+                                        float3 position,
+                                        int iteration_count,
+                                        constant FptRenderConfig &cfg,
+                                        thread SdfProfileLocalStats &stats,
+                                        thread uint &ray_steps) {
+    float3 start = position;
+    float distance = 0.0f;
+    float threshold = mandelbulberMarchThreshold(position, cfg);
+    float step = 0.0f;
+    bool found = false;
+    int maximum_iterations = sdfMarchIterationLimit(iteration_count, cfg);
+    for (int iteration = 0; iteration < maximum_iterations; ++iteration) {
+        ray_steps += 1u;
+        threshold = mandelbulberMarchThreshold(position, cfg);
+        distance = mandelbulberProfileDistance(position, cfg, stats);
+        if (!isfinite(distance)) break;
+        if (distance < threshold) {
+            found = true;
+            break;
+        }
+        step = sdfMarchStep(distance, threshold, cfg);
+        float3 next_position = position + direction * step;
+        if (all(next_position == position)) break;
+        position = next_position;
+        if (length(position - start) >= cfg.render[4]) break;
+    }
+    if (!found) return position;
+
+    float search_limit = 1.0f - 0.001f * max(cfg.vset_values[129], 0.0f);
+    step *= 0.5f;
+    for (int refinement = 0; refinement < 30; ++refinement) {
+        if (distance < threshold && distance > threshold * search_limit) break;
+        stats.refinement_steps += 1u;
+        stats.refinement_distance_evals += 1u;
+        if (distance > threshold) {
+            float3 next_position = position + direction * step;
+            if (all(next_position == position)) break;
+            position = next_position;
+        } else if (distance < threshold * search_limit) {
+            float3 next_position = position - direction * step;
+            if (all(next_position == position)) break;
+            position = next_position;
+        }
+        distance = mandelbulberProfileDistance(position, cfg, stats);
+        step *= 0.5f;
+    }
+    return position;
+}
+
+static float3 marchProfiled(float3 direction,
+                            float3 position,
+                            int iteration_count,
+                            float minimum_distance,
+                            float lod_falloff,
+                            constant FptRenderConfig &cfg,
+                            thread SdfProfileLocalStats &stats,
+                            thread uint &ray_steps) {
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        return marchMandelbulberProfiled(direction, position, iteration_count,
+                                         cfg, stats, ray_steps);
+    }
+    float3 result = marchCounted(direction, position, iteration_count,
+                                 minimum_distance, lod_falloff, cfg, ray_steps);
+    stats.distance_evals += ray_steps;
+    return result;
+}
+
+static uint sunProfiledWithNormal(float3 position,
+                                  float2 xy,
+                                  float seed,
+                                  float3 normal,
+                                  constant FptRenderConfig &cfg,
+                                  thread SdfProfileLocalStats &stats) {
+    float3 light_direction = rotateCamera(
+        float3(0.0f, 0.0f, 1.0f),
+        float2(cfg.sun[1] * pi / 180.0f, cfg.sun[2] * pi / 180.0f));
+    float h1 = hash13(float3(xy, seed * 5.0f + 1.0f));
+    float h2 = hash13(float3(xy, seed * 3.0f + 5.0f));
+    float2 divergence = float2(cos(h1 * 2.0f * pi), sin(h1 * 2.0f * pi)) *
+                        sqrt(h2) * cfg.sun[4];
+    light_direction = rotateCamera(light_direction, divergence);
+    uint ray_steps = 0u;
+    uint previous_phase = stats.phase;
+    stats.phase = 2u;
+    (void)marchProfiled(light_direction, position + normal * 0.001f,
+                        int(cfg.render[1]), cfg.render[3], 0.0002f, cfg,
+                        stats, ray_steps);
+    stats.phase = previous_phase;
+    stats.max_ray_steps = max(stats.max_ray_steps, ray_steps);
+    return ray_steps;
+}
+
 static void sdfProfilePath(float2 xy,
                            uint sample_idx,
                            constant FptRenderConfig &cfg,
-                           thread uint &primary_steps,
-                           thread uint &secondary_steps,
-                           thread uint &shadow_steps,
-                           thread uint &normal_evals,
-                           thread uint &bounces) {
+                           thread SdfProfileLocalStats &stats) {
     float frame = float(sample_idx);
     float3 cam_pos = cameraPos(cfg);
     float3 rp = cam_pos;
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
     float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
     float3 dr = normalize(float3(xy + randomPoint(aa_strength, xy, frame), focal_length));
-    dr = rotateCamera(dr, cameraYawPitch(cfg));
-    float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateFocusDistance(cfg);
-    float3 fp = rp + dr * focus;
-    float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-    rp += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
-    dr = normalize(fp - rp);
+    dr = rotateCamera(dr, cameraYawPitch(cfg), cfg.camera_roll);
+    if (cfg.camera_dof > 0.0f) {
+        float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateFocusDistance(cfg);
+        float3 fp = rp + dr * focus;
+        float2 lens = randomPoint(cfg.camera_dof, xy, frame);
+        rp += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg), cfg.camera_roll);
+        dr = normalize(fp - rp);
+    }
 
     int local_ni = int(cfg.render[1]);
     int bounce_limit = min(int(cfg.render[0]), 8);
@@ -6400,16 +7124,32 @@ static void sdfProfilePath(float2 xy,
     float far_dist_sq = far_dist * far_dist;
     for (int i = 0; i < bounce_limit; i++) {
         uint local_primary = 0u;
-        rp = marchCounted(dr, rp, local_ni, cfg.render[3], 0.0002f, cfg, local_primary);
-        if (i == 0) primary_steps += local_primary;
-        else secondary_steps += local_primary;
+        stats.phase = i == 0 ? 0u : 1u;
+        rp = marchProfiled(dr, rp, local_ni, cfg.render[3], 0.0002f, cfg,
+                           stats, local_primary);
+        stats.max_ray_steps = max(stats.max_ray_steps, local_primary);
+        if (i == 0) stats.primary_steps += local_primary;
+        else stats.secondary_steps += local_primary;
         local_ni = int(cfg.render[1] / (cfg.render[5] * 2.0f + 1.0f));
         if (dot(rp - cam_pos, rp - cam_pos) > far_dist_sq) break;
         Material material = userSdf(rp, cfg).material;
-        bounces += 1u;
-        normal_evals += 1u;
+        stats.material_evals += 1u;
+        stats.bounces += 1u;
+        stats.normal_evals += 1u;
+        if (cfg.sdf_id == SDF_MANDELBULBER) {
+            stats.normal_field_evals += cfg.render[7] > 0.0f
+                ? 1331u : (cfg.sdf_normal_mode == 1u ? 4u : 6u);
+        } else if (cfg.sdf_id == SDF_PROGRAM &&
+                   (cfg.sdf_normal_mode == 0u || cfg.sdf_normal_mode == 2u)) {
+            stats.normal_field_evals += 1u;
+        } else {
+            stats.normal_field_evals += cfg.sdf_normal_mode == 1u ? 4u : 6u;
+        }
         float3 n = normalAt(rp, cfg);
-        if (cfg.sun[0] == 1.0f) shadow_steps += sunStepCountWithNormal(rp, xy, frame, n, cfg);
+        if (cfg.sun[0] == 1.0f) {
+            stats.shadow_steps += sunProfiledWithNormal(rp, xy, frame, n, cfg,
+                                                        stats);
+        }
         float r1 = hash13(float3(xy, frame * 1.37f + float(i)));
         float r2 = hash13(float3(xy, frame * 7.91f + float(i)));
         if (r1 > material.translucency) {
@@ -6445,12 +7185,14 @@ static float3 sdfBounceContributionDiagnostic(float2 xy, constant FptRenderConfi
         float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
         float aa_strength = 0.3f / max(float(cfg.width), float(cfg.height));
         float3 dr = normalize(float3(xy + randomPoint(aa_strength, xy, frame), focal_length));
-        dr = rotateCamera(dr, cameraYawPitch(cfg));
-        float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateFocusDistance(cfg);
-        float3 fp = rp + dr * focus;
-        float2 lens = randomPoint(cfg.camera_dof, xy, frame);
-        rp += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg));
-        dr = normalize(fp - rp);
+        dr = rotateCamera(dr, cameraYawPitch(cfg), cfg.camera_roll);
+        if (cfg.camera_dof > 0.0f) {
+            float focus = cfg.focus_distance > 0.0f ? cfg.focus_distance : estimateFocusDistance(cfg);
+            float3 fp = rp + dr * focus;
+            float2 lens = randomPoint(cfg.camera_dof, xy, frame);
+            rp += rotateCamera(float3(lens.x, lens.y, 0.0f), cameraYawPitch(cfg), cfg.camera_roll);
+            dr = normalize(fp - rp);
+        }
 
         int local_ni = int(cfg.render[1]);
         int bounce_limit = min(int(cfg.render[0]), 8);
@@ -6528,22 +7270,62 @@ static float3 sdfDiagnostic(float2 xy, constant FptRenderConfig &cfg, constant F
     }
     float3 ro = cameraPos(cfg);
     float3 rp = ro;
-    float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
-    float3 rd = rotateCamera(normalize(float3(xy, focal_length)), cameraYawPitch(cfg));
-    int steps = min(int(max(cfg.render[1], 32.0f)), 420);
-    bool hit = false;
-    for (int i = 0; i < steps; ++i) {
-        float d = mapSdf(rp, cfg);
-        if (!isfinite(d)) break;
-        if (d < max(cfg.render[3], 0.0005f) && length(rp - ro) > 0.001f) {
-            hit = true;
-            break;
-        }
-        rp += rd * clamp(d, max(cfg.render[3], 0.0005f), 0.25f);
-        if (length(rp - ro) > cfg.render[4]) break;
+    float3 rd;
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        if (!mandelbulberProjectionVisible(xy, cfg)) return float3(0.0f);
+        rd = mandelbulberCameraRay(xy, cfg);
+    } else {
+        float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+        rd = rotateCamera(normalize(float3(xy, focal_length)),
+                          cameraYawPitch(cfg), cfg.camera_roll);
     }
+    int requested_steps = int(max(cfg.render[1], 32.0f));
+    int steps = cfg.sdf_id == SDF_MANDELBULBER
+        ? min(requested_steps, 10000)
+        : min(requested_steps, 420);
+    bool hit = false;
+    float threshold = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberMarchThreshold(rp, cfg)
+        : max(cfg.render[3], 0.0005f);
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        MandelbulberMarchResult march_result =
+            marchMandelbulber(rd, rp, steps, cfg);
+        rp = march_result.position;
+        hit = march_result.found;
+    } else {
+        for (int i = 0; i < steps; ++i) {
+            float d = mapSdf(rp, cfg);
+            if (!isfinite(d)) break;
+            if (d < threshold && length(rp - ro) > 0.001f) {
+                hit = true;
+                break;
+            }
+            rp += rd * sdfMarchStep(d, threshold, cfg);
+            if (length(rp - ro) > cfg.render[4]) break;
+        }
+    }
+    if (diag.mode == FPT_DIAGNOSTIC_HIT_MASK) return hit ? float3(1.0f) : float3(0.0f);
     if (diag.mode == FPT_DIAGNOSTIC_DEPTH) return diagnosticEncodeDepth(length(rp - ro), hit, cfg, diag);
     if (!hit) return float3(0.0f);
+    if (diag.mode == FPT_DIAGNOSTIC_DIFFUSE_NORMAL) {
+        float3 normal = normalAt(rp, cfg);
+        float3 camera_forward = rotateCamera(float3(0.0f, 0.0f, 1.0f), cameraYawPitch(cfg), cfg.camera_roll);
+        float diffuse = max(dot(normal, -camera_forward), 0.0f);
+        return float3(0.12f + 0.88f * diffuse);
+    }
+#if defined(FPT_MANDEL_GENERATED_MATERIAL)
+    if (diag.mode == FPT_DIAGNOSTIC_MANDEL_COLOR_INDEX) {
+        return float3(mandelbulberGeneratedColorCoordinate(rp, cfg));
+    }
+    if (diag.mode == FPT_DIAGNOSTIC_MANDEL_PALETTE_POSITION) {
+        return float3(mandelbulberGeneratedPalettePosition(rp, cfg));
+    }
+#else
+    if (diag.mode == FPT_DIAGNOSTIC_MANDEL_COLOR_INDEX ||
+        diag.mode == FPT_DIAGNOSTIC_MANDEL_PALETTE_POSITION) {
+        return float3(0.0f);
+    }
+#endif
     SDFResult result = userSdf(rp, cfg);
     if (diag.mode == FPT_DIAGNOSTIC_MATERIAL) return clamp(result.material.rgb, float3(0.0f), float3(1.0f));
     if (diag.mode == FPT_DIAGNOSTIC_PATH_DIRECT) return diagnosticEncodeHdr(cfg.sun[0] == 1.0f ? sunContribution(rp, xy, 0.0f, cfg) : float3(0.0f), cfg);
@@ -6561,12 +7343,11 @@ kernel void sdf_diagnostic_kernel(device uchar4 *out [[buffer(0)]],
                                   constant FptRenderConfig &cfg [[buffer(1)]],
                                   constant FptDiagnosticConfig &diag [[buffer(2)]],
                                   uint2 gid [[thread_position_in_grid]]) {
-    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
-    float2 uv = suv - 0.5f;
-    uv.x *= float(cfg.width) / float(cfg.height);
+    uint2 pixel = gid + diag.dispatch_origin;
+    if (pixel.x >= cfg.width || pixel.y >= cfg.height) return;
+    float2 uv = sdfScreenUv(pixel, cfg);
     float3 color = sdfDiagnostic(uv, cfg, diag);
-    uint idx = (cfg.height - 1u - gid.y) * cfg.width + gid.x;
+    uint idx = (cfg.height - 1u - pixel.y) * cfg.width + pixel.x;
     out[idx] = uchar4(uchar(clamp(color.r, 0.0f, 1.0f) * 255.0f),
                       uchar(clamp(color.g, 0.0f, 1.0f) * 255.0f),
                       uchar(clamp(color.b, 0.0f, 1.0f) * 255.0f),
@@ -6587,8 +7368,11 @@ static float3 voxelDiagnostic(float2 xy,
         return postProcess(color / float(samples), cfg);
     }
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
-    float3 direction = rotateCamera(normalize(float3(xy, focal_length)), cameraYawPitch(cfg));
+    float3 direction = rotateCamera(normalize(float3(xy, focal_length)), cameraYawPitch(cfg), cfg.camera_roll);
     VoxelHit hit = traceVoxel(cameraPos(cfg), direction, cfg, cells, page_table);
+    if (diag.mode == FPT_DIAGNOSTIC_HIT_MASK) {
+        return hit.hit ? float3(1.0f) : float3(0.0f);
+    }
     if (diag.mode == FPT_DIAGNOSTIC_DEPTH) {
         return diagnosticEncodeDepth(hit.surface_distance, hit.hit, cfg, diag);
     }
@@ -6598,6 +7382,11 @@ static float3 voxelDiagnostic(float2 xy,
     if (!hit.hit) return float3(0.0f);
     float3 normal = voxelShadingNormal(hit, cfg);
     if (dot(normal, direction) > 0.0f) normal = -normal;
+    if (diag.mode == FPT_DIAGNOSTIC_DIFFUSE_NORMAL) {
+        float3 camera_forward = rotateCamera(float3(0.0f, 0.0f, 1.0f), cameraYawPitch(cfg), cfg.camera_roll);
+        float diffuse = max(dot(normal, -camera_forward), 0.0f);
+        return float3(0.12f + 0.88f * diffuse);
+    }
     float3 offset_normal = cfg.voxel_normal_mode == 2u ? hit.normal : normal;
     if (dot(offset_normal, direction) > 0.0f) offset_normal = -offset_normal;
     Material material = voxelMaterialAtHit(hit, cfg);
@@ -6625,12 +7414,13 @@ kernel void voxel_diagnostic_kernel(device uchar4 *out [[buffer(0)]],
                                     device const VoxelCell *cells [[buffer(3)]],
                                     device const uint *page_table [[buffer(4)]],
                                     uint2 gid [[thread_position_in_grid]]) {
-    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
+    uint2 pixel = gid + diag.dispatch_origin;
+    if (pixel.x >= cfg.width || pixel.y >= cfg.height) return;
+    float2 suv = (float2(pixel) + 0.5f) / float2(float(cfg.width), float(cfg.height));
     float2 uv = suv - 0.5f;
     uv.x *= float(cfg.width) / float(cfg.height);
     float3 color = voxelDiagnostic(uv, cfg, diag, cells, page_table);
-    uint index = (cfg.height - 1u - gid.y) * cfg.width + gid.x;
+    uint index = (cfg.height - 1u - pixel.y) * cfg.width + pixel.x;
     out[index] = uchar4(uchar(clamp(color.r, 0.0f, 1.0f) * 255.0f),
                         uchar(clamp(color.g, 0.0f, 1.0f) * 255.0f),
                         uchar(clamp(color.b, 0.0f, 1.0f) * 255.0f),
@@ -6687,9 +7477,7 @@ kernel void render_kernel(device uchar4 *out [[buffer(0)]],
                           constant FptRenderConfig &cfg [[buffer(1)]],
                           uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height) return;
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
-    float2 uv = suv - 0.5f;
-    uv.x *= float(cfg.width) / float(cfg.height);
+    float2 uv = sdfScreenUv(gid, cfg);
 
     float3 color = float3(0.0f);
     if (cfg.preview != 0u) {
@@ -6719,9 +7507,7 @@ kernel void preview_kernel(device uchar4 *out [[buffer(0)]],
                            constant FptRenderConfig &cfg [[buffer(1)]],
                            uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height) return;
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
-    float2 uv = suv - 0.5f;
-    uv.x *= float(cfg.width) / float(cfg.height);
+    float2 uv = sdfScreenUv(gid, cfg);
     float3 color = postProcess(viewport(uv, cfg), cfg);
     uint idx = outputIndex(gid, cfg);
     out[idx] = uchar4(uchar(clamp(color.r, 0.0f, 1.0f) * 255.0f),
@@ -6730,14 +7516,81 @@ kernel void preview_kernel(device uchar4 *out [[buffer(0)]],
                       255);
 }
 
+static bool mandelInteractivePreviewPixel(
+    uint2 local_pixel,
+    constant FptRenderConfig &cfg,
+    thread uint2 &pixel) {
+    pixel = local_pixel;
+#if defined(FPT_MANDEL_INTERACTIVE_REFINEMENT)
+    float refinement_state = cfg.vset_values[131];
+    if (refinement_state >= 1.0f) {
+        uint tile_mask = min(uint(refinement_state), 0xffffu);
+        bool single_tile = (tile_mask & (tile_mask - 1u)) == 0u;
+        if (single_tile) {
+            uint tile = 0u;
+            while ((tile_mask & (1u << tile)) == 0u && tile < 15u) ++tile;
+            uint2 tile_coordinate = uint2(tile & 3u, tile >> 2u);
+            uint2 origin = uint2(
+                (tile_coordinate.x * cfg.width + 3u) / 4u,
+                (tile_coordinate.y * cfg.height + 3u) / 4u);
+            uint2 end = uint2(
+                ((tile_coordinate.x + 1u) * cfg.width + 3u) / 4u,
+                ((tile_coordinate.y + 1u) * cfg.height + 3u) / 4u);
+            if (any(local_pixel >= end - origin)) return false;
+            pixel = local_pixel + origin;
+            return true;
+        }
+        uint2 pixel_tile = uint2(
+            min((local_pixel.x * 4u) / max(cfg.width, 1u), 3u),
+            min((local_pixel.y * 4u) / max(cfg.height, 1u), 3u));
+        uint tile = pixel_tile.x + pixel_tile.y * 4u;
+        if ((tile_mask & (1u << tile)) == 0u) return false;
+    }
+#endif
+    return true;
+}
+
 kernel void preview_linear_kernel(device float4 *accum [[buffer(0)]],
                                   constant FptRenderConfig &cfg [[buffer(1)]],
                                   uint2 gid [[thread_position_in_grid]]) {
-    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
-    float2 uv = suv - 0.5f;
-    uv.x *= float(cfg.width) / float(cfg.height);
-    uint index = gid.y * cfg.width + gid.x;
+    uint2 pixel;
+#if defined(FPT_MANDEL_INTERACTIVE_REFINEMENT)
+    int spatial_mode = int(round(cfg.vset_values[132]));
+    if (spatial_mode != 0) {
+        uint spatial_code = uint(abs(spatial_mode));
+        uint spatial_stride = spatial_mode < 0
+            ? clamp(spatial_code, 2u, 16u)
+            : clamp(spatial_code >> 16u, 2u, 16u);
+        uint pass = spatial_mode > 0 ? max(spatial_code & 65535u, 1u) - 1u : 0u;
+        uint2 sample_offset = spatial_mode > 0
+            ? uint2(pass % spatial_stride, pass / spatial_stride)
+            : uint2(0u);
+        pixel = gid * spatial_stride + sample_offset;
+        if (pixel.x >= cfg.width || pixel.y >= cfg.height) return;
+        float2 uv = sdfScreenUv(pixel, cfg);
+        float4 sample = float4(viewport(uv, cfg), 1.0f);
+        if (spatial_mode < 0) {
+            // The moving preview traces one sample per 2x2 block and fills the
+            // block. Four exact interlace passes subsequently replace every
+            // copied value without changing the persistent buffer layout.
+            for (uint y = 0u; y < spatial_stride; ++y) {
+                for (uint x = 0u; x < spatial_stride; ++x) {
+                    uint2 destination = gid * spatial_stride + uint2(x, y);
+                    if (destination.x < cfg.width && destination.y < cfg.height) {
+                        accum[destination.y * cfg.width + destination.x] = sample;
+                    }
+                }
+            }
+        } else {
+            accum[pixel.y * cfg.width + pixel.x] = sample;
+        }
+        return;
+    }
+#endif
+    if (!mandelInteractivePreviewPixel(gid, cfg, pixel) ||
+        pixel.x >= cfg.width || pixel.y >= cfg.height) return;
+    float2 uv = sdfScreenUv(pixel, cfg);
+    uint index = pixel.y * cfg.width + pixel.x;
     accum[index] = float4(viewport(uv, cfg), 1.0f);
 }
 
@@ -6772,21 +7625,48 @@ kernel void sdf_profile_kernel(device FptSdfProfileCounts *counts [[buffer(0)]],
         atomic_fetch_add_explicit(&counts->pixels, 1u, memory_order_relaxed);
         return;
     }
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
-    float2 uv = suv - 0.5f;
-    uv.x *= float(cfg.width) / float(cfg.height);
-    uint primary_steps = 0u;
-    uint secondary_steps = 0u;
-    uint shadow_steps = 0u;
-    uint normal_evals = 0u;
-    uint bounces = 0u;
-    sdfProfilePath(uv, profile.frame_index, cfg, primary_steps, secondary_steps,
-                   shadow_steps, normal_evals, bounces);
-    atomic_fetch_add_explicit(&counts->primary_steps, primary_steps, memory_order_relaxed);
-    atomic_fetch_add_explicit(&counts->secondary_steps, secondary_steps, memory_order_relaxed);
-    atomic_fetch_add_explicit(&counts->shadow_steps, shadow_steps, memory_order_relaxed);
-    atomic_fetch_add_explicit(&counts->normal_evals, normal_evals, memory_order_relaxed);
-    atomic_fetch_add_explicit(&counts->bounces, bounces, memory_order_relaxed);
+    float2 uv = sdfScreenUv(gid, cfg);
+    SdfProfileLocalStats stats = {};
+    sdfProfilePath(uv, profile.frame_index, cfg, stats);
+    uint pixel_steps = stats.primary_steps + stats.secondary_steps +
+                       stats.shadow_steps;
+    atomic_fetch_add_explicit(&counts->primary_steps, stats.primary_steps, memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->secondary_steps, stats.secondary_steps, memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->shadow_steps, stats.shadow_steps, memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->normal_evals, stats.normal_evals, memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->bounces, stats.bounces, memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->distance_evals, stats.distance_evals,
+                              memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->march_orbit_iterations,
+                              stats.march_orbit_iterations,
+                              memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->refinement_steps,
+                              stats.refinement_steps, memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->normal_field_evals,
+                              stats.normal_field_evals,
+                              memory_order_relaxed);
+    atomic_fetch_add_explicit(&counts->material_evals, stats.material_evals,
+                              memory_order_relaxed);
+    atomic_fetch_max_explicit(&counts->max_ray_steps, stats.max_ray_steps,
+                              memory_order_relaxed);
+    atomic_fetch_max_explicit(&counts->max_pixel_steps, pixel_steps,
+                              memory_order_relaxed);
+    for (uint phase = 0u; phase < 4u; ++phase) {
+        atomic_fetch_add_explicit(&counts->distance_evals_by_phase[phase],
+                                  stats.distance_evals_by_phase[phase],
+                                  memory_order_relaxed);
+        atomic_fetch_add_explicit(&counts->orbit_iterations_by_phase[phase],
+                                  stats.orbit_iterations_by_phase[phase],
+                                  memory_order_relaxed);
+    }
+    for (uint slot = 0u; slot < 9u; ++slot) {
+        atomic_fetch_add_explicit(&counts->formula_slot_iterations[slot],
+                                  stats.formula_slot_iterations[slot],
+                                  memory_order_relaxed);
+    }
+    atomic_fetch_add_explicit(&counts->refinement_distance_evals,
+                              stats.refinement_distance_evals,
+                              memory_order_relaxed);
     atomic_fetch_add_explicit(&counts->pixels, 1u, memory_order_relaxed);
 }
 
@@ -6795,9 +7675,7 @@ kernel void accumulate_kernel(device float4 *accum [[buffer(0)]],
                               constant uint &frame_index [[buffer(2)]],
                               uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height) return;
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
-    float2 uv = suv - 0.5f;
-    uv.x *= float(cfg.width) / float(cfg.height);
+    float2 uv = sdfScreenUv(gid, cfg);
     float3 sample_color = (cfg.sdf_id == SDF_GLASS_BALL && cfg.glass_mode == 1u)
         ? renderGlassAnalytic(uv, frame_index, cfg)
         : renderPath(uv, frame_index, cfg);
@@ -6811,9 +7689,7 @@ kernel void accumulate_all_kernel(device float4 *accum [[buffer(0)]],
                                   constant FptRenderConfig &cfg [[buffer(1)]],
                                   uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height) return;
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
-    float2 uv = suv - 0.5f;
-    uv.x *= float(cfg.width) / float(cfg.height);
+    float2 uv = sdfScreenUv(gid, cfg);
     uint samples = max(cfg.samples, 1u);
     samples = min(samples, 512u);
     float3 color = float3(0.0f);
@@ -6827,14 +7703,30 @@ kernel void accumulate_all_kernel(device float4 *accum [[buffer(0)]],
     accum[idx] = float4(color, 1.0f);
 }
 
+kernel void accumulate_all_tile_kernel(
+    device float4 *accum [[buffer(0)]],
+    constant FptRenderConfig &cfg [[buffer(1)]],
+    constant FptAccumulationTile &tile [[buffer(2)]],
+    uint2 local_gid [[thread_position_in_grid]]) {
+    uint2 gid = local_gid + tile.dispatch_origin;
+    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
+    float2 uv = sdfScreenUv(gid, cfg);
+    uint samples = min(max(cfg.samples, 1u), 512u);
+    float3 color = float3(0.0f);
+    for (uint sample = 0u; sample < samples; ++sample) {
+        float3 sample_color = renderPath(uv, sample, cfg);
+        color = mix(color, sample_color, 1.0f / float(sample + 1u));
+    }
+    uint index = gid.y * cfg.width + gid.x;
+    accum[index] = float4(color, 1.0f);
+}
+
 kernel void accumulate_chunk_kernel(device float4 *accum [[buffer(0)]],
                                     constant FptRenderConfig &cfg [[buffer(1)]],
                                     constant FptAccumulationChunk &chunk [[buffer(2)]],
                                     uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height || chunk.sample_count == 0u) return;
-    float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
-    float2 uv = suv - 0.5f;
-    uv.x *= float(cfg.width) / float(cfg.height);
+    float2 uv = sdfScreenUv(gid, cfg);
     uint index = gid.y * cfg.width + gid.x;
     float3 color = chunk.start_sample == 0u ? float3(0.0f) : accum[index].xyz;
     uint end_sample = min(chunk.start_sample + chunk.sample_count, min(max(cfg.samples, 1u), 512u));
@@ -6949,9 +7841,9 @@ kernel void bound_grid_accumulate_kernel(
     device float4 *accum [[buffer(0)]],
     constant FptRenderConfig &cfg [[buffer(1)]],
     constant uint &frame_index [[buffer(2)]],
-    texture3d<float, access::read> bound_grid [[texture(0)]],
-    texture3d<float, access::read> derivative_lower_grid [[texture(1)]],
-    texture3d<float, access::read> derivative_upper_grid [[texture(2)]],
+    texture3d<float, access::sample> bound_grid [[texture(0)]],
+    texture3d<float, access::sample> derivative_lower_grid [[texture(1)]],
+    texture3d<float, access::sample> derivative_upper_grid [[texture(2)]],
     uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height) return;
     float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
@@ -6969,9 +7861,9 @@ kernel void bound_grid_accumulate_kernel(
 kernel void bound_grid_accumulate_all_kernel(
     device float4 *accum [[buffer(0)]],
     constant FptRenderConfig &cfg [[buffer(1)]],
-    texture3d<float, access::read> bound_grid [[texture(0)]],
-    texture3d<float, access::read> derivative_lower_grid [[texture(1)]],
-    texture3d<float, access::read> derivative_upper_grid [[texture(2)]],
+    texture3d<float, access::sample> bound_grid [[texture(0)]],
+    texture3d<float, access::sample> derivative_lower_grid [[texture(1)]],
+    texture3d<float, access::sample> derivative_upper_grid [[texture(2)]],
     uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height) return;
     float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
@@ -6992,9 +7884,9 @@ kernel void bound_grid_accumulate_chunk_kernel(
     device float4 *accum [[buffer(0)]],
     constant FptRenderConfig &cfg [[buffer(1)]],
     constant FptAccumulationChunk &chunk [[buffer(2)]],
-    texture3d<float, access::read> bound_grid [[texture(0)]],
-    texture3d<float, access::read> derivative_lower_grid [[texture(1)]],
-    texture3d<float, access::read> derivative_upper_grid [[texture(2)]],
+    texture3d<float, access::sample> bound_grid [[texture(0)]],
+    texture3d<float, access::sample> derivative_lower_grid [[texture(1)]],
+    texture3d<float, access::sample> derivative_upper_grid [[texture(2)]],
     uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height || chunk.sample_count == 0u) return;
     float2 suv = (float2(gid) + 0.5f) / float2(float(cfg.width), float(cfg.height));
@@ -7016,9 +7908,9 @@ kernel void bound_grid_accumulate_chunk_kernel(
 kernel void bound_grid_profile_kernel(
     device BoundGridLocalStats *samples [[buffer(0)]],
     constant FptRenderConfig &cfg [[buffer(1)]],
-    texture3d<float, access::read> bound_grid [[texture(0)]],
-    texture3d<float, access::read> derivative_lower_grid [[texture(1)]],
-    texture3d<float, access::read> derivative_upper_grid [[texture(2)]],
+    texture3d<float, access::sample> bound_grid [[texture(0)]],
+    texture3d<float, access::sample> derivative_lower_grid [[texture(1)]],
+    texture3d<float, access::sample> derivative_upper_grid [[texture(2)]],
     uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= cfg.width || gid.y >= cfg.height) return;
     uint index = gid.y * cfg.width + gid.x;
@@ -7088,9 +7980,11 @@ kernel void present_kernel(device uchar4 *out [[buffer(0)]],
                            device const float4 *accum [[buffer(1)]],
                            constant FptRenderConfig &cfg [[buffer(2)]],
                            uint2 gid [[thread_position_in_grid]]) {
-    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
-    uint out_idx = outputIndex(gid, cfg);
-    float3 color = postProcess(chromaticAt(accum, gid, cfg) + highlightAt(accum, gid, cfg), cfg);
+    uint2 pixel;
+    if (!mandelInteractivePreviewPixel(gid, cfg, pixel) ||
+        pixel.x >= cfg.width || pixel.y >= cfg.height) return;
+    uint out_idx = outputIndex(pixel, cfg);
+    float3 color = postProcess(chromaticAt(accum, pixel, cfg) + highlightAt(accum, pixel, cfg), cfg);
     out[out_idx] = uchar4(uchar(clamp(color.r, 0.0f, 1.0f) * 255.0f),
                       uchar(clamp(color.g, 0.0f, 1.0f) * 255.0f),
                       uchar(clamp(color.b, 0.0f, 1.0f) * 255.0f),

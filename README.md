@@ -38,6 +38,20 @@ release. The repository now provides shared SDF and voxel geometry paths plus
 the generic typed-program route for future procedurally generated fractals.
 Arbitrary GLSL translation remains intentionally out of scope.
 
+The `mandel` branch also contains a generated Mandelbulber2 formula
+frontend. See the [Mandelbulber compatibility architecture](docs/mandelbulber-compatibility.md)
+for its 458 fixed formula implementations, 747-scene dependency coverage, generated
+analytic/delta, hybrid, boolean, and embedded-custom runtimes, hit-only
+Mandelbulber palette colouring mapped into Metal-FPT materials, validation
+results, corpus benchmarks, persistent generated-pipeline caching, remaining
+scene-feature tiers, and GPL artifact boundary. The
+[Mandelbulber optimization report](docs/mandelbulber-optimization.md) documents
+the retained exact kernel specializations, fixed-point marcher stop,
+content-selected formula compiler, watchdog fallback, adaptive spatial preview,
+template-brick capacity mode, and every rejected experiment. The retained
+full-corpus path improved median GPU time from 35.934 ms to 23.756 ms while all
+743 comparable images remained pixel-identical.
+
 ## Quick Start
 
 Requirements: macOS with a Metal-capable GPU, Xcode command-line tools, and a

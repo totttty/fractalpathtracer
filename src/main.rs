@@ -1,11 +1,13 @@
 #![recursion_limit = "512"]
 
 mod ffi;
+mod mandelbulber;
 mod scene;
 mod tools;
 
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use ffi::*;
+use mandelbulber::MandelbulberScene;
 use scene::*;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -14,6 +16,9 @@ use std::collections::BTreeMap;
 use std::ffi::{CStr, CString};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const METALLIB_BYTES: &[u8] = include_bytes!(env!("FPT_METALLIB_PATH"));
@@ -41,6 +46,16 @@ const SDF_BACKEND_PARITY_MAE: f64 = 1.0e-6;
 const SDF_BACKEND_PARITY_OUTLIER_THRESHOLD: f64 = 1.0e-3;
 const SDF_BACKEND_PARITY_MAX_OUTLIER_FRACTION: f64 = 2.0e-5;
 
+#[cfg(test)]
+static METAL_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+#[cfg(test)]
+pub(crate) fn metal_test_guard() -> std::sync::MutexGuard<'static, ()> {
+    METAL_TEST_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
 #[derive(Default)]
 struct MetalRenderStats {
     build_ms: f64,
@@ -54,6 +69,131 @@ struct MetalRenderStats {
     stitch_validation: FptStitchValidationStats,
     stitch_pipeline: FptStitchPipelineStats,
     sdf_profile: FptSdfProfileStats,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct MandelBenchmarkImageHealth {
+    width: u32,
+    height: u32,
+    mean_luminance: f64,
+    luminance_stddev: f64,
+    non_black_fraction: f64,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct MandelBenchmarkEntry {
+    corpus_index: usize,
+    path: String,
+    hybrid: Option<bool>,
+    boolean: Option<bool>,
+    delta_de: Option<bool>,
+    formula_ids: Vec<u32>,
+    status: String,
+    source_bytes: Option<usize>,
+    generated_source_bytes: Option<usize>,
+    generation_ms: Option<f64>,
+    cold_build_ms: Option<f64>,
+    warm_build_ms: Vec<f64>,
+    cold_render_ms: Option<f64>,
+    warm_render_ms: Vec<f64>,
+    cold_execution_wall_ms: Option<f64>,
+    warm_execution_wall_ms: Vec<f64>,
+    first_render_total_ms: Option<f64>,
+    output: Option<PathBuf>,
+    image_health: Option<MandelBenchmarkImageHealth>,
+    error: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct MandelBenchmarkSummary {
+    successful: usize,
+    failed: usize,
+    generation_median_ms: f64,
+    cold_build_median_ms: f64,
+    cold_build_p90_ms: f64,
+    cold_render_median_ms: f64,
+    cold_render_p90_ms: f64,
+    warm_build_median_ms: f64,
+    warm_render_median_ms: f64,
+    cold_execution_wall_median_ms: f64,
+    warm_execution_wall_median_ms: f64,
+    first_render_total_median_ms: f64,
+    blank_or_near_blank_images: usize,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct MandelBenchmarkReport {
+    schema_version: u32,
+    renderer_revision: String,
+    mandelbulber_root: PathBuf,
+    metal_device: String,
+    kernel_set: String,
+    corpus_scenes: usize,
+    selected_scenes: usize,
+    offset: usize,
+    stride: usize,
+    width: u32,
+    height: u32,
+    samples: u32,
+    warm_runs: usize,
+    elapsed_ms: f64,
+    summary: MandelBenchmarkSummary,
+    entries: Vec<MandelBenchmarkEntry>,
+}
+
+struct CachedMandelRenderArtifacts {
+    metallib: PathBuf,
+    pipeline_archive: PathBuf,
+    compile_ms: f64,
+    cache_hit: bool,
+    optimization: MandelMetalOptimization,
+    source_bytes: usize,
+    fallback_marker: PathBuf,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MandelMetalOptimization {
+    O0,
+    O1,
+    Default,
+}
+
+impl MandelMetalOptimization {
+    fn cache_tag(self) -> &'static [u8] {
+        match self {
+            Self::O0 => b"o0",
+            Self::O1 => b"o1",
+            Self::Default => b"default",
+        }
+    }
+
+    fn metadata_label(self) -> &'static str {
+        match self {
+            Self::O0 => "o0-exact",
+            Self::O1 => "o1-exact",
+            Self::Default => "optimized",
+        }
+    }
+
+    fn diagnostic_label(self) -> &'static str {
+        match self {
+            Self::O0 => "-O0",
+            Self::O1 => "-O1",
+            Self::Default => "optimized",
+        }
+    }
+
+    fn apply(self, command: &mut Command) {
+        match self {
+            Self::O0 => {
+                command.arg("-O0");
+            }
+            Self::O1 => {
+                command.arg("-O1");
+            }
+            Self::Default => {}
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -107,12 +247,13 @@ impl Drop for ProbeDirectory {
 fn usage() {
     eprintln!(
         "Usage:\n\
-  fpt-metal render <scene.json> --out <dir> [--renderer sdf|voxel|bound-grid|regional] [--sdf-backend auto] [--regional-program-resolution 16|32] [--bound-grid-resolution 32|64] [--bound-grid-directional] [--bound-grid-fp16] [--bound-grid-profile] [--bound-grid-profile-stride N] [--bound-grid-cage-bounds] [--no-sdf-geometry-split] [--no-sdf-canonical-ir] [--sdf-topology-specialization] [--sdf-tiny-linked-helper] [--sdf-canonical-topology-specialization] [--sdf-compact-canonical-topology-specialization] [--sdf-shared-transform-topology-specialization] [--sdf-affine-index-topology-specialization] [--no-sdf-generated-surface] [--sdf-runtime-source-bytecode] [--sdf-function-stitching normal|inline|auto] [--sdf-stitch-distance-only] [--sdf-stitch-split-graph] [--sdf-stitch-fusion off|one-pair|pairs|double-pairs] [--sdf-program-validation] [--sdf-flat-union] [--sdf-typed-soa] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks] [--voxel-surface-band N] [--voxel-coverage legacy|lipschitz|interval] [--voxel-build staging|direct] [--voxel-brick-rejection] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--preview] [--glass-mode analytic|pathtrace] [--sdf-accumulation auto|per-sample|batch|chunked] [--sdf-normal-mode auto|central|tetra|program-gradient] [--sdf-program-optimization off|basic] [--sdf-chunk-samples N] [--width N] [--height N] [--samples N]\n\
+  fpt-metal render <scene.json> --out <dir> [--renderer sdf|voxel|bound-grid|regional] [--mandelbulber-root <dir>] [--sdf-backend auto] [--regional-program-resolution 16|32] [--bound-grid-resolution 32|64] [--bound-grid-directional] [--bound-grid-fp16] [--bound-grid-profile] [--bound-grid-profile-stride N] [--bound-grid-cage-bounds] [--no-sdf-geometry-split] [--no-sdf-canonical-ir] [--sdf-topology-specialization] [--sdf-tiny-linked-helper] [--sdf-canonical-topology-specialization] [--sdf-compact-canonical-topology-specialization] [--sdf-shared-transform-topology-specialization] [--sdf-affine-index-topology-specialization] [--no-sdf-generated-surface] [--sdf-runtime-source-bytecode] [--sdf-function-stitching normal|inline|auto] [--sdf-stitch-distance-only] [--sdf-stitch-split-graph] [--sdf-stitch-fusion off|one-pair|pairs|double-pairs] [--sdf-program-validation] [--sdf-flat-union] [--sdf-typed-soa] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-surface-band N] [--voxel-coverage legacy|lipschitz|interval] [--voxel-build staging|direct] [--voxel-brick-rejection] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--preview] [--glass-mode analytic|pathtrace] [--sdf-accumulation auto|per-sample|batch|chunked] [--sdf-normal-mode auto|central|tetra|program-gradient] [--sdf-program-optimization off|basic] [--sdf-chunk-samples N] [--width N] [--height N] [--samples N]\n\
   --sdf-backend auto reuses cached decisions; --sdf-backend probe measures on a cache miss\n\
   Research-only: function-stitching variants, canonical/shared/affine generated forms, dual/tiny libraries, bound-grid, and regional backends\n\
   fpt-metal render-batch <jobs.json>\n\
-  fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--fpt-root <dir>] [--width N] [--height N]\n\
-  fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
+  fpt-metal diagnostic-batch <jobs.json> [--report <report.json>] [--workers N] [--offset N] [--limit N]\n\
+  fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--fpt-root <dir>] [--width N] [--height N]\n\
+  fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -123,6 +264,15 @@ fn usage() {
   fpt-metal bounce-summary <out-dir> <bounce...>\n\
   fpt-metal optimization-summary <out-dir> <max-mae> <max-rmse> <min-ssim> <min-lf-ssim> <runs> [expected-scenes]\n\
   fpt-metal voxel-summary <report.json> <sdf.render.json> <voxel.render.json>...\n\
+  fpt-metal mandel-catalog <mandelbulber-source> --out <directory>\n\
+  fpt-metal mandel-coverage <mandelbulber-source> [--catalog-out <directory>] [--report <report.json>]\n\
+  fpt-metal mandel-audit <mandelbulber-source> --report <report.json> [--metal-check [--metal-out <directory>]]\n\
+  fpt-metal mandel-scene-audit <mandelbulber-source> --report <report.json> [--metal-check]\n\
+  fpt-metal mandel-benchmark <mandelbulber-source> --report <report.json> [--out <directory>] [--kernel-set full|render|offline-render|offline-render-o0] [--offset N] [--limit N] [--stride N] [--width N] [--height N] [--samples N] [--warm-runs N]\n\
+  fpt-metal mandel-compile <mandelbulber-source> <formula-id-or-symbol> --out <formula.metal> [--report <report.json>] [--no-check]\n\
+  fpt-metal mandel-scene-compile <scene.fract> --mandelbulber-root <dir> --out <scene.metal>\n\
+  fpt-metal mandel-formula-policy-audit <mandelbulber-root> --report <report.json>\n\
+  fpt-metal mandel-parity <scene.fract> --report <report.json> [--samples N] [--mandelbulber-root <dir>]\n\
   fpt-metal list-scenes\n\
   fpt-metal clean-reports"
     );
@@ -130,7 +280,7 @@ fn usage() {
 
 fn list_scenes() {
     eprintln!(
-        "Supported presets:\n  Cornell_Box\n  Glass_Ball\n  Ball_Fractal\n  Cage_Fractal\n  IFS_Fractal\n  Mandelbox_Fractal\n  Menger_Sponge\n  Tower_Fractal\n  Tree_Fractal\n  Any JSON scene containing a typed sdf_program\n  Gradient_Example.fpt (compatibility compiler)"
+        "Supported presets:\n  Cornell_Box\n  Glass_Ball\n  Ball_Fractal\n  Cage_Fractal\n  IFS_Fractal\n  Mandelbox_Fractal\n  Menger_Sponge\n  Mandelbulber 2.x generated analytic formulas (.fract; use --mandelbulber-root)\n  Tower_Fractal\n  Tree_Fractal\n  Any JSON scene containing a typed sdf_program\n  Gradient_Example.fpt (compatibility compiler)"
     );
 }
 
@@ -147,17 +297,163 @@ fn bridge_error(buffer: &[i8]) -> String {
 }
 
 fn materialize_metallib(bytes: &[u8], label: &str, digest: &str) -> Result<PathBuf> {
+    static MATERIALIZATION_SEQUENCE: AtomicUsize = AtomicUsize::new(0);
+
     let directory = std::env::temp_dir().join("fpt-metal");
     let path = directory.join(format!("{label}-{}.metallib", &digest[..16]));
-    if !path.exists() {
-        fs::create_dir_all(&directory)?;
-        fs::write(&path, bytes)?;
+    fs::create_dir_all(&directory)?;
+    let is_complete = || {
+        fs::metadata(&path)
+            .map(|metadata| metadata.is_file() && metadata.len() == bytes.len() as u64)
+            .unwrap_or(false)
+    };
+    if is_complete() {
+        return Ok(path);
+    }
+
+    // Tests and parallel render jobs can request the same embedded library at once.
+    // Publish a fully written sibling atomically so readers never observe a partial file.
+    let sequence = MATERIALIZATION_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let temporary = directory.join(format!(
+        ".{label}-{}-{}-{sequence}.tmp",
+        &digest[..16],
+        std::process::id()
+    ));
+    fs::write(&temporary, bytes)?;
+    if let Err(error) = fs::rename(&temporary, &path) {
+        let _ = fs::remove_file(&temporary);
+        if !is_complete() {
+            return Err(error).with_context(|| {
+                format!("failed to publish embedded metallib {}", path.display())
+            });
+        }
     }
     Ok(path)
 }
 
 fn default_metallib_path() -> Result<PathBuf> {
     materialize_metallib(METALLIB_BYTES, "Shaders", METALLIB_SHA)
+}
+
+fn cached_diagnostic_metallib(
+    source: &str,
+    optimization: MandelMetalOptimization,
+) -> Result<PathBuf> {
+    let mut digest = Sha256::new();
+    digest.update(b"fpt-mandel-diagnostic-metallib-v4\0");
+    digest.update(b"macos-metal2.4\0");
+    digest.update(optimization.cache_tag());
+    digest.update(b"\0-ffast-math\0");
+    digest.update(std::env::consts::ARCH.as_bytes());
+    digest.update(source.as_bytes());
+    let key = format!("{:x}", digest.finalize());
+    let directory = std::env::var_os("FPT_MANDEL_DIAGNOSTIC_CACHE_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            std::env::temp_dir()
+                .join("fpt-metal")
+                .join("mandel-diagnostic-v1")
+        });
+    fs::create_dir_all(&directory)?;
+    let metallib = directory.join(format!("{key}.metallib"));
+    if metallib.is_file() {
+        return Ok(metallib);
+    }
+
+    let unique = format!(
+        "{}-{}",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    );
+    let metal_source = directory.join(format!("{key}-{unique}.metal"));
+    let air = directory.join(format!("{key}-{unique}.air"));
+    let temporary_metallib = directory.join(format!("{key}-{unique}.metallib"));
+    fs::write(&metal_source, source)?;
+    let mut compile_command = Command::new("xcrun");
+    compile_command.args(["-sdk", "macosx", "metal", "-std=macos-metal2.4"]);
+    optimization.apply(&mut compile_command);
+    let compile = compile_command
+        .args(["-ffast-math", "-c"])
+        .arg(&metal_source)
+        .arg("-o")
+        .arg(&air)
+        .output()
+        .context("launch diagnostic Metal compiler")?;
+    if !compile.status.success() {
+        let _ = fs::remove_file(&metal_source);
+        let _ = fs::remove_file(&air);
+        bail!(
+            "diagnostic Metal compilation failed:\n{}",
+            String::from_utf8_lossy(&compile.stderr)
+        );
+    }
+    let mut link = Command::new("xcrun")
+        .args(["-sdk", "macosx", "metallib"])
+        .arg(&air)
+        .arg("-o")
+        .arg(&temporary_metallib)
+        .output()
+        .context("launch diagnostic Metal linker")?;
+    if optimization == MandelMetalOptimization::O0
+        && !link.status.success()
+        && String::from_utf8_lossy(&link.stderr).contains("llvm.global_ctors")
+    {
+        // Most generated formulas compile dramatically faster at O0. A small
+        // set of aggregate-heavy parameter blocks (notably kaleidoscopic IFS)
+        // leave global constructors in the AIR at O0, which Metal cannot link
+        // into a kernel. O1 folds those constructors while remaining much
+        // cheaper than the toolchain's default whole-program optimisation.
+        let _ = fs::remove_file(&air);
+        let _ = fs::remove_file(&temporary_metallib);
+        let fallback_compile = Command::new("xcrun")
+            .args([
+                "-sdk",
+                "macosx",
+                "metal",
+                "-std=macos-metal2.4",
+                "-O1",
+                "-ffast-math",
+                "-c",
+            ])
+            .arg(&metal_source)
+            .arg("-o")
+            .arg(&air)
+            .output()
+            .context("launch diagnostic Metal O1 fallback compiler")?;
+        if !fallback_compile.status.success() {
+            let _ = fs::remove_file(&metal_source);
+            let _ = fs::remove_file(&air);
+            bail!(
+                "diagnostic Metal O1 fallback compilation failed:\n{}",
+                String::from_utf8_lossy(&fallback_compile.stderr)
+            );
+        }
+        link = Command::new("xcrun")
+            .args(["-sdk", "macosx", "metallib"])
+            .arg(&air)
+            .arg("-o")
+            .arg(&temporary_metallib)
+            .output()
+            .context("launch diagnostic Metal O1 fallback linker")?;
+    }
+    let _ = fs::remove_file(&metal_source);
+    let _ = fs::remove_file(&air);
+    if !link.status.success() {
+        let _ = fs::remove_file(&temporary_metallib);
+        bail!(
+            "diagnostic Metal link failed:\n{}",
+            String::from_utf8_lossy(&link.stderr)
+        );
+    }
+    if metallib.exists() {
+        fs::remove_file(&temporary_metallib)?;
+    } else {
+        fs::rename(&temporary_metallib, &metallib)?;
+    }
+    Ok(metallib)
 }
 
 fn default_builtin_metallib_path() -> Result<PathBuf> {
@@ -411,7 +707,12 @@ fn backend_workload_key(config: &FptRenderConfig, device_name: &str) -> String {
     hash_f32_slice(&mut digest, &config.camera_yaw_pitch);
     hash_f32_slice(
         &mut digest,
-        &[config.camera_fov, config.camera_dof, config.focus_distance],
+        &[
+            config.camera_roll,
+            config.camera_fov,
+            config.camera_dof,
+            config.focus_distance,
+        ],
     );
     hash_f32_slice(&mut digest, &config.render);
     hash_f32_slice(&mut digest, &config.world);
@@ -517,6 +818,9 @@ fn apply_cached_backend(config: &FptRenderConfig, selected: &str) -> Option<FptR
 }
 
 fn median(mut values: Vec<f64>) -> f64 {
+    if values.is_empty() {
+        return 0.0;
+    }
     values.sort_by(f64::total_cmp);
     values[values.len() / 2]
 }
@@ -604,6 +908,7 @@ fn execute_metal_render_internal(
     stitch_metallib: &Path,
     stitch_archive: Option<&Path>,
     output: &Path,
+    shader_source: &[u8],
     linear_output: Option<&mut [f32]>,
 ) -> Result<MetalRenderStats> {
     if let Some(parent) = output.parent() {
@@ -624,8 +929,8 @@ fn execute_metal_render_internal(
             stitch_metallib_c.as_ptr(),
             stitch_archive_c.as_ptr(),
             output_c.as_ptr(),
-            METAL_SOURCE_BYTES.as_ptr().cast(),
-            METAL_SOURCE_BYTES.len(),
+            shader_source.as_ptr().cast(),
+            shader_source.len(),
             config,
             &mut stats.build_ms,
             &mut stats.elapsed_ms,
@@ -663,6 +968,7 @@ fn execute_metal_render(
         stitch_metallib,
         stitch_archive,
         output,
+        METAL_SOURCE_BYTES,
         None,
     )
 }
@@ -788,6 +1094,7 @@ fn select_sdf_backend(
         stitch_metallib,
         None,
         &probe_directory.0.join("direct-warmup.png"),
+        METAL_SOURCE_BYTES,
         Some(&mut direct_parity_output),
     )?;
     for candidate in &mut candidates {
@@ -801,6 +1108,7 @@ fn select_sdf_backend(
             stitch_metallib,
             None,
             &output,
+            METAL_SOURCE_BYTES,
             Some(&mut parity_output),
         ) {
             Ok(stats) => {
@@ -1015,6 +1323,13 @@ struct RenderMetadataInput<'a> {
     stats: &'a MetalRenderStats,
     stitch_cache_key: Option<&'a str>,
     backend_selection: Option<&'a SdfBackendSelection>,
+    mandel_kernel_mode: Option<&'a str>,
+    mandel_compile_mode: Option<&'a str>,
+    mandel_dispatch_mode: Option<&'a str>,
+    mandel_formula_dispatch_mode: Option<&'a str>,
+    mandel_cache_status: Option<&'a str>,
+    mandel_source_bytes: Option<usize>,
+    mandel_offline_compile_ms: Option<f64>,
 }
 
 fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
@@ -1025,6 +1340,13 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         stats,
         stitch_cache_key,
         backend_selection,
+        mandel_kernel_mode,
+        mandel_compile_mode,
+        mandel_dispatch_mode,
+        mandel_formula_dispatch_mode,
+        mandel_cache_status,
+        mandel_source_bytes,
+        mandel_offline_compile_ms,
     } = input;
     let MetalRenderStats {
         build_ms,
@@ -1162,6 +1484,18 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
                 "shadow_steps": sdf_profile.shadow_steps,
                 "normal_evaluations": sdf_profile.normal_evals,
                 "bounces": sdf_profile.bounces,
+                "distance_evaluations": sdf_profile.distance_evals,
+                "march_orbit_iterations": sdf_profile.march_orbit_iterations,
+                "refinement_steps": sdf_profile.refinement_steps,
+                "normal_field_evaluations": sdf_profile.normal_field_evals,
+                "material_evaluations": sdf_profile.material_evals,
+                "max_ray_steps": sdf_profile.max_ray_steps,
+                "max_pixel_steps": sdf_profile.max_pixel_steps,
+                "ray_phases": ["primary", "secondary", "shadow", "normal"],
+                "distance_evaluations_by_phase": sdf_profile.distance_evals_by_phase,
+                "orbit_iterations_by_phase": sdf_profile.orbit_iterations_by_phase,
+                "formula_slot_iterations": sdf_profile.formula_slot_iterations,
+                "refinement_distance_evaluations": sdf_profile.refinement_distance_evals,
                 "estimated_ms": {
                     "primary": sdf_profile.primary_ms_estimate,
                     "secondary": sdf_profile.secondary_ms_estimate,
@@ -1191,6 +1525,14 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         },
         "metal_language_version": "2.4",
         "metal_math_mode": "fast",
+        "mandel_kernel_mode": mandel_kernel_mode,
+        "mandel_compile_mode": mandel_compile_mode,
+        "mandel_dispatch_mode": mandel_dispatch_mode,
+        "mandel_formula_dispatch_mode": mandel_formula_dispatch_mode,
+        "mandel_cache_status": mandel_cache_status,
+        "mandel_source_bytes": mandel_source_bytes,
+        "mandel_offline_compile_ms": mandel_offline_compile_ms,
+        "mandel_pipeline_build_ms": mandel_offline_compile_ms.map(|compile_ms| (build_ms - compile_ms).max(0.0)),
         "sdf_flat_union_primitive_count": config.sdf_flat_union_count,
         "sdf_typed_soa_sphere_count": config.sdf_typed_soa.sphere_count,
         "sdf_typed_soa_box_count": config.sdf_typed_soa.box_count,
@@ -1273,7 +1615,11 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
             VOXEL_NORMAL_EXACT => "exact",
             _ => "face",
         },
-        "voxel_storage": if config.voxel_storage == VOXEL_STORAGE_SPARSE_BRICKS { "sparse-bricks" } else { "dense" },
+        "voxel_storage": match config.voxel_storage {
+            VOXEL_STORAGE_SPARSE_BRICKS => "sparse-bricks",
+            VOXEL_STORAGE_TEMPLATE_BRICKS => "template-bricks",
+            _ => "dense",
+        },
         "voxel_coverage": match config.voxel_coverage_mode {
             VOXEL_COVERAGE_LIPSCHITZ => "lipschitz",
             VOXEL_COVERAGE_INTERVAL => "interval",
@@ -1289,12 +1635,18 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         "voxel_material": if config.voxel_material_mode == VOXEL_MATERIAL_EXACT { "exact" } else { "stored" },
         "voxel_offset": if config.voxel_offset_mode == VOXEL_OFFSET_PRECISION { "precision" } else { "legacy" },
         "acceleration_memory_bytes": voxel_memory_bytes,
+        "acceleration_bounds_min": config.voxel_bounds_min,
+        "acceleration_bounds_max": config.voxel_bounds_max,
         "voxel_memory_bytes": if config.renderer_backend == RENDERER_VOXEL { Some(voxel_memory_bytes) } else { None },
         "voxel_active_bricks": if config.renderer_backend == RENDERER_VOXEL { Some(voxel_active_bricks) } else { None },
         "voxel_active_cells": if config.renderer_backend == RENDERER_VOXEL { Some(voxel_active_cells) } else { None },
         "voxel_rejected_bricks": if config.renderer_backend == RENDERER_VOXEL { Some(voxel_rejected_bricks) } else { None },
         "bound_grid_resolution": config.bound_grid_resolution,
-        "bound_grid_mode": if config.bound_grid_directional != 0 { "directional" } else { "range" },
+        "bound_grid_mode": if config.bound_grid_directional != 0 {
+            "directional"
+        } else {
+            "range"
+        },
         "bound_grid_format": if config.bound_grid_fp16 != 0 { "packed-fp16" } else { "fp32" },
         "bound_grid_build_ms": if config.renderer_backend == RENDERER_BOUND_GRID { Some(build_ms) } else { None },
         "bound_grid_memory_bytes": if config.renderer_backend == RENDERER_BOUND_GRID { Some(voxel_memory_bytes) } else { None },
@@ -1396,13 +1748,13 @@ fn render(args: &RenderArgs) -> Result<()> {
     }
     fs::create_dir_all(&args.out_dir)?;
     let output = output_path(args, &loaded.output_name);
-    let metallib = metallib_path(args, &loaded.config)?;
+    let base_metallib = metallib_path(args, &loaded.config)?;
     let stitch_metallib = default_stitch_metallib_path()?;
     let backend_selection = if args.sdf_function_stitching == SdfFunctionStitching::Auto {
         let selection_start = Instant::now();
         let (selected, mut selection) = select_sdf_backend(
             &loaded.config,
-            &metallib,
+            &base_metallib,
             &stitch_metallib,
             args.sdf_backend_probe,
         )?;
@@ -1424,19 +1776,194 @@ fn render(args: &RenderArgs) -> Result<()> {
     } else {
         None
     };
-    let stitch_archive = stitch_archive_path(&loaded.config)?;
+    let generated_source = loaded.runtime_metal_source.take();
+    let use_cached_mandel = generated_source.is_some()
+        && loaded.config.sdf_id == SDF_MANDELBULBER
+        && loaded.config.renderer_backend == RENDERER_SDF
+        && args.metallib.is_none();
+    let mut mandel_artifacts = if use_cached_mandel {
+        let source = generated_source.as_deref().expect("checked above");
+        let force_o1 = std::env::var_os("FPT_MANDEL_FORCE_O1").is_some();
+        let force_o0 = std::env::var_os("FPT_MANDEL_FORCE_O0").is_some()
+            || (!force_o1 && mandel_scene_requires_o0(&args.scene_path)?);
+        if force_o0 {
+            Some(cached_mandel_render_artifacts(
+                source,
+                &loaded.config,
+                MandelMetalOptimization::O0,
+            )?)
+        } else if force_o1 {
+            Some(cached_mandel_render_artifacts(
+                source,
+                &loaded.config,
+                MandelMetalOptimization::O1,
+            )?)
+        } else {
+            let optimized = cached_mandel_render_artifacts(
+                source,
+                &loaded.config,
+                MandelMetalOptimization::Default,
+            )?;
+            if optimized.fallback_marker.is_file() {
+                Some(cached_mandel_render_artifacts(
+                    source,
+                    &loaded.config,
+                    MandelMetalOptimization::O0,
+                )?)
+            } else {
+                Some(optimized)
+            }
+        }
+    } else {
+        None
+    };
+    if mandel_artifacts.is_some() {
+        loaded.config.sdf_runtime_source_bytecode = 0;
+    }
+    let mut stitch_archive = if let Some(artifacts) = mandel_artifacts.as_ref() {
+        Some(artifacts.pipeline_archive.clone())
+    } else {
+        stitch_archive_path(&loaded.config)?
+    };
+    let stats = if let Some(artifacts) = mandel_artifacts.as_ref() {
+        let initial_compile_ms = artifacts.compile_ms;
+        let initial_pipeline_started = Instant::now();
+        let result = execute_metal_render_internal(
+            &loaded.config,
+            &artifacts.metallib,
+            &stitch_metallib,
+            stitch_archive.as_deref(),
+            &output,
+            &[],
+            None,
+        );
+        let initial_pipeline_attempt_ms = initial_pipeline_started.elapsed().as_secs_f64() * 1000.0;
+        match result {
+            Ok(mut stats) => {
+                stats.build_ms += artifacts.compile_ms;
+                stats
+            }
+            Err(error)
+                if artifacts.optimization == MandelMetalOptimization::Default
+                    && format!("{error:#}").contains("XPC_ERROR_CONNECTION_INTERRUPTED") =>
+            {
+                let source = generated_source.as_deref().expect("cached source exists");
+                fs::write(
+                    &artifacts.fallback_marker,
+                    b"optimized Metal pipeline creation failed; use -O0\n",
+                )?;
+                eprintln!(
+                    "optimized Mandel pipeline failed; retrying with cached -O0 fallback: {error:#}"
+                );
+                let fallback = cached_mandel_render_artifacts(
+                    source,
+                    &loaded.config,
+                    MandelMetalOptimization::O0,
+                )?;
+                stitch_archive = Some(fallback.pipeline_archive.clone());
+                let mut stats = execute_metal_render_internal(
+                    &loaded.config,
+                    &fallback.metallib,
+                    &stitch_metallib,
+                    stitch_archive.as_deref(),
+                    &output,
+                    &[],
+                    None,
+                )?;
+                stats.build_ms +=
+                    fallback.compile_ms + initial_compile_ms + initial_pipeline_attempt_ms;
+                mandel_artifacts = Some(fallback);
+                stats
+            }
+            Err(error) => return Err(error),
+        }
+    } else if let Some(shader_source) = generated_source.as_deref() {
+        execute_metal_render_internal(
+            &loaded.config,
+            &base_metallib,
+            &stitch_metallib,
+            stitch_archive.as_deref(),
+            &output,
+            shader_source,
+            None,
+        )?
+    } else {
+        execute_metal_render(
+            &loaded.config,
+            &base_metallib,
+            &stitch_metallib,
+            stitch_archive.as_deref(),
+            &output,
+        )?
+    };
     let stitch_cache_key = stitch_archive
         .as_ref()
         .and_then(|path| path.file_stem())
         .and_then(|stem| stem.to_str())
         .map(str::to_owned);
-    let stats = execute_metal_render(
-        &loaded.config,
-        &metallib,
-        &stitch_metallib,
-        stitch_archive.as_deref(),
-        &output,
-    )?;
+    if let Some(artifacts) = mandel_artifacts.as_ref() {
+        eprintln!(
+            "Mandel pipeline cache: {} {} source ({} bytes)",
+            if artifacts.cache_hit {
+                "hit"
+            } else {
+                "populated"
+            },
+            artifacts.optimization.diagnostic_label(),
+            artifacts.source_bytes,
+        );
+    }
+    let mandel_kernel_mode = if use_cached_mandel {
+        Some(
+            if mandelbulber::compiler::scene_uses_kernel_specialization(&args.scene_path)? {
+                "specialized"
+            } else {
+                "generic-exact"
+            },
+        )
+    } else {
+        None
+    };
+    let mandel_compile_mode = mandel_artifacts
+        .as_ref()
+        .map(|artifacts| artifacts.optimization.metadata_label());
+    let mandel_dispatch_mode = if use_cached_mandel {
+        Some(if std::env::var_os("FPT_MANDEL_TILED_DISPATCH").is_some() {
+            "tiled-32-row"
+        } else {
+            "single-command-buffer"
+        })
+    } else {
+        None
+    };
+    let mandel_formula_dispatch_mode = if use_cached_mandel {
+        Some(
+            if mandelbulber::compiler::scene_uses_direct_hybrid_loop(&args.scene_path)? {
+                "direct-homogeneous"
+            } else if mandelbulber::compiler::scene_formula_optimization_policy(&args.scene_path)?
+                .periodic_hybrid_loop
+            {
+                "periodic-mixed"
+            } else {
+                "dynamic-or-standalone"
+            },
+        )
+    } else {
+        None
+    };
+    let mandel_cache_status = mandel_artifacts.as_ref().map(|artifacts| {
+        if artifacts.cache_hit {
+            "hit"
+        } else {
+            "populated"
+        }
+    });
+    let mandel_source_bytes = mandel_artifacts
+        .as_ref()
+        .map(|artifacts| artifacts.source_bytes);
+    let mandel_offline_compile_ms = mandel_artifacts
+        .as_ref()
+        .map(|artifacts| artifacts.compile_ms);
     write_render_metadata(RenderMetadataInput {
         output: &output,
         scene: &args.scene_path,
@@ -1444,6 +1971,13 @@ fn render(args: &RenderArgs) -> Result<()> {
         stats: &stats,
         stitch_cache_key: stitch_cache_key.as_deref(),
         backend_selection: backend_selection.as_ref(),
+        mandel_kernel_mode,
+        mandel_compile_mode,
+        mandel_dispatch_mode,
+        mandel_formula_dispatch_mode,
+        mandel_cache_status,
+        mandel_source_bytes,
+        mandel_offline_compile_ms,
     })?;
     eprintln!(
         "rendered {} -> {} (build {:.2} ms, render {:.2} ms)",
@@ -1453,6 +1987,24 @@ fn render(args: &RenderArgs) -> Result<()> {
         stats.elapsed_ms,
     );
     Ok(())
+}
+
+fn mandel_scene_requires_o0(scene: &Path) -> Result<bool> {
+    // These corpus fixtures previously triggered Metal's optimized-pipeline
+    // fallback on Apple Silicon. Re-enabling optimization after a shader
+    // source change can alter their highly sensitive march decisions, even
+    // when the generated field program is otherwise equivalent. Key the
+    // conservative mode by content rather than path so renamed scenes retain
+    // the exact renderer selected by the frozen compatibility corpus.
+    const EXACT_O0_SCENES: [&str; 5] = [
+        "dc67ed9066cac84403ed28cea04458bf332bdc4e5df5ef118bad9ebd541c49cd",
+        "8bbd267428bb7fe674b4f84f549ff9af495850b27bcf12b118d7a27f187989d8",
+        "7f40aeb3c2cd5ce44f59e62b7b6a3c3bbd0a36afd6aac629eca6f7194bb985d3",
+        "03d8c4943e271e7b2d803108aec197d83ef894c4ba67b2ce15c54cdd4701109c",
+        "c1f596cb79c5566ef078fb5b719e919e85dd597e085c612d0339640d237e2bd7",
+    ];
+    let digest = format!("{:x}", Sha256::digest(fs::read(scene)?));
+    Ok(EXACT_O0_SCENES.contains(&digest.as_str()))
 }
 
 fn diagnostic(args: &RenderArgs) -> Result<()> {
@@ -1465,20 +2017,68 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
     apply_optimization_args(&mut loaded.config, args);
     fs::create_dir_all(&args.out_dir)?;
     let output = output_path(args, &loaded.output_name);
-    let metallib_c = c_path(&metallib_path(args, &loaded.config)?)?;
     let output_c = c_path(&output)?;
     let diagnostic = FptDiagnosticConfig {
         mode: args.diagnostic_mode as u32,
         _pad0: args.sdf_bounce_index,
-        max_distance: loaded.config.render[4],
+        max_distance: args
+            .diagnostic_max_distance
+            .unwrap_or(loaded.config.render[4]),
         normal_mix: 1.0,
+        dispatch_origin: [0, 0],
     };
     let mut elapsed_ms = 0.0;
     let mut error = [0_i8; 4096];
+    let diagnostic_shader_source = loaded
+        .runtime_metal_source
+        .as_deref()
+        .map(|source| {
+            let source = std::str::from_utf8(source)?;
+            let retained = if loaded.config.renderer_backend == RENDERER_VOXEL {
+                &["voxel_build_kernel", "voxel_diagnostic_kernel"][..]
+            } else {
+                &["sdf_diagnostic_kernel"][..]
+            };
+            mandelbulber::compiler::retain_metal_kernels(source, retained)
+        })
+        .transpose()?;
+    let production_compile = std::env::var_os("FPT_MANDEL_DIAGNOSTIC_PRODUCTION_COMPILE").is_some();
+    let diagnostic_optimization = if std::env::var_os("FPT_MANDEL_DIAGNOSTIC_O1").is_some() {
+        MandelMetalOptimization::O1
+    } else if std::env::var_os("FPT_MANDEL_DIAGNOSTIC_OPTIMIZED").is_some()
+        || (production_compile && !mandel_scene_requires_o0(&args.scene_path)?)
+    {
+        MandelMetalOptimization::Default
+    } else {
+        MandelMetalOptimization::O0
+    };
+    let diagnostic_metallib = diagnostic_shader_source
+        .as_deref()
+        .map(|source| cached_diagnostic_metallib(source, diagnostic_optimization))
+        .transpose()?;
+    let diagnostic_formula_dispatch_mode = if diagnostic_shader_source.is_some() {
+        Some(
+            if mandelbulber::compiler::scene_uses_direct_hybrid_loop(&args.scene_path)? {
+                "direct-homogeneous"
+            } else if mandelbulber::compiler::scene_formula_optimization_policy(&args.scene_path)?
+                .periodic_hybrid_loop
+            {
+                "periodic-mixed"
+            } else {
+                "dynamic-or-standalone"
+            },
+        )
+    } else {
+        None
+    };
+    let metallib = diagnostic_metallib.unwrap_or(metallib_path(args, &loaded.config)?);
+    let metallib_c = c_path(&metallib)?;
     let status = unsafe {
         fpt_metal_diagnostic_render(
             metallib_c.as_ptr(),
             output_c.as_ptr(),
+            std::ptr::null(),
+            0,
             &loaded.config,
             &diagnostic,
             &mut elapsed_ms,
@@ -1500,6 +2100,15 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         stats: &stats,
         stitch_cache_key: None,
         backend_selection: None,
+        mandel_kernel_mode: None,
+        mandel_compile_mode: diagnostic_shader_source
+            .as_ref()
+            .map(|_| diagnostic_optimization.diagnostic_label()),
+        mandel_dispatch_mode: None,
+        mandel_formula_dispatch_mode: diagnostic_formula_dispatch_mode,
+        mandel_cache_status: None,
+        mandel_source_bytes: None,
+        mandel_offline_compile_ms: None,
     })?;
     eprintln!(
         "rendered {} diagnostic {} -> {} ({elapsed_ms:.2} ms)",
@@ -1551,13 +2160,17 @@ fn preview(args: &RenderArgs) -> Result<()> {
         .map(|path| path.as_ptr())
         .collect::<Vec<_>>();
     let mut error = [0_i8; 4096];
+    let preview_shader_source = loaded
+        .runtime_metal_source
+        .as_deref()
+        .unwrap_or(METAL_SOURCE_BYTES);
     let status = unsafe {
         fpt_metal_preview(
             metallib_c.as_ptr(),
             stitch_metallib_c.as_ptr(),
             stitch_archive_ptrs.as_ptr(),
-            METAL_SOURCE_BYTES.as_ptr().cast(),
-            METAL_SOURCE_BYTES.len(),
+            preview_shader_source.as_ptr().cast(),
+            preview_shader_source.len(),
             &loaded.config,
             scenes.as_ptr(),
             scenes.len() as u32,
@@ -1644,6 +2257,1523 @@ fn render_batch(args: &[String]) -> Result<()> {
     Ok(())
 }
 
+fn mandel_benchmark_image_health(path: &Path) -> Result<MandelBenchmarkImageHealth> {
+    let image = image::open(path)
+        .with_context(|| format!("open benchmark image {}", path.display()))?
+        .to_rgb8();
+    let (width, height) = image.dimensions();
+    let pixels = image.as_raw().chunks_exact(3);
+    let count = pixels.len().max(1) as f64;
+    let mut sum = 0.0;
+    let mut sum_squared = 0.0;
+    let mut non_black = 0usize;
+    for pixel in pixels {
+        let luminance = (0.2126 * f64::from(pixel[0])
+            + 0.7152 * f64::from(pixel[1])
+            + 0.0722 * f64::from(pixel[2]))
+            / 255.0;
+        sum += luminance;
+        sum_squared += luminance * luminance;
+        non_black += usize::from(pixel.iter().copied().max().unwrap_or(0) > 2);
+    }
+    let mean_luminance = sum / count;
+    let variance = (sum_squared / count - mean_luminance * mean_luminance).max(0.0);
+    Ok(MandelBenchmarkImageHealth {
+        width,
+        height,
+        mean_luminance,
+        luminance_stddev: variance.sqrt(),
+        non_black_fraction: non_black as f64 / count,
+    })
+}
+
+fn compile_mandel_metallib(
+    source: &[u8],
+    directory: &Path,
+    label: &str,
+    optimization: MandelMetalOptimization,
+) -> Result<(PathBuf, f64)> {
+    fs::create_dir_all(directory)?;
+    let metal_path = directory.join(format!("{label}.metal"));
+    let air_path = directory.join(format!("{label}.air"));
+    let metallib_path = directory.join(format!("{label}.metallib"));
+    fs::write(&metal_path, source)?;
+    let started = Instant::now();
+    let mut compile_command = Command::new("xcrun");
+    compile_command.args(["-sdk", "macosx", "metal", "-std=macos-metal2.4"]);
+    optimization.apply(&mut compile_command);
+    let compile = compile_command
+        .args(["-ffast-math", "-c"])
+        .arg(&metal_path)
+        .arg("-o")
+        .arg(&air_path)
+        .output()
+        .context("launch offline Metal compiler")?;
+    if !compile.status.success() {
+        bail!(
+            "offline Metal compilation failed:\n{}",
+            String::from_utf8_lossy(&compile.stderr)
+        );
+    }
+    let link = Command::new("xcrun")
+        .args(["-sdk", "macosx", "metallib"])
+        .arg(&air_path)
+        .arg("-o")
+        .arg(&metallib_path)
+        .output()
+        .context("launch Metal library linker")?;
+    if !link.status.success() {
+        bail!(
+            "offline Metal library link failed:\n{}",
+            String::from_utf8_lossy(&link.stderr)
+        );
+    }
+    let elapsed_ms = started.elapsed().as_secs_f64() * 1000.0;
+    let _ = fs::remove_file(&metal_path);
+    let _ = fs::remove_file(&air_path);
+    Ok((metallib_path, elapsed_ms))
+}
+
+fn mandel_render_kernel_names(config: &FptRenderConfig) -> Vec<&'static str> {
+    if config.preview != 0 {
+        return vec!["preview_linear_kernel", "present_kernel"];
+    }
+    let tiled_batch = std::env::var_os("FPT_MANDEL_TILED_DISPATCH").is_some()
+        && effective_accumulation(config) == "batch";
+    let mut kernels = vec![
+        if tiled_batch {
+            "accumulate_all_tile_kernel"
+        } else {
+            match effective_accumulation(config) {
+                "per-sample" => "accumulate_kernel",
+                "chunked" => "accumulate_chunk_kernel",
+                _ => "accumulate_all_kernel",
+            }
+        },
+        "present_kernel",
+    ];
+    if config.focus_distance <= 0.0 {
+        kernels.push("estimate_focus_distance_kernel");
+    }
+    if config.sdf_profile != 0 {
+        kernels.push("sdf_profile_kernel");
+    }
+    kernels
+}
+
+fn mandel_render_cache_directory() -> PathBuf {
+    std::env::var_os("FPT_MANDEL_RENDER_CACHE_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            std::env::temp_dir()
+                .join("fpt-metal")
+                .join("mandel-render-v1")
+        })
+}
+
+fn cached_mandel_render_artifacts(
+    generated_source: &[u8],
+    config: &FptRenderConfig,
+    optimization: MandelMetalOptimization,
+) -> Result<CachedMandelRenderArtifacts> {
+    let retained = mandelbulber::compiler::retain_metal_kernels(
+        std::str::from_utf8(generated_source)?,
+        &mandel_render_kernel_names(config),
+    )?;
+    let mut base_digest = Sha256::new();
+    base_digest.update(b"fpt-mandel-render-pipeline-v1\0");
+    base_digest.update(METAL_COMPILER_IDENTITY.as_bytes());
+    base_digest.update(std::env::consts::ARCH.as_bytes());
+    base_digest.update(effective_accumulation(config).as_bytes());
+    base_digest.update(b"fast-math\0");
+    base_digest.update(retained.as_bytes());
+    let base_key = format!("{:x}", base_digest.finalize());
+    let directory = mandel_render_cache_directory();
+    fs::create_dir_all(&directory)?;
+    let fallback_marker = directory.join(format!("{base_key}.requires-o0"));
+    let mut mode_digest = Sha256::new();
+    mode_digest.update(base_key.as_bytes());
+    mode_digest.update(optimization.cache_tag());
+    let key = format!("{:x}", mode_digest.finalize());
+    let metallib = directory.join(format!("{key}.metallib"));
+    let pipeline_archive = directory.join(format!("{key}.metallibarchive"));
+    let cache_hit = metallib.is_file();
+    let compile_ms = if cache_hit {
+        0.0
+    } else {
+        let unique = format!(
+            "{key}-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        );
+        let (temporary, elapsed_ms) =
+            compile_mandel_metallib(retained.as_bytes(), &directory, &unique, optimization)?;
+        if metallib.is_file() {
+            let _ = fs::remove_file(&temporary);
+        } else {
+            fs::rename(&temporary, &metallib)?;
+        }
+        elapsed_ms
+    };
+    Ok(CachedMandelRenderArtifacts {
+        metallib,
+        pipeline_archive,
+        compile_ms,
+        cache_hit,
+        optimization,
+        source_bytes: retained.len(),
+        fallback_marker,
+    })
+}
+
+fn mandel_benchmark_summary(entries: &[MandelBenchmarkEntry]) -> MandelBenchmarkSummary {
+    let successful = entries.iter().filter(|entry| entry.status == "ok").count();
+    let mut generation = entries
+        .iter()
+        .filter_map(|entry| entry.generation_ms)
+        .collect::<Vec<_>>();
+    let mut cold_build = entries
+        .iter()
+        .filter_map(|entry| entry.cold_build_ms)
+        .collect::<Vec<_>>();
+    let mut cold_render = entries
+        .iter()
+        .filter_map(|entry| entry.cold_render_ms)
+        .collect::<Vec<_>>();
+    let warm_build = entries
+        .iter()
+        .flat_map(|entry| entry.warm_build_ms.iter().copied())
+        .collect::<Vec<_>>();
+    let warm_render = entries
+        .iter()
+        .flat_map(|entry| entry.warm_render_ms.iter().copied())
+        .collect::<Vec<_>>();
+    let first_total = entries
+        .iter()
+        .filter_map(|entry| entry.first_render_total_ms)
+        .collect::<Vec<_>>();
+    let cold_execution_wall = entries
+        .iter()
+        .filter_map(|entry| entry.cold_execution_wall_ms)
+        .collect::<Vec<_>>();
+    let warm_execution_wall = entries
+        .iter()
+        .flat_map(|entry| entry.warm_execution_wall_ms.iter().copied())
+        .collect::<Vec<_>>();
+    let generation_median_ms = median(generation.clone());
+    let cold_build_median_ms = median(cold_build.clone());
+    let cold_build_p90_ms = percentile(&mut cold_build, 0.9);
+    let cold_render_median_ms = median(cold_render.clone());
+    let cold_render_p90_ms = percentile(&mut cold_render, 0.9);
+    generation.clear();
+    cold_render.clear();
+    MandelBenchmarkSummary {
+        successful,
+        failed: entries.len() - successful,
+        generation_median_ms,
+        cold_build_median_ms,
+        cold_build_p90_ms,
+        cold_render_median_ms,
+        cold_render_p90_ms,
+        warm_build_median_ms: median(warm_build),
+        warm_render_median_ms: median(warm_render),
+        cold_execution_wall_median_ms: median(cold_execution_wall),
+        warm_execution_wall_median_ms: median(warm_execution_wall),
+        first_render_total_median_ms: median(first_total),
+        blank_or_near_blank_images: entries
+            .iter()
+            .filter_map(|entry| entry.image_health.as_ref())
+            .filter(|health| health.non_black_fraction < 0.001 || health.luminance_stddev < 0.001)
+            .count(),
+    }
+}
+
+fn mandel_benchmark(args: &[String]) -> Result<()> {
+    let root = args
+        .first()
+        .ok_or_else(|| anyhow!("mandel-benchmark requires a Mandelbulber source directory"))?;
+    let root = PathBuf::from(root);
+    let mut report_path = PathBuf::from("reports/mandel-benchmark/report.json");
+    let mut output_dir = PathBuf::from("reports/mandel-benchmark/images");
+    let mut kernel_set = "full".to_owned();
+    let mut offset = 0usize;
+    let mut limit = None::<usize>;
+    let mut stride = 1usize;
+    let mut width = 120u32;
+    let mut height = 68u32;
+    let mut samples = 1u32;
+    let mut warm_runs = 1usize;
+    let mut index = 1usize;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--report" => {
+                index += 1;
+                report_path = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--report requires a path"))?
+                    .into();
+            }
+            "--out" => {
+                index += 1;
+                output_dir = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--out requires a directory"))?
+                    .into();
+            }
+            "--kernel-set" => {
+                index += 1;
+                kernel_set = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--kernel-set requires full or render"))?
+                    .to_owned();
+                ensure!(
+                    matches!(
+                        kernel_set.as_str(),
+                        "full" | "render" | "offline-render" | "offline-render-o0"
+                    ),
+                    "--kernel-set must be full, render, offline-render, or offline-render-o0"
+                );
+            }
+            "--offset" => {
+                index += 1;
+                offset = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--offset requires a value"))?
+                    .parse()?;
+            }
+            "--limit" => {
+                index += 1;
+                limit = Some(
+                    args.get(index)
+                        .ok_or_else(|| anyhow!("--limit requires a value"))?
+                        .parse()?,
+                );
+            }
+            "--stride" => {
+                index += 1;
+                stride = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--stride requires a value"))?
+                    .parse()?;
+                ensure!(stride > 0, "--stride must be positive");
+            }
+            "--width" => {
+                index += 1;
+                width = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--width requires a value"))?
+                    .parse()?;
+            }
+            "--height" => {
+                index += 1;
+                height = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--height requires a value"))?
+                    .parse()?;
+            }
+            "--samples" => {
+                index += 1;
+                samples = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--samples requires a value"))?
+                    .parse()?;
+            }
+            "--warm-runs" => {
+                index += 1;
+                warm_runs = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--warm-runs requires a value"))?
+                    .parse()?;
+            }
+            value => bail!("unknown mandel-benchmark argument: {value}"),
+        }
+        index += 1;
+    }
+    ensure!((16..=4096).contains(&width), "--width must be 16..4096");
+    ensure!((16..=4096).contains(&height), "--height must be 16..4096");
+    ensure!((1..=512).contains(&samples), "--samples must be 1..512");
+    ensure!(warm_runs <= 10, "--warm-runs must be 0..10");
+
+    let paths = mandelbulber::catalog::example_scene_paths(&root)?;
+    ensure!(offset <= paths.len(), "--offset exceeds the scene corpus");
+    let selected = paths
+        .iter()
+        .enumerate()
+        .skip(offset)
+        .step_by(stride)
+        .take(limit.unwrap_or(usize::MAX))
+        .collect::<Vec<_>>();
+    fs::create_dir_all(&output_dir)?;
+    let benchmark_started = Instant::now();
+    let benchmark_nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let base_metallib = default_builtin_metallib_path()?;
+    let stitch_metallib = default_stitch_metallib_path()?;
+    let mut entries = Vec::with_capacity(selected.len());
+
+    for (selected_index, (corpus_index, path)) in selected.iter().enumerate() {
+        eprintln!(
+            "Mandel benchmark {}/{}: {}",
+            selected_index + 1,
+            selected.len(),
+            path.display()
+        );
+        let relative_path = path
+            .strip_prefix(&root)
+            .unwrap_or(path)
+            .display()
+            .to_string();
+        let parsed_scene = MandelbulberScene::load(path);
+        let (hybrid, boolean, delta_de, formula_ids) = parsed_scene
+            .as_ref()
+            .map(|scene| {
+                (
+                    Some(scene.hybrid_enabled),
+                    Some(scene.boolean_enabled),
+                    Some(scene.force_delta_de),
+                    scene
+                        .formula_slots
+                        .iter()
+                        .filter(|slot| slot.active())
+                        .map(|slot| slot.formula_id)
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .unwrap_or((None, None, None, Vec::new()));
+        let run = (|| -> Result<_> {
+            parsed_scene?;
+            let entry_dir = output_dir.join(format!("{:04}", corpus_index + 1));
+            let render_arguments = vec![
+                path.display().to_string(),
+                "--out".to_owned(),
+                entry_dir.display().to_string(),
+                "--renderer".to_owned(),
+                "sdf".to_owned(),
+                "--mandelbulber-root".to_owned(),
+                root.display().to_string(),
+                "--width".to_owned(),
+                width.to_string(),
+                "--height".to_owned(),
+                height.to_string(),
+                "--samples".to_owned(),
+                samples.to_string(),
+            ];
+            let render_args = parse_render_args(&render_arguments)?;
+            let generation_started = Instant::now();
+            let mut loaded = load_scene_config(&render_args)?;
+            let generation_ms = generation_started.elapsed().as_secs_f64() * 1000.0;
+            let generated_source = loaded
+                .runtime_metal_source
+                .take()
+                .ok_or_else(|| anyhow!("scene did not produce runtime Metal source"))?;
+            let generated_source_bytes = generated_source.len();
+            let mut source = if matches!(
+                kernel_set.as_str(),
+                "render" | "offline-render" | "offline-render-o0"
+            ) {
+                let retained_kernel = if samples <= 16 {
+                    "accumulate_all_kernel"
+                } else {
+                    "accumulate_chunk_kernel"
+                };
+                mandelbulber::compiler::retain_metal_kernels(
+                    std::str::from_utf8(&generated_source)?,
+                    &[retained_kernel, "present_kernel"],
+                )?
+                .into_bytes()
+            } else {
+                generated_source
+            };
+            source.extend_from_slice(
+                format!(
+                    "\n// FPT_MANDEL_BENCHMARK_NONCE: {benchmark_nonce}:{}\n",
+                    corpus_index + 1
+                )
+                .as_bytes(),
+            );
+            let source_bytes = source.len();
+            fs::create_dir_all(&entry_dir)?;
+            let output = entry_dir.join(&loaded.output_name);
+            let offline_metallib =
+                if matches!(kernel_set.as_str(), "offline-render" | "offline-render-o0") {
+                    Some(compile_mandel_metallib(
+                        &source,
+                        &output_dir.join("metallibs"),
+                        &format!("scene-{:04}", corpus_index + 1),
+                        if kernel_set == "offline-render" {
+                            MandelMetalOptimization::Default
+                        } else {
+                            MandelMetalOptimization::O0
+                        },
+                    )?)
+                } else {
+                    None
+                };
+            let mut execution_config = loaded.config;
+            if offline_metallib.is_some() {
+                execution_config.sdf_runtime_source_bytecode = 0;
+            }
+            let pipeline_archive = offline_metallib.as_ref().map(|_| {
+                output_dir
+                    .join("archives")
+                    .join(format!("scene-{:04}.metallibarchive", corpus_index + 1))
+            });
+            if let Some(parent) = pipeline_archive.as_ref().and_then(|path| path.parent()) {
+                fs::create_dir_all(parent)?;
+            }
+            let (execution_metallib, execution_source) = offline_metallib
+                .as_ref()
+                .map_or((&base_metallib, source.as_slice()), |(path, _)| {
+                    (path, &[][..])
+                });
+            let cold_execution_started = Instant::now();
+            let mut cold = execute_metal_render_internal(
+                &execution_config,
+                execution_metallib,
+                &stitch_metallib,
+                pipeline_archive.as_deref(),
+                &output,
+                execution_source,
+                None,
+            )?;
+            let cold_execution_wall_ms = cold_execution_started.elapsed().as_secs_f64() * 1000.0;
+            let offline_compile_ms = offline_metallib
+                .as_ref()
+                .map_or(0.0, |(_, compile_ms)| *compile_ms);
+            if let Some((_, compile_ms)) = offline_metallib.as_ref() {
+                cold.build_ms = *compile_ms;
+            }
+            let mut warm_build_ms = Vec::with_capacity(warm_runs);
+            let mut warm_render_ms = Vec::with_capacity(warm_runs);
+            let mut warm_execution_wall_ms = Vec::with_capacity(warm_runs);
+            for _ in 0..warm_runs {
+                let warm_execution_started = Instant::now();
+                let warm = execute_metal_render_internal(
+                    &execution_config,
+                    execution_metallib,
+                    &stitch_metallib,
+                    pipeline_archive.as_deref(),
+                    &output,
+                    execution_source,
+                    None,
+                )?;
+                warm_execution_wall_ms
+                    .push(warm_execution_started.elapsed().as_secs_f64() * 1000.0);
+                warm_build_ms.push(warm.build_ms);
+                warm_render_ms.push(warm.elapsed_ms);
+            }
+            let image_health = mandel_benchmark_image_health(&output)?;
+            Ok((
+                generated_source_bytes,
+                source_bytes,
+                generation_ms,
+                cold,
+                warm_build_ms,
+                warm_render_ms,
+                cold_execution_wall_ms,
+                warm_execution_wall_ms,
+                offline_compile_ms,
+                output,
+                image_health,
+            ))
+        })();
+        let entry = match run {
+            Ok((
+                generated_source_bytes,
+                source_bytes,
+                generation_ms,
+                cold,
+                warm_build_ms,
+                warm_render_ms,
+                cold_execution_wall_ms,
+                warm_execution_wall_ms,
+                offline_compile_ms,
+                output,
+                image_health,
+            )) => MandelBenchmarkEntry {
+                corpus_index: corpus_index + 1,
+                path: relative_path,
+                hybrid,
+                boolean,
+                delta_de,
+                formula_ids,
+                status: "ok".to_owned(),
+                source_bytes: Some(source_bytes),
+                generated_source_bytes: Some(generated_source_bytes),
+                generation_ms: Some(generation_ms),
+                cold_build_ms: Some(cold.build_ms),
+                warm_build_ms,
+                cold_render_ms: Some(cold.elapsed_ms),
+                warm_render_ms,
+                cold_execution_wall_ms: Some(cold_execution_wall_ms),
+                warm_execution_wall_ms,
+                first_render_total_ms: Some(
+                    generation_ms + offline_compile_ms + cold_execution_wall_ms,
+                ),
+                output: Some(output),
+                image_health: Some(image_health),
+                error: None,
+            },
+            Err(error) => {
+                eprintln!("Mandel benchmark scene failed: {error:#}");
+                MandelBenchmarkEntry {
+                    corpus_index: corpus_index + 1,
+                    path: relative_path,
+                    hybrid,
+                    boolean,
+                    delta_de,
+                    formula_ids,
+                    status: "failed".to_owned(),
+                    source_bytes: None,
+                    generated_source_bytes: None,
+                    generation_ms: None,
+                    cold_build_ms: None,
+                    warm_build_ms: Vec::new(),
+                    cold_render_ms: None,
+                    warm_render_ms: Vec::new(),
+                    cold_execution_wall_ms: None,
+                    warm_execution_wall_ms: Vec::new(),
+                    first_render_total_ms: None,
+                    output: None,
+                    image_health: None,
+                    error: Some(format!("{error:#}")),
+                }
+            }
+        };
+        entries.push(entry);
+    }
+    let summary = mandel_benchmark_summary(&entries);
+    let report = MandelBenchmarkReport {
+        schema_version: 1,
+        renderer_revision: UPSTREAM_SHA.to_owned(),
+        mandelbulber_root: root,
+        metal_device: metal_device_name(),
+        kernel_set,
+        corpus_scenes: paths.len(),
+        selected_scenes: entries.len(),
+        offset,
+        stride,
+        width,
+        height,
+        samples,
+        warm_runs,
+        elapsed_ms: benchmark_started.elapsed().as_secs_f64() * 1000.0,
+        summary,
+        entries,
+    };
+    if let Some(parent) = report_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(
+        &report_path,
+        format!("{}\n", serde_json::to_string_pretty(&report)?),
+    )?;
+    eprintln!(
+        "Mandel benchmark: {}/{} passed; cold build median {:.2} ms, render median {:.2} ms; wrote {}",
+        report.summary.successful,
+        report.selected_scenes,
+        report.summary.cold_build_median_ms,
+        report.summary.cold_render_median_ms,
+        report_path.display()
+    );
+    ensure!(
+        report.summary.failed == 0,
+        "benchmark contains failed scenes"
+    );
+    Ok(())
+}
+
+fn diagnostic_batch(args: &[String]) -> Result<()> {
+    let jobs_path = args
+        .first()
+        .ok_or_else(|| anyhow!("diagnostic-batch expects a JSON job manifest"))?;
+    let mut report_path = PathBuf::from("reports/diagnostic-batch.json");
+    let mut workers = 1usize;
+    let mut offset = 0usize;
+    let mut limit = None;
+    let mut index = 1;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--report" => {
+                index += 1;
+                report_path = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--report requires a path"))?
+                    .into();
+            }
+            "--workers" => {
+                index += 1;
+                workers = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--workers requires a value"))?
+                    .parse()?;
+                ensure!((1..=32).contains(&workers), "--workers must be 1..32");
+            }
+            "--offset" => {
+                index += 1;
+                offset = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--offset requires a value"))?
+                    .parse()?;
+            }
+            "--limit" => {
+                index += 1;
+                limit = Some(
+                    args.get(index)
+                        .ok_or_else(|| anyhow!("--limit requires a value"))?
+                        .parse::<usize>()?,
+                );
+            }
+            value => bail!("unknown diagnostic-batch argument: {value}"),
+        }
+        index += 1;
+    }
+    let jobs: Vec<Vec<String>> = serde_json::from_slice(&fs::read(jobs_path)?)
+        .context("diagnostic-batch manifest must be an array of argument arrays")?;
+    ensure!(offset <= jobs.len(), "--offset exceeds manifest job count");
+    let end = limit
+        .map(|count| offset.saturating_add(count).min(jobs.len()))
+        .unwrap_or(jobs.len());
+    let selected_jobs = end - offset;
+    let batch_started = Instant::now();
+    let next_job = AtomicUsize::new(0);
+    let entries = Mutex::new(Vec::with_capacity(selected_jobs));
+    std::thread::scope(|scope| {
+        for _ in 0..workers.min(selected_jobs.max(1)) {
+            scope.spawn(|| {
+                loop {
+                    let local_index = next_job.fetch_add(1, Ordering::Relaxed);
+                    if local_index >= selected_jobs {
+                        break;
+                    }
+                    let job_index = offset + local_index;
+                    let Some(job) = jobs.get(job_index) else {
+                        break;
+                    };
+                    eprintln!("diagnostic-batch job {}/{}", job_index + 1, jobs.len());
+                    let job_started = Instant::now();
+                    let result = parse_render_args(job)
+                        .with_context(|| format!("invalid diagnostic-batch job {}", job_index + 1))
+                        .and_then(|parsed| diagnostic(&parsed));
+                    let elapsed_ms = job_started.elapsed().as_secs_f64() * 1000.0;
+                    let entry = match result {
+                        Ok(()) => json!({
+                            "index": job_index + 1,
+                            "scene": job.first(),
+                            "status": "ok",
+                            "elapsed_ms": elapsed_ms,
+                            "error": null,
+                        }),
+                        Err(error) => {
+                            eprintln!("diagnostic-batch job {} failed: {error:#}", job_index + 1);
+                            json!({
+                                "index": job_index + 1,
+                                "scene": job.first(),
+                                "status": "failed",
+                                "elapsed_ms": elapsed_ms,
+                                "error": format!("{error:#}"),
+                            })
+                        }
+                    };
+                    entries
+                        .lock()
+                        .expect("diagnostic entries mutex")
+                        .push(entry);
+                }
+            });
+        }
+    });
+    let mut entries = entries.into_inner().expect("diagnostic entries mutex");
+    entries.sort_by_key(|entry| entry.get("index").and_then(Value::as_u64));
+    let passed = entries
+        .iter()
+        .filter(|entry| entry.get("status").and_then(Value::as_str) == Some("ok"))
+        .count();
+    let failed = selected_jobs - passed;
+    let report = json!({
+        "schema_version": 1,
+        "manifest_jobs": jobs.len(),
+        "offset": offset,
+        "end": end,
+        "jobs": selected_jobs,
+        "passed": passed,
+        "failed": failed,
+        "workers": workers,
+        "elapsed_ms": batch_started.elapsed().as_secs_f64() * 1000.0,
+        "entries": entries,
+    });
+    if let Some(parent) = report_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(
+        &report_path,
+        format!("{}\n", serde_json::to_string_pretty(&report)?),
+    )?;
+    eprintln!(
+        "diagnostic-batch: {passed}/{} passed; wrote {}",
+        selected_jobs,
+        report_path.display()
+    );
+    ensure!(failed == 0, "{failed} diagnostic-batch jobs failed");
+    Ok(())
+}
+
+fn parity_hash(mut value: u32) -> u32 {
+    value ^= value >> 16;
+    value = value.wrapping_mul(0x7feb_352d);
+    value ^= value >> 15;
+    value = value.wrapping_mul(0x846c_a68b);
+    value ^ (value >> 16)
+}
+
+fn percentile(values: &mut [f64], fraction: f64) -> f64 {
+    if values.is_empty() {
+        return 0.0;
+    }
+    values.sort_by(f64::total_cmp);
+    let index = ((values.len() - 1) as f64 * fraction).round() as usize;
+    values[index]
+}
+
+fn mandel_parity(args: &[String]) -> Result<()> {
+    let scene_path = PathBuf::from(
+        args.first()
+            .ok_or_else(|| anyhow!("mandel-parity requires a .fract scene"))?,
+    );
+    let mut report_path = PathBuf::from("reports/mandel/field-parity.json");
+    let mut sample_count = 65_536usize;
+    let mut source_root = None::<PathBuf>;
+    let mut index = 1;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--report" => {
+                index += 1;
+                report_path = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--report requires a path"))?
+                    .into();
+            }
+            "--samples" => {
+                index += 1;
+                sample_count = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--samples requires a value"))?
+                    .parse()?;
+            }
+            "--mandelbulber-root" => {
+                index += 1;
+                source_root = Some(
+                    args.get(index)
+                        .ok_or_else(|| anyhow!("--mandelbulber-root requires a directory"))?
+                        .into(),
+                );
+            }
+            value => bail!("unknown mandel-parity argument: {value}"),
+        }
+        index += 1;
+    }
+    if !(16..=1_048_576).contains(&sample_count) {
+        bail!("mandel-parity samples must be 16..1048576");
+    }
+
+    let mut scene = MandelbulberScene::load(&scene_path)?;
+    ensure!(
+        scene.has_cpu_reference(),
+        "formula ID {} has no independent CPU parity reference yet",
+        scene.formula_id
+    );
+    let runtime_formulas = if let Some(source_root) = &source_root {
+        let mut formulas = Vec::new();
+        for (index, slot) in scene.formula_slots.iter().enumerate() {
+            if !slot.active() {
+                continue;
+            }
+            let formula =
+                mandelbulber::compiler::parse_formula(source_root, &slot.formula_id.to_string())?;
+            ensure!(
+                if scene.hybrid_enabled {
+                    mandelbulber::compiler::supports_runtime_kernel(&formula)
+                } else {
+                    mandelbulber::compiler::supports_runtime_emitter(&formula)
+                },
+                "formula slot {} ({}) is not supported by the generated runtime",
+                index + 1,
+                formula.source.symbol
+            );
+            formulas.push((index, formula));
+        }
+        let sources = formulas
+            .iter()
+            .map(|(index, formula)| (*index, &formula.source))
+            .collect::<Vec<_>>();
+        scene.configure_formula_slots(&sources)?;
+        formulas
+    } else {
+        ensure!(
+            !scene.hybrid_enabled,
+            "hybrid parity requires --mandelbulber-root"
+        );
+        Vec::new()
+    };
+    let mut config = default_config();
+    scene.apply_to_config(&mut config);
+    let generated_source = if scene.hybrid_enabled {
+        let sequence = scene.hybrid_sequence()?;
+        let slots = runtime_formulas
+            .iter()
+            .map(
+                |(index, formula)| mandelbulber::compiler::RuntimeFormulaSlot {
+                    index: *index,
+                    formula,
+                    formula_values: &scene.formula_slots[*index].parameters,
+                    iterations: scene.formula_slots[*index].iterations,
+                    weight: scene.formula_slots[*index].weight,
+                    add_c_constant: scene.formula_slots[*index].add_c_constant,
+                    check_for_bailout: scene.formula_slots[*index].check_for_bailout,
+                    bailout: scene.formula_slots[*index].bailout,
+                },
+            )
+            .collect::<Vec<_>>();
+        Some(mandelbulber::compiler::specialize_fpt_shader_hybrid(
+            std::str::from_utf8(METAL_SOURCE_BYTES)?,
+            &slots,
+            &sequence,
+            &config.set_values,
+            scene.linear_de_offset,
+            scene.force_delta_de,
+            scene.delta_de_function,
+            false,
+            mandelbulber::compiler::SceneFormulaOptimizationPolicy::default(),
+        )?)
+    } else if let Some((_, formula)) = runtime_formulas.first() {
+        Some(mandelbulber::compiler::specialize_fpt_shader(
+            std::str::from_utf8(METAL_SOURCE_BYTES)?,
+            formula,
+            &config.set_values,
+            &scene.formula_parameters,
+            scene.force_delta_de,
+            scene.delta_de_function,
+        )?)
+    } else {
+        None
+    };
+    let world_scale = f64::from(config.set_values[mandelbulber::PARAM_WORLD_SCALE]);
+    let mut points = vec![[0.0f32; 4]; sample_count];
+    let mut cpu_points = vec![[0.0f64; 3]; sample_count];
+    let fixed = [
+        [0.0, 0.0, 0.0],
+        scene.camera,
+        scene.target,
+        [
+            (scene.camera[0] + scene.target[0]) * 0.5,
+            (scene.camera[1] + scene.target[1]) * 0.5,
+            (scene.camera[2] + scene.target[2]) * 0.5,
+        ],
+        [-1.0, -1.0, -1.0],
+        [1.0, 1.0, 1.0],
+        [-1.0, 1.0, -1.0],
+        [1.0, -1.0, 1.0],
+    ];
+    for ((point, cpu_point), source) in points.iter_mut().zip(&mut cpu_points).zip(fixed) {
+        point[..3].copy_from_slice(&[
+            (source[0] * world_scale) as f32,
+            (source[2] * world_scale) as f32,
+            (source[1] * world_scale) as f32,
+        ]);
+        *cpu_point = [
+            f64::from(point[0]) / world_scale,
+            f64::from(point[2]) / world_scale,
+            f64::from(point[1]) / world_scale,
+        ];
+    }
+    for (sample_index, (point, cpu_point)) in points
+        .iter_mut()
+        .zip(&mut cpu_points)
+        .enumerate()
+        .skip(fixed.len())
+    {
+        for axis in 0..3 {
+            let hash = parity_hash(
+                (sample_index as u32)
+                    .wrapping_mul(3)
+                    .wrapping_add(axis as u32)
+                    .wrapping_add([0x9e37_79b9, 0x243f_6a88, 0xb7e1_5162][axis]),
+            );
+            cpu_point[axis] = hash as f64 * (4.0 / u32::MAX as f64) - 2.0;
+        }
+        point[..3].copy_from_slice(&[
+            (cpu_point[0] * world_scale) as f32,
+            (cpu_point[2] * world_scale) as f32,
+            (cpu_point[1] * world_scale) as f32,
+        ]);
+        *cpu_point = [
+            f64::from(point[0]) / world_scale,
+            f64::from(point[2]) / world_scale,
+            f64::from(point[1]) / world_scale,
+        ];
+    }
+
+    let metallib = default_metallib_path()?;
+    let metallib_c = c_path(&metallib)?;
+    let mut gpu_samples = vec![FptMandelbulberFieldSample::default(); sample_count];
+    let mut error = [0_i8; 4096];
+    let gpu_started = Instant::now();
+    let status = unsafe {
+        fpt_mandelbulber_sample_field(
+            metallib_c.as_ptr(),
+            generated_source
+                .as_ref()
+                .map_or(std::ptr::null(), |source| source.as_ptr().cast()),
+            generated_source.as_ref().map_or(0, String::len),
+            &config,
+            points.as_ptr().cast(),
+            points.len(),
+            gpu_samples.as_mut_ptr(),
+            error.as_mut_ptr(),
+            error.len(),
+        )
+    };
+    let gpu_elapsed_ms = gpu_started.elapsed().as_secs_f64() * 1000.0;
+    if status != 0 {
+        bail!("{}", bridge_error(&error));
+    }
+    let mut distance_errors = Vec::with_capacity(sample_count);
+    let mut radius_errors = Vec::with_capacity(sample_count);
+    let mut derivative_errors = Vec::with_capacity(sample_count);
+    let mut same_iteration_radius_relative_errors = Vec::with_capacity(sample_count);
+    let mut same_iteration_derivative_relative_errors = Vec::with_capacity(sample_count);
+    let mut distance_failures = 0usize;
+    let mut precision_limited_samples = 0usize;
+    let mut iteration_mismatches = 0usize;
+    let mut non_finite_samples = 0usize;
+    let mut outliers = Vec::<(f64, Value)>::new();
+    let cpu_started = Instant::now();
+    for ((point, cpu_point), gpu) in points.iter().zip(&cpu_points).zip(&gpu_samples) {
+        let cpu = scene.distance(*cpu_point);
+        if !gpu.distance.is_finite() || !gpu.radius.is_finite() || !gpu.derivative.is_finite() {
+            non_finite_samples += 1;
+            continue;
+        }
+        let gpu_distance = f64::from(gpu.distance) / world_scale;
+        let distance_error = (cpu.distance - gpu_distance).abs();
+        let radius_error = (cpu.radius - gpu.radius as f64).abs();
+        let derivative_error = (cpu.derivative - gpu.derivative as f64).abs();
+        let tolerance = 5.0e-5 * (1.0 + cpu.distance.abs());
+        let precision_limited =
+            scene.formula_id == 3 && cpu.derivative.abs() < f64::from(f32::MIN_POSITIVE);
+        precision_limited_samples += usize::from(precision_limited);
+        if distance_error > tolerance && !precision_limited {
+            distance_failures += 1;
+        }
+        let iteration_mismatch = cpu.iterations != gpu.iterations as u32;
+        if iteration_mismatch {
+            iteration_mismatches += 1;
+        } else {
+            same_iteration_radius_relative_errors.push(radius_error / (1.0 + cpu.radius.abs()));
+            same_iteration_derivative_relative_errors
+                .push(derivative_error / (1.0 + cpu.derivative.abs()));
+        }
+        if distance_error > tolerance || iteration_mismatch {
+            outliers.push((
+                distance_error,
+                json!({
+                    "point": [point[0], point[1], point[2]],
+                    "cpu": {
+                        "distance": cpu.distance,
+                        "radius": cpu.radius,
+                        "derivative": cpu.derivative,
+                        "iterations": cpu.iterations,
+                    },
+                    "gpu": {
+                        "distance": gpu_distance,
+                        "radius": gpu.radius,
+                        "derivative": gpu.derivative,
+                        "iterations": gpu.iterations as u32,
+                    },
+                    "absolute_distance_error": distance_error,
+                    "distance_tolerance": tolerance,
+                }),
+            ));
+        }
+        distance_errors.push(distance_error);
+        radius_errors.push(radius_error);
+        derivative_errors.push(derivative_error);
+    }
+    let cpu_elapsed_ms = cpu_started.elapsed().as_secs_f64() * 1000.0;
+
+    let mean_distance_error =
+        distance_errors.iter().sum::<f64>() / distance_errors.len().max(1) as f64;
+    let max_distance_error = distance_errors.iter().copied().fold(0.0, f64::max);
+    let p99_distance_error = percentile(&mut distance_errors, 0.99);
+    let max_radius_error = radius_errors.iter().copied().fold(0.0, f64::max);
+    let max_derivative_error = derivative_errors.iter().copied().fold(0.0, f64::max);
+    let max_same_iteration_radius_relative_error = same_iteration_radius_relative_errors
+        .iter()
+        .copied()
+        .fold(0.0, f64::max);
+    let max_same_iteration_derivative_relative_error = same_iteration_derivative_relative_errors
+        .iter()
+        .copied()
+        .fold(0.0, f64::max);
+    let distance_failure_fraction = distance_failures as f64 / sample_count as f64;
+    let iteration_mismatch_fraction = iteration_mismatches as f64 / sample_count as f64;
+    let allowed_outlier_fraction = 2.0e-4;
+    let geometry_qualified = non_finite_samples == 0
+        && distance_failure_fraction <= allowed_outlier_fraction
+        && p99_distance_error <= 5.0e-5;
+    let orbit_qualified =
+        geometry_qualified && iteration_mismatch_fraction <= allowed_outlier_fraction;
+    outliers.sort_by(|left, right| right.0.total_cmp(&left.0));
+    let outlier_examples = outliers
+        .into_iter()
+        .take(16)
+        .map(|(_, value)| value)
+        .collect::<Vec<_>>();
+    let formula_backend = if scene.hybrid_enabled {
+        "hybrid-sequence"
+    } else {
+        match scene.formula_id {
+            3 => "mandelbulb-power2",
+            10 => "kaleidoscopic-ifs",
+            _ => "unknown",
+        }
+    };
+    let implementation = if generated_source.is_some() {
+        "generated"
+    } else {
+        "handwritten"
+    };
+    let report = json!({
+        "scene": scene_path,
+        "backend": format!("mandelbulber-{implementation}-{formula_backend}-metal-f32"),
+        "reference": "cpu-f64",
+        "metal_device": metal_device_name(),
+        "sample_count": sample_count,
+        "sample_bounds_mandelbulber": [[-2.0, -2.0, -2.0], [2.0, 2.0, 2.0]],
+        "metal_fpt_world_scale": world_scale,
+        "gpu_batch_elapsed_ms": gpu_elapsed_ms,
+        "cpu_reference_and_comparison_elapsed_ms": cpu_elapsed_ms,
+        "distance_tolerance": "5e-5 * (1 + abs(cpu_distance))",
+        "mean_absolute_distance_error": mean_distance_error,
+        "p99_absolute_distance_error": p99_distance_error,
+        "max_absolute_distance_error": max_distance_error,
+        "max_absolute_radius_error": max_radius_error,
+        "max_absolute_derivative_error": max_derivative_error,
+        "max_same_iteration_radius_relative_error": max_same_iteration_radius_relative_error,
+        "max_same_iteration_derivative_relative_error": max_same_iteration_derivative_relative_error,
+        "distance_failures": distance_failures,
+        "distance_failure_fraction": distance_failure_fraction,
+        "iteration_mismatches": iteration_mismatches,
+        "iteration_mismatch_fraction": iteration_mismatch_fraction,
+        "non_finite_samples": non_finite_samples,
+        "precision_limited_samples": precision_limited_samples,
+        "precision_limited_note": "Power 2 samples whose f64 derivative is below f32::MIN_POSITIVE are reported but excluded from geometry qualification because Mandelbulber's f32 path takes its DE<=0 fallback after underflow.",
+        "allowed_outlier_fraction": allowed_outlier_fraction,
+        "outlier_examples": outlier_examples,
+        "geometry_qualified": geometry_qualified,
+        "orbit_qualified": orbit_qualified,
+        "qualified": geometry_qualified,
+    });
+    if let Some(parent) = report_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(
+        &report_path,
+        format!("{}\n", serde_json::to_string_pretty(&report)?),
+    )?;
+    eprintln!(
+        "Mandelbulber field parity: {sample_count} samples, GPU {gpu_elapsed_ms:.2} ms, CPU+comparison {cpu_elapsed_ms:.2} ms, mean {mean_distance_error:.3e}, p99 {p99_distance_error:.3e}, max {max_distance_error:.3e}, failures {distance_failures}, iteration mismatches {iteration_mismatches}; wrote {}",
+        report_path.display()
+    );
+    Ok(())
+}
+
+fn mandel_catalog(args: &[String]) -> Result<()> {
+    let source_root = PathBuf::from(
+        args.first()
+            .ok_or_else(|| anyhow!("mandel-catalog requires a Mandelbulber source directory"))?,
+    );
+    let mut output_dir = PathBuf::from("reports/mandel/catalog");
+    let mut index = 1;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--out" => {
+                index += 1;
+                output_dir = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--out requires a directory"))?
+                    .into();
+            }
+            value => bail!("unknown mandel-catalog argument: {value}"),
+        }
+        index += 1;
+    }
+    let summary = mandelbulber::catalog::generate_catalog(&source_root, &output_dir)?;
+    eprintln!(
+        "Mandelbulber catalog: {} formulas ({} kernels), {} defaults, {} examples ({} hybrid), {} distinct scene formulas; wrote {}",
+        summary.formulas,
+        summary.formula_kernels,
+        summary.parameter_defaults,
+        summary.example_scenes,
+        summary.hybrid_scenes,
+        summary.distinct_scene_formula_ids,
+        output_dir.display()
+    );
+    if !summary.unresolved_scene_formula_ids.is_empty() {
+        eprintln!(
+            "unresolved formula IDs referenced by scenes: {:?}",
+            summary.unresolved_scene_formula_ids
+        );
+    }
+    Ok(())
+}
+
+fn mandel_coverage(args: &[String]) -> Result<()> {
+    let source_root = PathBuf::from(
+        args.first()
+            .ok_or_else(|| anyhow!("mandel-coverage requires a Mandelbulber source directory"))?,
+    );
+    let mut catalog_dir = PathBuf::from("reports/mandel/catalog");
+    let mut report_path = PathBuf::from("reports/mandel/coverage.json");
+    let mut index = 1;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--catalog-out" => {
+                index += 1;
+                catalog_dir = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--catalog-out requires a directory"))?
+                    .into();
+            }
+            "--report" => {
+                index += 1;
+                report_path = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--report requires a JSON path"))?
+                    .into();
+            }
+            value => bail!("unknown mandel-coverage argument: {value}"),
+        }
+        index += 1;
+    }
+    let report =
+        mandelbulber::coverage::generate_coverage(&source_root, &catalog_dir, &report_path)?;
+    eprintln!(
+        "Mandelbulber coverage: {}/{} scenes compatible ({} non-hybrid, {} hybrid), {} scenes blocked, {} one formula away; wrote {}",
+        report.summary.runtime_compatible_scenes,
+        report.summary.total_scenes,
+        report.summary.compatible_non_hybrid_scenes,
+        report.summary.compatible_hybrid_scenes,
+        report.summary.blocked_scenes,
+        report.summary.scenes_one_formula_away,
+        report_path.display()
+    );
+    Ok(())
+}
+
+fn mandel_compile(args: &[String]) -> Result<()> {
+    let source_root = PathBuf::from(
+        args.first()
+            .ok_or_else(|| anyhow!("mandel-compile requires a Mandelbulber source directory"))?,
+    );
+    let identifier = args
+        .get(1)
+        .ok_or_else(|| anyhow!("mandel-compile requires a formula ID or symbol"))?;
+    let mut output = None::<PathBuf>;
+    let mut report_path = None::<PathBuf>;
+    let mut check_metal = true;
+    let mut index = 2;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--out" => {
+                index += 1;
+                output = Some(
+                    args.get(index)
+                        .ok_or_else(|| anyhow!("--out requires a .metal path"))?
+                        .into(),
+                );
+            }
+            "--report" => {
+                index += 1;
+                report_path = Some(
+                    args.get(index)
+                        .ok_or_else(|| anyhow!("--report requires a JSON path"))?
+                        .into(),
+                );
+            }
+            "--no-check" => check_metal = false,
+            value => bail!("unknown mandel-compile argument: {value}"),
+        }
+        index += 1;
+    }
+    let output = output.ok_or_else(|| anyhow!("mandel-compile requires --out"))?;
+    let report =
+        mandelbulber::compiler::compile_formula(&source_root, identifier, &output, check_metal)?;
+    if let Some(report_path) = report_path {
+        if let Some(parent) = report_path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+        {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(
+            &report_path,
+            format!("{}\n", serde_json::to_string_pretty(&report)?),
+        )?;
+    }
+    eprintln!(
+        "Mandelbulber formula {} (ID {}) -> {}{}",
+        report.formula.symbol,
+        report.formula.id,
+        output.display(),
+        if report.metal_checked {
+            " (Metal compile passed)"
+        } else {
+            ""
+        }
+    );
+    Ok(())
+}
+
+fn mandel_scene_compile(args: &[String]) -> Result<()> {
+    let scene_path = PathBuf::from(
+        args.first()
+            .ok_or_else(|| anyhow!("mandel-scene-compile requires a .fract scene"))?,
+    );
+    let mut source_root = None::<PathBuf>;
+    let mut output = None::<PathBuf>;
+    let mut index = 1;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--mandelbulber-root" => {
+                index += 1;
+                source_root = Some(
+                    args.get(index)
+                        .ok_or_else(|| anyhow!("--mandelbulber-root requires a directory"))?
+                        .into(),
+                );
+            }
+            "--out" => {
+                index += 1;
+                output = Some(
+                    args.get(index)
+                        .ok_or_else(|| anyhow!("--out requires a .metal path"))?
+                        .into(),
+                );
+            }
+            value => bail!("unknown mandel-scene-compile argument: {value}"),
+        }
+        index += 1;
+    }
+    let source_root =
+        source_root.ok_or_else(|| anyhow!("mandel-scene-compile requires --mandelbulber-root"))?;
+    let output = output.ok_or_else(|| anyhow!("mandel-scene-compile requires --out"))?;
+    let mut scene = MandelbulberScene::load(&scene_path)?;
+    let mut config = default_config();
+    scene.apply_to_config(&mut config);
+    let source = mandelbulber::compiler::specialize_scene_with_kernel_specialization(
+        std::str::from_utf8(METAL_SOURCE_BYTES)?,
+        &mut scene,
+        &source_root,
+        &config.set_values,
+        mandelbulber::compiler::scene_uses_kernel_specialization(&scene_path)?,
+        mandelbulber::compiler::scene_uses_direct_hybrid_loop(&scene_path)?,
+        mandelbulber::compiler::scene_formula_optimization_policy(&scene_path)?,
+    )?;
+    if let Some(parent) = output
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(&output, source)?;
+    eprintln!(
+        "Mandelbulber scene {} -> {}",
+        scene_path.display(),
+        output.display()
+    );
+    Ok(())
+}
+
+fn mandel_audit(args: &[String]) -> Result<()> {
+    let source_root = PathBuf::from(
+        args.first()
+            .ok_or_else(|| anyhow!("mandel-audit requires a Mandelbulber source directory"))?,
+    );
+    let mut report_path = PathBuf::from("reports/mandel/compiler-audit.json");
+    let mut metal_check = false;
+    let mut metal_output_dir = None::<PathBuf>;
+    let mut index = 1;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--report" => {
+                index += 1;
+                report_path = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--report requires a path"))?
+                    .into();
+            }
+            "--metal-check" => metal_check = true,
+            "--metal-out" => {
+                index += 1;
+                metal_output_dir = Some(
+                    args.get(index)
+                        .ok_or_else(|| anyhow!("--metal-out requires a directory"))?
+                        .into(),
+                );
+                metal_check = true;
+            }
+            value => bail!("unknown mandel-audit argument: {value}"),
+        }
+        index += 1;
+    }
+    let default_metal_output = report_path
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join("compiler-audit-metal");
+    let metal_output =
+        metal_check.then(|| metal_output_dir.as_deref().unwrap_or(&default_metal_output));
+    let report = mandelbulber::compiler::audit_formulas(&source_root, metal_output)?;
+    if let Some(parent) = report_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(
+        &report_path,
+        format!("{}\n", serde_json::to_string_pretty(&report)?),
+    )?;
+    eprintln!(
+        "Mandelbulber frontend audit: {}/{} formulas parsed, {} failed, {} have generated runtime emitters; Metal {}/{} passed; wrote {}",
+        report.parsed,
+        report.formulas,
+        report.failed,
+        report.runtime_emitters,
+        report.metal_passed,
+        report.metal_checked,
+        report_path.display()
+    );
+    Ok(())
+}
+
+fn mandel_scene_audit(args: &[String]) -> Result<()> {
+    let source_root =
+        PathBuf::from(args.first().ok_or_else(|| {
+            anyhow!("mandel-scene-audit requires a Mandelbulber source directory")
+        })?);
+    let mut report_path = PathBuf::from("reports/mandel/scene-audit.json");
+    let mut metal_check = false;
+    let mut index = 1;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--report" => {
+                index += 1;
+                report_path = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--report requires a path"))?
+                    .into();
+            }
+            "--metal-check" => metal_check = true,
+            value => bail!("unknown mandel-scene-audit argument: {value}"),
+        }
+        index += 1;
+    }
+    let report = mandelbulber::compiler::audit_scenes(
+        &source_root,
+        std::str::from_utf8(METAL_SOURCE_BYTES)?,
+        metal_check,
+    )?;
+    if let Some(parent) = report_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(
+        &report_path,
+        format!("{}\n", serde_json::to_string_pretty(&report)?),
+    )?;
+    eprintln!(
+        "Mandelbulber scene audit: {}/{} generated, {} generation failures; Metal {}/{} passed; wrote {}",
+        report.generated,
+        report.scenes,
+        report.generation_failed,
+        report.metal_passed,
+        report.metal_checked,
+        report_path.display()
+    );
+    Ok(())
+}
+
+fn mandel_formula_policy_audit(args: &[String]) -> Result<()> {
+    let source_root = PathBuf::from(args.first().ok_or_else(|| {
+        anyhow!("mandel-formula-policy-audit requires a Mandelbulber source directory")
+    })?);
+    let mut report_path = PathBuf::from("reports/mandel/formula-policy-audit.json");
+    let mut index = 1;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--report" => {
+                index += 1;
+                report_path = args
+                    .get(index)
+                    .ok_or_else(|| anyhow!("--report requires a path"))?
+                    .into();
+            }
+            value => bail!("unknown mandel-formula-policy-audit argument: {value}"),
+        }
+        index += 1;
+    }
+    let report = mandelbulber::compiler::audit_formula_optimization_policy(
+        &source_root,
+        std::str::from_utf8(METAL_SOURCE_BYTES)?,
+    )?;
+    if let Some(parent) = report_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(
+        &report_path,
+        format!("{}\n", serde_json::to_string_pretty(&report)?),
+    )?;
+    eprintln!(
+        "Mandel formula policy audit: {}/{} generated, {} selected, {} changed, {} unexpected source changes, {} unexpected generation failures, {} missed; wrote {}",
+        report.generated,
+        report.scenes,
+        report.selected_scenes,
+        report.changed_sources,
+        report.unexpected_changes,
+        report.unexpected_generation_failures,
+        report.missed_selections,
+        report_path.display()
+    );
+    ensure!(
+        report.generated > 0
+            && report.unexpected_generation_failures == 0
+            && report.unexpected_changes == 0
+            && report.missed_selections == 0,
+        "formula policy audit failed"
+    );
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let Some(command) = args.first().map(String::as_str) else {
@@ -1654,6 +3784,7 @@ fn main() -> Result<()> {
     match command {
         "render" => render(&parse_render_args(tail)?),
         "render-batch" => render_batch(tail),
+        "diagnostic-batch" => diagnostic_batch(tail),
         "diagnostic" => diagnostic(&parse_render_args(tail)?),
         "preview" => preview(&parse_render_args(tail)?),
         "compare" => compare(tail),
@@ -1666,6 +3797,15 @@ fn main() -> Result<()> {
         "bounce-summary" => tools::bounce_summary_command(tail),
         "optimization-summary" => tools::optimization_summary_command(tail),
         "voxel-summary" => tools::voxel_summary_command(tail),
+        "mandel-catalog" => mandel_catalog(tail),
+        "mandel-coverage" => mandel_coverage(tail),
+        "mandel-audit" => mandel_audit(tail),
+        "mandel-scene-audit" => mandel_scene_audit(tail),
+        "mandel-formula-policy-audit" => mandel_formula_policy_audit(tail),
+        "mandel-benchmark" => mandel_benchmark(tail),
+        "mandel-compile" => mandel_compile(tail),
+        "mandel-scene-compile" => mandel_scene_compile(tail),
+        "mandel-parity" => mandel_parity(tail),
         "list-scenes" => {
             list_scenes();
             Ok(())
@@ -1730,6 +3870,38 @@ mod tests {
         config.sdf_id = SDF_TOWER_FRACTAL;
         config.samples = 17;
         assert_eq!(effective_accumulation(&config), "chunked");
+    }
+
+    #[test]
+    fn mandel_render_cache_retains_only_required_entry_points() {
+        let mut config = FptRenderConfig {
+            samples: 1,
+            focus_distance: 10.0,
+            ..Default::default()
+        };
+        assert_eq!(
+            mandel_render_kernel_names(&config),
+            ["accumulate_all_kernel", "present_kernel"]
+        );
+
+        config.samples = 32;
+        config.focus_distance = 0.0;
+        config.sdf_profile = 1;
+        assert_eq!(
+            mandel_render_kernel_names(&config),
+            [
+                "accumulate_chunk_kernel",
+                "present_kernel",
+                "estimate_focus_distance_kernel",
+                "sdf_profile_kernel",
+            ]
+        );
+    }
+
+    #[test]
+    fn benchmark_statistics_accept_an_all_failure_cohort() {
+        assert_eq!(median(Vec::new()), 0.0);
+        assert_eq!(percentile(&mut [], 0.9), 0.0);
     }
 
     #[test]
@@ -1905,6 +4077,7 @@ mod tests {
 
     #[test]
     fn persistent_async_jit_renders_fallback_then_reuses_archive() {
+        let _metal_test_guard = metal_test_guard();
         use std::time::{SystemTime, UNIX_EPOCH};
 
         let scene =
@@ -1966,6 +4139,7 @@ mod tests {
 
     #[test]
     fn expanded_stitch_vocabulary_matches_preview_fallback() {
+        let _metal_test_guard = metal_test_guard();
         use std::time::{SystemTime, UNIX_EPOCH};
 
         let scene =
@@ -2012,6 +4186,7 @@ mod tests {
 
     #[test]
     fn typed_soa_matches_interpreted_field_and_gradient() {
+        let _metal_test_guard = metal_test_guard();
         let scene = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("scenes/benchmarks/Exact_Translation_Union.json");
         let args = parse_render_args(&[
@@ -2047,6 +4222,7 @@ mod tests {
 
     #[test]
     fn research_stitched_modes_match_interpreted_field_and_gradient() {
+        let _metal_test_guard = metal_test_guard();
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -2136,6 +4312,7 @@ mod tests {
 
     #[test]
     fn topology_generated_surface_matches_interpreted_field_and_gradient() {
+        let _metal_test_guard = metal_test_guard();
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -2183,6 +4360,7 @@ mod tests {
 
     #[test]
     fn canonical_generated_surface_matches_interpreted_field_and_gradient() {
+        let _metal_test_guard = metal_test_guard();
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()

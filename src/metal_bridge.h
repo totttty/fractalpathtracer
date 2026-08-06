@@ -20,6 +20,7 @@ typedef enum FptSdfId {
     FPT_SDF_PROGRAM = 9,
     FPT_SDF_README_CORNELL = 10,
     FPT_SDF_README_GLASS = 11,
+    FPT_SDF_MANDELBULBER = 12,
 } FptSdfId;
 
 enum {
@@ -145,6 +146,7 @@ typedef enum FptVoxelOffsetMode {
 typedef enum FptVoxelStorage {
     FPT_VOXEL_STORAGE_DENSE = 0,
     FPT_VOXEL_STORAGE_SPARSE_BRICKS = 1,
+    FPT_VOXEL_STORAGE_TEMPLATE_BRICKS = 3,
 } FptVoxelStorage;
 
 typedef enum FptVoxelCoverageMode {
@@ -183,6 +185,7 @@ struct FptRenderConfig {
 
     float camera_position[3];
     float camera_yaw_pitch[2];
+    float camera_roll;
     float camera_fov;
     float camera_dof;
     float focus_distance;
@@ -195,7 +198,7 @@ struct FptRenderConfig {
     float background_gradient[6];
     float post[7];
     float set_values[40];
-    float vset_values[120];
+    float vset_values[133];
 
     uint32_t sdf_program_count;
     uint32_t gradient_count;
@@ -335,6 +338,17 @@ struct FptSdfProfileStats {
     uint64_t normal_evals;
     uint64_t bounces;
     uint64_t pixels;
+    uint64_t distance_evals;
+    uint64_t march_orbit_iterations;
+    uint64_t refinement_steps;
+    uint64_t normal_field_evals;
+    uint64_t material_evals;
+    uint64_t max_ray_steps;
+    uint64_t max_pixel_steps;
+    uint64_t distance_evals_by_phase[4];
+    uint64_t orbit_iterations_by_phase[4];
+    uint64_t formula_slot_iterations[9];
+    uint64_t refinement_distance_evals;
     double primary_ms_estimate;
     double secondary_ms_estimate;
     double shadow_ms_estimate;
@@ -356,10 +370,14 @@ typedef enum FptDiagnosticMode {
     FPT_DIAGNOSTIC_DEPTH = 0,
     FPT_DIAGNOSTIC_NORMAL = 1,
     FPT_DIAGNOSTIC_MATERIAL = 2,
+    FPT_DIAGNOSTIC_HIT_MASK = 3,
     FPT_DIAGNOSTIC_PATH_DIRECT = 4,
     FPT_DIAGNOSTIC_PATH_ENVIRONMENT = 5,
     FPT_DIAGNOSTIC_PATH_THROUGHPUT = 6,
     FPT_DIAGNOSTIC_PATH_FINAL = 7,
+    FPT_DIAGNOSTIC_DIFFUSE_NORMAL = 8,
+    FPT_DIAGNOSTIC_MANDEL_COLOR_INDEX = 9,
+    FPT_DIAGNOSTIC_MANDEL_PALETTE_POSITION = 10,
     FPT_DIAGNOSTIC_SDF_PRIMARY_STEPS = 11,
     FPT_DIAGNOSTIC_SDF_SHADOW_STEPS = 12,
     FPT_DIAGNOSTIC_SDF_NORMAL_EVALS = 13,
@@ -372,6 +390,14 @@ struct FptDiagnosticConfig {
     uint32_t _pad0;
     float max_distance;
     float normal_mix;
+    uint32_t dispatch_origin[2];
+};
+
+struct FptMandelbulberFieldSample {
+    float distance;
+    float radius;
+    float derivative;
+    float iterations;
 };
 
 int fpt_metal_render(const char *metallib_path,
@@ -399,11 +425,24 @@ int fpt_metal_render(const char *metallib_path,
 
 int fpt_metal_diagnostic_render(const char *metallib_path,
                                 const char *output_path,
+                                const char *shader_source,
+                                size_t shader_source_len,
                                 const struct FptRenderConfig *config,
                                 const struct FptDiagnosticConfig *diagnostic,
                                 double *elapsed_ms,
                                 char *error,
                                 size_t error_len);
+
+int fpt_mandelbulber_sample_field(
+    const char *metallib_path,
+    const char *shader_source,
+    size_t shader_source_len,
+    const struct FptRenderConfig *config,
+    const float *points_xyzw,
+    size_t point_count,
+    struct FptMandelbulberFieldSample *samples,
+    char *error,
+    size_t error_len);
 
 int fpt_compare_images(const char *baseline_path,
                        const char *candidate_path,

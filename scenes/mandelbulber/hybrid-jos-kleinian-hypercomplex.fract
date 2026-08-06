@@ -1,0 +1,33 @@
+# Mandelbulber settings file
+# version 2.33
+# Jos Kleinian-dominant hybrid fixture for the six-way DE selector.
+[main_parameters]
+N 9;
+camera 3 -4 2;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 122;
+formula_2 4;
+formula_iterations_1 2;
+formula_iterations_2 1;
+formula_weight_1 0,9;
+formula_weight_2 0,65;
+fov 53,13;
+hybrid_fractal_enable true;
+image_height 180;
+image_width 320;
+target 0 0 0;
+view_distance_max 30;
+[fractal_1]
+analyticDE_offset_1 0,8;
+analyticDE_scale_1 1,05;
+analyticDE_tweak_005 0,06;
+fold_color_aux_color_enabled true;
+fold_color_aux_color_enabled_false true;
+fold_color_difs_0000 0,1 0,2 0,3 0;
+transf_addition_constant 0,05 -0,02 0,03;
+transf_folding_value 2,1;
+transf_offset 0,15;
+transf_offset_111 1,1 0,9 1,2;
+transf_spheres_enabled true;
+[fractal_2]

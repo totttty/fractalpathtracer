@@ -12,6 +12,7 @@ pub const SDF_TREE_FRACTAL: u32 = 8;
 pub const SDF_PROGRAM: u32 = 9;
 pub const SDF_README_CORNELL: u32 = 10;
 pub const SDF_README_GLASS: u32 = 11;
+pub const SDF_MANDELBULBER: u32 = 12;
 
 pub const SDF_PROGRAM_MAX_OPS: usize = 64;
 pub const SDF_FLAT_UNION_MAX_PRIMITIVES: usize = 64;
@@ -57,6 +58,7 @@ pub const VOXEL_OFFSET_LEGACY: u32 = 0;
 pub const VOXEL_OFFSET_PRECISION: u32 = 1;
 pub const VOXEL_STORAGE_DENSE: u32 = 0;
 pub const VOXEL_STORAGE_SPARSE_BRICKS: u32 = 1;
+pub const VOXEL_STORAGE_TEMPLATE_BRICKS: u32 = 3;
 pub const VOXEL_COVERAGE_LEGACY: u32 = 0;
 pub const VOXEL_COVERAGE_LIPSCHITZ: u32 = 1;
 pub const VOXEL_COVERAGE_INTERVAL: u32 = 2;
@@ -70,10 +72,14 @@ pub const VOXEL_LEAF_REFINEMENT_FIXED_DE: u32 = 3;
 pub const DIAGNOSTIC_DEPTH: u32 = 0;
 pub const DIAGNOSTIC_NORMAL: u32 = 1;
 pub const DIAGNOSTIC_MATERIAL: u32 = 2;
+pub const DIAGNOSTIC_HIT_MASK: u32 = 3;
 pub const DIAGNOSTIC_PATH_DIRECT: u32 = 4;
 pub const DIAGNOSTIC_PATH_ENVIRONMENT: u32 = 5;
 pub const DIAGNOSTIC_PATH_THROUGHPUT: u32 = 6;
 pub const DIAGNOSTIC_PATH_FINAL: u32 = 7;
+pub const DIAGNOSTIC_DIFFUSE_NORMAL: u32 = 8;
+pub const DIAGNOSTIC_MANDEL_COLOR_INDEX: u32 = 9;
+pub const DIAGNOSTIC_MANDEL_PALETTE_POSITION: u32 = 10;
 pub const DIAGNOSTIC_SDF_PRIMARY_STEPS: u32 = 11;
 pub const DIAGNOSTIC_SDF_SHADOW_STEPS: u32 = 12;
 pub const DIAGNOSTIC_SDF_NORMAL_EVALS: u32 = 13;
@@ -174,6 +180,7 @@ pub struct FptRenderConfig {
     pub sdf_rr_min_prob: f32,
     pub camera_position: [f32; 3],
     pub camera_yaw_pitch: [f32; 2],
+    pub camera_roll: f32,
     pub camera_fov: f32,
     pub camera_dof: f32,
     pub focus_distance: f32,
@@ -185,7 +192,7 @@ pub struct FptRenderConfig {
     pub background_gradient: [f32; 6],
     pub post: [f32; 7],
     pub set_values: [f32; 40],
-    pub vset_values: [f32; 120],
+    pub vset_values: [f32; 133],
     pub sdf_program_count: u32,
     pub gradient_count: u32,
     pub material_mode: u32,
@@ -328,6 +335,17 @@ pub struct FptSdfProfileStats {
     pub normal_evals: u64,
     pub bounces: u64,
     pub pixels: u64,
+    pub distance_evals: u64,
+    pub march_orbit_iterations: u64,
+    pub refinement_steps: u64,
+    pub normal_field_evals: u64,
+    pub material_evals: u64,
+    pub max_ray_steps: u64,
+    pub max_pixel_steps: u64,
+    pub distance_evals_by_phase: [u64; 4],
+    pub orbit_iterations_by_phase: [u64; 4],
+    pub formula_slot_iterations: [u64; 9],
+    pub refinement_distance_evals: u64,
     pub primary_ms_estimate: f64,
     pub secondary_ms_estimate: f64,
     pub shadow_ms_estimate: f64,
@@ -362,6 +380,16 @@ pub struct FptDiagnosticConfig {
     pub _pad0: u32,
     pub max_distance: f32,
     pub normal_mix: f32,
+    pub dispatch_origin: [u32; 2],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default, Debug)]
+pub struct FptMandelbulberFieldSample {
+    pub distance: f32,
+    pub radius: f32,
+    pub derivative: f32,
+    pub iterations: f32,
 }
 
 unsafe extern "C" {
@@ -392,9 +420,22 @@ unsafe extern "C" {
     pub fn fpt_metal_diagnostic_render(
         metallib_path: *const c_char,
         output_path: *const c_char,
+        shader_source: *const c_char,
+        shader_source_len: usize,
         config: *const FptRenderConfig,
         diagnostic: *const FptDiagnosticConfig,
         elapsed_ms: *mut f64,
+        error: *mut c_char,
+        error_len: usize,
+    ) -> c_int;
+    pub fn fpt_mandelbulber_sample_field(
+        metallib_path: *const c_char,
+        shader_source: *const c_char,
+        shader_source_len: usize,
+        config: *const FptRenderConfig,
+        points_xyzw: *const f32,
+        point_count: usize,
+        samples: *mut FptMandelbulberFieldSample,
         error: *mut c_char,
         error_len: usize,
     ) -> c_int;
@@ -457,14 +498,16 @@ mod tests {
         assert_eq!(std::mem::size_of::<FptIndexedPrimitive>(), 32);
         assert_eq!(std::mem::size_of::<FptTypedSoAProgram>(), 5136);
         assert_eq!(std::mem::size_of::<FptStitchPipelineStats>(), 72);
-        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 30388);
-        assert_eq!(std::mem::size_of::<FptSdfProfileStats>(), 88);
-        assert_eq!(std::mem::size_of::<FptDiagnosticConfig>(), 16);
+        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 30444);
+        assert_eq!(std::mem::size_of::<FptSdfProfileStats>(), 288);
+        assert_eq!(std::mem::size_of::<FptDiagnosticConfig>(), 24);
+        assert_eq!(std::mem::size_of::<FptMandelbulberFieldSample>(), 16);
         assert_eq!(std::mem::size_of::<FptAsyncJitStats>(), 40);
     }
 
     #[test]
     fn voxel_dda_contract_holds_on_metal() {
+        let _metal_test_guard = crate::metal_test_guard();
         let metallib = std::ffi::CString::new(env!("FPT_METALLIB_PATH")).unwrap();
         let mut error = [0_i8; 512];
         let status =

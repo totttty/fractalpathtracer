@@ -1,0 +1,21 @@
+# Mandelbulber settings file
+# version 2.33
+# Full Mandelbox fixture covering the scalar box-fold path.
+[main_parameters]
+N 32;
+camera 5 -5 3;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 8;
+fov 53,13;
+image_height 180;
+image_width 320;
+target 0 0 0;
+view_distance_max 30;
+[fractal_1]
+mandelbox_folding_fixed_radius 1,1;
+mandelbox_folding_limit 0,95;
+mandelbox_folding_min_radius 0,45;
+mandelbox_folding_value 1,9;
+mandelbox_offset 0,08 -0,04 0,06;
+mandelbox_scale -1,35;
