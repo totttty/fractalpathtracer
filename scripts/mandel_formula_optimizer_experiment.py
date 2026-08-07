@@ -25,6 +25,7 @@ EXPERIMENT_VARIABLES = (
     "FPT_MANDEL_FORMULA_CSE",
     "FPT_MANDEL_FORMULA_IDS",
     "FPT_MANDEL_FORMULA_STATS",
+    "FPT_MANDEL_UNROLL_PERIODIC_HYBRID",
 )
 
 
@@ -64,6 +65,13 @@ def candidate_matrix(
     formula_ids: list[int], hybrid: bool
 ) -> list[tuple[str, dict[str, str]]]:
     candidates: list[tuple[str, dict[str, str]]] = [("baseline", {})]
+    if hybrid:
+        candidates.append(
+            (
+                "unrolled-periodic",
+                {"FPT_MANDEL_UNROLL_PERIODIC_HYBRID": "1"},
+            )
+        )
     id_sets = [(str(formula_id), [formula_id]) for formula_id in formula_ids]
     if len(formula_ids) > 1:
         id_sets.append(("all", formula_ids))

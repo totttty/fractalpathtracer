@@ -19,7 +19,7 @@ exact procedural hit. It does not replace them with cached geometry.
 | Mandel-specific render kernel | Default | Removes generic renderer branches without changing formula operations |
 | Representable-position fixed-point stop | Default | 1.116× median incremental corpus speedup; exact |
 | Selected homogeneous hybrid schedules | Content-selected | 21 scene hashes; latest ten add 1.995–3.417× native speedups; exact |
-| Selected short-period hybrid schedules | Content-selected | 1.278× median across the slowest-five cohort; exact |
+| Selected short-period hybrid schedules | Content-selected | Table-index rewrites plus one exact 1.206× native two-phase unroll |
 | Scene-bound formula partial evaluation | Three content hashes | 1.415–1.673× in accepted diffuse/path gates; exact |
 | Generic and `-O0` safety policies | Content-selected | Preserves numerically sensitive scenes |
 | Watchdog retry as 32-row tiles | Automatic fallback | Lets exceptionally slow scenes complete without changing global coordinates or samples |
@@ -139,6 +139,30 @@ and colour state remain unchanged.
 
 `pseudoKleinianMod4` is the unchanged control: it has no hybrid sequence table,
 so its timing difference is run-to-run variance.
+
+The later formula-cost sweep revisited formulas 606, 127, and 60 in scenes 19,
+119, and 101. Scene-bound structural binding of formula 606 was rejected: it
+was 1.076× faster but changed 1,486 of 8,160 pixels. Formulas 127 and 60 stayed
+pixel-exact under structural binding but measured between 0.994× and 1.000×,
+so their apparent profile cost was not reducible by the current source passes.
+Phase-specialized variants were also rejected because they were slower or
+non-exact.
+
+Scene 19's exact opportunity was instead its alternating `[0, 1]` formula
+schedule. Lowering two iterations at a time removes the sequence lookup and
+formula switch while retaining the original formula calls, weights, bailout
+tests, iteration values, and floating-point operation order. Three 120×68
+runs were pixel-identical and measured 1.174× in path tracing and 1.178× in
+diffuse-normal. At native 1920×1080, 1 spp, four-row tiled dispatch produced:
+
+| Schedule | GPU ms runs | Median |
+| --- | --- | ---: |
+| Periodic index + switch | 244,552.630; 245,088.385; 239,491.470 | 244,552.630 ms |
+| Two-phase unrolled | 202,723.528; 202,787.154; 202,811.946 | 202,787.154 ms |
+
+All three native image pairs were byte-identical. The retained native speedup
+is 1.206×, and the scene-content policy reports `unrolled-periodic-mixed` in
+render metadata.
 
 ### Scene-bound formula compiler
 

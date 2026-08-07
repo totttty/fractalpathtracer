@@ -1958,6 +1958,10 @@ fn render(args: &RenderArgs) -> Result<()> {
             if mandelbulber::compiler::scene_uses_direct_hybrid_loop(&args.scene_path)? {
                 "direct-homogeneous"
             } else if mandelbulber::compiler::scene_formula_optimization_policy(&args.scene_path)?
+                .unrolled_periodic_hybrid_loop
+            {
+                "unrolled-periodic-mixed"
+            } else if mandelbulber::compiler::scene_formula_optimization_policy(&args.scene_path)?
                 .periodic_hybrid_loop
             {
                 "periodic-mixed"
@@ -2077,6 +2081,10 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         Some(
             if mandelbulber::compiler::scene_uses_direct_hybrid_loop(&args.scene_path)? {
                 "direct-homogeneous"
+            } else if mandelbulber::compiler::scene_formula_optimization_policy(&args.scene_path)?
+                .unrolled_periodic_hybrid_loop
+            {
+                "unrolled-periodic-mixed"
             } else if mandelbulber::compiler::scene_formula_optimization_policy(&args.scene_path)?
                 .periodic_hybrid_loop
             {

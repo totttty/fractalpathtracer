@@ -202,6 +202,7 @@ pub fn specialize_scene(
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct SceneFormulaOptimizationPolicy {
     pub periodic_hybrid_loop: bool,
+    pub unrolled_periodic_hybrid_loop: bool,
     pub partial_evaluation_formula_id: i32,
     pub partial_evaluation_phases: bool,
     pub partial_evaluation_scalarize_loops: bool,
@@ -421,6 +422,8 @@ fn formula_optimization_policy_for_digest(digest: &str) -> SceneFormulaOptimizat
     };
     SceneFormulaOptimizationPolicy {
         periodic_hybrid_loop,
+        unrolled_periodic_hybrid_loop: digest
+            == "8bbd267428bb7fe674b4f84f549ff9af495850b27bcf12b118d7a27f187989d8",
         partial_evaluation_formula_id,
         partial_evaluation_phases: partial_evaluation_formula_id != 0,
         partial_evaluation_scalarize_loops: partial_evaluation_formula_id != 0,
@@ -2449,6 +2452,7 @@ pub fn audit_formula_optimization_policy(
             scene.apply_to_config(&mut config);
             let selected_policy = scene_formula_optimization_policy(path)?;
             let mut baseline_policy = selected_policy;
+            baseline_policy.unrolled_periodic_hybrid_loop = false;
             baseline_policy.partial_evaluation_formula_id = 0;
             baseline_policy.partial_evaluation_phases = false;
             baseline_policy.partial_evaluation_scalarize_loops = false;
@@ -3782,12 +3786,19 @@ pub fn specialize_fpt_shader_hybrid(
     } else {
         None
     };
+    let unrolled_periodic_loop = if formula_optimization.unrolled_periodic_hybrid_loop
+        || std::env::var_os("FPT_MANDEL_UNROLL_PERIODIC_HYBRID").is_some()
+    {
+        hybrid_unrolled_periodic_loop_source(slots, sequence, set_values)?
+    } else {
+        None
+    };
     let periodic_sequence_index = if formula_optimization.periodic_hybrid_loop {
         periodic_hybrid_sequence_expression(sequence)
     } else {
         None
     };
-    let iteration_body = direct_loop.unwrap_or_else(|| {
+    let iteration_body = direct_loop.or(unrolled_periodic_loop).unwrap_or_else(|| {
         let previous_color = "        float previous_color = aux.color;\n";
         let blend_color =
             "            aux.color = aux.color * formula_weight + previous_color * inverse_weight;\n";
@@ -3946,6 +3957,123 @@ fn periodic_hybrid_sequence_expression(sequence: &[u8]) -> Option<String> {
         });
     }
     None
+}
+
+fn hybrid_unrolled_periodic_loop_source(
+    slots: &[RuntimeFormulaSlot<'_>],
+    sequence: &[u8],
+    set_values: &[f32; 40],
+) -> Result<Option<String>> {
+    let period = (2..=8usize.min(sequence.len())).find(|&period| {
+        sequence
+            .iter()
+            .enumerate()
+            .all(|(index, slot)| *slot == sequence[index % period])
+            && sequence[..period]
+                .iter()
+                .enumerate()
+                .all(|(index, slot)| usize::from(*slot) == index)
+    });
+    let Some(period) = period else {
+        return Ok(None);
+    };
+    let mut phases = String::new();
+    for phase in 0..period {
+        let slot = slots
+            .iter()
+            .find(|slot| slot.index == phase)
+            .ok_or_else(|| anyhow!("hybrid sequence references missing slot {}", phase + 1))?;
+        if phase > 0 {
+            phases.push_str(&format!(
+                "        if (iteration + {phase} >= max_iterations) break;\n"
+            ));
+        }
+        phases.push_str(&hybrid_unrolled_phase_source(slot, phase, set_values));
+    }
+    Ok(Some(format!(
+        "    for (int iteration = 0; iteration < max_iterations; iteration += {period}) {{\n{phases}    }}"
+    )))
+}
+
+fn hybrid_unrolled_phase_source(
+    slot: &RuntimeFormulaSlot<'_>,
+    phase: usize,
+    set_values: &[f32; 40],
+) -> String {
+    let namespace = format!("MandelSlot{}", slot.index);
+    let current_iteration = if phase == 0 {
+        "iteration".to_owned()
+    } else {
+        format!("iteration + {phase}")
+    };
+    let previous_color = if slot.weight < 1.0 {
+        "            float previous_color = aux.color;\n"
+    } else {
+        ""
+    };
+    let formula = if slot.weight > 0.0 {
+        format!(
+            "            z = {namespace}::{}(z, {namespace}::kMandelFormulaParameters, aux);\n",
+            slot.formula.function_name
+        )
+    } else {
+        String::new()
+    };
+    let addition =
+        hybrid_constant_addition_source(slot.add_c_constant, slot.formula.source.id, set_values);
+    let blend = if slot.weight < 1.0 {
+        format!(
+            r#"            float formula_weight = kMandelHybridWeights[{slot_index}];
+            z = mandelHybridSmoothVector(previous_z, z, formula_weight);
+            float inverse_weight = 1.0f - formula_weight;
+            aux.DE = aux.DE * formula_weight + previous_de * inverse_weight;
+            aux.color = aux.color * formula_weight + previous_color * inverse_weight;
+"#,
+            slot_index = slot.index,
+        )
+    } else {
+        String::new()
+    };
+    let bailout = if slot.check_for_bailout {
+        let additional = if uses_additional_bailout(slot.formula) {
+            format!(
+                r#"                escaped = true;
+                if (length(z - aux.old_z) / aux.r < 0.1f / kMandelHybridBailouts[{slot_index}]) break;
+"#,
+                slot_index = slot.index,
+            )
+        } else {
+            String::new()
+        };
+        format!(
+            r#"            if (forced_iterations < 0
+                && kMandelHybridBailoutChecks[{slot_index}] != 0) {{
+                if (aux.r > kMandelHybridBailouts[{slot_index}]) {{
+                    escaped = true;
+                    break;
+                }}
+                if (kMandelHybridAdditionalBailoutChecks[{slot_index}] != 0) {{
+{additional}                }}
+            }}
+"#,
+            slot_index = slot.index,
+        )
+    } else {
+        String::new()
+    };
+    format!(
+        r#"        {{
+            int current_iteration = {current_iteration};
+            aux.i = uint(current_iteration);
+            aux.old_z = z;
+            z = mandelApplyGlobalFoldings(z, cfg, aux);
+            float4 previous_z = z;
+            float previous_de = aux.DE;
+{previous_color}{formula}{addition}{blend}            aux.r = length(z);
+            completed_iterations = current_iteration + 1;
+{bailout}        }}
+"#,
+    )
 }
 
 fn hybrid_direct_loop_source(
@@ -7134,11 +7262,53 @@ kernel void also_discarded(uint gid [[thread_position_in_grid]]) {
     }
 
     #[test]
+    fn periodic_hybrid_schedule_can_lower_to_ordered_phases() {
+        let first = generated_binding_fixture(&[]);
+        let second = generated_binding_fixture(&[]);
+        let values = BTreeMap::new();
+        let slots = [
+            RuntimeFormulaSlot {
+                index: 0,
+                formula: &first,
+                formula_values: &values,
+                iterations: 1,
+                weight: 1.0,
+                add_c_constant: false,
+                check_for_bailout: false,
+                bailout: 100.0,
+            },
+            RuntimeFormulaSlot {
+                index: 1,
+                formula: &second,
+                formula_values: &values,
+                iterations: 1,
+                weight: 1.0,
+                add_c_constant: false,
+                check_for_bailout: false,
+                bailout: 100.0,
+            },
+        ];
+        let source = hybrid_unrolled_periodic_loop_source(&slots, &[0, 1, 0, 1], &[0.0; 40])
+            .unwrap()
+            .expect("periodic schedule");
+        assert!(source.contains("iteration += 2"));
+        assert!(source.contains("MandelSlot0::TransfDIFSGridIteration"));
+        assert!(source.contains("MandelSlot1::TransfDIFSGridIteration"));
+        assert!(!source.contains("switch"));
+        assert!(
+            hybrid_unrolled_periodic_loop_source(&slots, &[0, 1, 1, 0], &[0.0; 40])
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    #[test]
     fn slow_scene_formula_policies_are_content_selected() {
         let torus = formula_optimization_policy_for_digest(
             "8bbd267428bb7fe674b4f84f549ff9af495850b27bcf12b118d7a27f187989d8",
         );
         assert!(torus.periodic_hybrid_loop);
+        assert!(torus.unrolled_periodic_hybrid_loop);
         assert_eq!(torus.partial_evaluation_formula_id, 132);
         assert!(torus.partial_evaluation_phases);
         assert!(torus.partial_evaluation_scalarize_loops);
@@ -7161,6 +7331,7 @@ kernel void also_discarded(uint gid [[thread_position_in_grid]]) {
             "243f3b55d101588b42437330a9ef1f7adb661af69fc3b22c59710abdc8167244",
         );
         assert!(!pseudo.periodic_hybrid_loop);
+        assert!(!pseudo.unrolled_periodic_hybrid_loop);
         assert_eq!(pseudo.partial_evaluation_formula_id, 0);
 
         assert_eq!(
