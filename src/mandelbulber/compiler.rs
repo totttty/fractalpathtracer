@@ -355,7 +355,7 @@ pub fn scene_uses_direct_hybrid_loop(scene: &Path) -> Result<bool> {
     // retain identical PNGs and account for most of the measured benefit from
     // homogeneous hybrid lowering. Unknown scenes keep dynamic dispatch
     // because optimized Metal can otherwise reassociate sensitive orbits.
-    const DIRECT_HYBRID_SCENES: [&str; 10] = [
+    const DIRECT_HYBRID_SCENES: [&str; 11] = [
         "f34b78bcb0632aeed0ddeed35a7667bc7a9e005556eb231ded3776d824d4d68c",
         "82d6eb83b73ef38aa8f25e59da066b3c67632464a87fe7781348864fccd115e8",
         "ab1db40d86b88decbd2d8032125155517572866d4798bdb6d57a280795094edb",
@@ -366,6 +366,8 @@ pub fn scene_uses_direct_hybrid_loop(scene: &Path) -> Result<bool> {
         "b1be9a5b2f77be6c767a728404b96f34f7badee60da75087ccacc9749c31210e",
         "9ac02395052160cd1c59f4ef7e48181d150d3111bbe26ca795b7162ff6bd61c5",
         "320966913215facfa0a29140bc8c92f52ff3e279aaf784a55218aaf3daaf4278",
+        // pseudoKleinianMod4 rec; formula 217 dominates all ray phases.
+        "bed33dd3dedcf0f26d4a65ff79db997dcac8306896cefa3cd0e37c6f0718f236",
     ];
     let digest = format!("{:x}", Sha256::digest(fs::read(scene)?));
     Ok(DIRECT_HYBRID_SCENES.contains(&digest.as_str()))
@@ -1472,8 +1474,10 @@ static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
 
 static float4 mandelbulberGeneratedFieldSample(float3 p,
                                                 constant FptRenderConfig &cfg,
-                                                int iteration_multiplier) {{
+                                                int iteration_multiplier,
+                                                int iteration_budget) {{
     (void)iteration_multiplier;
+    (void)iteration_budget;
     float world_scale = max(setv(cfg, 0), 1.0f);
     float3 scaled = p / world_scale;
     float3 point = float3(scaled.x, scaled.z, scaled.y);
@@ -3419,7 +3423,8 @@ static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
 
 static float4 mandelbulberGeneratedFieldSample(float3 p,
                                                 constant FptRenderConfig &cfg,
-                                                int iteration_multiplier) {{
+                                                int iteration_multiplier,
+                                                int iteration_budget) {{
     float world_scale = max(setv(cfg, 0), 1.0f);
     float3 scaled = p / world_scale;
     float4 z = float4(scaled.x, scaled.z, scaled.y, {initial_w});
@@ -3437,7 +3442,11 @@ static float4 mandelbulberGeneratedFieldSample(float3 p,
     aux.temp1000 = 1000.0f;
     int completed_iterations = 0;
     bool escaped = false;
-    int max_iterations = clamp(int(setv(cfg, 1)) * iteration_multiplier, 1, 4096);
+    int configured_iterations = clamp(
+        int(setv(cfg, 1)) * iteration_multiplier, 1, 4096);
+    int max_iterations = iteration_budget > 0
+        ? min(configured_iterations, iteration_budget)
+        : configured_iterations;
     float bailout = max(setv(cfg, 2), 1.0f);
 {orbit_loop}
     float distance = ({distance_expression}) * world_scale;
@@ -3519,7 +3528,8 @@ static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
 
 static MandelDeltaOrbitResult mandelDeltaOrbit(float3 scaled,
                                                 constant FptRenderConfig &cfg,
-                                                int forced_iterations) {{
+                                                int forced_iterations,
+                                                int iteration_budget) {{
     float4 z = float4(scaled.x, scaled.z, scaled.y, {initial_w});
     MandelOrbitState aux = {{}};
     aux.c = z;
@@ -3539,7 +3549,9 @@ static MandelDeltaOrbitResult mandelDeltaOrbit(float3 scaled,
         int(setv(cfg, 1)) * iteration_multiplier, 1, 4096);
     int max_iterations = forced_iterations >= 0
         ? min(configured_iterations, forced_iterations)
-        : configured_iterations;
+        : (iteration_budget > 0
+            ? min(configured_iterations, iteration_budget)
+            : configured_iterations);
     bool escaped = false;
     float bailout = max(setv(cfg, 2), 1.0f);
     for (int iteration = 0; iteration < max_iterations; ++iteration) {{
@@ -3563,17 +3575,19 @@ static MandelDeltaOrbitResult mandelDeltaOrbit(float3 scaled,
 
 static float4 mandelbulberGeneratedFieldSample(float3 p,
                                                 constant FptRenderConfig &cfg,
-                                                int iteration_multiplier) {{
+                                                int iteration_multiplier,
+                                                int iteration_budget) {{
     float world_scale = max(setv(cfg, 0), 1.0f);
     float3 scaled = p / world_scale;
-    MandelDeltaOrbitResult base = mandelDeltaOrbit(scaled, cfg, -iteration_multiplier);
+    MandelDeltaOrbitResult base = mandelDeltaOrbit(
+        scaled, cfg, -iteration_multiplier, iteration_budget);
     // Mandelbulber's fp64 implementation can tie this probe to a much smaller
     // fraction of the detail threshold. Metal is fp32-only; 1e-4 is the
     // empirically stable floor across explicit-delta and Newton fixtures.
     float delta = max(1.0e-4f, 1.0e-4f * length(scaled));
-    float rx = mandelDeltaOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations).radius;
-    float ry = mandelDeltaOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations).radius;
-    float rz = mandelDeltaOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations).radius;
+    float rx = mandelDeltaOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations, 0).radius;
+    float ry = mandelDeltaOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations, 0).radius;
+    float rz = mandelDeltaOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations, 0).radius;
     float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;
     float radial_gradient = length(radial_derivative);
     float distance = radial_gradient > 0.0f ? ({distance_expression}) : base.radius;
@@ -3693,11 +3707,12 @@ pub fn specialize_fpt_shader_hybrid(
     let sample_body = if uses_delta {
         let finalizer = hybrid_delta_distance_expression(slots, delta_de_function)?;
         format!(
-            r#"    MandelHybridOrbitResult base = mandelHybridOrbit(scaled, cfg, -iteration_multiplier);
+            r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
+        scaled, cfg, -iteration_multiplier, iteration_budget);
     float delta = max(1.0e-4f, 1.0e-4f * length(scaled));
-    float rx = mandelHybridOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations).radius;
-    float ry = mandelHybridOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations).radius;
-    float rz = mandelHybridOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations).radius;
+    float rx = mandelHybridOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations, 0).radius;
+    float ry = mandelHybridOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations, 0).radius;
+    float rz = mandelHybridOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations, 0).radius;
     float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;
     float radial_gradient = length(radial_derivative);
     float distance = radial_gradient > 0.0f ? ({finalizer}) : base.radius;
@@ -3714,7 +3729,8 @@ pub fn specialize_fpt_shader_hybrid(
             delta_de_function,
         )?);
         format!(
-            r#"    MandelHybridOrbitResult base = mandelHybridOrbit(scaled, cfg, -iteration_multiplier);
+            r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
+        scaled, cfg, -iteration_multiplier, iteration_budget);
     float4 z = base.z;
     MandelOrbitState aux = {{}};
     aux.r = base.radius;
@@ -3826,7 +3842,8 @@ struct MandelHybridOrbitResult {{
 
 static MandelHybridOrbitResult mandelHybridOrbit(float3 scaled,
                                                   constant FptRenderConfig &cfg,
-                                                  int forced_iterations) {{
+                                                  int forced_iterations,
+                                                  int iteration_budget) {{
     float4 z = float4(scaled.x, scaled.z, scaled.y, {initial_w});
     MandelOrbitState aux = {{}};
     aux.c = z;
@@ -3847,7 +3864,9 @@ static MandelHybridOrbitResult mandelHybridOrbit(float3 scaled,
         {sequence_length});
     int max_iterations = forced_iterations >= 0
         ? min(configured_iterations, forced_iterations)
-        : configured_iterations;
+        : (iteration_budget > 0
+            ? min(configured_iterations, iteration_budget)
+            : configured_iterations);
     bool escaped = false;
 {iteration_body}
     return {{ z, aux.r, aux.DE, aux.dist, aux.pseudoKleinianDE,
@@ -3867,7 +3886,8 @@ static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
 
 static float4 mandelbulberGeneratedFieldSample(float3 p,
                                                 constant FptRenderConfig &cfg,
-                                                int iteration_multiplier) {{
+                                                int iteration_multiplier,
+                                                int iteration_budget) {{
     float world_scale = max(setv(cfg, 0), 1.0f);
     float3 scaled = p / world_scale;
 {sample_body}

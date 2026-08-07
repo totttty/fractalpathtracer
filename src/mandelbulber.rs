@@ -63,6 +63,10 @@ pub const VPARAM_FRACTAL_POSITION: usize = 120;
 pub const VPARAM_FRACTAL_ROTATION: usize = 123;
 pub const VPARAM_FRACTAL_REPEAT: usize = 126;
 pub const VPARAM_DETAIL_LEVEL: usize = 129;
+/// Optional screen-space iteration reduction, measured in formula iterations
+/// removed per octave of pixel footprint above the scene's minimum detail
+/// threshold. Zero preserves the exact configured iteration count.
+pub const VPARAM_SCREEN_LOD_RATE: usize = 130;
 /// Optional conservative world-space radius produced by the procedural-bound
 /// compiler. Zero means that no formula-family proof is available.
 /// Preview-only scheduler state. Negative values request a reduced orbit

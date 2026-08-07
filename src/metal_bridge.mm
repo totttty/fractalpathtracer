@@ -33,7 +33,7 @@ static_assert(sizeof(FptAffineTransform) == 64u,
               "FptAffineTransform layout must match Rust and Metal");
 static_assert(sizeof(FptIndexedPrimitive) == 32u,
               "FptIndexedPrimitive layout must match Rust and Metal");
-static_assert(sizeof(FptRenderConfig) == 30444u,
+static_assert(sizeof(FptRenderConfig) == 30448u,
               "FptRenderConfig layout must match Rust and Metal");
 static_assert(sizeof(FptDiagnosticConfig) == 24u,
               "FptDiagnosticConfig layout must match Rust and Metal");
@@ -5488,7 +5488,15 @@ extern "C" int fpt_metal_render(const char *metallib_path,
         MTLSize groups = groups_for_extent(dispatch_width, dispatch_height, threads_per_group);
         id<MTLComputeCommandEncoder> encoder = nil;
         if (use_tiled_accumulation) {
-            const uint32_t rows_per_dispatch = 32u;
+            uint32_t rows_per_dispatch = 32u;
+            if (const char *configured_rows = std::getenv("FPT_MANDEL_TILE_ROWS")) {
+                char *end = nullptr;
+                const unsigned long parsed = std::strtoul(configured_rows, &end, 10);
+                if (end != configured_rows && *end == '\0') {
+                    rows_per_dispatch = std::clamp<uint32_t>(
+                        static_cast<uint32_t>(parsed), 1u, 32u);
+                }
+            }
             for (uint32_t row = 0u; row < config->height;
                  row += rows_per_dispatch) {
                 FptAccumulationTileCpp tile = {{0u, row}};

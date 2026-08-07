@@ -18,7 +18,7 @@ exact procedural hit. It does not replace them with cached geometry.
 | --- | --- | --- |
 | Mandel-specific render kernel | Default | Removes generic renderer branches without changing formula operations |
 | Representable-position fixed-point stop | Default | 1.116× median incremental corpus speedup; exact |
-| Selected homogeneous hybrid schedules | Content-selected | 2.520× median across ten selected scenes; exact |
+| Selected homogeneous hybrid schedules | Content-selected | Original ten-scene median 2.520×; formula-217 addition 2.886× natively; exact |
 | Selected short-period hybrid schedules | Content-selected | 1.278× median across the slowest-five cohort; exact |
 | Scene-bound formula partial evaluation | Three content hashes | 1.415–1.673× in accepted diffuse/path gates; exact |
 | Generic and `-O0` safety policies | Content-selected | Preserves numerically sensitive scenes |
@@ -79,11 +79,15 @@ Eight sensitive fixtures retain the generic renderer kernel, and five retain
 ### Homogeneous and periodic hybrid schedules
 
 A blanket direct lowering of all 92 single-formula hybrids was faster but
-changed 22 images under optimized Metal. Production therefore selects only ten
-content hashes that passed exact gates. Their median speedup was 2.520× and
-they saved 2,916 ms in aggregate. On `MbulbAbsPow2_002`, direct lowering
+changed 22 images under optimized Metal. Production therefore selects only
+content hashes that passed exact gates. The original ten-scene cohort had a
+2.520× median speedup and saved 2,916 ms in aggregate. On `MbulbAbsPow2_002`, direct lowering
 reduced the fixed-point result from 532.901 ms to 180.863 ms—about 38.3× faster
 than the original 6,917.647 ms result.
+
+The profile-guided follow-up added `pseudoKleinianMod4 rec` (formula 217).
+Its direct one-formula loop reduced the 1800×1200 watchdog-safe render from
+131,318.105 ms to 45,496.258 ms, a 2.886× speedup, with zero changed pixels.
 
 Four difficult mixed hybrids retain a narrower optimization. Their sequence
 tables repeat every two or three entries, so only the table read is replaced

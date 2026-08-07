@@ -178,6 +178,7 @@ pub struct FptRenderConfig {
     pub sdf_chunk_samples: u32,
     pub sdf_rr_start: f32,
     pub sdf_rr_min_prob: f32,
+    pub mandel_iteration_scale: f32,
     pub camera_position: [f32; 3],
     pub camera_yaw_pitch: [f32; 2],
     pub camera_roll: f32,
@@ -498,7 +499,7 @@ mod tests {
         assert_eq!(std::mem::size_of::<FptIndexedPrimitive>(), 32);
         assert_eq!(std::mem::size_of::<FptTypedSoAProgram>(), 5136);
         assert_eq!(std::mem::size_of::<FptStitchPipelineStats>(), 72);
-        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 30444);
+        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 30448);
         assert_eq!(std::mem::size_of::<FptSdfProfileStats>(), 288);
         assert_eq!(std::mem::size_of::<FptDiagnosticConfig>(), 24);
         assert_eq!(std::mem::size_of::<FptMandelbulberFieldSample>(), 16);

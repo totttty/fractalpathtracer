@@ -2,6 +2,7 @@ use crate::ffi::*;
 use crate::mandelbulber::MandelbulberScene;
 use anyhow::{Result, anyhow, bail, ensure};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -182,6 +183,10 @@ pub struct RenderArgs {
     pub regional_program_resolution: u32,
     pub sdf_rr_start: f32,
     pub sdf_rr_min_prob: f32,
+    pub mandel_iteration_scale: Option<f32>,
+    pub mandel_screen_lod_rate: Option<f32>,
+    pub mandel_optimization_auto: bool,
+    pub mandel_selection_cache: Option<PathBuf>,
     pub sdf_bounce_index: u32,
     pub diagnostic_mode: DiagnosticMode,
     pub diagnostic_max_distance: Option<f32>,
@@ -247,6 +252,10 @@ impl RenderArgs {
             regional_program_resolution: 16,
             sdf_rr_start: 3.0,
             sdf_rr_min_prob: 0.2,
+            mandel_iteration_scale: None,
+            mandel_screen_lod_rate: None,
+            mandel_optimization_auto: false,
+            mandel_selection_cache: None,
             sdf_bounce_index: 0,
             diagnostic_mode: DiagnosticMode::Depth,
             diagnostic_max_distance: None,
@@ -422,6 +431,37 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
             "--sdf-rr-min-prob" => {
                 out.sdf_rr_min_prob = next_value(args, &mut i, "--sdf-rr-min-prob")?.parse()?
             }
+            "--mandel-iteration-scale" => {
+                let scale = next_value(args, &mut i, "--mandel-iteration-scale")?.parse()?;
+                ensure!(
+                    (0.125..=1.0).contains(&scale),
+                    "Mandel iteration scale must be 0.125..1"
+                );
+                out.mandel_iteration_scale = Some(scale);
+            }
+            "--mandel-screen-lod-rate" => {
+                let rate = next_value(args, &mut i, "--mandel-screen-lod-rate")?.parse()?;
+                ensure!(
+                    (0.0..=8.0).contains(&rate),
+                    "Mandel screen LOD rate must be 0..8"
+                );
+                out.mandel_screen_lod_rate = Some(rate);
+            }
+            "--mandel-optimization" => {
+                out.mandel_optimization_auto =
+                    match next_value(args, &mut i, "--mandel-optimization")? {
+                        "exact" => false,
+                        "auto" => true,
+                        value => bail!("unknown Mandel optimization mode: {value}"),
+                    };
+            }
+            "--mandel-selection-cache" => {
+                out.mandel_selection_cache = Some(PathBuf::from(next_value(
+                    args,
+                    &mut i,
+                    "--mandel-selection-cache",
+                )?));
+            }
             "--sdf-bounce-index" => {
                 out.sdf_bounce_index = next_value(args, &mut i, "--sdf-bounce-index")?.parse()?
             }
@@ -559,12 +599,71 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
     Ok(out)
 }
 
+fn cached_mandel_selection(config: &FptRenderConfig, args: &RenderArgs) -> Option<(String, f32)> {
+    if !args.mandel_optimization_auto || config.sdf_id != SDF_MANDELBULBER {
+        return None;
+    }
+    let cache_path = args
+        .mandel_selection_cache
+        .clone()
+        .or_else(|| std::env::var_os("FPT_MANDEL_SELECTION_CACHE").map(PathBuf::from))?;
+    let cache: Value = serde_json::from_slice(&fs::read(cache_path).ok()?).ok()?;
+    if cache.get("schema_version")?.as_u64()? != 1 {
+        return None;
+    }
+    let minimum_ssim = cache.get("minimum_ssim")?.as_f64()?.max(0.98);
+    let minimum_speedup = cache.get("minimum_speedup")?.as_f64()?.max(1.05);
+    let scene_sha256 = format!("{:x}", Sha256::digest(fs::read(&args.scene_path).ok()?));
+    let key = format!(
+        "{scene_sha256}:{}x{}:{}",
+        config.width, config.height, config.samples
+    );
+    let entry = cache.get("entries")?.get(&key)?;
+    if entry.get("scene_sha256")?.as_str()? != scene_sha256
+        || entry.get("width")?.as_u64()? != u64::from(config.width)
+        || entry.get("height")?.as_u64()? != u64::from(config.height)
+        || entry.get("samples")?.as_u64()? != u64::from(config.samples)
+        || entry.get("ssim")?.as_f64()? < minimum_ssim
+        || entry.get("speedup")?.as_f64()? < minimum_speedup
+    {
+        return None;
+    }
+    let selection = entry.get("selection")?;
+    Some((
+        selection.get("kind")?.as_str()?.to_owned(),
+        selection.get("value")?.as_f64()? as f32,
+    ))
+}
+
 pub fn apply_optimization_args(config: &mut FptRenderConfig, args: &RenderArgs) {
     config.sdf_bounce_cap = args.sdf_bounce_cap.unwrap_or(0);
     config.sdf_russian_roulette = u32::from(args.sdf_russian_roulette);
     config.sdf_normal_mode = args.sdf_normal_mode as u32;
     config.sdf_rr_start = args.sdf_rr_start;
     config.sdf_rr_min_prob = args.sdf_rr_min_prob;
+    let mut iteration_scale = args.mandel_iteration_scale;
+    let mut screen_lod_rate = args.mandel_screen_lod_rate;
+    if iteration_scale.is_none()
+        && screen_lod_rate.is_none()
+        && let Some((kind, value)) = cached_mandel_selection(config, args)
+    {
+        match kind.as_str() {
+            "iteration_scale" if (0.125..=1.0).contains(&value) => iteration_scale = Some(value),
+            "screen_lod" if (0.0..=8.0).contains(&value) => screen_lod_rate = Some(value),
+            "exact" => {}
+            _ => {}
+        }
+    }
+    config.mandel_iteration_scale = iteration_scale.unwrap_or(1.0);
+    config.vset_values[crate::mandelbulber::VPARAM_SCREEN_LOD_RATE] =
+        screen_lod_rate.unwrap_or(0.0);
+    if config.sdf_id == SDF_MANDELBULBER {
+        if let Some(scale) = iteration_scale {
+            let iterations = config.set_values[crate::mandelbulber::PARAM_MAX_ITERATIONS];
+            config.set_values[crate::mandelbulber::PARAM_MAX_ITERATIONS] =
+                (iterations * scale).round().max(1.0);
+        }
+    }
     config.sdf_chunk_samples = args.sdf_chunk_samples;
     config.sdf_topology_specialization = if args.sdf_affine_index_topology_specialization {
         5
@@ -649,6 +748,7 @@ pub fn default_config() -> FptRenderConfig {
         sdf_id: SDF_CORNELL_BOX,
         sdf_rr_start: 3.0,
         sdf_rr_min_prob: 0.2,
+        mandel_iteration_scale: 1.0,
         sdf_chunk_samples: 8,
         camera_position: [0.1, 0.1, -5.0],
         camera_yaw_pitch: [0.0, 0.0],
@@ -2036,6 +2136,98 @@ mod tests {
             parse_render_args(&args).unwrap().sdf_normal_mode,
             SdfNormalMode::ProgramGradient
         );
+    }
+
+    #[test]
+    fn approximation_controls_parse_and_default_off() {
+        let defaults = parse_render_args(&["scene.json".to_owned()]).unwrap();
+        assert_eq!(defaults.mandel_iteration_scale, None);
+        assert_eq!(defaults.mandel_screen_lod_rate, None);
+        assert!(!defaults.mandel_optimization_auto);
+        assert_eq!(defaults.mandel_selection_cache, None);
+
+        let args = vec![
+            "scene.json".to_owned(),
+            "--mandel-iteration-scale".to_owned(),
+            "0.75".to_owned(),
+            "--mandel-screen-lod-rate".to_owned(),
+            "1.5".to_owned(),
+            "--mandel-optimization".to_owned(),
+            "auto".to_owned(),
+            "--mandel-selection-cache".to_owned(),
+            "selection.json".to_owned(),
+        ];
+        let parsed = parse_render_args(&args).unwrap();
+        assert_eq!(parsed.mandel_iteration_scale, Some(0.75));
+        assert_eq!(parsed.mandel_screen_lod_rate, Some(1.5));
+        assert!(parsed.mandel_optimization_auto);
+        assert_eq!(
+            parsed.mandel_selection_cache,
+            Some(PathBuf::from("selection.json"))
+        );
+    }
+
+    #[test]
+    fn mandel_selection_cache_is_strict_and_manual_controls_win() {
+        let directory = std::env::temp_dir().join(format!(
+            "fpt-mandel-selection-cache-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&directory).unwrap();
+        let scene_path = directory.join("fixture.fract");
+        fs::write(&scene_path, "formula fixture").unwrap();
+        let digest = format!("{:x}", Sha256::digest(fs::read(&scene_path).unwrap()));
+        let cache_path = directory.join("selection.json");
+        let key = format!("{digest}:640x360:1");
+        fs::write(
+            &cache_path,
+            serde_json::to_vec(&serde_json::json!({
+                "schema_version": 1,
+                "minimum_ssim": 0.98,
+                "minimum_speedup": 1.05,
+                "entries": {
+                    (key): {
+                        "scene_sha256": digest,
+                        "width": 640,
+                        "height": 360,
+                        "samples": 1,
+                        "ssim": 0.995,
+                        "speedup": 1.2,
+                        "selection": {"kind": "screen_lod", "value": 1.0}
+                    }
+                }
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let base = vec![
+            scene_path.display().to_string(),
+            "--mandel-optimization".to_owned(),
+            "auto".to_owned(),
+            "--mandel-selection-cache".to_owned(),
+            cache_path.display().to_string(),
+        ];
+        let args = parse_render_args(&base).unwrap();
+        let mut config = default_config();
+        config.sdf_id = SDF_MANDELBULBER;
+        config.width = 640;
+        config.height = 360;
+        config.samples = 1;
+        apply_optimization_args(&mut config, &args);
+        assert_eq!(
+            config.vset_values[crate::mandelbulber::VPARAM_SCREEN_LOD_RATE],
+            1.0
+        );
+
+        let mut manual = base;
+        manual.extend(["--mandel-screen-lod-rate".to_owned(), "0.5".to_owned()]);
+        let args = parse_render_args(&manual).unwrap();
+        apply_optimization_args(&mut config, &args);
+        assert_eq!(
+            config.vset_values[crate::mandelbulber::VPARAM_SCREEN_LOD_RATE],
+            0.5
+        );
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]

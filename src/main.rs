@@ -247,7 +247,7 @@ impl Drop for ProbeDirectory {
 fn usage() {
     eprintln!(
         "Usage:\n\
-  fpt-metal render <scene.json> --out <dir> [--renderer sdf|voxel|bound-grid|regional] [--mandelbulber-root <dir>] [--sdf-backend auto] [--regional-program-resolution 16|32] [--bound-grid-resolution 32|64] [--bound-grid-directional] [--bound-grid-fp16] [--bound-grid-profile] [--bound-grid-profile-stride N] [--bound-grid-cage-bounds] [--no-sdf-geometry-split] [--no-sdf-canonical-ir] [--sdf-topology-specialization] [--sdf-tiny-linked-helper] [--sdf-canonical-topology-specialization] [--sdf-compact-canonical-topology-specialization] [--sdf-shared-transform-topology-specialization] [--sdf-affine-index-topology-specialization] [--no-sdf-generated-surface] [--sdf-runtime-source-bytecode] [--sdf-function-stitching normal|inline|auto] [--sdf-stitch-distance-only] [--sdf-stitch-split-graph] [--sdf-stitch-fusion off|one-pair|pairs|double-pairs] [--sdf-program-validation] [--sdf-flat-union] [--sdf-typed-soa] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-surface-band N] [--voxel-coverage legacy|lipschitz|interval] [--voxel-build staging|direct] [--voxel-brick-rejection] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--preview] [--glass-mode analytic|pathtrace] [--sdf-accumulation auto|per-sample|batch|chunked] [--sdf-normal-mode auto|central|tetra|program-gradient] [--sdf-program-optimization off|basic] [--sdf-chunk-samples N] [--width N] [--height N] [--samples N]\n\
+  fpt-metal render <scene.json> --out <dir> [--renderer sdf|voxel|bound-grid|regional] [--mandelbulber-root <dir>] [--sdf-backend auto] [--regional-program-resolution 16|32] [--bound-grid-resolution 32|64] [--bound-grid-directional] [--bound-grid-fp16] [--bound-grid-profile] [--bound-grid-profile-stride N] [--bound-grid-cage-bounds] [--no-sdf-geometry-split] [--no-sdf-canonical-ir] [--sdf-topology-specialization] [--sdf-tiny-linked-helper] [--sdf-canonical-topology-specialization] [--sdf-compact-canonical-topology-specialization] [--sdf-shared-transform-topology-specialization] [--sdf-affine-index-topology-specialization] [--no-sdf-generated-surface] [--sdf-runtime-source-bytecode] [--sdf-function-stitching normal|inline|auto] [--sdf-stitch-distance-only] [--sdf-stitch-split-graph] [--sdf-stitch-fusion off|one-pair|pairs|double-pairs] [--sdf-program-validation] [--sdf-flat-union] [--sdf-typed-soa] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-surface-band N] [--voxel-coverage legacy|lipschitz|interval] [--voxel-build staging|direct] [--voxel-brick-rejection] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--preview] [--glass-mode analytic|pathtrace] [--sdf-accumulation auto|per-sample|batch|chunked] [--sdf-normal-mode auto|central|tetra|program-gradient] [--sdf-program-optimization off|basic] [--sdf-chunk-samples N] [--mandel-iteration-scale X] [--mandel-screen-lod-rate X] [--mandel-optimization exact|auto] [--mandel-selection-cache PATH] [--width N] [--height N] [--samples N]\n\
   --sdf-backend auto reuses cached decisions; --sdf-backend probe measures on a cache miss\n\
   Research-only: function-stitching variants, canonical/shared/affine generated forms, dual/tiny libraries, bound-grid, and regional backends\n\
   fpt-metal render-batch <jobs.json>\n\
@@ -702,7 +702,14 @@ fn backend_workload_key(config: &FptRenderConfig, device_name: &str) -> String {
             config.sdf_typed_soa.plane_count,
         ],
     );
-    hash_f32_slice(&mut digest, &[config.sdf_rr_start, config.sdf_rr_min_prob]);
+    hash_f32_slice(
+        &mut digest,
+        &[
+            config.sdf_rr_start,
+            config.sdf_rr_min_prob,
+            config.mandel_iteration_scale,
+        ],
+    );
     hash_f32_slice(&mut digest, &config.camera_position);
     hash_f32_slice(&mut digest, &config.camera_yaw_pitch);
     hash_f32_slice(
@@ -1316,6 +1323,14 @@ fn effective_accumulation(config: &FptRenderConfig) -> &'static str {
     }
 }
 
+fn mandel_tile_rows() -> u32 {
+    std::env::var("FPT_MANDEL_TILE_ROWS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .map(|value: u32| value.clamp(1, 32))
+        .unwrap_or(32)
+}
+
 struct RenderMetadataInput<'a> {
     output: &'a Path,
     scene: &'a Path,
@@ -1410,6 +1425,8 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         "sdf_russian_roulette": config.sdf_russian_roulette != 0,
         "sdf_rr_start": config.sdf_rr_start,
         "sdf_rr_min_prob": config.sdf_rr_min_prob,
+        "mandel_iteration_scale": config.mandel_iteration_scale,
+        "mandel_screen_lod_rate": config.vset_values[mandelbulber::VPARAM_SCREEN_LOD_RATE],
         "sdf_normal_mode": match config.sdf_normal_mode {
             value if value == SdfNormalMode::Tetra as u32 => "tetra",
             value if value == SdfNormalMode::ProgramGradient as u32 => "program-gradient",
@@ -1927,11 +1944,11 @@ fn render(args: &RenderArgs) -> Result<()> {
     let mandel_compile_mode = mandel_artifacts
         .as_ref()
         .map(|artifacts| artifacts.optimization.metadata_label());
-    let mandel_dispatch_mode = if use_cached_mandel {
+    let mandel_dispatch_label = if use_cached_mandel {
         Some(if std::env::var_os("FPT_MANDEL_TILED_DISPATCH").is_some() {
-            "tiled-32-row"
+            format!("tiled-{}-row", mandel_tile_rows())
         } else {
-            "single-command-buffer"
+            "single-command-buffer".to_owned()
         })
     } else {
         None
@@ -1973,7 +1990,7 @@ fn render(args: &RenderArgs) -> Result<()> {
         backend_selection: backend_selection.as_ref(),
         mandel_kernel_mode,
         mandel_compile_mode,
-        mandel_dispatch_mode,
+        mandel_dispatch_mode: mandel_dispatch_label.as_deref(),
         mandel_formula_dispatch_mode,
         mandel_cache_status,
         mandel_source_bytes,

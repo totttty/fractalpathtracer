@@ -182,6 +182,7 @@ struct FptRenderConfig {
     uint32_t sdf_chunk_samples;
     float sdf_rr_start;
     float sdf_rr_min_prob;
+    float mandel_iteration_scale;
 
     float camera_position[3];
     float camera_yaw_pitch[2];

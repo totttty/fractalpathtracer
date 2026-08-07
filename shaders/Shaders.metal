@@ -157,6 +157,7 @@ struct FptRenderConfig {
     uint _pad0;
     float sdf_rr_start;
     float sdf_rr_min_prob;
+    float mandel_iteration_scale;
 
     float camera_position[3];
     float camera_yaw_pitch[2];
@@ -855,6 +856,31 @@ static float mandelInteractiveIterationScale(constant FptRenderConfig &cfg) {
     return 1.0f;
 }
 
+// Remove formula iterations only when the projected pixel footprint is
+// coarser than the scene's minimum detail threshold. The rate is expressed as
+// iterations removed per doubling of that footprint, making the experiment
+// position-dependent rather than a scene-wide iteration multiplier.
+static int mandelbulberScreenIterationBudget(float3 world_position,
+                                              constant FptRenderConfig &cfg,
+                                              int iteration_multiplier) {
+    int configured = clamp(int(setv(cfg, 1)) * max(iteration_multiplier, 1),
+                           1, 4096);
+    float rate = cfg.vset_values[130];
+    if (!(rate > 0.0f) || !isfinite(rate)) return configured;
+    float footprint = cfg.vset_values[115] > 0.5f
+        ? length(cameraPos(cfg) - world_position) * cfg.vset_values[116]
+        : cfg.vset_values[117];
+    footprint = clamp(footprint, cfg.vset_values[118], cfg.vset_values[119]);
+    float minimum = max(cfg.vset_values[118], 1.0e-12f);
+    float octaves = max(log2(max(footprint / minimum, 1.0f)), 0.0f);
+    int reduction = int(floor(octaves * rate));
+    // Never discard more than the 25% scene-wide reduction that already
+    // survived the visual gate. Low-iteration hybrid schedules otherwise
+    // collapse to one pass when their min/max detail ratio spans many octaves.
+    int floor_budget = max(int(ceil(float(configured) * 0.75f)), 1);
+    return max(configured - reduction, floor_budget);
+}
+
 // FPT_MANDELBULBER_GENERATED_INSERTION_POINT
 
 #ifndef FPT_MANDEL_GENERATED_FIELD
@@ -871,6 +897,8 @@ static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
 static float4 mandelbulberFieldSample(float3 p,
                                       constant FptRenderConfig &cfg,
                                       int iteration_multiplier) {
+    int iteration_budget = mandelbulberScreenIterationBudget(
+        p, cfg, iteration_multiplier);
     p = mandelbulberGlobalPoint(p, cfg);
     float world_scale = max(setv(cfg, 0), 1.0f);
     float3 scaled = p / world_scale;
@@ -879,7 +907,7 @@ static float4 mandelbulberFieldSample(float3 p,
     float radius = length(z);
     int completed_iterations = 0;
     bool escaped = false;
-    int max_iterations = clamp(int(setv(cfg, 1)) * iteration_multiplier, 1, 4096);
+    int max_iterations = iteration_budget;
     float bailout = max(setv(cfg, 2), 1.0f);
     float ifs_scale = max(setv(cfg, 3), 1.000001f);
     uint abs_mask = uint(round(setv(cfg, 4)));
@@ -919,12 +947,17 @@ static float4 mandelbulberFieldSample(float3 p,
         : float(completed_iterations);
     return float4(distance, radius, derivative, iteration_state);
 }
+
 #else
 static float4 mandelbulberFieldSample(float3 p,
                                       constant FptRenderConfig &cfg,
                                       int iteration_multiplier) {
+    int iteration_budget = cfg.vset_values[130] > 0.0f
+        ? mandelbulberScreenIterationBudget(p, cfg, iteration_multiplier)
+        : 0;
     return mandelbulberGeneratedFieldSample(
-        mandelbulberGlobalPoint(p, cfg), cfg, iteration_multiplier);
+        mandelbulberGlobalPoint(p, cfg), cfg, iteration_multiplier,
+        iteration_budget);
 }
 #endif
 
