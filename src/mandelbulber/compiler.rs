@@ -355,7 +355,7 @@ pub fn scene_uses_direct_hybrid_loop(scene: &Path) -> Result<bool> {
     // retain identical PNGs and account for most of the measured benefit from
     // homogeneous hybrid lowering. Unknown scenes keep dynamic dispatch
     // because optimized Metal can otherwise reassociate sensitive orbits.
-    const DIRECT_HYBRID_SCENES: [&str; 11] = [
+    const DIRECT_HYBRID_SCENES: [&str; 21] = [
         "f34b78bcb0632aeed0ddeed35a7667bc7a9e005556eb231ded3776d824d4d68c",
         "82d6eb83b73ef38aa8f25e59da066b3c67632464a87fe7781348864fccd115e8",
         "ab1db40d86b88decbd2d8032125155517572866d4798bdb6d57a280795094edb",
@@ -368,6 +368,26 @@ pub fn scene_uses_direct_hybrid_loop(scene: &Path) -> Result<bool> {
         "320966913215facfa0a29140bc8c92f52ff3e279aaf784a55218aaf3daaf4278",
         // pseudoKleinianMod4 rec; formula 217 dominates all ray phases.
         "bed33dd3dedcf0f26d4a65ff79db997dcac8306896cefa3cd0e37c6f0718f236",
+        // Jos Leys Kleinian v3.
+        "5c2d866f47b53820189f4781a5760bd0451a2cea810f97a5a8ab7a0bfce3a690",
+        // MengerV4.
+        "f01b919d638ef1f362c8ce7703b79e7379564b89ad1d247d5542d8f26b201f4b",
+        // aboxMod13Surf.
+        "c92324bb5ec7653b37c1c992b6b6bb0764544da191166a44b62437c461432437",
+        // asurf4_sphere_invert.
+        "9b43af7ca776dcb5b8fcc9b9d3629813e1bccfaa92f3280fdaa7939756cf02cc",
+        // asurf4_worms.
+        "4d74e93d606ab5d77264cb004cf449865448ae67ebdad5533c91fe339030cf69",
+        // mandelbulb_pupuku pow2.
+        "4ecdfeeb1b520a12bfe351944d175bb85cc469494278418278a2cc0a93d8ce8a",
+        // mandelbulb_pupuku pow6.
+        "50972b994a3ffef8ca2135ac6d848d1ee2133f7ff5929ca6578711e841d08f44",
+        // pseudoKleinianMod5.
+        "076a93d0c1f43832068832dfa9853671964959ff784745d0db58b87a29e75ee6",
+        // transf_juliaBoxV2.
+        "e66fac4f0495dbd39e65166be7d36d74b69e9b3ba4d0e5ec9d7cb50e6dcf3c69",
+        // newtonPow3-delta-gnj-002h.
+        "934637dee1bd7598763658ea45e4b0556702259b9408fdb8ba3cf24122c2589d",
     ];
     let digest = format!("{:x}", Sha256::digest(fs::read(scene)?));
     Ok(DIRECT_HYBRID_SCENES.contains(&digest.as_str()))
