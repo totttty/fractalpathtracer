@@ -356,7 +356,7 @@ pub fn scene_uses_direct_hybrid_loop(scene: &Path) -> Result<bool> {
     // retain identical PNGs and account for most of the measured benefit from
     // homogeneous hybrid lowering. Unknown scenes keep dynamic dispatch
     // because optimized Metal can otherwise reassociate sensitive orbits.
-    const DIRECT_HYBRID_SCENES: [&str; 21] = [
+    const DIRECT_HYBRID_SCENES: [&str; 35] = [
         "f34b78bcb0632aeed0ddeed35a7667bc7a9e005556eb231ded3776d824d4d68c",
         "82d6eb83b73ef38aa8f25e59da066b3c67632464a87fe7781348864fccd115e8",
         "ab1db40d86b88decbd2d8032125155517572866d4798bdb6d57a280795094edb",
@@ -389,6 +389,34 @@ pub fn scene_uses_direct_hybrid_loop(scene: &Path) -> Result<bool> {
         "e66fac4f0495dbd39e65166be7d36d74b69e9b3ba4d0e5ec9d7cb50e6dcf3c69",
         // newtonPow3-delta-gnj-002h.
         "934637dee1bd7598763658ea45e4b0556702259b9408fdb8ba3cf24122c2589d",
+        // DIFS Cylinder rocket.
+        "ee8bebc32eecc3928defbdcc348ecce5b3760299b4c000327e7dd368fa2df8fe",
+        // DIFS Cylinder tree.
+        "734964f9d82044338cdb52f57f45250046cd1536d81bdbd368ddf306d832a3b6",
+        // Koch_Ifs aaa1.
+        "0ac95acb49303a0a95260d0863fce353ab9e854a84aef7c463a51669007e5b62",
+        // MbulbAbsPow2_001.
+        "09485d54387faaf499aae685fcce3781f2c169ce456ddee06dd474b1156a6ea2",
+        // abox_donut4d_aa2.
+        "95b2f85fdc974cd82d5861f385fb12699daee49e1872014329f8544f39550dd2",
+        // mandelbarV3 ABa1.
+        "e7677ace02d50a6a6bf8b83741e2f1942f13b173f3bb6c25841c1bb5f62a5062",
+        // mandelnest.
+        "5ddb30fc490615b107ffa31ed2b0d49731b25bf5c17f5b5143e4dc4fb988ae08",
+        // mandelnest_full_001.
+        "7b71548eb8085781da09350dc64eee3de2f71224f790ee9eb0ab23ec31264e45",
+        // msltoe_sym3_mod4.
+        "0ff40582231e20e8a7599f726d6b7c24a95d0f687a54f6803b93a88b4c5d4c43",
+        // msltoe_sym3_mod5.
+        "08de208334baef7bf756cac217fd6925aedf041d8dd5e6e4ec188b6b5b5792ad",
+        // vicsek_001.
+        "95fdef42b5ca86ea0f80749ef0ecabdee352940cfa2c51b1fca362b17a8af45e",
+        // xenodreambuie_v3.
+        "c1ce1c8fb25494834b1ccfb79d67ec4da84107e9240b4a815d6136edde60cb8b",
+        // RoadToExascale.
+        "98baaeb09ffaf586320bd07492fb72ed47f59bc504f5be3dc612db7fca2ed27e",
+        // newtonPow3-delta-gnj-001b.
+        "5fcd33fac8dc8824e39af00073185295e50f88e7f622aa0310a69668ec5a959c",
     ];
     let digest = format!("{:x}", Sha256::digest(fs::read(scene)?));
     Ok(DIRECT_HYBRID_SCENES.contains(&digest.as_str()))
@@ -422,8 +450,31 @@ fn formula_optimization_policy_for_digest(digest: &str) -> SceneFormulaOptimizat
     };
     SceneFormulaOptimizationPolicy {
         periodic_hybrid_loop,
-        unrolled_periodic_hybrid_loop: digest
-            == "8bbd267428bb7fe674b4f84f549ff9af495850b27bcf12b118d7a27f187989d8",
+        unrolled_periodic_hybrid_loop: matches!(
+            digest,
+            // DIFS Torus asurf.
+            "8bbd267428bb7fe674b4f84f549ff9af495850b27bcf12b118d7a27f187989d8"
+                // KochV5_KochV5.
+                | "3557e16f11a55869e375d95eb5ccd9b65925a4e9cb0fe1b4502fa687e3bf877f"
+                // aboxMod11_addCpixelRotate.
+                | "4e71d3331ff0bd2e4eb19ec7dbf797b1fd61b4394e887fe1c35b78ecd31d7cb1"
+                // aboxMod15cpixelInvert.
+                | "3f4ebaa58cc33dd68702510392f77a44edec69233702444346211be345fc4eae"
+                // abox_mod1_add.
+                | "aad1812e33004e8247bffc2004649d54d64f3eb4ab939b023e7e77f559fd0e9c"
+                // boxFoldBulb_v2_twice.
+                | "3b61a5878c14577092103862b76f5b2577293ec06311758231a47576a131508f"
+                // pseudo kleinian abox13.
+                | "035ba82d0606cba849b7fe2e1d96896637813cc385590d3fdaee2f263f83656f"
+                // transfSphereInvV3_abxTetra_OT.
+                | "e81bd1e26cc8983d00444e0270cbaa97b188abccdfe4da29780b44d96c05e6a5"
+                // newtonPow3-rotfold-delta-gnj-003d.
+                | "b4b23fe2d3c9812a19482a615c62e655c8e3004d2c275f302a0ea103f85b9066"
+                // newtonPow3-rotfold-delta-gnj-010g.
+                | "5091e3639526f98c98ebfdc243d288f64c8d2f51839720fd918ad17bc6458e5a"
+                // hybrid001.
+                | "b9236c85374cc00782cc8a2e418a3a5aa7af67c82d15ea0c8924152b36638cfb"
+        ),
         partial_evaluation_formula_id,
         partial_evaluation_phases: partial_evaluation_formula_id != 0,
         partial_evaluation_scalarize_loops: partial_evaluation_formula_id != 0,
@@ -2411,6 +2462,7 @@ pub struct FormulaPolicyAuditEntry {
     pub candidate_source_bytes: Option<usize>,
     pub source_changed: bool,
     pub selected_formula_id: i32,
+    pub selected_unrolled_periodic: bool,
     pub error: Option<String>,
 }
 
@@ -2491,6 +2543,7 @@ pub fn audit_formula_optimization_policy(
                 candidate_source_bytes: Some(candidate.len()),
                 source_changed: baseline_sha256 != candidate_sha256,
                 selected_formula_id: selected_policy.partial_evaluation_formula_id,
+                selected_unrolled_periodic: selected_policy.unrolled_periodic_hybrid_loop,
                 error: None,
             })
         })();
@@ -2503,6 +2556,7 @@ pub fn audit_formula_optimization_policy(
             candidate_source_bytes: None,
             source_changed: false,
             selected_formula_id: 0,
+            selected_unrolled_periodic: false,
             error: Some(format!("{error:#}")),
         }));
         if (index + 1) % 25 == 0 || index + 1 == paths.len() {
@@ -2525,19 +2579,26 @@ pub fn audit_formula_optimization_policy(
         .count();
     let selected_scenes = entries
         .iter()
-        .filter(|entry| entry.selected_formula_id != 0)
+        .filter(|entry| entry.selected_formula_id != 0 || entry.selected_unrolled_periodic)
         .count();
     let changed_sources = entries.iter().filter(|entry| entry.source_changed).count();
     let unexpected_changes = entries
         .iter()
-        .filter(|entry| entry.source_changed && entry.selected_formula_id == 0)
+        .filter(|entry| {
+            entry.source_changed
+                && entry.selected_formula_id == 0
+                && !entry.selected_unrolled_periodic
+        })
         .count();
     let missed_selections = entries
         .iter()
-        .filter(|entry| !entry.source_changed && entry.selected_formula_id != 0)
+        .filter(|entry| {
+            !entry.source_changed
+                && (entry.selected_formula_id != 0 || entry.selected_unrolled_periodic)
+        })
         .count();
     Ok(FormulaPolicyAuditReport {
-        schema_version: 2,
+        schema_version: 3,
         scenes: entries.len(),
         generated,
         generation_failed: entries.len() - generated,
@@ -7326,6 +7387,13 @@ kernel void also_discarded(uint gid [[thread_position_in_grid]]) {
         );
         assert_eq!(ifs_xy.partial_evaluation_formula_id, 150);
         assert!(ifs_xy.partial_evaluation_phases);
+
+        let hybrid = formula_optimization_policy_for_digest(
+            "b9236c85374cc00782cc8a2e418a3a5aa7af67c82d15ea0c8924152b36638cfb",
+        );
+        assert!(hybrid.periodic_hybrid_loop);
+        assert!(hybrid.unrolled_periodic_hybrid_loop);
+        assert_eq!(hybrid.partial_evaluation_formula_id, 0);
 
         let pseudo = formula_optimization_policy_for_digest(
             "243f3b55d101588b42437330a9ef1f7adb661af69fc3b22c59710abdc8167244",

@@ -22,6 +22,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("mandelbulber_root", type=Path)
     parser.add_argument("--production-binary", type=Path, required=True)
     parser.add_argument("--candidate-binary", type=Path, required=True)
+    parser.add_argument(
+        "--candidate-env",
+        action="append",
+        default=[],
+        metavar="NAME=VALUE",
+        help="environment override applied only to candidate renders",
+    )
     parser.add_argument("--screening-comparison", type=Path, required=True)
     parser.add_argument("--compiler-source", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
@@ -33,9 +40,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--minimum-native-speedup", type=float, default=1.10)
     parser.add_argument("--native-confirm-count", type=int, default=0)
     parser.add_argument("--native-runs", type=int, default=1)
+    parser.add_argument("--confirmation-width", type=int)
+    parser.add_argument("--confirmation-height", type=int)
     parser.add_argument("--timeout", type=float, default=300.0)
     parser.add_argument("--native-timeout", type=float, default=1200.0)
     parser.add_argument("--tile-rows", type=int, default=4)
+    parser.add_argument("--resume", action="store_true")
     return parser.parse_args()
 
 
@@ -44,6 +54,16 @@ def write_json(path: Path, value: object) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
     temporary.replace(path)
+
+
+def environment_overrides(values: list[str]) -> dict[str, str]:
+    overrides: dict[str, str] = {}
+    for value in values:
+        name, separator, setting = value.partition("=")
+        if not separator or not name:
+            raise ValueError(f"candidate environment must use NAME=VALUE: {value}")
+        overrides[name] = setting
+    return overrides
 
 
 def safe_name(path: str) -> str:
@@ -81,6 +101,7 @@ def render(
     cache: Path,
     temporary: Path,
     tile_rows: int | None,
+    extra_environment: dict[str, str] | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     output.mkdir(parents=True, exist_ok=True)
     cache.mkdir(parents=True, exist_ok=True)
@@ -103,6 +124,7 @@ def render(
     if width is not None and height is not None:
         command.extend(["--width", str(width), "--height", str(height)])
     environment = os.environ.copy()
+    environment.update(extra_environment or {})
     environment["FPT_MANDEL_RENDER_CACHE_DIR"] = str(cache)
     environment["TMPDIR"] = str(temporary) + os.sep
     if tile_rows is not None:
@@ -143,6 +165,7 @@ def paired_runs(
     runs: int,
     timeout: float,
     tile_rows: int | None,
+    candidate_environment: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     production_times: list[float] = []
     candidate_times: list[float] = []
@@ -162,6 +185,7 @@ def paired_runs(
                 cache=output.parent / "cache-production",
                 temporary=output.parent / "tmp-production",
                 tile_rows=tile_rows,
+                extra_environment={},
             )
             candidate_image, candidate_metadata = render(
                 binary=candidate_binary,
@@ -175,6 +199,7 @@ def paired_runs(
                 cache=output.parent / "cache-direct",
                 temporary=output.parent / "tmp-direct",
                 tile_rows=tile_rows,
+                extra_environment=candidate_environment,
             )
             production_times.append(float(production_metadata["elapsed_ms"]))
             candidate_times.append(float(candidate_metadata["elapsed_ms"]))
@@ -206,9 +231,12 @@ def paired_runs(
 
 def main() -> int:
     args = parse_args()
+    if (args.confirmation_width is None) != (args.confirmation_height is None):
+        raise ValueError("confirmation width and height must be provided together")
     root = args.mandelbulber_root.resolve()
     production_binary = args.production_binary.resolve()
     candidate_binary = args.candidate_binary.resolve()
+    candidate_environment = environment_overrides(args.candidate_env)
     comparison = json.loads(args.screening_comparison.read_text(encoding="utf-8"))
     production_hashes = direct_hashes(args.compiler_source.read_text(encoding="utf-8"))
     output = args.out.resolve()
@@ -225,6 +253,7 @@ def main() -> int:
             continue
         selected.append({**entry, "scene_sha256": digest})
     selected.sort(key=lambda entry: int(entry["corpus_index"]))
+    report_path = output / "report.json"
     report: dict[str, Any] = {
         "schema_version": 1,
         "mandelbulber_root": str(root),
@@ -232,6 +261,7 @@ def main() -> int:
         "production_binary_sha256": hashlib.sha256(production_binary.read_bytes()).hexdigest(),
         "candidate_binary": str(candidate_binary),
         "candidate_binary_sha256": hashlib.sha256(candidate_binary.read_bytes()).hexdigest(),
+        "candidate_environment": candidate_environment,
         "screening_comparison": str(args.screening_comparison.resolve()),
         "settings": {
             "width": args.width,
@@ -242,6 +272,8 @@ def main() -> int:
             "minimum_native_speedup": args.minimum_native_speedup,
             "native_confirm_count": args.native_confirm_count,
             "native_runs": args.native_runs,
+            "confirmation_width": args.confirmation_width,
+            "confirmation_height": args.confirmation_height,
             "tile_rows": args.tile_rows,
         },
         "screened_scenes": len(comparison["entries"]),
@@ -249,8 +281,25 @@ def main() -> int:
         "scenes": [],
         "accepted_hashes": [],
     }
+    if args.resume and report_path.is_file():
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        report["settings"]["native_confirm_count"] = args.native_confirm_count
+        report["settings"]["native_runs"] = args.native_runs
+        report["settings"]["confirmation_width"] = args.confirmation_width
+        report["settings"]["confirmation_height"] = args.confirmation_height
+        report["settings"]["minimum_native_speedup"] = args.minimum_native_speedup
+        report["accepted_hashes"] = []
+    completed_screens = {
+        int(scene["corpus_index"]) for scene in report["scenes"] if scene.get("screen")
+    }
     for position, entry in enumerate(selected, start=1):
         index = int(entry["corpus_index"])
+        if index in completed_screens:
+            print(
+                f"[{position:02d}/{len(selected):02d}] resume repeated gate {index:04d} {entry['path']}",
+                flush=True,
+            )
+            continue
         print(f"[{position:02d}/{len(selected):02d}] repeated gate {index:04d} {entry['path']}", flush=True)
         screen = paired_runs(
             root=root,
@@ -264,6 +313,7 @@ def main() -> int:
             runs=args.screen_runs,
             timeout=args.timeout,
             tile_rows=None,
+            candidate_environment=candidate_environment,
         )
         screen["qualifies"] = bool(
             screen.get("pixel_exact")
@@ -280,7 +330,7 @@ def main() -> int:
                 "native": None,
             }
         )
-        write_json(output / "report.json", report)
+        write_json(report_path, report)
 
     finalists = [scene for scene in report["scenes"] if scene["screen"]["qualifies"]]
     finalists.sort(
@@ -288,6 +338,10 @@ def main() -> int:
     )
     for scene_record in finalists[: args.native_confirm_count]:
         index = int(scene_record["corpus_index"])
+        if scene_record.get("native") is not None:
+            if scene_record["native"].get("qualifies"):
+                report["accepted_hashes"].append(scene_record["scene_sha256"])
+            continue
         print(f"native gate {index:04d} {scene_record['path']}", flush=True)
         native = paired_runs(
             root=root,
@@ -295,12 +349,13 @@ def main() -> int:
             output=output / "native" / f"{index:04d}-{safe_name(scene_record['path'])}",
             production_binary=production_binary,
             candidate_binary=candidate_binary,
-            width=None,
-            height=None,
+            width=args.confirmation_width,
+            height=args.confirmation_height,
             samples=args.samples,
             runs=args.native_runs,
             timeout=args.native_timeout,
             tile_rows=args.tile_rows,
+            candidate_environment=candidate_environment,
         )
         native["qualifies"] = bool(
             native.get("pixel_exact")
@@ -309,9 +364,9 @@ def main() -> int:
         scene_record["native"] = native
         if native["qualifies"]:
             report["accepted_hashes"].append(scene_record["scene_sha256"])
-        write_json(output / "report.json", report)
+        write_json(report_path, report)
 
-    write_json(output / "report.json", report)
+    write_json(report_path, report)
     print(
         f"accepted {len(report['accepted_hashes'])}/{min(len(finalists), args.native_confirm_count)} native candidates",
         flush=True,

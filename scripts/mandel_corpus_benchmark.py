@@ -168,6 +168,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--height", type=int, default=68)
     parser.add_argument("--samples", type=int, default=1)
     parser.add_argument(
+        "--sdf-accumulation",
+        choices=("auto", "per-sample", "batch", "chunked"),
+        default="auto",
+        help="SDF sample accumulation dispatch mode",
+    )
+    parser.add_argument(
         "--render-mode",
         choices=("pathtrace", "diffuse-normal"),
         default="pathtrace",
@@ -288,6 +294,7 @@ def main() -> int:
         "width": args.width,
         "height": args.height,
         "samples": args.samples,
+        "sdf_accumulation": args.sdf_accumulation,
         "process_isolated": True,
         "sequential": True,
         "timeout_seconds": args.timeout,
@@ -360,6 +367,8 @@ def main() -> int:
                 str(args.samples),
             ]
         )
+        if args.sdf_accumulation != "auto":
+            command.extend(["--sdf-accumulation", args.sdf_accumulation])
         print(
             f"[{position:04d}/{total:04d}] {args.render_mode} {corpus_index:04d} "
             f'{audit_entry["path"]}',

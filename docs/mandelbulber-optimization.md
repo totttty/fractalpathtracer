@@ -18,8 +18,8 @@ exact procedural hit. It does not replace them with cached geometry.
 | --- | --- | --- |
 | Mandel-specific render kernel | Default | Removes generic renderer branches without changing formula operations |
 | Representable-position fixed-point stop | Default | 1.116× median incremental corpus speedup; exact |
-| Selected homogeneous hybrid schedules | Content-selected | 21 scene hashes; latest ten add 1.995–3.417× native speedups; exact |
-| Selected short-period hybrid schedules | Content-selected | Table-index rewrites plus one exact 1.206× native two-phase unroll |
+| Selected homogeneous hybrid schedules | Content-selected | 35 scene hashes; latest fourteen add 1.835–3.609× native speedups; exact |
+| Selected short-period hybrid schedules | Content-selected | Table-index rewrites plus eleven unrolled schedules; latest ten add 2.200–3.572× at 960×540; exact |
 | Scene-bound formula partial evaluation | Three content hashes | 1.415–1.673× in accepted diffuse/path gates; exact |
 | Generic and `-O0` safety policies | Content-selected | Preserves numerically sensitive scenes |
 | Watchdog retry as 32-row tiles | Automatic fallback | Lets exceptionally slow scenes complete without changing global coordinates or samples |
@@ -53,6 +53,24 @@ Adding the fixed-point stop produced the final full-corpus milestone:
 | P95 GPU time | 392.256 ms | 265.597 ms | 1.48× faster |
 | Maximum GPU time | 8,616.995 ms | 8,495.528 ms | 1.01× faster |
 | Watchdog-tiled scenes | 7 | 3 | four fewer |
+
+The final exact compiler harvest added fourteen homogeneous direct loops and
+ten unrolled mixed schedules. Against the immediately preceding exact corpus,
+the production binary produced identical images for all 743 comparable scenes:
+
+| Metric | Previous exact | Final exact | Incremental change |
+| --- | ---: | ---: | ---: |
+| Successful scenes | 743 / 746 | 743 / 746 | no losses |
+| Pixel-exact comparable images | — | 743 / 743 | zero changed pixels |
+| Median GPU time | 27.596 ms | 23.750 ms | 1.162× faster |
+| Mean GPU time | 71.473 ms | 62.731 ms | 1.139× faster |
+| P90 GPU time | 119.910 ms | 111.195 ms | 1.078× faster |
+| P95 GPU time | 218.566 ms | 198.681 ms | 1.100× faster |
+| Maximum GPU time | 4,327.175 ms | 4,551.173 ms | 0.951×; noisy worst-scene regression |
+
+The maximum is a single-pass measurement of `pseudoKleinianMod4`; it has no
+selected new policy and remained byte-identical, so its 5.2% movement is not
+attributed to the accepted compiler transformations.
 
 The stop is safe because a computed fp32 step that cannot change the current
 ray position can only cause the next iteration to sample the same field point.
@@ -164,6 +182,53 @@ All three native image pairs were byte-identical. The retained native speedup
 is 1.206×, and the scene-content policy reports `unrolled-periodic-mixed` in
 render metadata.
 
+The remaining homogeneous audit then native-confirmed fourteen additional
+direct-loop candidates. All were byte-identical and cleared the 1.10× gate:
+
+| Scene | Dynamic loop | Direct loop | Speedup |
+| --- | ---: | ---: | ---: |
+| `DIFS Cylinder rocket` | 1,230.228 ms | 454.901 ms | 2.704× |
+| `DIFS Cylinder tree` | 3,796.030 ms | 1,370.158 ms | 2.771× |
+| `Koch_Ifs aaa1` | 5,967.352 ms | 2,264.250 ms | 2.635× |
+| `MbulbAbsPow2_001` | 3,840.685 ms | 1,455.177 ms | 2.639× |
+| `abox_donut4d_aa2` | 13,366.021 ms | 4,036.077 ms | 3.312× |
+| `mandelbarV3 ABa1` | 9,037.428 ms | 2,504.371 ms | 3.609× |
+| `mandelnest` | 1,274.922 ms | 694.903 ms | 1.835× |
+| `mandelnest_full_001` | 7,305.002 ms | 3,804.928 ms | 1.920× |
+| `msltoe_sym3_mod4` | 2,248.735 ms | 1,029.387 ms | 2.185× |
+| `msltoe_sym3_mod5` | 10,293.680 ms | 3,699.401 ms | 2.783× |
+| `vicsek_001` | 1,436.120 ms | 664.697 ms | 2.161× |
+| `xenodreambuie_v3` | 6,090.988 ms | 3,067.415 ms | 1.986× |
+| `RoadToExascale` | 16,541.228 ms | 7,579.781 ms | 2.182× |
+| `newtonPow3-delta-gnj-001b` | 35,134.794 ms | 14,203.670 ms | 2.474× |
+
+A separate sweep enabled ordered 2–8-phase unrolling for all 261 generated
+mixed scenes. Eighty-eight sources were structurally eligible, 75 were
+pixel-identical in the initial pass, and 52 retained both exactness and at
+least 1.25× across three alternating screen pairs. The ten largest repeatable
+savers were confirmed at 960×540; all ten remained byte-identical:
+
+| Scene | Periodic switch | Unrolled schedule | Speedup |
+| --- | ---: | ---: | ---: |
+| `KochV5_KochV5` | 33,884.120 ms | 9,485.888 ms | 3.572× |
+| `aboxMod11_addCpixelRotate` | 53,794.349 ms | 19,595.401 ms | 2.745× |
+| `aboxMod15cpixelInvert` | 69,047.850 ms | 20,977.503 ms | 3.292× |
+| `abox_mod1_add` | 208,928.367 ms | 74,097.860 ms | 2.820× |
+| `boxFoldBulb_v2_twice` | 113,941.185 ms | 43,543.529 ms | 2.617× |
+| `pseudo kleinian abox13` | 286,949.926 ms | 115,070.384 ms | 2.494× |
+| `transfSphereInvV3_abxTetra_OT` | 64,282.407 ms | 18,298.789 ms | 3.513× |
+| `newtonPow3-rotfold-delta-gnj-003d` | 84,311.486 ms | 38,323.113 ms | 2.200× |
+| `newtonPow3-rotfold-delta-gnj-010g` | 46,971.054 ms | 20,720.305 ms | 2.267× |
+| `hybrid001` | 146,275.402 ms | 49,945.085 ms | 2.929× |
+
+The unroller retains the original formula calls, weights, global foldings,
+bailout tests, iteration numbers, constant addition, and blend order. Thirteen
+initially eligible scenes changed pixels under optimized Metal and were
+rejected. The production source-policy audit now covers all 747 examples:
+746 generate, 13 selected sources change (three formula partial evaluations
+plus ten new schedule selections), with zero unexpected changes, zero missed
+selections, and zero unexpected generation failures.
+
 ### Scene-bound formula compiler
 
 The compiler binds scene-constant boolean, integer, and enum parameters before
@@ -183,9 +248,9 @@ Three exact scene-content policies are enabled:
 
 Five repeated renders in both workloads were pixel-identical for formulas 602
 and 150. Formula 132 was also exact in repeated diffuse and path gates. The
-full source-policy audit covered 747 examples: 746 generated, the one known
-invalid fixture failed both paths, exactly three selected sources changed, and
-there were no unexpected changes or missed selections.
+formula-only cohort remains three scenes. In the combined source-policy audit,
+the one known invalid fixture fails both paths and all intended formula and
+schedule selections are accounted for without unexpected changes.
 
 One important correctness fix came from rejected formula 64. The expression
 evaluator had treated two different unknown symbol names as proof of
@@ -222,6 +287,73 @@ hit. Across seven README scenes every image was bit-identical. Median resident
 memory fell 19.51×, while median render speedup was 0.991× and median build
 ratio was 1.048×. This is retained as an explicit capacity option, not a speed
 default.
+
+## Final corpus compatibility classification
+
+The final exact pass retains 743/746 successful path-traced scenes. The same
+three files have failed every exact corpus pass because the renderer rejects a
+final image containing fewer than two colours:
+
+| Corpus | Scene | Captured path output | Diffuse-normal colours | Classification |
+| ---: | --- | --- | ---: | --- |
+| 407 | `hexgrid` | uniform `(122,122,122)` | 225 | final shading/import gap |
+| 449 | `light circle` | uniform `(122,122,122)` | 193 | final shading/import gap |
+| 609 | `boolean001` | uniform `(0,0,0)` | 216 | final shading/import gap |
+
+A temporary diagnostic write-through captured the single-colour buffers and
+was then removed. All three ordinary diffuse-normal renders contain visible,
+non-uniform procedural hits, proving that formula parsing, distance estimation,
+camera setup, and normals work. Their remaining gaps are in the appearance
+translation used by the complete path tracer: the first two rely heavily on
+volumetric fog, clouds, visible point lights, displacement, and reflections;
+the Boolean example reaches geometry but produces zero final radiance under
+the translated material/light state. They are therefore not counted as
+unsupported fractal formulas and are not optimization regressions.
+
+## Production-quality evidence
+
+A fixed fast/median/slow cohort was rendered at 854×480 with 20 samples and at
+1280×720 with 50 samples. Difficult accumulation used exact per-sample plus
+one-row dispatch to stay below Apple's interactivity watchdog; it does not
+change sample coordinates or image values.
+
+| Scene class | Scene | 480p / 20 spp | 720p / 50 spp |
+| --- | --- | ---: | ---: |
+| Fast | `menger-coastn` | 32.594 ms | 120.910 ms |
+| Median | `T_sphInvV4_menger3` | 918.323 ms | 4,082.461 ms |
+| Slow | `transfSphereInvV3_abxTetra_OT` | 26,486.355 ms | 127,142.222 ms |
+
+Labelled contact sheets are stored with each report:
+
+- `reports/mandel-optimization/production-quality-480p-20spp/contact-sheet.jpg`
+- `reports/mandel-optimization/production-quality-720p-50spp/contact-sheet.jpg`
+
+`scripts/mandel_render_contact_sheet.py` regenerates the PNG or mobile-friendly
+JPEG directly from a corpus benchmark report.
+
+## Optional 0.98-quality approximation gate
+
+The final exact renderer was also used as a fresh baseline for the ten slowest
+scenes. Each exact, iteration-scale, and screen-space LOD candidate ran three
+times at 160×90. Candidates needed SSIM at least 0.98 and a median speedup of
+at least 1.10×. Four screen candidates qualified and were retested at 960×540:
+
+| Scene | Candidate | Exact | Candidate | Speedup | SSIM | Decision |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| `bristorbrot001` | screen LOD 1.0 | 111,333.619 ms | 41,999.929 ms | 2.651× | 0.99116 | cache selection |
+| `hex grid 002` | iteration scale 0.70 | 92,935.012 ms | 70,519.699 ms | 1.318× | 0.97496 | exact fallback |
+| `mandelbulb powe 6 - circle` | iteration scale 0.70 | 9,816.143 ms | 6,042.694 ms | 1.624× | 0.99934 | cache selection |
+| `T_sphInvV4_abxKali_hexGrid2` | iteration scale 0.70 | 45,138.890 ms | 33,142.331 ms | 1.362× | 0.99980 | cache selection |
+
+The failed `hex grid 002` confirmation is important: its screen SSIM was
+0.99283, but intended-resolution SSIM fell below the threshold. Approximation
+decisions therefore remain keyed by scene hash, resolution, and sample count;
+they never alter the default exact content policies.
+
+The earlier adaptive-sampling implementation remains rejected. Its Welford
+standard-error stop saved only 3.6–11.9% at 16 spp while SSIM fell to
+0.782–0.929. The biased rule was removed and was not resurrected for this
+final gate.
 
 ## Rejected or neutral experiments
 

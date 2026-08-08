@@ -51,6 +51,8 @@ def parse_args() -> argparse.Namespace:
         help="confirm the N fastest qualifying screen candidates at scene-native resolution",
     )
     parser.add_argument("--native-samples", type=int, default=1)
+    parser.add_argument("--confirmation-width", type=int)
+    parser.add_argument("--confirmation-height", type=int)
     parser.add_argument("--native-timeout", type=float, default=900.0)
     parser.add_argument(
         "--selection-cache",
@@ -63,6 +65,7 @@ def parse_args() -> argparse.Namespace:
         help="do not run the existing ray/formula work profiler on exact candidates",
     )
     parser.add_argument("--timeout", type=float, default=300.0)
+    parser.add_argument("--resume", action="store_true")
     return parser.parse_args()
 
 
@@ -248,6 +251,8 @@ def render(
 
 def main() -> int:
     args = parse_args()
+    if (args.confirmation_width is None) != (args.confirmation_height is None):
+        raise ValueError("confirmation width and height must be provided together")
     root = args.mandelbulber_root.resolve()
     binary = args.binary.resolve()
     cohort = json.loads(args.cohort.read_text(encoding="utf-8"))
@@ -295,14 +300,29 @@ def main() -> int:
             "screen_lod_rates": screen_lod_rates,
             "native_confirm_count": args.native_confirm_count,
             "native_samples": args.native_samples,
+            "confirmation_width": args.confirmation_width,
+            "confirmation_height": args.confirmation_height,
             "profile_exact": not args.no_profile,
         },
         "scenes": [],
         "formula_priorities": [],
     }
+    report_path = output / "report.json"
+    if args.resume and report_path.is_file():
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        report["settings"]["native_confirm_count"] = args.native_confirm_count
+        report["settings"]["native_samples"] = args.native_samples
+        report["settings"]["confirmation_width"] = args.confirmation_width
+        report["settings"]["confirmation_height"] = args.confirmation_height
+        report["settings"]["minimum_ssim"] = args.minimum_ssim
+        report["settings"]["minimum_speedup"] = args.minimum_speedup
+    completed_scenes = {int(scene["corpus_index"]) for scene in report["scenes"]}
     formula_totals: dict[int, dict[str, float | int]] = {}
     for scene_record in scenes:
         index = int(scene_record["corpus_index"])
+        if index in completed_scenes:
+            print(f"{index:04d} resume screen sweep", flush=True)
+            continue
         path = root / scene_record["path"]
         scene_output = output / f"{index:04d}-{safe_name(scene_record['path'])}"
         baseline_image: Path | None = None
@@ -406,7 +426,7 @@ def main() -> int:
             key=lambda entry: float(entry["estimated_gpu_ms"]),
             reverse=True,
         )
-        write_json(output / "report.json", report)
+        write_json(report_path, report)
 
     confirmation_candidates = [
         scene for scene in report["scenes"] if scene["best_qualifying"] is not None
@@ -437,6 +457,8 @@ def main() -> int:
         }
     for scene_result in confirmation_candidates:
         index = int(scene_result["corpus_index"])
+        if scene_result.get("native_confirmation") is not None:
+            continue
         path = root / scene_result["path"]
         candidate = scene_result["best_qualifying"]
         native_output = output / f"{index:04d}-{safe_name(scene_result['path'])}" / "native"
@@ -447,8 +469,8 @@ def main() -> int:
                 root=root,
                 scene=path,
                 output=native_output / "exact",
-                width=None,
-                height=None,
+                width=args.confirmation_width,
+                height=args.confirmation_height,
                 samples=args.native_samples,
                 extra_args=[],
                 timeout=args.native_timeout,
@@ -458,8 +480,8 @@ def main() -> int:
                 root=root,
                 scene=path,
                 output=native_output / candidate["name"],
-                width=None,
-                height=None,
+                width=args.confirmation_width,
+                height=args.confirmation_height,
                 samples=args.native_samples,
                 extra_args=(
                     ["--mandel-screen-lod-rate", str(candidate["screen_lod_rate"])]
@@ -511,13 +533,13 @@ def main() -> int:
         except (RuntimeError, subprocess.TimeoutExpired) as error:
             confirmation = {"status": "failed", "error": str(error)}
         scene_result["native_confirmation"] = confirmation
-        write_json(output / "report.json", report)
+        write_json(report_path, report)
         if cache_path is not None:
             write_json(cache_path, cache)
 
     if cache_path is not None:
         write_json(cache_path, cache)
-    write_json(output / "report.json", report)
+    write_json(report_path, report)
     return 0
 
 
