@@ -38,19 +38,13 @@ release. The repository now provides shared SDF and voxel geometry paths plus
 the generic typed-program route for future procedurally generated fractals.
 Arbitrary GLSL translation remains intentionally out of scope.
 
-FPT Metal also contains a generated Mandelbulber2 formula frontend. See the
-[Mandelbulber compatibility architecture](docs/mandelbulber-compatibility.md)
-for its 458 fixed formula implementations, 747-scene dependency coverage, generated
-analytic/delta, hybrid, boolean, and embedded-custom runtimes, hit-only
-Mandelbulber palette colouring mapped into Metal-FPT materials, validation
-results, corpus benchmarks, persistent generated-pipeline caching, remaining
-scene-feature tiers, and GPL artifact boundary. The
-[Mandelbulber optimization report](docs/mandelbulber-optimization.md) documents
-the retained exact kernel specializations, fixed-point marcher stop,
-content-selected formula compiler, watchdog fallback, adaptive spatial preview,
-template-brick capacity mode, and every rejected experiment. The retained
-full-corpus path improved median GPU time from 35.934 ms to 23.756 ms while all
-743 comparable images remained pixel-identical.
+FPT Metal also contains a generated Mandelbulber2 formula frontend with 458
+fixed formula implementations and 747-scene dependency coverage. It supports
+analytic/delta estimators, hybrids, Boolean combinations, embedded custom
+formulas, and Mandelbulber palette colouring through FPT Metal's material
+system. The retained exact optimization stack improved full-corpus median GPU
+time from 35.934 ms to 23.756 ms while all 743 comparable images remained
+pixel-identical.
 
 ## Mandelbulber2 Scenes
 
@@ -65,10 +59,46 @@ It does not bake the fractal into voxels or a cached SDF.
 These three production examples span the measured fast, median, and slow
 cohort at `1280x720`, 50 spp on an Apple M1 Max. Their GPU times were 120.910
 ms, 4,082.461 ms, and 127,142.222 ms respectively; shader compilation is not
-included. The individual [fast](docs/mandel-renders/production-quality-720p-50spp-fast.png),
-[median](docs/mandel-renders/production-quality-720p-50spp-median.png), and
-[slow](docs/mandel-renders/production-quality-720p-50spp-slow.png) renders are
-tracked alongside the contact sheet.
+included.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/mandel-renders/production-quality-720p-50spp-median.png" alt="T sphInvV4 menger3 Mandelbulber scene rendered by FPT Metal"></td>
+    <td width="50%"><img src="docs/mandel-renders/production-quality-720p-50spp-slow.png" alt="transfSphereInvV3 abxTetra OT Mandelbulber scene rendered by FPT Metal"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>T_sphInvV4_menger3</strong><br>4,082.461 ms GPU</td>
+    <td align="center"><strong>transfSphereInvV3_abxTetra_OT</strong><br>127,142.222 ms GPU</td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/mandel-renders/production-quality-720p-50spp-fast.png" alt="menger coastn Mandelbulber scene rendered by FPT Metal"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><strong>menger-coastn</strong><br>120.910 ms GPU</td>
+  </tr>
+</table>
+
+### How the Mandelbulber frontend works
+
+1. The Rust importer parses a `.fract` scene, its active formula slots,
+   transforms, iteration schedule, camera, lights, and supported material
+   controls.
+2. Formula IDs are resolved against an external Mandelbulber2 checkout. The
+   source frontend translates the selected OpenCL formula bodies and shared
+   helpers into scene-specialized Metal.
+3. Generated shaders preserve the procedural distance estimator. FPT Metal
+   sphere-traces that exact field and uses its own path tracer for final
+   lighting rather than voxelising or meshing the fractal.
+4. Generated libraries and Metal pipeline archives are cached by source and
+   topology hash. Scene-content policies enable exact compiler
+   specializations only where native-resolution image gates passed.
+
+The exact renderer retains a Mandel-specific kernel, representable-position
+march termination, 35 selected homogeneous schedules, 11 selected short-period
+hybrid schedules, persistent pipeline caching, and watchdog-safe tiled retry.
+Cached SDF, voxel, NAADF, sparse traversal, adaptive sampling, and approximate
+normal experiments were not retained because they either lost detail, changed
+images, or failed to improve end-to-end time.
 
 Render an upstream scene after building the release binary:
 
@@ -100,6 +130,13 @@ Cache decisions apply only when the complete scene hash, width, height, and
 sample count match. Every miss or failed quality gate falls back to exact.
 The packaged example accepts three candidates at SSIM at least `0.98` and
 speedup at least `1.10x`, and records one explicit rejection.
+
+| Example cache scene | Selection | Speedup | SSIM |
+| --- | --- | ---: | ---: |
+| `bristorbrot001` | Screen LOD 1.0 | 2.651x | 0.99116 |
+| `mandelbulb powe 6 - circle` | Iteration scale 0.70 | 1.624x | 0.99934 |
+| `T_sphInvV4_abxKali_hexGrid2` | Iteration scale 0.70 | 1.362x | 0.99980 |
+| `hex grid 002` | Exact fallback | 1.318x candidate | 0.97496 |
 
 Formula geometry is broadly covered, but Mandelbulber's complete appearance
 system is not: volumetric fog and clouds, visible light geometry, advanced
