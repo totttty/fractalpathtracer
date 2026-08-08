@@ -5,6 +5,25 @@ experiments. Exact procedural rendering remains the default. Approximate
 iteration controls are selected only from a native-resolution, device-local
 cache, while exact compiler improvements remain content-hash selected.
 
+## Current packaged example
+
+[`mandel-approximation-cache-960x540-1spp.json`](mandel-approximation-cache-960x540-1spp.json)
+is the final opt-in example produced after the exact compiler harvest. It is
+specific to the Apple M1 Max measurements at 960×540 and one sample per pixel.
+The gate required SSIM at least 0.98 and a median speedup of at least 1.10×:
+
+| Upstream scene | Selection | Speedup | SSIM | Decision |
+|---|---|---:|---:|---|
+| `bristorbrot001.fract` | screen LOD 1.0 | 2.651× | 0.99116 | approximate |
+| `mandelbulb powe 6 - circle.fract` | iteration scale 0.70 | 1.624× | 0.99934 | approximate |
+| `T_sphInvV4_abxKali_hexGrid2.fract` | iteration scale 0.70 | 1.362× | 0.99980 | approximate |
+| `hex grid 002.fract` | iteration scale 0.70 candidate | 1.318× | 0.97496 | exact fallback |
+
+The explicit exact entry demonstrates that a speed win is not sufficient.
+Scene hash, width, height, and sample count must all match before the runtime
+uses a cached approximation. This file is an example and benchmark artifact,
+not a portable promise for other devices or output settings.
+
 ## 1. Slow-scene cohort sweep
 
 The 20 slowest scenes in `reports/mandel-optimization/cohort.json` were
@@ -103,11 +122,12 @@ different output settings, failed native renders, and candidates below the
 hard gate all fall back to exact rendering. A cache can alternatively be
 provided through `FPT_MANDEL_SELECTION_CACHE`.
 
-The production cache from this run is
+The historical production cache from this first run was written to
 `reports/mandel-approximation-selector/selection-cache-production.json`. Its
-only approximate entry is scene 101 at 1536x1536 and one sample. An automatic
+only approximate entry was scene 101 at 1536x1536 and one sample. An automatic
 smoke render reported iteration scale 0.75, confirming that the renderer
-applied the cached decision.
+applied the cached decision. The tracked example above supersedes it as the
+current demonstration cache.
 
 ## 5. Profile-guided exact compiler lowering
 

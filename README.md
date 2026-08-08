@@ -38,8 +38,8 @@ release. The repository now provides shared SDF and voxel geometry paths plus
 the generic typed-program route for future procedurally generated fractals.
 Arbitrary GLSL translation remains intentionally out of scope.
 
-The `mandel` branch also contains a generated Mandelbulber2 formula
-frontend. See the [Mandelbulber compatibility architecture](docs/mandelbulber-compatibility.md)
+FPT Metal also contains a generated Mandelbulber2 formula frontend. See the
+[Mandelbulber compatibility architecture](docs/mandelbulber-compatibility.md)
 for its 458 fixed formula implementations, 747-scene dependency coverage, generated
 analytic/delta, hybrid, boolean, and embedded-custom runtimes, hit-only
 Mandelbulber palette colouring mapped into Metal-FPT materials, validation
@@ -51,6 +51,64 @@ content-selected formula compiler, watchdog fallback, adaptive spatial preview,
 template-brick capacity mode, and every rejected experiment. The retained
 full-corpus path improved median GPU time from 35.934 ms to 23.756 ms while all
 743 comparable images remained pixel-identical.
+
+## Mandelbulber2 Scenes
+
+The importer reads `.fract` scenes and formula sources from an external
+[Mandelbulber2](https://github.com/buddhi1980/mandelbulber2) checkout, generates
+a scene-specialized Metal distance estimator, and renders the exact procedural
+surface through FPT Metal's own camera, materials, lighting, and path tracer.
+It does not bake the fractal into voxels or a cached SDF.
+
+<img src="docs/mandel-renders/production-quality-720p-50spp-contact-sheet.jpg" alt="Three Mandelbulber2 scenes path traced by FPT Metal at 1280 by 720 and 50 samples per pixel" width="1200">
+
+These three production examples span the measured fast, median, and slow
+cohort at `1280x720`, 50 spp on an Apple M1 Max. Their GPU times were 120.910
+ms, 4,082.461 ms, and 127,142.222 ms respectively; shader compilation is not
+included. The individual [fast](docs/mandel-renders/production-quality-720p-50spp-fast.png),
+[median](docs/mandel-renders/production-quality-720p-50spp-median.png), and
+[slow](docs/mandel-renders/production-quality-720p-50spp-slow.png) renders are
+tracked alongside the contact sheet.
+
+Render an upstream scene after building the release binary:
+
+```sh
+MANDELBULBER_ROOT=/path/to/mandelbulber2
+SCENE="$MANDELBULBER_ROOT/deploy/share/mandelbulber2/examples/mandelbulb001.fract"
+
+target/release/fpt-metal render "$SCENE" \
+  --out renders/mandelbulb001 --renderer sdf \
+  --mandelbulber-root "$MANDELBULBER_ROOT" \
+  --width 1280 --height 720 --samples 50 \
+  --sdf-accumulation per-sample
+```
+
+Exact rendering is the default. A deliberately opt-in, device- and
+output-specific approximation example is provided in
+[`docs/mandel-approximation-cache-960x540-1spp.json`](docs/mandel-approximation-cache-960x540-1spp.json):
+
+```sh
+target/release/fpt-metal render "$SCENE" \
+  --out renders/mandel-auto --renderer sdf \
+  --mandelbulber-root "$MANDELBULBER_ROOT" \
+  --width 960 --height 540 --samples 1 \
+  --mandel-optimization auto \
+  --mandel-selection-cache docs/mandel-approximation-cache-960x540-1spp.json
+```
+
+Cache decisions apply only when the complete scene hash, width, height, and
+sample count match. Every miss or failed quality gate falls back to exact.
+The packaged example accepts three candidates at SSIM at least `0.98` and
+speedup at least `1.10x`, and records one explicit rejection.
+
+Formula geometry is broadly covered, but Mandelbulber's complete appearance
+system is not: volumetric fog and clouds, visible light geometry, advanced
+reflection/transparency gradients, textures, and some material graphs can
+still make an otherwise correct fractal look different. Three of 746 valid
+corpus scenes currently reach visible diffuse-normal geometry but fail the
+full path-traced appearance gate. Generated formula artifacts retain
+Mandelbulber2's GPLv3-or-later boundary and stay in ignored runtime caches; the
+Apache-2.0 repository does not vendor the upstream generated formula corpus.
 
 ## Quick Start
 

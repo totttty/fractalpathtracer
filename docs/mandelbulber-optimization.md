@@ -323,10 +323,10 @@ change sample coordinates or image values.
 | Median | `T_sphInvV4_menger3` | 918.323 ms | 4,082.461 ms |
 | Slow | `transfSphereInvV3_abxTetra_OT` | 26,486.355 ms | 127,142.222 ms |
 
-Labelled contact sheets are stored with each report:
-
-- `reports/mandel-optimization/production-quality-480p-20spp/contact-sheet.jpg`
-- `reports/mandel-optimization/production-quality-720p-50spp/contact-sheet.jpg`
+The final 720p labelled contact sheet and its three source renders are tracked
+in [`docs/mandel-renders`](mandel-renders/). The complete 480p and 720p reports,
+render metadata, and generated pipeline caches remain ignored under
+`reports/mandel-optimization/production-quality-*`.
 
 `scripts/mandel_render_contact_sheet.py` regenerates the PNG or mobile-friendly
 JPEG directly from a corpus benchmark report.
