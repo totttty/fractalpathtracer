@@ -1,0 +1,21 @@
+# Mandelbulber settings file
+# version 2.33
+# Generated-binding fixture: mixed max-axis/Euclidean Linear Cube distance.
+[main_parameters]
+N 1;
+camera 3 -4 2;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 1113;
+fov 53,13;
+image_height 180;
+image_width 320;
+target 0 0 0;
+view_distance_max 30;
+[fractal_1]
+fold_color_aux_color_enabled_false true;
+fold_color_difs1 0,7;
+transf_function_enabledA_false true;
+transf_offset_0 80;
+transf_scaleA_0 0,35;
+transf_scale_1 0,8;

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "minimum_ssim": 0.98,
+  "minimum_speedup": 1.1,
+  "entries": {
+    "1df5ce32481800e889e67792737c6ba4fb17dbcfd0b204af1bae41bd98ccbc95:960x540:1": {
+      "scene_sha256": "1df5ce32481800e889e67792737c6ba4fb17dbcfd0b204af1bae41bd98ccbc95",
+      "width": 960,
+      "height": 540,
+      "samples": 1,
+      "formula_ids": [21],
+      "selection": {
+        "kind": "screen_lod",
+        "value": 1.0
+      },
+      "speedup": 2.650804936544504,
+      "ssim": 0.9911599159240723,
+      "mae": 0.321757972240448
+    },
+    "6c4c68f789ebb4633fdd6a4ea1f854c0f73c186ddb8575e8ed4e671246ff7e2b:960x540:1": {
+      "scene_sha256": "6c4c68f789ebb4633fdd6a4ea1f854c0f73c186ddb8575e8ed4e671246ff7e2b",
+      "width": 960,
+      "height": 540,
+      "samples": 1,
+      "formula_ids": [122, 1603, 1600],
+      "selection": {
+        "kind": "exact",
+        "value": 1.0
+      },
+      "speedup": 1.3178588866723413,
+      "ssim": 0.9749615788459778,
+      "mae": 1.1295968294143677
+    },
+    "c1e3aa2e58189773ea459eceb9424a4934da01814067f78fbbc5bf3934b83712:960x540:1": {
+      "scene_sha256": "c1e3aa2e58189773ea459eceb9424a4934da01814067f78fbbc5bf3934b83712",
+      "width": 960,
+      "height": 540,
+      "samples": 1,
+      "formula_ids": [2],
+      "selection": {
+        "kind": "iteration_scale",
+        "value": 0.7
+      },
+      "speedup": 1.6244646974377936,
+      "ssim": 0.9993354678153992,
+      "mae": 0.01160622388124466
+    },
+    "84e4bf8cbec835c5556304fc5fe4bf5000683820d79ef4360804a9f53d54b550:960x540:1": {
+      "scene_sha256": "84e4bf8cbec835c5556304fc5fe4bf5000683820d79ef4360804a9f53d54b550",
+      "width": 960,
+      "height": 540,
+      "samples": 1,
+      "formula_ids": [1155, 60, 1603],
+      "selection": {
+        "kind": "iteration_scale",
+        "value": 0.7
+      },
+      "speedup": 1.361970889203827,
+      "ssim": 0.9998000264167786,
+      "mae": 0.01528999488800764
+    }
+  }
+}

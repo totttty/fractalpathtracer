@@ -1,0 +1,25 @@
+# Mandelbulber settings file
+# version 2.33
+# Generated-binding fixture for TransfDIFSBox (ID 1600).
+[main_parameters]
+N 1;
+camera 3 -4 2;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 1600;
+fov 53,13;
+image_height 180;
+image_width 320;
+target 0 0 0;
+view_distance_max 30;
+[fractal_1]
+fold_color_aux_color_enabledA_false true;
+fold_color_aux_color_enabledB_false true;
+fold_color_aux_color_enabled_false true;
+fold_color_difs0 0,03;
+fold_color_difs_0000 0,1 0,2 0,3 0,4;
+fold_color_start_iterations_A 0;
+fold_color_stop_iterations_A 2;
+transf_addition_constant_111 0,8 0,6 1,1;
+transf_offsetB_0 0,08;
+transf_offset_0 0,25;

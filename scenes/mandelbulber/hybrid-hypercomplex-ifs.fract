@@ -1,0 +1,46 @@
+# Mandelbulber settings file
+# version 2.33
+# Mixed analytic/IFS fixture exercising complete per-slot IFS packing.
+[main_parameters]
+N 24;
+camera 2,8 -3,2 2,4;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 4;
+formula_2 10;
+formula_iterations_1 1;
+formula_iterations_2 2;
+formula_weight_1 0,7;
+formula_weight_2 0,85;
+fractal_constant_factor 0,8 0,9 1,05;
+fov 53,13;
+hybrid_fractal_enable true;
+image_height 180;
+image_width 320;
+target 0 0 0;
+view_distance_max 30;
+[fractal_1]
+[fractal_2]
+IFS_abs_x true;
+IFS_abs_z true;
+IFS_direction_0 1 0,2 0;
+IFS_direction_2 -0,56 0,61 0,56;
+IFS_direction_3 -0,54 0,65 0,54;
+IFS_distance_2 0,08;
+IFS_distance_3 -0,04;
+IFS_edge 0,15 0 0,1;
+IFS_edge_enabled true;
+IFS_enabled_0 true;
+IFS_enabled_2 true;
+IFS_enabled_3 true;
+IFS_intensity_0 0,9;
+IFS_intensity_2 1,1;
+IFS_intensity_3 0,8;
+IFS_menger_sponge_mode true;
+IFS_offset 1 0,8 1,1;
+IFS_rotation -2 8 6;
+IFS_rotation_enabled true;
+IFS_rotations_0 3 -4 2;
+IFS_rotations_2 -5 1 7;
+IFS_rotations_3 2 6 -3;
+IFS_scale 1,7;

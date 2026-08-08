@@ -1,6 +1,8 @@
 use crate::ffi::*;
+use crate::mandelbulber::MandelbulberScene;
 use anyhow::{Result, anyhow, bail, ensure};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -81,6 +83,7 @@ pub enum VoxelOffsetMode {
 pub enum VoxelStorageMode {
     Dense = VOXEL_STORAGE_DENSE as isize,
     SparseBricks = VOXEL_STORAGE_SPARSE_BRICKS as isize,
+    TemplateBricks = VOXEL_STORAGE_TEMPLATE_BRICKS as isize,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -109,10 +112,14 @@ pub enum DiagnosticMode {
     Depth = DIAGNOSTIC_DEPTH as isize,
     Normal = DIAGNOSTIC_NORMAL as isize,
     Material = DIAGNOSTIC_MATERIAL as isize,
+    HitMask = DIAGNOSTIC_HIT_MASK as isize,
     PathDirect = DIAGNOSTIC_PATH_DIRECT as isize,
     PathEnvironment = DIAGNOSTIC_PATH_ENVIRONMENT as isize,
     PathThroughput = DIAGNOSTIC_PATH_THROUGHPUT as isize,
     PathFinal = DIAGNOSTIC_PATH_FINAL as isize,
+    DiffuseNormal = DIAGNOSTIC_DIFFUSE_NORMAL as isize,
+    MandelColorIndex = DIAGNOSTIC_MANDEL_COLOR_INDEX as isize,
+    MandelPalettePosition = DIAGNOSTIC_MANDEL_PALETTE_POSITION as isize,
     SdfPrimarySteps = DIAGNOSTIC_SDF_PRIMARY_STEPS as isize,
     SdfShadowSteps = DIAGNOSTIC_SDF_SHADOW_STEPS as isize,
     SdfNormalEvals = DIAGNOSTIC_SDF_NORMAL_EVALS as isize,
@@ -125,6 +132,7 @@ pub struct RenderArgs {
     pub scene_path: PathBuf,
     pub out_dir: PathBuf,
     pub fpt_root: PathBuf,
+    pub mandelbulber_root: Option<PathBuf>,
     pub metallib: Option<PathBuf>,
     pub preview: bool,
     pub live_pathtrace: bool,
@@ -175,8 +183,13 @@ pub struct RenderArgs {
     pub regional_program_resolution: u32,
     pub sdf_rr_start: f32,
     pub sdf_rr_min_prob: f32,
+    pub mandel_iteration_scale: Option<f32>,
+    pub mandel_screen_lod_rate: Option<f32>,
+    pub mandel_optimization_auto: bool,
+    pub mandel_selection_cache: Option<PathBuf>,
     pub sdf_bounce_index: u32,
     pub diagnostic_mode: DiagnosticMode,
+    pub diagnostic_max_distance: Option<f32>,
     pub width: Option<u32>,
     pub height: Option<u32>,
     pub samples: Option<u32>,
@@ -188,6 +201,7 @@ impl RenderArgs {
             scene_path: scene_path.into(),
             out_dir: "renders".into(),
             fpt_root: DEFAULT_FPT_ROOT.into(),
+            mandelbulber_root: None,
             metallib: None,
             preview: false,
             live_pathtrace: false,
@@ -238,8 +252,13 @@ impl RenderArgs {
             regional_program_resolution: 16,
             sdf_rr_start: 3.0,
             sdf_rr_min_prob: 0.2,
+            mandel_iteration_scale: None,
+            mandel_screen_lod_rate: None,
+            mandel_optimization_auto: false,
+            mandel_selection_cache: None,
             sdf_bounce_index: 0,
             diagnostic_mode: DiagnosticMode::Depth,
+            diagnostic_max_distance: None,
             width: None,
             height: None,
             samples: None,
@@ -250,6 +269,7 @@ impl RenderArgs {
 pub struct LoadedScene {
     pub config: FptRenderConfig,
     pub output_name: String,
+    pub runtime_metal_source: Option<Vec<u8>>,
 }
 
 fn next_value<'a>(args: &'a [String], index: &mut usize, flag: &str) -> Result<&'a str> {
@@ -280,8 +300,8 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
             "--bound-grid-resolution" => {
                 let resolution = next_value(args, &mut i, "--bound-grid-resolution")?.parse()?;
                 ensure!(
-                    matches!(resolution, 32 | 64),
-                    "bound-grid resolution must be 32 or 64"
+                    matches!(resolution, 32 | 64 | 128 | 256),
+                    "bound-grid resolution must be 32, 64, 128, or 256"
                 );
                 out.bound_grid_resolution = Some(resolution);
             }
@@ -326,6 +346,7 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                 out.voxel_storage_mode = Some(match next_value(args, &mut i, "--voxel-storage")? {
                     "dense" => VoxelStorageMode::Dense,
                     "sparse-bricks" => VoxelStorageMode::SparseBricks,
+                    "template-bricks" => VoxelStorageMode::TemplateBricks,
                     value => bail!("invalid voxel storage mode: {value}"),
                 })
             }
@@ -381,6 +402,10 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
             }
             "--out" => out.out_dir = next_value(args, &mut i, "--out")?.into(),
             "--fpt-root" => out.fpt_root = next_value(args, &mut i, "--fpt-root")?.into(),
+            "--mandelbulber-root" => {
+                out.mandelbulber_root =
+                    Some(next_value(args, &mut i, "--mandelbulber-root")?.into())
+            }
             "--metallib" => out.metallib = Some(next_value(args, &mut i, "--metallib")?.into()),
             "--width" => out.width = Some(next_value(args, &mut i, "--width")?.parse()?),
             "--height" => out.height = Some(next_value(args, &mut i, "--height")?.parse()?),
@@ -405,6 +430,37 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
             }
             "--sdf-rr-min-prob" => {
                 out.sdf_rr_min_prob = next_value(args, &mut i, "--sdf-rr-min-prob")?.parse()?
+            }
+            "--mandel-iteration-scale" => {
+                let scale = next_value(args, &mut i, "--mandel-iteration-scale")?.parse()?;
+                ensure!(
+                    (0.125..=1.0).contains(&scale),
+                    "Mandel iteration scale must be 0.125..1"
+                );
+                out.mandel_iteration_scale = Some(scale);
+            }
+            "--mandel-screen-lod-rate" => {
+                let rate = next_value(args, &mut i, "--mandel-screen-lod-rate")?.parse()?;
+                ensure!(
+                    (0.0..=8.0).contains(&rate),
+                    "Mandel screen LOD rate must be 0..8"
+                );
+                out.mandel_screen_lod_rate = Some(rate);
+            }
+            "--mandel-optimization" => {
+                out.mandel_optimization_auto =
+                    match next_value(args, &mut i, "--mandel-optimization")? {
+                        "exact" => false,
+                        "auto" => true,
+                        value => bail!("unknown Mandel optimization mode: {value}"),
+                    };
+            }
+            "--mandel-selection-cache" => {
+                out.mandel_selection_cache = Some(PathBuf::from(next_value(
+                    args,
+                    &mut i,
+                    "--mandel-selection-cache",
+                )?));
             }
             "--sdf-bounce-index" => {
                 out.sdf_bounce_index = next_value(args, &mut i, "--sdf-bounce-index")?.parse()?
@@ -512,10 +568,14 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                     "depth" => DiagnosticMode::Depth,
                     "normal" => DiagnosticMode::Normal,
                     "material" => DiagnosticMode::Material,
+                    "hit-mask" => DiagnosticMode::HitMask,
                     "path-direct" => DiagnosticMode::PathDirect,
                     "path-environment" => DiagnosticMode::PathEnvironment,
                     "path-throughput" => DiagnosticMode::PathThroughput,
                     "path-final" => DiagnosticMode::PathFinal,
+                    "diffuse-normal" => DiagnosticMode::DiffuseNormal,
+                    "mandel-color-index" => DiagnosticMode::MandelColorIndex,
+                    "mandel-palette-position" => DiagnosticMode::MandelPalettePosition,
                     "sdf-primary-steps" => DiagnosticMode::SdfPrimarySteps,
                     "sdf-shadow-steps" => DiagnosticMode::SdfShadowSteps,
                     "sdf-normal-evals" => DiagnosticMode::SdfNormalEvals,
@@ -524,11 +584,55 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                     value => bail!("invalid diagnostic mode: {value}"),
                 }
             }
+            "--max-distance" => {
+                let value = next_value(args, &mut i, "--max-distance")?.parse::<f32>()?;
+                ensure!(
+                    value.is_finite() && value > 0.0,
+                    "--max-distance must be finite and positive"
+                );
+                out.diagnostic_max_distance = Some(value);
+            }
             value => bail!("unknown argument: {value}"),
         }
         i += 1;
     }
     Ok(out)
+}
+
+fn cached_mandel_selection(config: &FptRenderConfig, args: &RenderArgs) -> Option<(String, f32)> {
+    if !args.mandel_optimization_auto || config.sdf_id != SDF_MANDELBULBER {
+        return None;
+    }
+    let cache_path = args
+        .mandel_selection_cache
+        .clone()
+        .or_else(|| std::env::var_os("FPT_MANDEL_SELECTION_CACHE").map(PathBuf::from))?;
+    let cache: Value = serde_json::from_slice(&fs::read(cache_path).ok()?).ok()?;
+    if cache.get("schema_version")?.as_u64()? != 1 {
+        return None;
+    }
+    let minimum_ssim = cache.get("minimum_ssim")?.as_f64()?.max(0.98);
+    let minimum_speedup = cache.get("minimum_speedup")?.as_f64()?.max(1.05);
+    let scene_sha256 = format!("{:x}", Sha256::digest(fs::read(&args.scene_path).ok()?));
+    let key = format!(
+        "{scene_sha256}:{}x{}:{}",
+        config.width, config.height, config.samples
+    );
+    let entry = cache.get("entries")?.get(&key)?;
+    if entry.get("scene_sha256")?.as_str()? != scene_sha256
+        || entry.get("width")?.as_u64()? != u64::from(config.width)
+        || entry.get("height")?.as_u64()? != u64::from(config.height)
+        || entry.get("samples")?.as_u64()? != u64::from(config.samples)
+        || entry.get("ssim")?.as_f64()? < minimum_ssim
+        || entry.get("speedup")?.as_f64()? < minimum_speedup
+    {
+        return None;
+    }
+    let selection = entry.get("selection")?;
+    Some((
+        selection.get("kind")?.as_str()?.to_owned(),
+        selection.get("value")?.as_f64()? as f32,
+    ))
 }
 
 pub fn apply_optimization_args(config: &mut FptRenderConfig, args: &RenderArgs) {
@@ -537,6 +641,29 @@ pub fn apply_optimization_args(config: &mut FptRenderConfig, args: &RenderArgs) 
     config.sdf_normal_mode = args.sdf_normal_mode as u32;
     config.sdf_rr_start = args.sdf_rr_start;
     config.sdf_rr_min_prob = args.sdf_rr_min_prob;
+    let mut iteration_scale = args.mandel_iteration_scale;
+    let mut screen_lod_rate = args.mandel_screen_lod_rate;
+    if iteration_scale.is_none()
+        && screen_lod_rate.is_none()
+        && let Some((kind, value)) = cached_mandel_selection(config, args)
+    {
+        match kind.as_str() {
+            "iteration_scale" if (0.125..=1.0).contains(&value) => iteration_scale = Some(value),
+            "screen_lod" if (0.0..=8.0).contains(&value) => screen_lod_rate = Some(value),
+            "exact" => {}
+            _ => {}
+        }
+    }
+    config.mandel_iteration_scale = iteration_scale.unwrap_or(1.0);
+    config.vset_values[crate::mandelbulber::VPARAM_SCREEN_LOD_RATE] =
+        screen_lod_rate.unwrap_or(0.0);
+    if config.sdf_id == SDF_MANDELBULBER {
+        if let Some(scale) = iteration_scale {
+            let iterations = config.set_values[crate::mandelbulber::PARAM_MAX_ITERATIONS];
+            config.set_values[crate::mandelbulber::PARAM_MAX_ITERATIONS] =
+                (iterations * scale).round().max(1.0);
+        }
+    }
     config.sdf_chunk_samples = args.sdf_chunk_samples;
     config.sdf_topology_specialization = if args.sdf_affine_index_topology_specialization {
         5
@@ -553,6 +680,8 @@ pub fn apply_optimization_args(config: &mut FptRenderConfig, args: &RenderArgs) 
         3
     } else if args.sdf_dual_generated_library {
         2
+    } else if args.mandelbulber_root.is_some() {
+        1
     } else {
         u32::from(args.sdf_runtime_source_bytecode)
     };
@@ -619,9 +748,11 @@ pub fn default_config() -> FptRenderConfig {
         sdf_id: SDF_CORNELL_BOX,
         sdf_rr_start: 3.0,
         sdf_rr_min_prob: 0.2,
+        mandel_iteration_scale: 1.0,
         sdf_chunk_samples: 8,
         camera_position: [0.1, 0.1, -5.0],
         camera_yaw_pitch: [0.0, 0.0],
+        camera_roll: 0.0,
         camera_fov: 90.0,
         camera_dof: 0.01,
         render: [5.0, 312.0, 0.0005, 0.0005, 1000.0, 0.25, 0.0, 0.0],
@@ -686,6 +817,7 @@ fn apply_camera(config: &mut FptRenderConfig, value: &Value) {
     if let Some(value) = object.get("yaw_pitch") {
         copy_float_array(&mut config.camera_yaw_pitch, value);
     }
+    config.camera_roll = number_f32(object.get("roll"), config.camera_roll);
     config.camera_fov = number_f32(object.get("fov"), config.camera_fov);
     config.camera_dof = number_f32(object.get("dof"), config.camera_dof);
     config.focus_distance = number_f32(object.get("focus_distance"), config.focus_distance);
@@ -1485,6 +1617,9 @@ fn load_fpt_settings(path: &Path, config: &mut FptRenderConfig) -> Result<()> {
 }
 
 pub fn load_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
+    if args.scene_path.extension().and_then(|value| value.to_str()) == Some("fract") {
+        return load_mandelbulber_scene_config(args);
+    }
     let data = fs::read_to_string(&args.scene_path)?;
     let root: Value = serde_json::from_str(&data)?;
     let object = root
@@ -1610,6 +1745,7 @@ pub fn load_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
             config.voxel_storage = match storage {
                 "dense" => VOXEL_STORAGE_DENSE,
                 "sparse-bricks" => VOXEL_STORAGE_SPARSE_BRICKS,
+                "template-bricks" => VOXEL_STORAGE_TEMPLATE_BRICKS,
                 value => bail!("invalid voxel storage mode: {value}"),
             };
         }
@@ -1835,6 +1971,68 @@ pub fn load_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
     Ok(LoadedScene {
         config,
         output_name,
+        runtime_metal_source: None,
+    })
+}
+
+fn load_mandelbulber_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
+    ensure!(
+        args.renderer_backend == RendererBackend::Sdf,
+        "Mandelbulber scenes currently support only the direct sdf renderer"
+    );
+    ensure!(
+        !args.sdf_topology_specialization
+            && !args.sdf_runtime_source_bytecode
+            && args.sdf_function_stitching == SdfFunctionStitching::Off
+            && !args.sdf_flat_union
+            && !args.sdf_typed_soa,
+        "typed-program compiler options do not apply to Mandelbulber iterative-DE scenes"
+    );
+
+    let mut scene = MandelbulberScene::load(&args.scene_path)?;
+    // Mandelbulber's dynamic distance threshold is resolution-dependent.
+    // Apply CLI dimensions before deriving the render configuration so a
+    // reduced-resolution render traces the same surface as upstream.
+    scene.width = args.width.unwrap_or(scene.width);
+    scene.height = args.height.unwrap_or(scene.height);
+    ensure!(
+        (!scene.hybrid_enabled && scene.formula_id == 10) || args.mandelbulber_root.is_some(),
+        "formula ID {} requires --mandelbulber-root so its Metal source can be generated",
+        scene.formula_id
+    );
+    let mut config = default_config();
+    scene.apply_to_config(&mut config);
+
+    let runtime_metal_source = if let Some(source_root) = &args.mandelbulber_root {
+        let source = crate::mandelbulber::compiler::specialize_scene_with_kernel_specialization(
+            include_str!("../shaders/Shaders.metal"),
+            &mut scene,
+            source_root,
+            &config.set_values,
+            crate::mandelbulber::compiler::scene_uses_kernel_specialization(&args.scene_path)?,
+            crate::mandelbulber::compiler::scene_uses_direct_hybrid_loop(&args.scene_path)?,
+            crate::mandelbulber::compiler::scene_formula_optimization_policy(&args.scene_path)?,
+        )?;
+        config.sdf_runtime_source_bytecode = 1;
+        Some(source.into_bytes())
+    } else {
+        None
+    };
+    scene.apply_to_config(&mut config);
+    config.preview = u32::from(args.preview);
+    config.sdf_profile = u32::from(args.sdf_profile);
+    config.width = scene.width;
+    config.height = scene.height;
+    config.samples = args.samples.unwrap_or(64);
+    ensure!(
+        (1..=512).contains(&config.samples),
+        "scene samples must be 1..512"
+    );
+    let name = stem(&args.scene_path).unwrap_or("mandelbulber");
+    Ok(LoadedScene {
+        config,
+        output_name: format!("{name}.png"),
+        runtime_metal_source,
     })
 }
 
@@ -1891,6 +2089,7 @@ fn prioritize_preview_config(
             candidate.sdf_id != current.sdf_id
                 || candidate.camera_position != current.camera_position
                 || candidate.camera_yaw_pitch != current.camera_yaw_pitch
+                || candidate.camera_roll != current.camera_roll
                 || candidate.fractal_style != current.fractal_style
                 || candidate.post != current.post
         });
@@ -1937,6 +2136,98 @@ mod tests {
             parse_render_args(&args).unwrap().sdf_normal_mode,
             SdfNormalMode::ProgramGradient
         );
+    }
+
+    #[test]
+    fn approximation_controls_parse_and_default_off() {
+        let defaults = parse_render_args(&["scene.json".to_owned()]).unwrap();
+        assert_eq!(defaults.mandel_iteration_scale, None);
+        assert_eq!(defaults.mandel_screen_lod_rate, None);
+        assert!(!defaults.mandel_optimization_auto);
+        assert_eq!(defaults.mandel_selection_cache, None);
+
+        let args = vec![
+            "scene.json".to_owned(),
+            "--mandel-iteration-scale".to_owned(),
+            "0.75".to_owned(),
+            "--mandel-screen-lod-rate".to_owned(),
+            "1.5".to_owned(),
+            "--mandel-optimization".to_owned(),
+            "auto".to_owned(),
+            "--mandel-selection-cache".to_owned(),
+            "selection.json".to_owned(),
+        ];
+        let parsed = parse_render_args(&args).unwrap();
+        assert_eq!(parsed.mandel_iteration_scale, Some(0.75));
+        assert_eq!(parsed.mandel_screen_lod_rate, Some(1.5));
+        assert!(parsed.mandel_optimization_auto);
+        assert_eq!(
+            parsed.mandel_selection_cache,
+            Some(PathBuf::from("selection.json"))
+        );
+    }
+
+    #[test]
+    fn mandel_selection_cache_is_strict_and_manual_controls_win() {
+        let directory = std::env::temp_dir().join(format!(
+            "fpt-mandel-selection-cache-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&directory).unwrap();
+        let scene_path = directory.join("fixture.fract");
+        fs::write(&scene_path, "formula fixture").unwrap();
+        let digest = format!("{:x}", Sha256::digest(fs::read(&scene_path).unwrap()));
+        let cache_path = directory.join("selection.json");
+        let key = format!("{digest}:640x360:1");
+        fs::write(
+            &cache_path,
+            serde_json::to_vec(&serde_json::json!({
+                "schema_version": 1,
+                "minimum_ssim": 0.98,
+                "minimum_speedup": 1.05,
+                "entries": {
+                    (key): {
+                        "scene_sha256": digest,
+                        "width": 640,
+                        "height": 360,
+                        "samples": 1,
+                        "ssim": 0.995,
+                        "speedup": 1.2,
+                        "selection": {"kind": "screen_lod", "value": 1.0}
+                    }
+                }
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let base = vec![
+            scene_path.display().to_string(),
+            "--mandel-optimization".to_owned(),
+            "auto".to_owned(),
+            "--mandel-selection-cache".to_owned(),
+            cache_path.display().to_string(),
+        ];
+        let args = parse_render_args(&base).unwrap();
+        let mut config = default_config();
+        config.sdf_id = SDF_MANDELBULBER;
+        config.width = 640;
+        config.height = 360;
+        config.samples = 1;
+        apply_optimization_args(&mut config, &args);
+        assert_eq!(
+            config.vset_values[crate::mandelbulber::VPARAM_SCREEN_LOD_RATE],
+            1.0
+        );
+
+        let mut manual = base;
+        manual.extend(["--mandel-screen-lod-rate".to_owned(), "0.5".to_owned()]);
+        let args = parse_render_args(&manual).unwrap();
+        apply_optimization_args(&mut config, &args);
+        assert_eq!(
+            config.vset_values[crate::mandelbulber::VPARAM_SCREEN_LOD_RATE],
+            0.5
+        );
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]
@@ -2356,6 +2647,20 @@ mod tests {
         assert!(parsed.bound_grid_directional);
         assert!(parsed.bound_grid_fp16);
 
+        for resolution in [128, 256] {
+            let higher_resolution = vec![
+                "scene.fract".to_owned(),
+                "--bound-grid-resolution".to_owned(),
+                resolution.to_string(),
+            ];
+            assert_eq!(
+                parse_render_args(&higher_resolution)
+                    .unwrap()
+                    .bound_grid_resolution,
+                Some(resolution)
+            );
+        }
+
         let invalid = vec![
             "scene.json".to_owned(),
             "--bound-grid-resolution".to_owned(),
@@ -2383,6 +2688,58 @@ mod tests {
             "24".to_owned(),
         ];
         assert!(parse_render_args(&invalid).is_err());
+    }
+
+    #[test]
+    fn diagnostic_max_distance_requires_a_positive_finite_value() {
+        let args = vec![
+            "scene.json".to_owned(),
+            "--max-distance".to_owned(),
+            "1000".to_owned(),
+        ];
+        assert_eq!(
+            parse_render_args(&args).unwrap().diagnostic_max_distance,
+            Some(1000.0)
+        );
+        for value in ["0", "-1", "NaN", "inf"] {
+            let invalid = vec![
+                "scene.json".to_owned(),
+                "--max-distance".to_owned(),
+                value.to_owned(),
+            ];
+            assert!(parse_render_args(&invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn diffuse_normal_diagnostic_mode_parses() {
+        let args = vec![
+            "scene.json".to_owned(),
+            "--mode".to_owned(),
+            "diffuse-normal".to_owned(),
+        ];
+        assert_eq!(
+            parse_render_args(&args).unwrap().diagnostic_mode,
+            DiagnosticMode::DiffuseNormal
+        );
+    }
+
+    #[test]
+    fn mandelbulber_colour_diagnostic_modes_parse() {
+        for (name, expected) in [
+            ("mandel-color-index", DiagnosticMode::MandelColorIndex),
+            (
+                "mandel-palette-position",
+                DiagnosticMode::MandelPalettePosition,
+            ),
+        ] {
+            let args = vec![
+                "scene.fract".to_owned(),
+                "--mode".to_owned(),
+                name.to_owned(),
+            ];
+            assert_eq!(parse_render_args(&args).unwrap().diagnostic_mode, expected);
+        }
     }
 
     #[test]
@@ -2469,6 +2826,21 @@ mod tests {
     }
 
     #[test]
+    fn template_voxel_storage_mode_parses() {
+        for (name, expected) in [("template-bricks", VoxelStorageMode::TemplateBricks)] {
+            let args = vec![
+                "scene.json".to_owned(),
+                "--voxel-storage".to_owned(),
+                name.to_owned(),
+            ];
+            assert_eq!(
+                parse_render_args(&args).unwrap().voxel_storage_mode,
+                Some(expected)
+            );
+        }
+    }
+
+    #[test]
     fn preview_keeps_requested_configuration() {
         let mut current = default_config();
         current.sdf_id = SDF_CAGE_FRACTAL;
@@ -2483,6 +2855,27 @@ mod tests {
         assert_eq!(configs.len(), 2);
         assert_eq!(configs[0].camera_position, [9.0, 8.0, 7.0]);
         assert_eq!(configs[1].sdf_id, SDF_TOWER_FRACTAL);
+    }
+
+    #[test]
+    fn mandelbulber_cli_resolution_controls_dynamic_threshold() {
+        let scene_path =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("scenes/mandelbulber/ifs-20.fract");
+        let mut native_args = RenderArgs::new(&scene_path);
+        native_args.width = Some(120);
+        native_args.height = Some(1080);
+        let native = load_mandelbulber_scene_config(&native_args).unwrap();
+
+        let mut reduced_args = RenderArgs::new(&scene_path);
+        reduced_args.width = Some(120);
+        reduced_args.height = Some(68);
+        let reduced = load_mandelbulber_scene_config(&reduced_args).unwrap();
+
+        assert_eq!((reduced.config.width, reduced.config.height), (120, 68));
+        let threshold_slot = crate::mandelbulber::VPARAM_THRESHOLD_SCALE;
+        let ratio =
+            reduced.config.vset_values[threshold_slot] / native.config.vset_values[threshold_slot];
+        assert!((ratio - 1080.0 / 68.0).abs() < 1.0e-5);
     }
 
     #[test]

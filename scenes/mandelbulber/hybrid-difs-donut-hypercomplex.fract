@@ -1,0 +1,28 @@
+# Mandelbulber settings file
+# version 2.33
+# Custom-distance precedence fixture: one dIFS iteration overrides log DE.
+[main_parameters]
+N 3;
+camera 3 -4 2;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 610;
+formula_2 4;
+formula_iterations_1 1;
+formula_iterations_2 2;
+formula_weight_1 0,8;
+formula_weight_2 0,7;
+fov 53,13;
+hybrid_fractal_enable true;
+image_height 180;
+image_width 320;
+julia_c 0,12 -0,08 0,05;
+julia_mode true;
+target 0 0 0;
+view_distance_max 30;
+[fractal_1]
+donut_factor 2,7;
+donut_number 8;
+donut_ring_radius 1,1;
+donut_ring_thickness 0,14;
+[fractal_2]

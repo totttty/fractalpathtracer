@@ -1,0 +1,31 @@
+# Mandelbulber settings file
+# version 2.33
+# Compiler fixture exercising all nine hybrid formula slots and parameter namespaces.
+[main_parameters]
+N 18;
+camera 4 -5 3;
+camera_top 0 0 1;
+formula_1 3;
+formula_2 4;
+formula_3 5;
+formula_4 21;
+formula_5 49;
+formula_6 50;
+formula_7 83;
+formula_8 102;
+formula_9 129;
+fov 53,13;
+hybrid_fractal_enable true;
+image_height 54;
+image_width 96;
+target 0 0 0;
+view_distance_max 25;
+[fractal_1]
+[fractal_2]
+[fractal_3]
+[fractal_4]
+[fractal_5]
+[fractal_6]
+[fractal_7]
+[fractal_8]
+[fractal_9]

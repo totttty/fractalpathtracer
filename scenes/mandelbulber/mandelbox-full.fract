@@ -1,0 +1,33 @@
+# Mandelbulber settings file
+# version 2.33
+# Full Mandelbox compatibility fixture exercising every supported parameter family.
+[main_parameters]
+N 32;
+camera 5 -5 3;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 8;
+fov 53,13;
+image_height 180;
+image_width 320;
+target 0 0 0;
+view_distance_max 30;
+[fractal_1]
+mandelbox_color 0,05 0,08 0,11;
+mandelbox_color_Sp1 0,45;
+mandelbox_color_Sp2 0,3;
+mandelbox_folding_fixed_radius 1,1;
+mandelbox_folding_limit 0,95;
+mandelbox_folding_min_radius 0,45;
+mandelbox_folding_value 1,9;
+mandelbox_main_rotation_enabled true;
+mandelbox_offset 0,08 -0,04 0,06;
+mandelbox_rotation_main 7 -11 13;
+mandelbox_rotation_neg_1 5 3 -2;
+mandelbox_rotation_neg_2 -4 2 6;
+mandelbox_rotation_neg_3 3 -5 1;
+mandelbox_rotation_pos_1 -6 -2 4;
+mandelbox_rotation_pos_2 2 -3 -5;
+mandelbox_rotation_pos_3 -1 4 -3;
+mandelbox_rotations_enabled true;
+mandelbox_scale -1,35;

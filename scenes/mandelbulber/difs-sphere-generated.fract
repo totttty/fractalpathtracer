@@ -1,0 +1,25 @@
+# Mandelbulber settings file
+# version 2.33
+# Generated-binding fixture for the four-dimensional TransfDIFSSphere mode.
+[main_parameters]
+N 1;
+camera 3 -4 2;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 1604;
+fov 53,13;
+image_height 180;
+image_width 320;
+initial_waxis 0,35;
+target 0 0 0;
+view_distance_max 30;
+[fractal_1]
+analyticDE_offset_0 0,25;
+fold_color_aux_color_enabledB_false true;
+fold_color_aux_color_enabled_false true;
+fold_color_difs0 0,05;
+fold_color_difs_0000 0 0,3 0 0;
+fold_color_start_iterations_A 0;
+fold_color_stop_iterations_A 2;
+transf_function_enabled4d_false true;
+transf_offsetR_1 0,9;

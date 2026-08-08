@@ -1,0 +1,22 @@
+# Mandelbulber settings file
+# version 2.33
+# Deterministic two-slot hybrid scheduler and weighting fixture.
+[main_parameters]
+N 32;
+camera 1,6 -2 1,2;
+camera_top 0 0 1;
+detail_level 1;
+formula_1 4;
+formula_2 5;
+formula_iterations_1 2;
+formula_iterations_2 1;
+formula_weight_1 0,75;
+fractal_constant_factor 0,85 0,9 0,95;
+fov 53,13;
+hybrid_fractal_enable true;
+image_height 180;
+image_width 320;
+target 0 0 0;
+view_distance_max 25;
+[fractal_1]
+[fractal_2]
