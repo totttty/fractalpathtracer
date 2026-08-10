@@ -164,8 +164,7 @@ FPT scene / Mandelbulber .fract
     -> authoritative Metal voxel_build_kernel
     -> VoxelGrid
     -> .fptvox
-    -> native NAADF volume construction/traversal
-    -> WGPU PathTracing + NRD
+    -> native NAADF volume construction/traversal/path tracing
 ```
 
 Decoders should reject unknown versions or coordinate enum values. Although a

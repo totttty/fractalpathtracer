@@ -164,7 +164,7 @@ target/release/fpt-metal voxel-export "$SCENE" \
 
 The lossless little-endian `.fptvox` path preserves every occupied cell's
 packed material tuple for direct native volume construction. The intended
-pipeline is FPT → `.fptvox` → native NAADF traversal → WGPU PathTracing + NRD.
+direct pipeline is FPT -> `.fptvox` -> the native Metal NAADF path tracer.
 Selecting a `.glb` output remains supported: it deduplicates packed materials,
 carries glTF specular, transmission, IOR, and emissive extensions, and embeds
 the versioned marker `asset.extras.fpt_voxel_contract`. See
