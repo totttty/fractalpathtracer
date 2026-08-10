@@ -8,6 +8,7 @@
 
 #[doc(hidden)]
 pub mod ffi;
+pub mod fptvox;
 #[doc(hidden)]
 pub mod mandelbulber;
 #[doc(hidden)]
@@ -16,6 +17,10 @@ pub mod scene;
 pub mod tools;
 pub mod voxel;
 
+pub use fptvox::{
+    FPTVOX_HEADER_SIZE, FPTVOX_MAGIC, FPTVOX_RECORD_SIZE, FPTVOX_VERSION, FptvoxExportSummary,
+    export_fptvox,
+};
 pub use mandelbulber::{
     MandelbulberFormulaSlot, MandelbulberGradientStop, MandelbulberMaterial, MandelbulberScene,
 };

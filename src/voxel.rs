@@ -55,13 +55,15 @@ impl Aabb {
 }
 
 /// Coordinate system used by the sampled field before GLB conversion.
+#[repr(u32)]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum CoordinateSystem {
-    /// Right-handed, positive Y is up. This is also the emitted glTF basis.
-    YUpRightHanded,
+    /// Right-handed, positive Y is up. Binary artifact enum value 1.
+    YUpRightHanded = 1,
     /// Mandelbulber's source scene basis: right-handed, positive Z is up.
-    MandelbulberZUpRightHanded,
+    /// Binary artifact enum value 2.
+    MandelbulberZUpRightHanded = 2,
 }
 
 /// Material values represented by the Metal voxel payload.
@@ -474,7 +476,7 @@ pub struct FractalError {
 }
 
 impl FractalError {
-    fn new(code: FractalErrorCode, message: impl Into<String>) -> Self {
+    pub(crate) fn new(code: FractalErrorCode, message: impl Into<String>) -> Self {
         Self {
             code,
             message: message.into(),
@@ -657,7 +659,7 @@ pub fn export_glb(
     })
 }
 
-fn validate_grid(grid: &VoxelGrid) -> Result<(), FractalError> {
+pub(crate) fn validate_grid(grid: &VoxelGrid) -> Result<(), FractalError> {
     if grid.contract_version != FPT_VOXEL_CONTRACT_VERSION {
         return Err(FractalError::new(
             FractalErrorCode::Artifact,
@@ -672,6 +674,19 @@ fn validate_grid(grid: &VoxelGrid) -> Result<(), FractalError> {
         return Err(FractalError::new(
             FractalErrorCode::InvalidResolution,
             "grid resolution must be non-zero",
+        ));
+    }
+    let cell_capacity = grid
+        .resolution
+        .iter()
+        .fold(1_u128, |total, value| total * u128::from(*value));
+    if grid.voxels.len() as u128 > cell_capacity {
+        return Err(FractalError::new(
+            FractalErrorCode::Artifact,
+            format!(
+                "voxel count {} exceeds grid capacity {cell_capacity}",
+                grid.voxels.len()
+            ),
         ));
     }
     let mut previous = None;
@@ -1122,10 +1137,10 @@ fn align4(bytes: &mut Vec<u8>, padding: u8) {
     }
 }
 
-fn linear_index(coordinate: [u32; 3], resolution: [u32; 3]) -> u64 {
-    u64::from(coordinate[0])
-        + u64::from(coordinate[1]) * u64::from(resolution[0])
-        + u64::from(coordinate[2]) * u64::from(resolution[0]) * u64::from(resolution[1])
+fn linear_index(coordinate: [u32; 3], resolution: [u32; 3]) -> u128 {
+    u128::from(coordinate[0])
+        + u128::from(coordinate[1]) * u128::from(resolution[0])
+        + u128::from(coordinate[2]) * u128::from(resolution[0]) * u128::from(resolution[1])
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {

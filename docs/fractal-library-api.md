@@ -1,7 +1,7 @@
 # Fractal library and voxel-export contract
 
 FPT Metal exposes a Rust library for scene parsing, deterministic reference
-voxelization, exact voxel payload interchange, and GLB export. Real
+voxelization, exact voxel payload interchange, `.fptvox`, and GLB export. Real
 Mandelbulber `.fract` files use the CLI adapter because their authoritative
 evaluator is the existing generated Metal program, not a second CPU port.
 
@@ -16,6 +16,9 @@ pub fn voxelize(request: &VoxelizationRequest)
 
 pub fn export_glb(grid: &VoxelGrid, path: impl AsRef<Path>)
     -> Result<GlbExportSummary, FractalError>;
+
+pub fn export_fptvox(grid: &VoxelGrid, path: impl AsRef<Path>)
+    -> Result<FptvoxExportSummary, FractalError>;
 
 pub fn voxelize_to_glb(
     request: &VoxelizationRequest,
@@ -72,7 +75,7 @@ exact emission float bits.
 cargo build --release
 
 target/release/fpt-metal voxel-export scene.fract \
-  --out scene.glb \
+  --out scene.fptvox \
   --voxel-resolution 256 \
   --mandelbulber-root /path/to/mandelbulber2
 ```
@@ -93,13 +96,80 @@ For `.fract`, the command:
 2. Retains and caches `voxel_build_kernel` and its dependencies.
 3. Dispatches that kernel into a shared dense buffer and reads back every
    exact 12-byte `VoxelCell`.
-4. Converts occupied cells to `VoxelGrid` and greedy-meshes exposed faces.
-   Faces merge only when their packed material tuples are identical.
-5. Writes a glTF 2.0 GLB with one primitive per deduplicated material.
+4. Converts occupied cells to `VoxelGrid` without changing their payloads.
+5. Writes either the lossless sparse volume or, for `.glb`, greedy-meshes
+   exposed faces whose packed material tuples are identical. The choice is
+   inferred from the output suffix.
 
 The dense readback costs `12 * N^3` bytes (192 MiB at 256 cubed) before
 sparsification. The command fails rather than writing an empty mesh, which
 makes incorrect bounds visible to automation.
+
+## FPTVOX contract version 1
+
+`.fptvox` is the preferred direct volume seam. It preserves every occupied
+cell's exact packed colour/occupancy, PBR properties, and emission without
+greedy meshing or glTF material conversion. All integers and IEEE-754 float
+bit patterns are little-endian.
+
+The version-1 header is exactly 64 bytes and has no reserved fields:
+
+| Offset | Size | Field | Encoding |
+| ---: | ---: | --- | --- |
+| 0 | 8 | `magic` | ASCII `FPTVOX1` followed by NUL |
+| 8 | 4 | `header_size` | `u32`, exactly 64 in version 1 |
+| 12 | 4 | `version` | `u32`, exactly 1 |
+| 16 | 4 | `resolution_x` | `u32` |
+| 20 | 4 | `resolution_y` | `u32` |
+| 24 | 4 | `resolution_z` | `u32` |
+| 28 | 4 | `coordinate_system` | `u32` enum |
+| 32 | 4 | `bounds_min_x` | `f32` |
+| 36 | 4 | `bounds_min_y` | `f32` |
+| 40 | 4 | `bounds_min_z` | `f32` |
+| 44 | 4 | `bounds_max_x` | `f32` |
+| 48 | 4 | `bounds_max_y` | `f32` |
+| 52 | 4 | `bounds_max_z` | `f32` |
+| 56 | 8 | `voxel_count` | `u64` |
+
+Coordinate-system enum values are:
+
+| Value | Meaning |
+| ---: | --- |
+| 1 | Right-handed, positive Y is up; the production CLI emits this value |
+| 2 | Right-handed Mandelbulber source coordinates, positive Z is up |
+
+Records begin at byte 64. There are exactly `voxel_count` records, each 24
+bytes:
+
+| Record offset | Size | Field |
+| ---: | ---: | --- |
+| 0 | 4 | cell X, `u32` |
+| 4 | 4 | cell Y, `u32` |
+| 8 | 4 | cell Z, `u32` |
+| 12 | 4 | packed RGB plus occupancy, `u32` |
+| 16 | 4 | packed roughness/specular/transmission/IOR, `u32` |
+| 20 | 4 | emission, `f32` |
+
+Records are strictly ordered by
+`x + y * resolution_x + z * resolution_x * resolution_y`, matching
+`VoxelGrid`. Export rejects invalid coordinates, duplicates, out-of-order
+records, impossible counts, and non-finite payloads before creating a file.
+Version 1 intentionally omits source labels and hashes: it is a geometry and
+material interchange contract, not a scene manifest.
+
+The intended native path is:
+
+```text
+FPT scene / Mandelbulber .fract
+    -> authoritative Metal voxel_build_kernel
+    -> VoxelGrid
+    -> .fptvox
+    -> native NAADF volume construction/traversal
+    -> WGPU PathTracing + NRD
+```
+
+Decoders should reject unknown versions or coordinate enum values. Although a
+future version may use a larger `header_size`, version 1 requires exactly 64.
 
 ## GLB contract version 1
 
@@ -132,10 +202,11 @@ the in-memory `VoxelGrid` remains the exact sparse volume.
 
 For built-ins or constructed volumes, depend on this repository as a normal
 Rust path/git dependency and call the in-memory API. For generated `.fract`
-formulas, invoke the versioned `voxel-export` process seam on macOS, validate
-the contract marker, then load the GLB in the downstream renderer. The CLI is
-the current stable adapter until generated Metal compilation and device
-ownership can be exposed without coupling consumers to `FptRenderConfig`.
+formulas, invoke the versioned `voxel-export` process seam on macOS and ingest
+`.fptvox` directly into the downstream native volume. GLB remains available
+for mesh-oriented consumers. The CLI is the current stable adapter until
+generated Metal compilation and device ownership can be exposed without
+coupling consumers to `FptRenderConfig`.
 
 ## Licensing boundary
 

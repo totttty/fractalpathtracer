@@ -157,17 +157,20 @@ authoritative generated evaluator by dispatching the existing Metal
 
 ```sh
 target/release/fpt-metal voxel-export "$SCENE" \
-  --out renders/mandelbulb001.glb \
+  --out renders/mandelbulb001.fptvox \
   --voxel-resolution 256 \
   --mandelbulber-root "$MANDELBULBER_ROOT"
 ```
 
-The GLB deduplicates packed materials, carries glTF specular, transmission,
-IOR, and emissive extensions, and embeds the versioned marker
-`asset.extras.fpt_voxel_contract`. See
+The lossless little-endian `.fptvox` path preserves every occupied cell's
+packed material tuple for direct native volume construction. The intended
+pipeline is FPT → `.fptvox` → native NAADF traversal → WGPU PathTracing + NRD.
+Selecting a `.glb` output remains supported: it deduplicates packed materials,
+carries glTF specular, transmission, IOR, and emissive extensions, and embeds
+the versioned marker `asset.extras.fpt_voxel_contract`. See
 [`docs/fractal-library-api.md`](docs/fractal-library-api.md) for public API
-signatures, payload layout, bounds controls, consumer integration, and the
-Mandelbulber licensing boundary.
+signatures, exact binary offsets, payload layout, bounds controls, consumer
+integration, and the Mandelbulber licensing boundary.
 
 ## Quick Start
 

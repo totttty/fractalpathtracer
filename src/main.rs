@@ -7,7 +7,7 @@ use fpt_metal::scene::*;
 use fpt_metal::tools;
 use fpt_metal::{
     Aabb, CoordinateSystem, FractalScene, VoxelCell, VoxelGrid, VoxelizationParameters,
-    VoxelizationRequest, export_glb, voxelize,
+    VoxelizationRequest, export_fptvox, export_glb, voxelize,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -254,7 +254,7 @@ fn usage() {
   fpt-metal diagnostic-batch <jobs.json> [--report <report.json>] [--workers N] [--offset N] [--limit N]\n\
   fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--fpt-root <dir>] [--width N] [--height N]\n\
   fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
-  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-band N] [--fill-interior]\n\
+  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-band N] [--fill-interior]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -286,6 +286,22 @@ fn parse_csv_vec3(value: &str, flag: &str) -> Result<[f32; 3]> {
         .collect::<std::result::Result<Vec<_>, _>>()?;
     ensure!(values.len() == 3, "{flag} requires x,y,z");
     Ok([values[0], values[1], values[2]])
+}
+
+fn export_voxel_artifact(grid: &VoxelGrid, output: &Path) -> Result<(&'static str, Value)> {
+    let extension = output
+        .extension()
+        .and_then(|value| value.to_str())
+        .map(str::to_ascii_lowercase)
+        .ok_or_else(|| anyhow!("voxel output must end in .glb or .fptvox"))?;
+    match extension.as_str() {
+        "glb" => Ok(("glb", serde_json::to_value(export_glb(grid, output)?)?)),
+        "fptvox" => Ok((
+            "fptvox",
+            serde_json::to_value(export_fptvox(grid, output)?)?,
+        )),
+        _ => bail!("unsupported voxel output extension .{extension}; use .glb or .fptvox"),
+    }
 }
 
 fn cached_mandel_voxel_metallib(
@@ -407,12 +423,13 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             grid.occupied_voxels() > 0,
             "voxel build produced no occupied cells; adjust --bounds-min/--bounds-max or --surface-band"
         );
-        let summary = export_glb(&grid, &output)?;
+        let (format, summary) = export_voxel_artifact(&grid, &output)?;
         println!(
             "{}",
             serde_json::to_string_pretty(&json!({
                 "contract_version":1,
                 "evaluator":"cpu-reference",
+                "format":format,
                 "output":output,
                 "resolution":[resolution,resolution,resolution],
                 "bounds_min":bounds.min,
@@ -522,12 +539,13 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         "voxel build produced no occupied cells; adjust --bounds-min/--bounds-max or --surface-band"
     );
     drop(cells);
-    let summary = export_glb(&grid, &output)?;
+    let (format, summary) = export_voxel_artifact(&grid, &output)?;
     println!(
         "{}",
         serde_json::to_string_pretty(&json!({
             "contract_version":1,
             "evaluator":"metal-voxel-build-kernel",
+            "format":format,
             "output":output,
             "resolution":grid.resolution,
             "bounds_min":grid.bounds.min,
