@@ -147,6 +147,28 @@ full path-traced appearance gate. Generated formula artifacts retain
 Mandelbulber2's GPLv3-or-later boundary and stay in ignored runtime caches; the
 Apache-2.0 repository does not vendor the upstream generated formula corpus.
 
+### Rust library and portable voxel export
+
+The crate exposes serializable fractal requests, the exact 12-byte Metal
+`VoxelCell`, sparse `VoxelGrid` volumes, a deterministic built-in CPU reference
+voxelizer, and a greedy-meshed GLB encoder. Real `.fract` scenes retain their
+authoritative generated evaluator by dispatching the existing Metal
+`voxel_build_kernel` and reading its cells back:
+
+```sh
+target/release/fpt-metal voxel-export "$SCENE" \
+  --out renders/mandelbulb001.glb \
+  --voxel-resolution 256 \
+  --mandelbulber-root "$MANDELBULBER_ROOT"
+```
+
+The GLB deduplicates packed materials, carries glTF specular, transmission,
+IOR, and emissive extensions, and embeds the versioned marker
+`asset.extras.fpt_voxel_contract`. See
+[`docs/fractal-library-api.md`](docs/fractal-library-api.md) for public API
+signatures, payload layout, bounds controls, consumer integration, and the
+Mandelbulber licensing boundary.
+
 ## Quick Start
 
 Requirements: macOS with a Metal-capable GPU, Xcode command-line tools, and a

@@ -1,14 +1,14 @@
 #![recursion_limit = "512"]
 
-mod ffi;
-mod mandelbulber;
-mod scene;
-mod tools;
-
 use anyhow::{Context, Result, anyhow, bail, ensure};
-use ffi::*;
-use mandelbulber::MandelbulberScene;
-use scene::*;
+use fpt_metal::ffi::*;
+use fpt_metal::mandelbulber::{self, MandelbulberScene};
+use fpt_metal::scene::*;
+use fpt_metal::tools;
+use fpt_metal::{
+    Aabb, CoordinateSystem, FractalScene, VoxelCell, VoxelGrid, VoxelizationParameters,
+    VoxelizationRequest, export_glb, voxelize,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -254,6 +254,7 @@ fn usage() {
   fpt-metal diagnostic-batch <jobs.json> [--report <report.json>] [--workers N] [--offset N] [--limit N]\n\
   fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--fpt-root <dir>] [--width N] [--height N]\n\
   fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
+  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-band N] [--fill-interior]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -276,6 +277,269 @@ fn usage() {
   fpt-metal list-scenes\n\
   fpt-metal clean-reports"
     );
+}
+
+fn parse_csv_vec3(value: &str, flag: &str) -> Result<[f32; 3]> {
+    let values = value
+        .split(',')
+        .map(str::parse::<f32>)
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    ensure!(values.len() == 3, "{flag} requires x,y,z");
+    Ok([values[0], values[1], values[2]])
+}
+
+fn cached_mandel_voxel_metallib(
+    generated_source: &[u8],
+    optimization: MandelMetalOptimization,
+) -> Result<(PathBuf, f64, bool)> {
+    let retained = mandelbulber::compiler::retain_metal_kernels(
+        std::str::from_utf8(generated_source)?,
+        &["voxel_build_kernel"],
+    )?;
+    let mut digest = Sha256::new();
+    digest.update(b"fpt-mandel-voxel-export-v1\0");
+    digest.update(METAL_COMPILER_IDENTITY.as_bytes());
+    digest.update(std::env::consts::ARCH.as_bytes());
+    digest.update(optimization.cache_tag());
+    digest.update(b"\0fast-math\0");
+    digest.update(retained.as_bytes());
+    let key = format!("{:x}", digest.finalize());
+    let directory = mandel_render_cache_directory().join("voxel-export-v1");
+    fs::create_dir_all(&directory)?;
+    let metallib = directory.join(format!("{key}.metallib"));
+    if metallib.is_file() {
+        return Ok((metallib, 0.0, true));
+    }
+    let label = format!(
+        "{key}-{}-{}",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    );
+    let (temporary, compile_ms) =
+        compile_mandel_metallib(retained.as_bytes(), &directory, &label, optimization)?;
+    if metallib.is_file() {
+        let _ = fs::remove_file(&temporary);
+    } else {
+        fs::rename(temporary, &metallib)?;
+    }
+    Ok((metallib, compile_ms, false))
+}
+
+fn voxel_export_command(args: &[String]) -> Result<()> {
+    let scene_argument = args
+        .first()
+        .ok_or_else(|| anyhow!("voxel-export requires a scene"))?;
+    let mut output = None::<PathBuf>;
+    let mut resolution = None::<u32>;
+    let mut mandelbulber_root = None::<PathBuf>;
+    let mut fpt_root = None::<PathBuf>;
+    let mut bounds_min = None::<[f32; 3]>;
+    let mut bounds_max = None::<[f32; 3]>;
+    let mut surface_band = 1.0_f32;
+    let mut fill_interior = false;
+    let mut index = 1usize;
+    while index < args.len() {
+        let next = |index: &mut usize, flag: &str| -> Result<&str> {
+            *index += 1;
+            args.get(*index)
+                .map(String::as_str)
+                .ok_or_else(|| anyhow!("{flag} requires a value"))
+        };
+        match args[index].as_str() {
+            "--out" => output = Some(next(&mut index, "--out")?.into()),
+            "--voxel-resolution" => {
+                let value = next(&mut index, "--voxel-resolution")?.parse()?;
+                ensure!(
+                    (1..=512).contains(&value),
+                    "voxel resolution must be 1..512"
+                );
+                resolution = Some(value);
+            }
+            "--mandelbulber-root" => {
+                mandelbulber_root = Some(next(&mut index, "--mandelbulber-root")?.into())
+            }
+            "--fpt-root" => fpt_root = Some(next(&mut index, "--fpt-root")?.into()),
+            "--bounds-min" => {
+                bounds_min = Some(parse_csv_vec3(
+                    next(&mut index, "--bounds-min")?,
+                    "--bounds-min",
+                )?)
+            }
+            "--bounds-max" => {
+                bounds_max = Some(parse_csv_vec3(
+                    next(&mut index, "--bounds-max")?,
+                    "--bounds-max",
+                )?)
+            }
+            "--surface-band" => {
+                surface_band = next(&mut index, "--surface-band")?.parse()?;
+                ensure!(
+                    surface_band.is_finite() && (0.25..=4.0).contains(&surface_band),
+                    "surface band must be 0.25..4"
+                );
+            }
+            "--fill-interior" => fill_interior = true,
+            flag => bail!("unknown voxel-export option: {flag}"),
+        }
+        index += 1;
+    }
+    let output = output.ok_or_else(|| anyhow!("voxel-export requires --out <scene.glb>"))?;
+    let resolution =
+        resolution.ok_or_else(|| anyhow!("voxel-export requires --voxel-resolution N"))?;
+
+    if scene_argument == "builtin:menger-sponge" {
+        let bounds = Aabb::new(
+            bounds_min.unwrap_or([-1.25; 3]),
+            bounds_max.unwrap_or([1.25; 3]),
+        );
+        let mut voxelization = VoxelizationParameters::cubic(resolution, bounds);
+        voxelization.surface_band = surface_band;
+        voxelization.fill_interior = fill_interior;
+        let request = VoxelizationRequest {
+            scene: FractalScene::menger_sponge(),
+            voxelization,
+        };
+        let grid = voxelize(&request)?;
+        ensure!(
+            grid.occupied_voxels() > 0,
+            "voxel build produced no occupied cells; adjust --bounds-min/--bounds-max or --surface-band"
+        );
+        let summary = export_glb(&grid, &output)?;
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&json!({
+                "contract_version":1,
+                "evaluator":"cpu-reference",
+                "output":output,
+                "resolution":[resolution,resolution,resolution],
+                "bounds_min":bounds.min,
+                "bounds_max":bounds.max,
+                "summary":summary
+            }))?
+        );
+        return Ok(());
+    }
+
+    let scene_path = PathBuf::from(scene_argument);
+    ensure!(
+        scene_path.is_file(),
+        "scene does not exist: {}",
+        scene_path.display()
+    );
+    let mut render_arguments = vec![scene_argument.clone()];
+    if let Some(root) = mandelbulber_root.as_ref() {
+        render_arguments.extend(["--mandelbulber-root".to_owned(), root.display().to_string()]);
+    }
+    if let Some(root) = fpt_root.as_ref() {
+        render_arguments.extend(["--fpt-root".to_owned(), root.display().to_string()]);
+    }
+    let render_args = parse_render_args(&render_arguments)?;
+    let mut loaded = load_scene_config(&render_args)?;
+    let is_mandel = loaded.config.sdf_id == SDF_MANDELBULBER;
+    let default_bounds = if is_mandel {
+        Aabb::new([-4.0; 3], [4.0; 3])
+    } else {
+        Aabb::new(
+            loaded.config.voxel_bounds_min,
+            loaded.config.voxel_bounds_max,
+        )
+    };
+    let export_bounds = Aabb::new(
+        bounds_min.unwrap_or(default_bounds.min),
+        bounds_max.unwrap_or(default_bounds.max),
+    );
+    ensure!(
+        export_bounds
+            .min
+            .iter()
+            .zip(export_bounds.max)
+            .all(|(min, max)| min.is_finite() && max.is_finite() && *min < max),
+        "invalid voxel bounds"
+    );
+    let world_scale = if is_mandel {
+        loaded.config.set_values[mandelbulber::PARAM_WORLD_SCALE].max(1.0)
+    } else {
+        1.0
+    };
+    loaded.config.renderer_backend = RENDERER_VOXEL;
+    loaded.config.voxel_resolution = resolution;
+    loaded.config.voxel_storage = VOXEL_STORAGE_DENSE;
+    loaded.config.voxel_build_mode = VOXEL_BUILD_STAGING;
+    loaded.config.voxel_coverage_mode = VOXEL_COVERAGE_LEGACY;
+    loaded.config.voxel_surface_band = surface_band;
+    loaded.config.voxel_fill_interior = u32::from(fill_interior);
+    loaded.config.voxel_bounds_min = export_bounds.min.map(|value| value * world_scale);
+    loaded.config.voxel_bounds_max = export_bounds.max.map(|value| value * world_scale);
+    loaded.config.sdf_runtime_source_bytecode = 0;
+
+    let (metallib, compile_ms, cache_hit) =
+        if let Some(source) = loaded.runtime_metal_source.as_deref() {
+            cached_mandel_voxel_metallib(source, MandelMetalOptimization::Default)?
+        } else {
+            (default_metallib_path()?, 0.0, true)
+        };
+    let cell_count = (resolution as usize)
+        .checked_pow(3)
+        .ok_or_else(|| anyhow!("voxel cell count overflow"))?;
+    let mut cells = vec![VoxelCell::default(); cell_count];
+    let mut build_ms = 0.0_f64;
+    let mut error = [0_i8; 1024];
+    let status = unsafe {
+        fpt_metal_voxel_build(
+            c_path(&metallib)?.as_ptr(),
+            &loaded.config,
+            cells.as_mut_ptr().cast(),
+            cells.len() * std::mem::size_of::<VoxelCell>(),
+            &mut build_ms,
+            error.as_mut_ptr(),
+            error.len(),
+        )
+    };
+    ensure!(
+        status == 0,
+        "Metal voxel export failed: {}",
+        bridge_error(&error)
+    );
+    let scene_bytes = fs::read(&scene_path)?;
+    let source_sha256 = format!("{:x}", Sha256::digest(&scene_bytes));
+    let source_label = scene_path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or("fractal");
+    let grid = VoxelGrid::from_dense_cells(
+        [resolution; 3],
+        export_bounds,
+        CoordinateSystem::YUpRightHanded,
+        source_label,
+        source_sha256,
+        &cells,
+    )?;
+    ensure!(
+        grid.occupied_voxels() > 0,
+        "voxel build produced no occupied cells; adjust --bounds-min/--bounds-max or --surface-band"
+    );
+    drop(cells);
+    let summary = export_glb(&grid, &output)?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json!({
+            "contract_version":1,
+            "evaluator":"metal-voxel-build-kernel",
+            "output":output,
+            "resolution":grid.resolution,
+            "bounds_min":grid.bounds.min,
+            "bounds_max":grid.bounds.max,
+            "metal_world_scale":world_scale,
+            "metal_compile_ms":compile_ms,
+            "metal_build_ms":build_ms,
+            "metal_cache_hit":cache_hit,
+            "summary":summary
+        }))?
+    );
+    Ok(())
 }
 
 fn list_scenes() {
@@ -3812,6 +4076,7 @@ fn main() -> Result<()> {
         "diagnostic-batch" => diagnostic_batch(tail),
         "diagnostic" => diagnostic(&parse_render_args(tail)?),
         "preview" => preview(&parse_render_args(tail)?),
+        "voxel-export" => voxel_export_command(tail),
         "compare" => compare(tail),
         "contact-sheet" => tools::contact_sheet_command(tail),
         "report-index" => tools::report_index_command(tail),

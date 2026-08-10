@@ -355,7 +355,6 @@ pub struct FptSdfProfileStats {
 }
 
 #[repr(C)]
-#[cfg(test)]
 #[derive(Clone, Copy, Default, Debug)]
 pub struct FptAsyncJitStats {
     pub fallback_render_ms: f64,
@@ -440,6 +439,15 @@ unsafe extern "C" {
         error: *mut c_char,
         error_len: usize,
     ) -> c_int;
+    pub fn fpt_metal_voxel_build(
+        metallib_path: *const c_char,
+        config: *const FptRenderConfig,
+        cells: *mut u8,
+        cells_len: usize,
+        build_ms: *mut f64,
+        error: *mut c_char,
+        error_len: usize,
+    ) -> c_int;
     pub fn fpt_compare_images(
         baseline_path: *const c_char,
         candidate_path: *const c_char,
@@ -448,13 +456,11 @@ unsafe extern "C" {
         error_len: usize,
     ) -> c_int;
     pub fn fpt_metal_device_name(name: *mut c_char, name_len: usize) -> c_int;
-    #[cfg(test)]
     pub fn fpt_test_voxel_dda(
         metallib_path: *const c_char,
         error: *mut c_char,
         error_len: usize,
     ) -> c_int;
-    #[cfg(test)]
     pub fn fpt_test_async_stitch_context(
         metallib_path: *const c_char,
         stitch_metallib_path: *const c_char,
@@ -464,7 +470,6 @@ unsafe extern "C" {
         error: *mut c_char,
         error_len: usize,
     ) -> c_int;
-    #[cfg(test)]
     pub fn fpt_test_typed_soa(
         metallib_path: *const c_char,
         config: *const FptRenderConfig,

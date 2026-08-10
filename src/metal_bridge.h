@@ -445,6 +445,14 @@ int fpt_mandelbulber_sample_field(
     char *error,
     size_t error_len);
 
+int fpt_metal_voxel_build(const char *metallib_path,
+                          const struct FptRenderConfig *config,
+                          void *cells,
+                          size_t cells_len,
+                          double *build_ms,
+                          char *error,
+                          size_t error_len);
+
 int fpt_compare_images(const char *baseline_path,
                        const char *candidate_path,
                        const char *report_path,

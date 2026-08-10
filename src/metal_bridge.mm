@@ -4295,6 +4295,76 @@ extern "C" int fpt_mandelbulber_sample_field(
     }
 }
 
+extern "C" int fpt_metal_voxel_build(
+    const char *metallib_path,
+    const struct FptRenderConfig *config,
+    void *cells,
+    size_t cells_len,
+    double *build_ms,
+    char *error,
+    size_t error_len) {
+    @autoreleasepool {
+        if (!metallib_path || !config || !cells) {
+            set_error(error, error_len, "missing Metal voxel-build input");
+            return 1;
+        }
+        const uint32_t resolution = config->voxel_resolution;
+        if (resolution == 0u || resolution > 512u) {
+            set_error(error, error_len, "voxel resolution must be 1..512");
+            return 1;
+        }
+        const size_t cell_count = static_cast<size_t>(resolution) * resolution * resolution;
+        if (cell_count > SIZE_MAX / sizeof(VoxelCellCpp) ||
+            cells_len != cell_count * sizeof(VoxelCellCpp)) {
+            set_error(error, error_len,
+                      "voxel output is %zu bytes; expected %zu bytes",
+                      cells_len, cell_count * sizeof(VoxelCellCpp));
+            return 1;
+        }
+
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        NSError *ns_error = nil;
+        id<MTLLibrary> library = device ? [device
+            newLibraryWithURL:[NSURL fileURLWithPath:ns_string(metallib_path)]
+                        error:&ns_error] : nil;
+        id<MTLFunction> function = library
+            ? [library newFunctionWithName:@"voxel_build_kernel"] : nil;
+        id<MTLComputePipelineState> pipeline = function
+            ? [device newComputePipelineStateWithFunction:function error:&ns_error] : nil;
+        id<MTLCommandQueue> queue = device ? [device newCommandQueue] : nil;
+        id<MTLBuffer> cells_buffer = device ? [device
+            newBufferWithLength:cells_len options:MTLResourceStorageModeShared] : nil;
+        id<MTLBuffer> config_buffer = device ? [device
+            newBufferWithBytes:config length:sizeof(*config)
+                       options:MTLResourceStorageModeShared] : nil;
+        if (!pipeline || !queue || !cells_buffer || !config_buffer) {
+            set_error(error, error_len, "failed to create Metal voxel-build resources: %s",
+                      ns_error.localizedDescription.UTF8String ?: "Metal unavailable");
+            return 1;
+        }
+
+        NSDate *started = [NSDate date];
+        id<MTLCommandBuffer> command = [queue commandBuffer];
+        id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
+        [encoder setComputePipelineState:pipeline];
+        [encoder setBuffer:cells_buffer offset:0 atIndex:0];
+        [encoder setBuffer:config_buffer offset:0 atIndex:1];
+        [encoder dispatchThreads:MTLSizeMake(resolution, resolution, resolution)
+           threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+        [encoder endEncoding];
+        [command commit];
+        [command waitUntilCompleted];
+        if (command.status == MTLCommandBufferStatusError) {
+            set_error(error, error_len, "Metal voxel build failed: %s",
+                      command.error.localizedDescription.UTF8String);
+            return 1;
+        }
+        if (build_ms) *build_ms = -[started timeIntervalSinceNow] * 1000.0;
+        std::memcpy(cells, cells_buffer.contents, cells_len);
+        return 0;
+    }
+}
+
 extern "C" int fpt_metal_render(const char *metallib_path,
                                  const char *stitch_metallib_path,
                                  const char *stitch_archive_path,
