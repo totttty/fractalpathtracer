@@ -9,6 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const NORMAL_CLUSTER_COSINE: f32 = 0.94;
+const AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO: f64 = 0.50;
 static TEMPORARY_DIRECTORY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Clone, Debug)]
@@ -39,6 +40,8 @@ pub struct MandelMeshAutoBoundsSummary {
     pub candidate_bounds: Option<Aabb>,
     pub discovery_boundary_cells: usize,
     pub candidate_boundary_cells: Option<usize>,
+    pub candidate_secondary_patch_ratio: Option<f64>,
+    pub max_secondary_patch_ratio: f64,
     pub discovery_pass_ms: f64,
     pub candidate_pass_ms: Option<f64>,
     pub total_pass_ms: f64,
@@ -214,6 +217,10 @@ fn boundary_cell_count(grid: &VoxelGrid) -> usize {
             })
         })
         .count()
+}
+
+fn secondary_patch_ratio(secondary_cells: usize, occupied_cells: usize) -> f64 {
+    secondary_cells as f64 / occupied_cells.max(1) as f64
 }
 
 struct TemporaryDirectory(PathBuf);
@@ -423,6 +430,8 @@ pub fn voxelize_mandelbulber_mesh(
         candidate_bounds: None,
         discovery_boundary_cells,
         candidate_boundary_cells: None,
+        candidate_secondary_patch_ratio: None,
+        max_secondary_patch_ratio: AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO,
         discovery_pass_ms,
         candidate_pass_ms: None,
         total_pass_ms: total_started.elapsed().as_secs_f64() * 1000.0,
@@ -483,6 +492,19 @@ pub fn voxelize_mandelbulber_mesh(
         discovery.auto_bounds = auto_bounds;
         return Ok(discovery);
     }
+    let candidate_secondary_patch_ratio = secondary_patch_ratio(
+        candidate.summary.cells_with_secondary_patch,
+        candidate.summary.occupied_cells,
+    );
+    auto_bounds.candidate_secondary_patch_ratio = Some(candidate_secondary_patch_ratio);
+    if candidate_secondary_patch_ratio > AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO {
+        if let Some(path) = candidate_raw.as_deref() {
+            let _ = fs::remove_file(path);
+        }
+        auto_bounds.reason = "candidate_surface_complexity_exceeds_limit".to_owned();
+        discovery.auto_bounds = auto_bounds;
+        return Ok(discovery);
+    }
     if let (Some(staged), Some(output)) = (candidate_raw.as_deref(), options.raw_ply_output) {
         fs::copy(staged, output).with_context(|| {
             format!(
@@ -494,7 +516,7 @@ pub fn voxelize_mandelbulber_mesh(
         let _ = fs::remove_file(staged);
     }
     auto_bounds.accepted = true;
-    auto_bounds.reason = "accepted_zero_boundary_contact".to_owned();
+    auto_bounds.reason = "accepted_bounds_and_surface_complexity".to_owned();
     candidate.auto_bounds = auto_bounds;
     Ok(candidate)
 }
@@ -619,6 +641,8 @@ fn voxelize_mandelbulber_mesh_once(
             candidate_bounds: None,
             discovery_boundary_cells: 0,
             candidate_boundary_cells: None,
+            candidate_secondary_patch_ratio: None,
+            max_secondary_patch_ratio: AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO,
             discovery_pass_ms: 0.0,
             candidate_pass_ms: None,
             total_pass_ms: 0.0,
@@ -1244,5 +1268,11 @@ mod tests {
             make([2, 3, 7]),
         ]);
         assert_eq!(boundary_cell_count(&grid), 6);
+    }
+
+    #[test]
+    fn automatic_bounds_reject_complex_multi_plane_candidates() {
+        assert!(secondary_patch_ratio(27, 100) <= AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO);
+        assert!(secondary_patch_ratio(89, 100) > AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO);
     }
 }

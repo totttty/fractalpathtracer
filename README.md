@@ -170,7 +170,8 @@ FPT's generated Metal evaluator is not used as the reference. See
 [Mandelbulber mesh voxelization](docs/mandelbulber-mesh-voxelization.md).
 Thin, isolated meshes can opt into the gated two-pass
 `--mandel-mesh-auto-bounds` policy; it retains tighter bounds only when both
-passes prove zero occupied boundary contact.
+passes prove zero occupied boundary contact and the candidate remains below
+the conservative multi-plane surface-complexity ceiling.
 
 The lossless little-endian `.fptvox` path preserves every occupied cell's
 packed material tuple for direct native volume construction. The intended

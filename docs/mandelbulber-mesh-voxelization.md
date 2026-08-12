@@ -41,8 +41,11 @@ The exporter then builds a scene-centered cube whose side is the mesh's largest 
 the total margin selected by `--mandel-mesh-auto-bounds-margin` (default `0.10`). The candidate
 is accepted only when the discovery volume has no occupied boundary cells, the new cube is
 strictly inside the original domain, and the candidate has no occupied cells on any of its six
-faces. Otherwise the original volume and PLY are retained. Export JSON records the candidate,
-acceptance state, boundary counts, and fallback reason under `auto_bounds`.
+faces. Candidates are also limited to 50% secondary-patch cells: denser multi-plane surfaces can
+recover real sub-voxel openings while becoming less representable as a conservative 192^3 shell,
+so they retain the discovery volume instead. Otherwise the original volume and PLY are retained.
+Export JSON records the candidate, acceptance state, boundary counts, surface-complexity ratio,
+threshold, and fallback reason under `auto_bounds`.
 It also reports discovery, candidate, and total pass time so the two-pass export
 cost remains explicit.
 
