@@ -5413,6 +5413,262 @@ static VoxelCell buildVoxelCell(float3 position,
     return cell;
 }
 
+static uint packVoxelSurfaceNormal(float3 normal) {
+    normal = normalize(normal);
+    const float denominator = max(abs(normal.x) + abs(normal.y) + abs(normal.z), 1.0e-8f);
+    float2 octahedral = normal.xy / denominator;
+    if (normal.z < 0.0f) {
+        const float2 source = octahedral;
+        octahedral = (1.0f - abs(source.yx)) * sign(source);
+    }
+    const ushort2 encoded = ushort2(round(clamp(octahedral * 0.5f + 0.5f, 0.0f, 1.0f) * 65535.0f));
+    const uint packed = uint(encoded.x) | (uint(encoded.y) << 16u);
+    return packed == 0u ? 1u : packed;
+}
+
+static uint packVoxelSurfacePlane(float3 normal, float offset) {
+    normal = normalize(normal);
+    const float denominator = max(abs(normal.x) + abs(normal.y) + abs(normal.z), 1.0e-8f);
+    float2 octahedral = normal.xy / denominator;
+    if (normal.z < 0.0f) {
+        const float2 source = octahedral;
+        octahedral = (1.0f - abs(source.yx)) * sign(source);
+    }
+    const ushort2 encoded = ushort2(round(clamp(octahedral * 0.5f + 0.5f, 0.0f, 1.0f) * 4095.0f));
+    const uint encoded_offset = uint(round(clamp(offset * 0.5f + 0.5f, 0.0f, 1.0f) * 255.0f));
+    const uint packed = uint(encoded.x) | (uint(encoded.y) << 12u) | (encoded_offset << 24u);
+    return packed == 0u ? 1u : packed;
+}
+
+static bool estimateVoxelSurface(float3 position,
+                                 float3 cell_size,
+                                 constant FptRenderConfig &cfg,
+                                 thread float3 &grid_normal,
+                                 thread float &grid_offset) {
+    const float3 half_extent = cell_size * 0.5f;
+    float closest_distance = distanceSdf(position, cfg);
+    float closest_absolute_distance = abs(closest_distance);
+    float3 closest_position = position;
+    for (uint corner = 0u; corner < 8u; ++corner) {
+        const float3 corner_sign = float3(
+            (corner & 1u) != 0u ? 1.0f : -1.0f,
+            (corner & 2u) != 0u ? 1.0f : -1.0f,
+            (corner & 4u) != 0u ? 1.0f : -1.0f);
+        const float3 sample_position = position + corner_sign * half_extent;
+        const float sample_distance = distanceSdf(sample_position, cfg);
+        if (isfinite(sample_distance) && abs(sample_distance) < closest_absolute_distance) {
+            closest_distance = sample_distance;
+            closest_absolute_distance = abs(sample_distance);
+            closest_position = sample_position;
+        }
+    }
+    if (!isfinite(closest_distance) || closest_absolute_distance > length(cell_size) * 2.0f)
+        return false;
+    const float3 sample_normal = normalAt(closest_position, cfg);
+    const float3 surface_position = closest_position - sample_normal * closest_distance;
+    const float3 grid_displacement = (surface_position - position) / cell_size;
+    if (any(abs(grid_displacement) > 0.55f))
+        return false;
+    const float3 surface_normal = normalAt(surface_position, cfg);
+    grid_normal = normalize(surface_normal * cell_size);
+    grid_offset = clamp(dot(grid_displacement, grid_normal), -1.0f, 1.0f);
+    const float support = 0.5f * (abs(grid_normal.x) + abs(grid_normal.y) + abs(grid_normal.z));
+    return abs(grid_offset) <= support + 1.0e-3f;
+}
+
+struct VoxelSurfacePatchSample {
+    float3 position;
+    float3 normal;
+};
+
+static bool sampleVoxelSurfacePatch(float3 sample_position,
+                                    float3 cell_center,
+                                    float3 cell_size,
+                                    constant FptRenderConfig &cfg,
+                                    thread VoxelSurfacePatchSample &sample,
+                                    thread float &absolute_distance) {
+    const float distance = distanceSdf(sample_position, cfg);
+    if (!isfinite(distance))
+        return false;
+    const float3 world_normal = normalAt(sample_position, cfg);
+    if (any(!isfinite(world_normal)) || dot(world_normal, world_normal) < 1.0e-8f)
+        return false;
+    const float3 surface_position = sample_position - world_normal * distance;
+    const float3 grid_position = (surface_position - cell_center) / cell_size;
+    if (any(!isfinite(grid_position)) || any(abs(grid_position) > 0.60f))
+        return false;
+    sample.position = grid_position;
+    sample.normal = normalize(world_normal * cell_size);
+    absolute_distance = abs(distance);
+    return true;
+}
+
+static uint packVoxelSurfacePatchBounds(float2 minimum, float2 maximum) {
+    const uchar4 encoded = uchar4(round(clamp(float4(minimum.x, maximum.x,
+                                                       minimum.y, maximum.y),
+                                              0.0f, 1.0f) * 255.0f));
+    return uint(encoded.x) | (uint(encoded.y) << 8u) |
+           (uint(encoded.z) << 16u) | (uint(encoded.w) << 24u);
+}
+
+static bool fitVoxelSurfacePatch(thread const VoxelSurfacePatchSample *samples,
+                                 thread const uchar *groups,
+                                 uint sample_count,
+                                 uchar selected_group,
+                                 float3 seed_normal,
+                                 thread uint &packed_plane,
+                                 thread uint &packed_bounds) {
+    float3 normal_sum = float3(0.0f);
+    float3 position_sum = float3(0.0f);
+    uint count = 0u;
+    for (uint index = 0u; index < sample_count; ++index) {
+        if (groups[index] != selected_group)
+            continue;
+        float3 normal = samples[index].normal;
+        if (dot(normal, seed_normal) < 0.0f)
+            normal = -normal;
+        normal_sum += normal;
+        position_sum += samples[index].position;
+        ++count;
+    }
+    if (count == 0u || dot(normal_sum, normal_sum) < 1.0e-8f)
+        return false;
+    const float3 normal = normalize(normal_sum);
+    const float3 mean_position = position_sum / float(count);
+    const float offset = dot(mean_position, normal);
+    const float support = 0.5f * (abs(normal.x) + abs(normal.y) + abs(normal.z));
+    if (abs(offset) > min(support + 1.0e-3f, 0.20f))
+        return false;
+
+    const float3 absolute_normal = abs(normal);
+    const uint depth_axis = absolute_normal.x >= absolute_normal.y &&
+                            absolute_normal.x >= absolute_normal.z
+        ? 0u
+        : (absolute_normal.y >= absolute_normal.z ? 1u : 2u);
+    const uint u_axis = (depth_axis + 1u) % 3u;
+    const uint v_axis = (depth_axis + 2u) % 3u;
+    float2 minimum = float2(1.0f);
+    float2 maximum = float2(0.0f);
+    for (uint index = 0u; index < sample_count; ++index) {
+        if (groups[index] != selected_group)
+            continue;
+        const float2 projected = float2(samples[index].position[u_axis],
+                                        samples[index].position[v_axis]) + 0.5f;
+        minimum = min(minimum, projected);
+        maximum = max(maximum, projected);
+    }
+    // Keep the fallback inside observed projected support. The primary V3
+    // plane remains responsible for the unsampled interval.
+    const float margin = 0.0f;
+    minimum = clamp(minimum - margin, 0.0f, 1.0f);
+    maximum = clamp(maximum + margin, 0.0f, 1.0f);
+    packed_plane = packVoxelSurfacePlane(normal, offset);
+    packed_bounds = packVoxelSurfacePatchBounds(minimum, maximum);
+    return true;
+}
+
+static bool estimateVoxelSurfacePatches(float3 position,
+                                        float3 cell_size,
+                                        constant FptRenderConfig &cfg,
+                                        bool fit_bounded_primary,
+                                        thread bool &used_probe_primary,
+                                        thread uint &probe_sample_count,
+                                        thread uint3 &packed_patches,
+                                        thread uint2 &bounded_primary) {
+    used_probe_primary = false;
+    probe_sample_count = 0u;
+    bounded_primary = uint2(0u);
+    float3 primary_normal;
+    float primary_offset = 0.0f;
+    const bool primary_valid = estimateVoxelSurface(position, cell_size, cfg,
+                                                     primary_normal, primary_offset);
+    VoxelSurfacePatchSample samples[27];
+    uint sample_count = 0u;
+    uint closest_sample = 0u;
+    float closest_distance = INFINITY;
+    for (uint z = 0u; z < 3u; ++z) {
+        for (uint y = 0u; y < 3u; ++y) {
+            for (uint x = 0u; x < 3u; ++x) {
+                const float3 lattice = float3(float(x), float(y), float(z)) * 0.5f - 0.5f;
+                VoxelSurfacePatchSample sample;
+                float absolute_distance = 0.0f;
+                if (!sampleVoxelSurfacePatch(position + lattice * cell_size,
+                                             position, cell_size, cfg,
+                                             sample, absolute_distance))
+                    continue;
+                samples[sample_count] = sample;
+                if (absolute_distance < closest_distance) {
+                    closest_distance = absolute_distance;
+                    closest_sample = sample_count;
+                }
+                ++sample_count;
+            }
+        }
+    }
+    probe_sample_count = sample_count;
+    if (sample_count == 0u) {
+        if (!primary_valid)
+            return false;
+        const uint primary_v3_plane = packVoxelSurfacePlane(primary_normal, primary_offset);
+        packed_patches = uint3(primary_v3_plane, 0u, 0u);
+        return true;
+    }
+    if (!primary_valid && sample_count < 4u)
+        return false;
+    if (!primary_valid) {
+        used_probe_primary = true;
+        primary_normal = samples[closest_sample].normal;
+        primary_offset = dot(samples[closest_sample].position, primary_normal);
+    }
+    const uint primary_v3_plane = packVoxelSurfacePlane(primary_normal, primary_offset);
+
+    const float3 seed0 = primary_normal;
+    uint seed1_index = 0u;
+    float greatest_angular_distance = 0.0f;
+    for (uint index = 0u; index < sample_count; ++index) {
+        const float angular_distance = 1.0f - abs(dot(samples[index].normal, seed0));
+        if (angular_distance > greatest_angular_distance) {
+            greatest_angular_distance = angular_distance;
+            seed1_index = index;
+        }
+    }
+    const bool split_candidate = greatest_angular_distance > 0.2928932f; // 45 degrees
+    const float3 seed1 = samples[seed1_index].normal;
+    uchar groups[27];
+    uint group_counts[2] = {0u, 0u};
+    for (uint index = 0u; index < sample_count; ++index) {
+        const float alignment0 = abs(dot(samples[index].normal, seed0));
+        const float alignment1 = abs(dot(samples[index].normal, seed1));
+        const uchar group = split_candidate && alignment1 > alignment0 ? 1u : 0u;
+        groups[index] = group;
+        ++group_counts[group];
+    }
+    const uint minimum_secondary = max(2u, uint(ceil(float(sample_count) * 0.25f)));
+    const bool split = split_candidate && group_counts[1] >= minimum_secondary &&
+                       group_counts[0] >= minimum_secondary;
+    if (!split) {
+        for (uint index = 0u; index < sample_count; ++index)
+            groups[index] = 0u;
+    }
+
+    if (fit_bounded_primary) {
+        uint bounded_primary_plane = 0u;
+        uint bounded_primary_bounds = 0u;
+        fitVoxelSurfacePatch(samples, groups, sample_count, 0u, seed0,
+                             bounded_primary_plane, bounded_primary_bounds);
+        bounded_primary = uint2(bounded_primary_plane, bounded_primary_bounds);
+    }
+
+    uint secondary_plane = 0u;
+    uint secondary_bounds = 0u;
+    if (split) {
+        fitVoxelSurfacePatch(samples, groups, sample_count, 1u, seed1,
+                             secondary_plane, secondary_bounds);
+    }
+    packed_patches = uint3(primary_v3_plane, secondary_plane, secondary_bounds);
+    return true;
+}
+
 kernel void voxel_build_kernel(device VoxelCell *cells [[buffer(0)]],
                                constant FptRenderConfig &cfg [[buffer(1)]],
                                uint3 gid [[thread_position_in_grid]]) {
@@ -5421,6 +5677,142 @@ kernel void voxel_build_kernel(device VoxelCell *cells [[buffer(0)]],
     float3 cell_size = voxelCellSize(cfg);
     float3 position = voxelBoundsMin(cfg) + (float3(gid) + 0.5f) * cell_size;
     cells[voxelIndex(gid, resolution)] = buildVoxelCell(position, cell_size * 0.5f, cfg);
+}
+
+kernel void voxel_build_surface_kernel(device VoxelCell *cells [[buffer(0)]],
+                                       constant FptRenderConfig &cfg [[buffer(1)]],
+                                       device uint *packed_normals [[buffer(2)]],
+                                       uint3 gid [[thread_position_in_grid]]) {
+    uint resolution = max(cfg.voxel_resolution, 1u);
+    if (any(gid >= uint3(resolution))) return;
+    float3 cell_size = voxelCellSize(cfg);
+    float3 position = voxelBoundsMin(cfg) + (float3(gid) + 0.5f) * cell_size;
+    const uint index = voxelIndex(gid, resolution);
+    const VoxelCell cell = buildVoxelCell(position, cell_size * 0.5f, cfg);
+    cells[index] = cell;
+    if ((cell.packed_color & 0x80000000u) != 0u) {
+        float3 grid_normal;
+        float grid_offset;
+        const bool valid = estimateVoxelSurface(position, cell_size, cfg, grid_normal, grid_offset);
+        packed_normals[index] = valid ? packVoxelSurfaceNormal(grid_normal) : 0u;
+    } else {
+        packed_normals[index] = 0u;
+    }
+}
+
+kernel void voxel_build_surface_plane_kernel(device VoxelCell *cells [[buffer(0)]],
+                                             constant FptRenderConfig &cfg [[buffer(1)]],
+                                             device uint *packed_planes [[buffer(2)]],
+                                             uint3 gid [[thread_position_in_grid]]) {
+    uint resolution = max(cfg.voxel_resolution, 1u);
+    if (any(gid >= uint3(resolution))) return;
+    float3 cell_size = voxelCellSize(cfg);
+    float3 position = voxelBoundsMin(cfg) + (float3(gid) + 0.5f) * cell_size;
+    const uint index = voxelIndex(gid, resolution);
+    const VoxelCell cell = buildVoxelCell(position, cell_size * 0.5f, cfg);
+    cells[index] = cell;
+    if ((cell.packed_color & 0x80000000u) != 0u) {
+        float3 grid_normal;
+        float grid_offset;
+        const bool valid = estimateVoxelSurface(position, cell_size, cfg, grid_normal, grid_offset);
+        packed_planes[index] = valid ? packVoxelSurfacePlane(grid_normal, grid_offset) : 0u;
+    } else {
+        packed_planes[index] = 0u;
+    }
+}
+
+kernel void voxel_build_surface_patch_kernel(device VoxelCell *cells [[buffer(0)]],
+                                             constant FptRenderConfig &cfg [[buffer(1)]],
+                                             device uint *packed_patches [[buffer(2)]],
+                                             uint3 gid [[thread_position_in_grid]]) {
+    uint resolution = max(cfg.voxel_resolution, 1u);
+    if (any(gid >= uint3(resolution))) return;
+    const float3 cell_size = voxelCellSize(cfg);
+    const float3 position = voxelBoundsMin(cfg) + (float3(gid) + 0.5f) * cell_size;
+    const uint index = voxelIndex(gid, resolution);
+    VoxelCell cell = buildVoxelCell(position, cell_size * 0.5f, cfg);
+    uint3 patches = uint3(0u);
+    const bool occupied = (cell.packed_color & 0x80000000u) != 0u;
+    bool used_probe_primary = false;
+    uint probe_sample_count = 0u;
+    uint2 bounded_primary = uint2(0u);
+    const bool surface_valid = estimateVoxelSurfacePatches(
+        position, cell_size, cfg, false, used_probe_primary, probe_sample_count,
+        patches, bounded_primary);
+    if (surface_valid && (cell.packed_color & 0x80000000u) == 0u) {
+        const Material material = userSdf(position, cfg).material;
+        cell.packed_color = packVoxelUnorm4(float4(material.rgb, 0.0f)) | 0x80000000u;
+        cell.packed_properties = packVoxelUnorm4(float4(material.roughness,
+                                                        material.specular,
+                                                        material.translucency,
+                                                        (material.ior - 1.0f) / 1.5f));
+        cell.emission = material.emission;
+    }
+    // Bits 24..28 store exporter-private probe support, while bit 30 marks
+    // cells whose occupancy or primary plane came from the probe fit. The CPU
+    // consumes and clears this provenance before constructing the public grid.
+    if (surface_valid && (!occupied || used_probe_primary)) {
+        cell.packed_color |= 0x40000000u |
+                             (min(probe_sample_count, 31u) << 24u);
+    }
+    cells[index] = cell;
+    const uint base = index * 3u;
+    packed_patches[base + 0u] = patches.x;
+    packed_patches[base + 1u] = patches.y;
+    packed_patches[base + 2u] = patches.z;
+}
+
+kernel void voxel_build_surface_complex_patch_kernel(
+    device VoxelCell *cells [[buffer(0)]],
+    constant FptRenderConfig &cfg [[buffer(1)]],
+    device uint *packed_patches [[buffer(2)]],
+    uint3 gid [[thread_position_in_grid]]) {
+    uint resolution = max(cfg.voxel_resolution, 1u);
+    if (any(gid >= uint3(resolution))) return;
+    const float3 cell_size = voxelCellSize(cfg);
+    const float3 position = voxelBoundsMin(cfg) + (float3(gid) + 0.5f) * cell_size;
+    const uint index = voxelIndex(gid, resolution);
+    VoxelCell cell = buildVoxelCell(position, cell_size * 0.5f, cfg);
+    uint3 patches = uint3(0u);
+    uint2 bounded_primary = uint2(0u);
+    const bool occupied = (cell.packed_color & 0x80000000u) != 0u;
+    bool used_probe_primary = false;
+    uint probe_sample_count = 0u;
+    const bool surface_valid = estimateVoxelSurfacePatches(
+        position, cell_size, cfg, true, used_probe_primary, probe_sample_count,
+        patches, bounded_primary);
+    const bool promoted = surface_valid && (!occupied || used_probe_primary);
+    if (surface_valid && !occupied) {
+        const Material material = userSdf(position, cfg).material;
+        cell.packed_color = packVoxelUnorm4(float4(material.rgb, 0.0f)) | 0x80000000u;
+        cell.packed_properties = packVoxelUnorm4(float4(material.roughness,
+                                                        material.specular,
+                                                        material.translucency,
+                                                        (material.ior - 1.0f) / 1.5f));
+        cell.emission = material.emission;
+    }
+    if (surface_valid && promoted) {
+        cell.packed_color |= 0x40000000u |
+                             (min(probe_sample_count, 31u) << 24u);
+    }
+    cells[index] = cell;
+    const uint base = index * 5u;
+    if (!surface_valid) {
+        for (uint word = 0u; word < 5u; ++word)
+            packed_patches[base + word] = 0u;
+    } else if (promoted) {
+        packed_patches[base + 0u] = patches.x;
+        packed_patches[base + 1u] = patches.y;
+        packed_patches[base + 2u] = patches.z;
+        packed_patches[base + 3u] = bounded_primary.x;
+        packed_patches[base + 4u] = bounded_primary.y;
+    } else {
+        packed_patches[base + 0u] = patches.x;
+        packed_patches[base + 1u] = patches.y;
+        packed_patches[base + 2u] = patches.z;
+        packed_patches[base + 3u] = 0u;
+        packed_patches[base + 4u] = 0u;
+    }
 }
 
 kernel void bound_grid_build_kernel(texture3d<float, access::write> bound_grid [[texture(0)]],
@@ -7385,6 +7777,58 @@ kernel void sdf_diagnostic_kernel(device uchar4 *out [[buffer(0)]],
                       uchar(clamp(color.g, 0.0f, 1.0f) * 255.0f),
                       uchar(clamp(color.b, 0.0f, 1.0f) * 255.0f),
                       255);
+}
+
+struct FptStructuralDiagnosticSample {
+    float4 positionDistance;
+    float4 normalHit;
+};
+
+kernel void sdf_structural_diagnostic_kernel(
+    device FptStructuralDiagnosticSample *out [[buffer(0)]],
+    constant FptRenderConfig &cfg [[buffer(1)]],
+    constant FptDiagnosticConfig &diag [[buffer(2)]],
+    uint2 gid [[thread_position_in_grid]]) {
+    uint2 pixel = gid + diag.dispatch_origin;
+    if (pixel.x >= cfg.width || pixel.y >= cfg.height) return;
+    float2 xy = sdfScreenUv(pixel, cfg);
+    float3 ray_origin = cameraPos(cfg);
+    float3 position = ray_origin;
+    float3 direction;
+    bool hit = false;
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        if (mandelbulberProjectionVisible(xy, cfg)) {
+            direction = mandelbulberCameraRay(xy, cfg);
+            const int steps = min(int(max(cfg.render[1], 32.0f)), 10000);
+            const MandelbulberMarchResult result =
+                marchMandelbulber(direction, position, steps, cfg);
+            position = result.position;
+            hit = result.found;
+        } else {
+            direction = float3(0.0f);
+        }
+    } else {
+        const float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
+        direction = rotateCamera(normalize(float3(xy, focal_length)),
+                                 cameraYawPitch(cfg), cfg.camera_roll);
+        const int steps = min(int(max(cfg.render[1], 32.0f)), 420);
+        const float threshold = max(cfg.render[3], 0.0005f);
+        for (int i = 0; i < steps; ++i) {
+            const float distance = mapSdf(position, cfg);
+            if (!isfinite(distance)) break;
+            if (distance < threshold && length(position - ray_origin) > 0.001f) {
+                hit = true;
+                break;
+            }
+            position += direction * sdfMarchStep(distance, threshold, cfg);
+            if (length(position - ray_origin) > cfg.render[4]) break;
+        }
+    }
+    const float ray_distance = hit ? length(position - ray_origin) : -1.0f;
+    const float3 normal = hit ? normalAt(position, cfg) : float3(0.0f);
+    const uint index = (cfg.height - 1u - pixel.y) * cfg.width + pixel.x;
+    out[index].positionDistance = float4(hit ? position : float3(0.0f), ray_distance);
+    out[index].normalHit = float4(normal, hit ? 1.0f : 0.0f);
 }
 
 static float3 voxelDiagnostic(float2 xy,

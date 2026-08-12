@@ -155,6 +155,14 @@ typedef enum FptVoxelCoverageMode {
     FPT_VOXEL_COVERAGE_INTERVAL = 2,
 } FptVoxelCoverageMode;
 
+typedef enum FptVoxelSurfacePayload {
+    FPT_VOXEL_SURFACE_NONE = 0,
+    FPT_VOXEL_SURFACE_NORMAL = 1,
+    FPT_VOXEL_SURFACE_PLANE = 2,
+    FPT_VOXEL_SURFACE_BOUNDED_PATCH = 3,
+    FPT_VOXEL_SURFACE_COMPLEX_PATCH = 4,
+} FptVoxelSurfacePayload;
+
 typedef enum FptVoxelBuildMode {
     FPT_VOXEL_BUILD_STAGING = 0,
     FPT_VOXEL_BUILD_DIRECT = 1,
@@ -426,6 +434,7 @@ int fpt_metal_render(const char *metallib_path,
 
 int fpt_metal_diagnostic_render(const char *metallib_path,
                                 const char *output_path,
+                                const char *structural_output_path,
                                 const char *shader_source,
                                 size_t shader_source_len,
                                 const struct FptRenderConfig *config,
@@ -449,6 +458,9 @@ int fpt_metal_voxel_build(const char *metallib_path,
                           const struct FptRenderConfig *config,
                           void *cells,
                           size_t cells_len,
+                          uint32_t surface_payload_mode,
+                          uint32_t *packed_surface,
+                          size_t packed_surface_len,
                           double *build_ms,
                           char *error,
                           size_t error_len);

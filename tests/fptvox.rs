@@ -1,6 +1,12 @@
 use fpt_metal::{
-    Aabb, CoordinateSystem, FPTVOX_HEADER_SIZE, FPTVOX_MAGIC, FPTVOX_RECORD_SIZE, FPTVOX_VERSION,
-    FractalErrorCode, SparseVoxel, SurfaceMaterial, VoxelCell, VoxelGrid, export_fptvox,
+    Aabb, CoordinateSystem, FPTVOX_BOUNDED_PATCH_MAGIC, FPTVOX_BOUNDED_PATCH_RECORD_SIZE,
+    FPTVOX_BOUNDED_PATCH_VERSION, FPTVOX_HEADER_SIZE, FPTVOX_MAGIC, FPTVOX_PLANE_MAGIC,
+    FPTVOX_PLANE_PAIR_MAGIC, FPTVOX_PLANE_PAIR_RECORD_SIZE, FPTVOX_PLANE_PAIR_VERSION,
+    FPTVOX_PLANE_RECORD_SIZE, FPTVOX_PLANE_VERSION, FPTVOX_RECORD_SIZE, FPTVOX_SURFACE_MAGIC,
+    FPTVOX_SURFACE_RECORD_SIZE, FPTVOX_SURFACE_VERSION, FPTVOX_VERSION, FractalErrorCode,
+    SparseVoxel, SurfaceMaterial, VoxelCell, VoxelGrid, export_fptvox,
+    export_fptvox_with_bounded_patches, export_fptvox_with_normals, export_fptvox_with_plane_pairs,
+    export_fptvox_with_planes,
 };
 use std::fs;
 use std::path::PathBuf;
@@ -120,6 +126,178 @@ fn header_and_record_are_byte_exact() {
     assert_eq!(summary.voxel_count, 1);
     assert_eq!(summary.bytes, 88);
     fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn surface_payload_is_byte_exact_and_versioned() {
+    let voxel = SparseVoxel {
+        coordinate: [1, 2, 3],
+        cell: VoxelCell {
+            packed_color: 0x8122_3344,
+            packed_properties: 0xaabb_ccdd,
+            emission: 1.5,
+        },
+    };
+    let grid = fixture_grid(vec![voxel], [2, 3, 4]);
+    let output = temporary_artifact("surface-exact");
+    let summary = export_fptvox_with_normals(&grid, &[0x5678_1234], &output).unwrap();
+    let bytes = fs::read(&output).unwrap();
+    assert_eq!(bytes[0..8], FPTVOX_SURFACE_MAGIC);
+    assert_eq!(u32_at(&bytes, 12), FPTVOX_SURFACE_VERSION);
+    assert_eq!(bytes.len(), 64 + FPTVOX_SURFACE_RECORD_SIZE as usize);
+    assert_eq!(u32_at(&bytes, 64 + 24), 0x5678_1234);
+    assert_eq!(summary.bytes, 92);
+    fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn surface_payload_rejects_a_mismatched_normal_count() {
+    let grid = fixture_grid(
+        vec![SparseVoxel {
+            coordinate: [0, 0, 0],
+            cell: VoxelCell::from_material(SurfaceMaterial::default()),
+        }],
+        [1; 3],
+    );
+    let output = temporary_artifact("surface-invalid-count");
+    let error = export_fptvox_with_normals(&grid, &[], &output).unwrap_err();
+    assert_eq!(error.code, FractalErrorCode::Artifact);
+    assert!(!output.exists());
+}
+
+#[test]
+fn plane_payload_is_byte_exact_and_versioned() {
+    let voxel = SparseVoxel {
+        coordinate: [1, 2, 3],
+        cell: VoxelCell {
+            packed_color: 0x8122_3344,
+            packed_properties: 0xaabb_ccdd,
+            emission: 1.5,
+        },
+    };
+    let grid = fixture_grid(vec![voxel], [2, 3, 4]);
+    let output = temporary_artifact("plane-exact");
+    let summary = export_fptvox_with_planes(&grid, &[0x9abc_def0], &output).unwrap();
+    let bytes = fs::read(&output).unwrap();
+    assert_eq!(bytes[0..8], FPTVOX_PLANE_MAGIC);
+    assert_eq!(u32_at(&bytes, 12), FPTVOX_PLANE_VERSION);
+    assert_eq!(bytes.len(), 64 + FPTVOX_PLANE_RECORD_SIZE as usize);
+    assert_eq!(u32_at(&bytes, 64 + 24), 0x9abc_def0);
+    assert_eq!(summary.bytes, 92);
+    fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn plane_payload_rejects_a_mismatched_count() {
+    let grid = fixture_grid(
+        vec![SparseVoxel {
+            coordinate: [0, 0, 0],
+            cell: VoxelCell::from_material(SurfaceMaterial::default()),
+        }],
+        [1; 3],
+    );
+    let output = temporary_artifact("plane-invalid-count");
+    let error = export_fptvox_with_planes(&grid, &[], &output).unwrap_err();
+    assert_eq!(error.code, FractalErrorCode::Artifact);
+    assert!(!output.exists());
+}
+
+#[test]
+fn plane_pair_payload_is_byte_exact_and_versioned() {
+    let voxel = SparseVoxel {
+        coordinate: [1, 2, 3],
+        cell: VoxelCell {
+            packed_color: 0x8122_3344,
+            packed_properties: 0xaabb_ccdd,
+            emission: 1.5,
+        },
+    };
+    let grid = fixture_grid(vec![voxel], [2, 3, 4]);
+    let output = temporary_artifact("plane-pair-exact");
+    let summary =
+        export_fptvox_with_plane_pairs(&grid, &[[0x9abc_def0, 0x1234_5678]], &output).unwrap();
+    let bytes = fs::read(&output).unwrap();
+    assert_eq!(bytes[0..8], FPTVOX_PLANE_PAIR_MAGIC);
+    assert_eq!(u32_at(&bytes, 12), FPTVOX_PLANE_PAIR_VERSION);
+    assert_eq!(bytes.len(), 64 + FPTVOX_PLANE_PAIR_RECORD_SIZE as usize);
+    assert_eq!(u32_at(&bytes, 64 + 24), 0x9abc_def0);
+    assert_eq!(u32_at(&bytes, 64 + 28), 0x1234_5678);
+    assert_eq!(summary.bytes, 96);
+    fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn plane_pair_payload_rejects_invalid_counts_and_primary_plane() {
+    let grid = fixture_grid(
+        vec![SparseVoxel {
+            coordinate: [0, 0, 0],
+            cell: VoxelCell::from_material(SurfaceMaterial::default()),
+        }],
+        [1; 3],
+    );
+    let output = temporary_artifact("plane-pair-invalid");
+    let count_error = export_fptvox_with_plane_pairs(&grid, &[], &output).unwrap_err();
+    assert_eq!(count_error.code, FractalErrorCode::Artifact);
+    let primary_error =
+        export_fptvox_with_plane_pairs(&grid, &[[0, 0x1234_5678]], &output).unwrap_err();
+    assert_eq!(primary_error.code, FractalErrorCode::Artifact);
+    assert!(!output.exists());
+}
+
+#[test]
+fn bounded_patch_payload_is_byte_exact_and_versioned() {
+    let voxel = SparseVoxel {
+        coordinate: [1, 2, 3],
+        cell: VoxelCell {
+            packed_color: 0x8122_3344,
+            packed_properties: 0xaabb_ccdd,
+            emission: 1.5,
+        },
+    };
+    let grid = fixture_grid(vec![voxel], [2, 3, 4]);
+    let output = temporary_artifact("bounded-patch-exact");
+    let patches = [[0x9abc_def0, 0x1234_5678, 0x8070_4030]];
+    let summary = export_fptvox_with_bounded_patches(&grid, &patches, &output).unwrap();
+    let bytes = fs::read(&output).unwrap();
+    assert_eq!(bytes[0..8], FPTVOX_BOUNDED_PATCH_MAGIC);
+    assert_eq!(u32_at(&bytes, 12), FPTVOX_BOUNDED_PATCH_VERSION);
+    assert_eq!(bytes.len(), 64 + FPTVOX_BOUNDED_PATCH_RECORD_SIZE as usize);
+    for (word, expected) in patches[0].iter().enumerate() {
+        assert_eq!(u32_at(&bytes, 64 + 24 + word * 4), *expected);
+    }
+    assert_eq!(summary.bytes, 100);
+    fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn bounded_patch_payload_rejects_invalid_records() {
+    let grid = fixture_grid(
+        vec![SparseVoxel {
+            coordinate: [0, 0, 0],
+            cell: VoxelCell::from_material(SurfaceMaterial::default()),
+        }],
+        [1; 3],
+    );
+    let output = temporary_artifact("bounded-patch-invalid");
+    assert_eq!(
+        export_fptvox_with_bounded_patches(&grid, &[], &output)
+            .unwrap_err()
+            .code,
+        FractalErrorCode::Artifact
+    );
+    assert_eq!(
+        export_fptvox_with_bounded_patches(&grid, &[[0, 0, 0]], &output)
+            .unwrap_err()
+            .code,
+        FractalErrorCode::Artifact
+    );
+    assert_eq!(
+        export_fptvox_with_bounded_patches(&grid, &[[1, 0, 0x0001_0000]], &output)
+            .unwrap_err()
+            .code,
+        FractalErrorCode::Artifact
+    );
+    assert!(!output.exists());
 }
 
 #[test]

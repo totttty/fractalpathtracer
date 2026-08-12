@@ -190,6 +190,11 @@ pub struct RenderArgs {
     pub sdf_bounce_index: u32,
     pub diagnostic_mode: DiagnosticMode,
     pub diagnostic_max_distance: Option<f32>,
+    pub structural_dump: Option<PathBuf>,
+    pub camera_position: Option<[f32; 3]>,
+    pub camera_yaw_pitch: Option<[f32; 2]>,
+    pub camera_roll: Option<f32>,
+    pub camera_fov: Option<f32>,
     pub width: Option<u32>,
     pub height: Option<u32>,
     pub samples: Option<u32>,
@@ -259,6 +264,11 @@ impl RenderArgs {
             sdf_bounce_index: 0,
             diagnostic_mode: DiagnosticMode::Depth,
             diagnostic_max_distance: None,
+            structural_dump: None,
+            camera_position: None,
+            camera_yaw_pitch: None,
+            camera_roll: None,
+            camera_fov: None,
             width: None,
             height: None,
             samples: None,
@@ -277,6 +287,22 @@ fn next_value<'a>(args: &'a [String], index: &mut usize, flag: &str) -> Result<&
     args.get(*index)
         .map(String::as_str)
         .ok_or_else(|| anyhow!("{flag} requires a value"))
+}
+
+fn parse_csv_f32<const N: usize>(value: &str, flag: &str) -> Result<[f32; N]> {
+    let values = value
+        .split(',')
+        .map(str::parse::<f32>)
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    ensure!(
+        values.len() == N,
+        "{flag} requires {N} comma-separated values"
+    );
+    ensure!(
+        values.iter().all(|value| value.is_finite()),
+        "{flag} values must be finite"
+    );
+    Ok(std::array::from_fn(|index| values[index]))
 }
 
 pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
@@ -592,6 +618,38 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                 );
                 out.diagnostic_max_distance = Some(value);
             }
+            "--structural-dump" => {
+                out.structural_dump = Some(PathBuf::from(next_value(
+                    args,
+                    &mut i,
+                    "--structural-dump",
+                )?));
+            }
+            "--camera-position" => {
+                out.camera_position = Some(parse_csv_f32(
+                    next_value(args, &mut i, "--camera-position")?,
+                    "--camera-position",
+                )?);
+            }
+            "--camera-yaw-pitch" => {
+                out.camera_yaw_pitch = Some(parse_csv_f32(
+                    next_value(args, &mut i, "--camera-yaw-pitch")?,
+                    "--camera-yaw-pitch",
+                )?);
+            }
+            "--camera-roll" => {
+                let value = next_value(args, &mut i, "--camera-roll")?.parse::<f32>()?;
+                ensure!(value.is_finite(), "--camera-roll must be finite");
+                out.camera_roll = Some(value);
+            }
+            "--camera-fov" => {
+                let value = next_value(args, &mut i, "--camera-fov")?.parse::<f32>()?;
+                ensure!(
+                    value.is_finite() && (1.0..179.0).contains(&value),
+                    "--camera-fov must be finite and between 1 and 179 degrees"
+                );
+                out.camera_fov = Some(value);
+            }
             value => bail!("unknown argument: {value}"),
         }
         i += 1;
@@ -738,6 +796,21 @@ pub fn apply_optimization_args(config: &mut FptRenderConfig, args: &RenderArgs) 
     config.bound_grid_directional = u32::from(args.bound_grid_directional);
     config.bound_grid_fp16 = u32::from(args.bound_grid_fp16);
     config.regional_program_resolution = args.regional_program_resolution;
+}
+
+pub fn apply_camera_args(config: &mut FptRenderConfig, args: &RenderArgs) {
+    if let Some(position) = args.camera_position {
+        config.camera_position = position;
+    }
+    if let Some(yaw_pitch) = args.camera_yaw_pitch {
+        config.camera_yaw_pitch = yaw_pitch;
+    }
+    if let Some(roll) = args.camera_roll {
+        config.camera_roll = roll;
+    }
+    if let Some(fov) = args.camera_fov {
+        config.camera_fov = fov;
+    }
 }
 
 pub fn default_config() -> FptRenderConfig {
@@ -2709,6 +2782,39 @@ mod tests {
             ];
             assert!(parse_render_args(&invalid).is_err());
         }
+    }
+
+    #[test]
+    fn structural_dump_path_parses() {
+        let args = vec![
+            "scene.json".to_owned(),
+            "--structural-dump".to_owned(),
+            "out/primary.bin".to_owned(),
+        ];
+        assert_eq!(
+            parse_render_args(&args).unwrap().structural_dump,
+            Some(PathBuf::from("out/primary.bin"))
+        );
+    }
+
+    #[test]
+    fn camera_overrides_parse() {
+        let args = vec![
+            "scene.fract".to_owned(),
+            "--camera-position".to_owned(),
+            "1.5,-2,3.25".to_owned(),
+            "--camera-yaw-pitch".to_owned(),
+            "0.75,-0.25".to_owned(),
+            "--camera-roll".to_owned(),
+            "0.125".to_owned(),
+            "--camera-fov".to_owned(),
+            "65".to_owned(),
+        ];
+        let parsed = parse_render_args(&args).unwrap();
+        assert_eq!(parsed.camera_position, Some([1.5, -2.0, 3.25]));
+        assert_eq!(parsed.camera_yaw_pitch, Some([0.75, -0.25]));
+        assert_eq!(parsed.camera_roll, Some(0.125));
+        assert_eq!(parsed.camera_fov, Some(65.0));
     }
 
     #[test]

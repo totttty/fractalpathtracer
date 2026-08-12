@@ -162,9 +162,69 @@ target/release/fpt-metal voxel-export "$SCENE" \
   --mandelbulber-root "$MANDELBULBER_ROOT"
 ```
 
+For an authoritative original-Mandelbulber surface and image pair, select
+`--surface-source mandelbulber-mesh`, preserve the raw exporter output with
+`--mandel-mesh-ply-out`, and capture the original renderer with
+`--mandel-reference-out`. These artifacts use the external Mandelbulber process directly;
+FPT's generated Metal evaluator is not used as the reference. See
+[Mandelbulber mesh voxelization](docs/mandelbulber-mesh-voxelization.md).
+
 The lossless little-endian `.fptvox` path preserves every occupied cell's
 packed material tuple for direct native volume construction. The intended
 direct pipeline is FPT -> `.fptvox` -> the native Metal NAADF path tracer.
+Experimental `--surface-normals` (`FPTVOX2`) and `--surface-planes`
+(`FPTVOX3`) exports add structural surface data for continuous-FPT parity
+work while leaving the version-1 default unchanged. The library also exposes
+experimental `FPTVOX5` two-plane cells for multi-surface validation; the CLI
+does not generate them until camera-independent plane clustering is proven.
+Experimental `--surface-patches` writes `FPTVOX6` cells with the V3 primary
+plane plus an optional dominant-axis bounded secondary patch, so a consumer can
+recover another local surface without changing the V1 default. V6 also probes
+cells rejected by the primary fit. Probe-derived cells are retained only when
+the resulting surface candidate covers at least 90% of the export grid; sparse
+scenes deterministically fall back to the established V6 cell set.
+`--surface-complex-patches` is an opt-in camera-independent completion mode
+that still writes ordinary FPTVOX6. It evaluates a bounded primary fit for
+probe-derived cells, admits the first weaker support tier only when it has one
+coherent patch and at least ten stronger neighbors in its 3x3x3 neighborhood,
+then encodes that cell as a bounded-only V6 record. Previously accepted cells
+retain their existing V6 payload. At `192^3`, this improved the held-out Greek
+view across silhouette IoU (`0.7327` to `0.7345`), mean/median/p95 hit-position
+error (`5.29/1.71/21.39` to `5.18/1.61/21.27` voxels), and normal agreement
+(`0.579` to `0.586`). The BoxFold control was metric-identical. Because the
+consumer receives V6, NAADF has no new shader, buffer, or traversal branch.
+Four alternating 160-frame pairs measured Greek at `1.930 -> 1.885 ms`
+(`-2.3%`) and BoxFold at `1.987 -> 2.018 ms`; BoxFold's paired median was
+`+0.57%`, within the `1% / 0.05 ms` noise gate. Added cells can still change
+the existing acceleration structure, so this remains an explicit quality mode.
+For offline structural matching, add `--surface-local-parallax`. The exporter
+captures twelve nearby continuous-SDF views, fits bounded secondary patches,
+and fills only one-cell gaps adjacent to the accepted V6 surface. This is an
+opt-in quality mode: it can add minutes to complex Mandelbulber exports, but it
+does not change default export bytes or NAADF render-time traversal. On held-out
+`192^3` views, the same bounded policy improved silhouette IoU for Greek
+(`0.7327` to `0.7426`), BoxFold (`0.4659` to `0.4672`), and AmazIfs Torus
+(`0.9662` to `0.9688`) while also improving mean, median, and p95 hit-position
+error and surface-normal agreement.
+The validated quality defaults are 12 views, 384x384 samples, and two parallax
+rings. Offline experiments can reduce export cost with
+`--surface-local-parallax-views 4|6|12`,
+`--surface-local-parallax-resolution 192|256|384`, and
+`--surface-local-parallax-rings 1|2`; the export report records all three
+effective values.
+The first `6/256/1` sweep was 5.8x cheaper than the quality default on Greek
+and improved that scene's held-out metrics, but did not improve every BoxFold
+metric. Reduced settings therefore remain explicit experiments rather than an
+automatic scene policy.
+As a separate offline experiment, `--surface-source mandelbulber-mesh` invokes
+Mandelbulber's authoritative marching-cubes PLY exporter and conservatively
+converts its triangles directly to FPTVOX6 cells in the requested fixed world
+bounds. This can preserve thin topology that point sampling loses, and it does
+not pass through GLB or MagicaVoxel. It requires an external Mandelbulber binary
+and remains opt-in because some generated scenes differ between Mandelbulber's
+evaluator and FPT's generated Metal evaluator. See
+[`docs/mandelbulber-mesh-voxelization.md`](docs/mandelbulber-mesh-voxelization.md)
+for the exact command, format contract, and current limitations.
 Selecting a `.glb` output remains supported: it deduplicates packed materials,
 carries glTF specular, transmission, IOR, and emissive extensions, and embeds
 the versioned marker `asset.extras.fpt_voxel_contract`. See

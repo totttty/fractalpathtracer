@@ -6,13 +6,14 @@ use fpt_metal::mandelbulber::{self, MandelbulberScene};
 use fpt_metal::scene::*;
 use fpt_metal::tools;
 use fpt_metal::{
-    Aabb, CoordinateSystem, FractalScene, VoxelCell, VoxelGrid, VoxelizationParameters,
-    VoxelizationRequest, export_fptvox, export_glb, voxelize,
+    Aabb, CoordinateSystem, FractalScene, SparseVoxel, VoxelCell, VoxelGrid,
+    VoxelizationParameters, VoxelizationRequest, export_fptvox, export_fptvox_with_bounded_patches,
+    export_fptvox_with_normals, export_fptvox_with_planes, export_glb, voxelize,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::ffi::{CStr, CString};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -20,6 +21,8 @@ use std::process::Command;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
+
+mod mandel_mesh;
 
 const METALLIB_BYTES: &[u8] = include_bytes!(env!("FPT_METALLIB_PATH"));
 const BUILTIN_METALLIB_BYTES: &[u8] = include_bytes!(env!("FPT_BUILTIN_METALLIB_PATH"));
@@ -252,9 +255,9 @@ fn usage() {
   Research-only: function-stitching variants, canonical/shared/affine generated forms, dual/tiny libraries, bound-grid, and regional backends\n\
   fpt-metal render-batch <jobs.json>\n\
   fpt-metal diagnostic-batch <jobs.json> [--report <report.json>] [--workers N] [--offset N] [--limit N]\n\
-  fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--fpt-root <dir>] [--width N] [--height N]\n\
+  fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--structural-dump <file.bin>] [--camera-position x,y,z] [--camera-yaw-pitch yaw,pitch] [--camera-roll radians] [--camera-fov degrees] [--fpt-root <dir>] [--width N] [--height N]\n\
   fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
-  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-band N] [--fill-interior]\n\
+  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -288,20 +291,493 @@ fn parse_csv_vec3(value: &str, flag: &str) -> Result<[f32; 3]> {
     Ok([values[0], values[1], values[2]])
 }
 
-fn export_voxel_artifact(grid: &VoxelGrid, output: &Path) -> Result<(&'static str, Value)> {
+enum VoxelSurfacePayload<'a> {
+    None,
+    Normals(&'a [u32]),
+    Planes(&'a [u32]),
+    BoundedPatches(&'a [[u32; 3]]),
+}
+
+fn export_voxel_artifact(
+    grid: &VoxelGrid,
+    surface_payload: VoxelSurfacePayload<'_>,
+    output: &Path,
+) -> Result<(&'static str, Value)> {
     let extension = output
         .extension()
         .and_then(|value| value.to_str())
         .map(str::to_ascii_lowercase)
         .ok_or_else(|| anyhow!("voxel output must end in .glb or .fptvox"))?;
     match extension.as_str() {
-        "glb" => Ok(("glb", serde_json::to_value(export_glb(grid, output)?)?)),
+        "glb" => {
+            ensure!(
+                matches!(surface_payload, VoxelSurfacePayload::None),
+                "surface payloads currently require .fptvox output"
+            );
+            Ok(("glb", serde_json::to_value(export_glb(grid, output)?)?))
+        }
         "fptvox" => Ok((
             "fptvox",
-            serde_json::to_value(export_fptvox(grid, output)?)?,
+            serde_json::to_value(match surface_payload {
+                VoxelSurfacePayload::None => export_fptvox(grid, output)?,
+                VoxelSurfacePayload::Normals(normals) => {
+                    export_fptvox_with_normals(grid, normals, output)?
+                }
+                VoxelSurfacePayload::Planes(planes) => {
+                    export_fptvox_with_planes(grid, planes, output)?
+                }
+                VoxelSurfacePayload::BoundedPatches(patches) => {
+                    export_fptvox_with_bounded_patches(grid, patches, output)?
+                }
+            })?,
         )),
         _ => bail!("unsupported voxel output extension .{extension}; use .glb or .fptvox"),
     }
+}
+
+fn retain_dense_surface_promotions(occupied_candidates: usize, cell_count: usize) -> bool {
+    cell_count > 0 && occupied_candidates.saturating_mul(10) >= cell_count.saturating_mul(9)
+}
+
+fn retain_sparse_surface_promotion(probe_sample_count: u32, minimum_probe_samples: u32) -> bool {
+    probe_sample_count >= minimum_probe_samples
+}
+
+fn filter_supported_minimum_tier(
+    retained: &mut [bool],
+    strongly_retained: &[bool],
+    resolution: u32,
+    minimum_neighbors: u32,
+) {
+    assert_eq!(retained.len(), strongly_retained.len());
+    let extent = resolution as usize;
+    assert_eq!(retained.len(), extent * extent * extent);
+    for z in 0..extent {
+        for y in 0..extent {
+            for x in 0..extent {
+                let index = x + y * extent + z * extent * extent;
+                if !retained[index] || strongly_retained[index] {
+                    continue;
+                }
+                let mut neighbors = 0u32;
+                for dz in -1_i32..=1 {
+                    for dy in -1_i32..=1 {
+                        for dx in -1_i32..=1 {
+                            if dx == 0 && dy == 0 && dz == 0 {
+                                continue;
+                            }
+                            let neighbor = [x as i32 + dx, y as i32 + dy, z as i32 + dz];
+                            if neighbor
+                                .iter()
+                                .any(|value| *value < 0 || *value >= resolution as i32)
+                            {
+                                continue;
+                            }
+                            let neighbor_index = neighbor[0] as usize
+                                + neighbor[1] as usize * extent
+                                + neighbor[2] as usize * extent * extent;
+                            neighbors += u32::from(strongly_retained[neighbor_index]);
+                        }
+                    }
+                }
+                retained[index] = neighbors >= minimum_neighbors;
+            }
+        }
+    }
+}
+
+const NON_INTERSECTING_PRIMARY_PATCH: u32 = 0xff80_0fff;
+
+#[derive(Clone, Copy)]
+struct StructuralSurfaceSample {
+    position: [f32; 3],
+    normal: [f32; 3],
+}
+
+struct SurfaceSampleAccumulator {
+    count: u32,
+    position_sum: [f64; 3],
+    normal_sum: [f64; 3],
+    seed_normal: [f32; 3],
+    local_min: [f32; 3],
+    local_max: [f32; 3],
+}
+
+impl SurfaceSampleAccumulator {
+    fn new(local_position: [f32; 3], normal: [f32; 3]) -> Self {
+        Self {
+            count: 1,
+            position_sum: local_position.map(f64::from),
+            normal_sum: normal.map(f64::from),
+            seed_normal: normal,
+            local_min: local_position,
+            local_max: local_position,
+        }
+    }
+
+    fn add(&mut self, local_position: [f32; 3], mut normal: [f32; 3]) {
+        if dot3(normal, self.seed_normal) < 0.0 {
+            normal = normal.map(|value| -value);
+        }
+        self.count += 1;
+        for axis in 0..3 {
+            self.position_sum[axis] += f64::from(local_position[axis]);
+            self.normal_sum[axis] += f64::from(normal[axis]);
+            self.local_min[axis] = self.local_min[axis].min(local_position[axis]);
+            self.local_max[axis] = self.local_max[axis].max(local_position[axis]);
+        }
+    }
+
+    fn fit_bounded_patch(&self) -> Option<(u32, u32)> {
+        let normal = normalize3(self.normal_sum.map(|value| value as f32))?;
+        let mean = self
+            .position_sum
+            .map(|value| (value / f64::from(self.count)) as f32);
+        let offset = dot3([mean[0] - 0.5, mean[1] - 0.5, mean[2] - 0.5], normal);
+        let depth_axis = if normal[0].abs() >= normal[1].abs() && normal[0].abs() >= normal[2].abs()
+        {
+            0
+        } else if normal[1].abs() >= normal[2].abs() {
+            1
+        } else {
+            2
+        };
+        let u_axis = (depth_axis + 1) % 3;
+        let v_axis = (depth_axis + 2) % 3;
+        let encode = |value: f32| (value.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let bounds = encode(self.local_min[u_axis])
+            | (encode(self.local_max[u_axis]) << 8)
+            | (encode(self.local_min[v_axis]) << 16)
+            | (encode(self.local_max[v_axis]) << 24);
+        Some((pack_surface_plane(normal, offset), bounds))
+    }
+}
+
+#[derive(Default, Serialize)]
+struct LocalParallaxSurfaceSummary {
+    captured_samples: usize,
+    samples_inside_bounds: usize,
+    samples_outside_bounds: usize,
+    added_cells: usize,
+    existing_cells_updated: usize,
+    rejected_non_adjacent_cells: usize,
+    diagnostic_gpu_ms: f64,
+}
+
+fn dot3(a: [f32; 3], b: [f32; 3]) -> f32 {
+    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+
+fn normalize3(value: [f32; 3]) -> Option<[f32; 3]> {
+    let length_squared = dot3(value, value);
+    (length_squared.is_finite() && length_squared > 1.0e-12).then(|| {
+        let inverse = length_squared.sqrt().recip();
+        value.map(|component| component * inverse)
+    })
+}
+
+fn pack_surface_plane(normal: [f32; 3], offset: f32) -> u32 {
+    let denominator = (normal[0].abs() + normal[1].abs() + normal[2].abs()).max(1.0e-8);
+    let mut octahedral = [normal[0] / denominator, normal[1] / denominator];
+    if normal[2] < 0.0 {
+        let source = octahedral;
+        let sign = |value: f32| {
+            if value > 0.0 {
+                1.0
+            } else if value < 0.0 {
+                -1.0
+            } else {
+                0.0
+            }
+        };
+        octahedral = [
+            (1.0 - source[1].abs()) * sign(source[0]),
+            (1.0 - source[0].abs()) * sign(source[1]),
+        ];
+    }
+    let encode_normal = |value: f32| ((value * 0.5 + 0.5).clamp(0.0, 1.0) * 4095.0).round() as u32;
+    let encoded_offset = ((offset * 0.5 + 0.5).clamp(0.0, 1.0) * 255.0).round() as u32;
+    let packed = encode_normal(octahedral[0])
+        | (encode_normal(octahedral[1]) << 12)
+        | (encoded_offset << 24);
+    packed.max(1)
+}
+
+fn voxel_linear_index(coordinate: [u32; 3], resolution: [u32; 3]) -> u64 {
+    u64::from(coordinate[0])
+        + u64::from(coordinate[1]) * u64::from(resolution[0])
+        + u64::from(coordinate[2]) * u64::from(resolution[0]) * u64::from(resolution[1])
+}
+
+fn augment_with_local_parallax_samples(
+    grid: &mut VoxelGrid,
+    patches: &mut Vec<[u32; 3]>,
+    samples: &[StructuralSurfaceSample],
+) -> Result<LocalParallaxSurfaceSummary> {
+    ensure!(
+        patches.len() == grid.voxels.len(),
+        "surface patch count mismatch"
+    );
+    let resolution = grid.resolution;
+    let grid_scale = [
+        resolution[0] as f32 / (grid.bounds.max[0] - grid.bounds.min[0]),
+        resolution[1] as f32 / (grid.bounds.max[1] - grid.bounds.min[1]),
+        resolution[2] as f32 / (grid.bounds.max[2] - grid.bounds.min[2]),
+    ];
+    let original = grid
+        .voxels
+        .iter()
+        .enumerate()
+        .map(|(index, voxel)| (voxel_linear_index(voxel.coordinate, resolution), index))
+        .collect::<HashMap<_, _>>();
+    let mut accumulators = BTreeMap::<u64, ([u32; 3], SurfaceSampleAccumulator)>::new();
+    let mut summary = LocalParallaxSurfaceSummary {
+        captured_samples: samples.len(),
+        ..LocalParallaxSurfaceSummary::default()
+    };
+    for sample in samples {
+        let point = [
+            (sample.position[0] - grid.bounds.min[0]) * grid_scale[0],
+            (sample.position[1] - grid.bounds.min[1]) * grid_scale[1],
+            (sample.position[2] - grid.bounds.min[2]) * grid_scale[2],
+        ];
+        let signed_cell = point.map(|value| value.floor() as i64);
+        if signed_cell
+            .iter()
+            .zip(resolution)
+            .any(|(value, extent)| *value < 0 || *value >= i64::from(extent))
+        {
+            summary.samples_outside_bounds += 1;
+            continue;
+        }
+        summary.samples_inside_bounds += 1;
+        let coordinate = signed_cell.map(|value| value as u32);
+        let local_position = [
+            point[0] - signed_cell[0] as f32,
+            point[1] - signed_cell[1] as f32,
+            point[2] - signed_cell[2] as f32,
+        ];
+        let Some(normal) = normalize3([
+            sample.normal[0] / grid_scale[0],
+            sample.normal[1] / grid_scale[1],
+            sample.normal[2] / grid_scale[2],
+        ]) else {
+            continue;
+        };
+        let linear = voxel_linear_index(coordinate, resolution);
+        match accumulators.entry(linear) {
+            std::collections::btree_map::Entry::Vacant(entry) => {
+                entry.insert((
+                    coordinate,
+                    SurfaceSampleAccumulator::new(local_position, normal),
+                ));
+            }
+            std::collections::btree_map::Entry::Occupied(mut entry) => {
+                entry.get_mut().1.add(local_position, normal);
+            }
+        }
+    }
+    for (linear, (coordinate, accumulator)) in accumulators {
+        let Some((plane, bounds)) = accumulator.fit_bounded_patch() else {
+            continue;
+        };
+        if let Some(&index) = original.get(&linear) {
+            patches[index][1] = plane;
+            patches[index][2] = bounds;
+            summary.existing_cells_updated += 1;
+            continue;
+        }
+        let mut nearest = None::<(u32, u64, usize)>;
+        for dz in -1_i32..=1 {
+            for dy in -1_i32..=1 {
+                for dx in -1_i32..=1 {
+                    if dx == 0 && dy == 0 && dz == 0 {
+                        continue;
+                    }
+                    let candidate = [
+                        i64::from(coordinate[0]) + i64::from(dx),
+                        i64::from(coordinate[1]) + i64::from(dy),
+                        i64::from(coordinate[2]) + i64::from(dz),
+                    ];
+                    if candidate
+                        .iter()
+                        .zip(resolution)
+                        .any(|(value, extent)| *value < 0 || *value >= i64::from(extent))
+                    {
+                        continue;
+                    }
+                    let neighbor = candidate.map(|value| value as u32);
+                    let neighbor_linear = voxel_linear_index(neighbor, resolution);
+                    if let Some(&index) = original.get(&neighbor_linear) {
+                        let distance = (dx * dx + dy * dy + dz * dz) as u32;
+                        let key = (distance, neighbor_linear, index);
+                        if nearest.is_none_or(|current| key < current) {
+                            nearest = Some(key);
+                        }
+                    }
+                }
+            }
+        }
+        let Some((_, _, material_index)) = nearest else {
+            summary.rejected_non_adjacent_cells += 1;
+            continue;
+        };
+        grid.voxels.push(SparseVoxel {
+            coordinate,
+            cell: grid.voxels[material_index].cell,
+        });
+        patches.push([NON_INTERSECTING_PRIMARY_PATCH, plane, bounds]);
+        summary.added_cells += 1;
+    }
+    let mut records = grid
+        .voxels
+        .drain(..)
+        .zip(patches.drain(..))
+        .collect::<Vec<_>>();
+    records.sort_by_key(|(voxel, _)| voxel_linear_index(voxel.coordinate, resolution));
+    for (voxel, patch) in records {
+        grid.voxels.push(voxel);
+        patches.push(patch);
+    }
+    Ok(summary)
+}
+
+fn local_parallax_camera_views(
+    config: &FptRenderConfig,
+    export_bounds: Aabb,
+    resolution: u32,
+    world_scale: f32,
+    target_distance_export: f32,
+    view_count: u32,
+    ring_count: u32,
+) -> Vec<([f32; 3], [f32; 2])> {
+    let [yaw, pitch] = config.camera_yaw_pitch;
+    let direction = [
+        yaw.sin() * pitch.cos(),
+        pitch.sin(),
+        yaw.cos() * pitch.cos(),
+    ];
+    let target = [
+        config.camera_position[0] + direction[0] * target_distance_export * world_scale,
+        config.camera_position[1] + direction[1] * target_distance_export * world_scale,
+        config.camera_position[2] + direction[2] * target_distance_export * world_scale,
+    ];
+    let right = [yaw.cos(), 0.0, -yaw.sin()];
+    let up = [
+        -yaw.sin() * pitch.sin(),
+        pitch.cos(),
+        -yaw.cos() * pitch.sin(),
+    ];
+    let cell_size_export = (0..3)
+        .map(|axis| (export_bounds.max[axis] - export_bounds.min[axis]) / resolution as f32)
+        .fold(0.0_f32, f32::max);
+    let views_per_ring = view_count / ring_count;
+    let radii: &[f32] = if ring_count == 1 { &[4.5] } else { &[3.0, 6.0] };
+    let mut views = Vec::with_capacity(view_count as usize);
+    for &radius_cells in radii {
+        let radius = radius_cells * cell_size_export * world_scale;
+        for angle_index in 0..views_per_ring {
+            let angle = angle_index as f32 * std::f32::consts::TAU / views_per_ring as f32;
+            let position = std::array::from_fn(|axis| {
+                config.camera_position[axis]
+                    + radius * (right[axis] * angle.cos() + up[axis] * angle.sin())
+            });
+            let delta = std::array::from_fn::<_, 3, _>(|axis| target[axis] - position[axis]);
+            let yaw_pitch = [
+                delta[0].atan2(delta[2]),
+                delta[1].atan2(delta[0].hypot(delta[2])),
+            ];
+            views.push((position, yaw_pitch));
+        }
+    }
+    views
+}
+
+fn capture_local_parallax_samples(
+    metallib: &Path,
+    base_config: &FptRenderConfig,
+    views: &[([f32; 3], [f32; 2])],
+    world_scale: f32,
+    sampling_resolution: u32,
+) -> Result<(Vec<StructuralSurfaceSample>, f64)> {
+    let directory = std::env::temp_dir().join(format!(
+        "fpt-local-parallax-{}-{}",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    fs::create_dir_all(&directory)?;
+    let result = (|| {
+        let mut samples = Vec::new();
+        let mut total_elapsed_ms = 0.0;
+        for (index, (position, yaw_pitch)) in views.iter().enumerate() {
+            let output = directory.join(format!("view-{index:02}.png"));
+            let structural = directory.join(format!("view-{index:02}.bin"));
+            let output_c = c_path(&output)?;
+            let structural_c = c_path(&structural)?;
+            let metallib_c = c_path(metallib)?;
+            let mut config = *base_config;
+            config.renderer_backend = RENDERER_SDF;
+            config.preview = 1;
+            config.samples = 1;
+            config.width = sampling_resolution;
+            config.height = sampling_resolution;
+            config.camera_position = *position;
+            config.camera_yaw_pitch = *yaw_pitch;
+            config.camera_roll = 0.0;
+            let diagnostic = FptDiagnosticConfig {
+                mode: DiagnosticMode::HitMask as u32,
+                _pad0: 0,
+                max_distance: config.render[4],
+                normal_mix: 1.0,
+                dispatch_origin: [0, 0],
+            };
+            let mut elapsed_ms = 0.0;
+            let mut error = [0_i8; 4096];
+            let status = unsafe {
+                fpt_metal_diagnostic_render(
+                    metallib_c.as_ptr(),
+                    output_c.as_ptr(),
+                    structural_c.as_ptr(),
+                    std::ptr::null(),
+                    0,
+                    &config,
+                    &diagnostic,
+                    &mut elapsed_ms,
+                    error.as_mut_ptr(),
+                    error.len(),
+                )
+            };
+            ensure!(
+                status == 0,
+                "local-parallax diagnostic failed: {}",
+                bridge_error(&error)
+            );
+            total_elapsed_ms += elapsed_ms;
+            let bytes = fs::read(&structural)?;
+            ensure!(
+                bytes.len() == sampling_resolution as usize * sampling_resolution as usize * 32,
+                "invalid local-parallax structural dump"
+            );
+            for record in bytes.chunks_exact(32) {
+                let read = |offset: usize| {
+                    f32::from_le_bytes(record[offset..offset + 4].try_into().expect("f32 bytes"))
+                };
+                if read(28) <= 0.5 {
+                    continue;
+                }
+                samples.push(StructuralSurfaceSample {
+                    position: [read(0), read(4), read(8)].map(|value| value / world_scale),
+                    normal: [read(16), read(20), read(24)],
+                });
+            }
+        }
+        Ok((samples, total_elapsed_ms))
+    })();
+    let _ = fs::remove_dir_all(&directory);
+    result
 }
 
 fn cached_mandel_voxel_metallib(
@@ -310,7 +786,13 @@ fn cached_mandel_voxel_metallib(
 ) -> Result<(PathBuf, f64, bool)> {
     let retained = mandelbulber::compiler::retain_metal_kernels(
         std::str::from_utf8(generated_source)?,
-        &["voxel_build_kernel"],
+        &[
+            "voxel_build_kernel",
+            "voxel_build_surface_kernel",
+            "voxel_build_surface_plane_kernel",
+            "voxel_build_surface_patch_kernel",
+            "voxel_build_surface_complex_patch_kernel",
+        ],
     )?;
     let mut digest = Sha256::new();
     digest.update(b"fpt-mandel-voxel-export-v1\0");
@@ -354,7 +836,25 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut fpt_root = None::<PathBuf>;
     let mut bounds_min = None::<[f32; 3]>;
     let mut bounds_max = None::<[f32; 3]>;
+    let mut mandel_mesh_source = false;
+    let mut mandelbulber_binary = None::<PathBuf>;
+    let mut mandel_mesh_resolution = None::<u32>;
+    let mut mandel_mesh_opencl = false;
+    let mut mandel_mesh_ply_output = None::<PathBuf>;
+    let mut mandel_reference_output = None::<PathBuf>;
+    let mut mandel_reference_size = None::<(u32, u32)>;
     let mut surface_band = 1.0_f32;
+    let mut surface_band_set = false;
+    let mut surface_normals = false;
+    let mut surface_planes = false;
+    let mut surface_patches = false;
+    let mut surface_complex_patches = false;
+    let mut surface_promotion_min_probes = 27u32;
+    let mut surface_dense_promotions = false;
+    let mut surface_local_parallax = false;
+    let mut surface_local_parallax_views = 12u32;
+    let mut surface_local_parallax_resolution = 384u32;
+    let mut surface_local_parallax_rings = 2u32;
     let mut fill_interior = false;
     let mut index = 1usize;
     while index < args.len() {
@@ -390,11 +890,90 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                     "--bounds-max",
                 )?)
             }
+            "--surface-source" => {
+                mandel_mesh_source = match next(&mut index, "--surface-source")? {
+                    "metal" => false,
+                    "mandelbulber-mesh" => true,
+                    value => {
+                        bail!("unknown surface source '{value}'; use metal or mandelbulber-mesh")
+                    }
+                }
+            }
+            "--mandelbulber-bin" => {
+                mandelbulber_binary = Some(next(&mut index, "--mandelbulber-bin")?.into())
+            }
+            "--mandel-mesh-resolution" => {
+                let value = next(&mut index, "--mandel-mesh-resolution")?.parse()?;
+                ensure!(
+                    (2..=1024).contains(&value),
+                    "Mandelbulber mesh resolution must be 2..1024"
+                );
+                mandel_mesh_resolution = Some(value);
+            }
+            "--mandel-mesh-opencl" => mandel_mesh_opencl = true,
+            "--mandel-mesh-ply-out" => {
+                mandel_mesh_ply_output = Some(next(&mut index, "--mandel-mesh-ply-out")?.into())
+            }
+            "--mandel-reference-out" => {
+                mandel_reference_output = Some(next(&mut index, "--mandel-reference-out")?.into())
+            }
+            "--mandel-reference-size" => {
+                let value = next(&mut index, "--mandel-reference-size")?;
+                let (width, height) = value
+                    .split_once('x')
+                    .ok_or_else(|| anyhow!("--mandel-reference-size must be formatted as WxH"))?;
+                let width = width.parse::<u32>()?;
+                let height = height.parse::<u32>()?;
+                ensure!(
+                    width > 0 && height > 0,
+                    "Mandelbulber reference size must be nonzero"
+                );
+                mandel_reference_size = Some((width, height));
+            }
             "--surface-band" => {
                 surface_band = next(&mut index, "--surface-band")?.parse()?;
+                surface_band_set = true;
                 ensure!(
                     surface_band.is_finite() && (0.25..=4.0).contains(&surface_band),
                     "surface band must be 0.25..4"
+                );
+            }
+            "--surface-normals" => surface_normals = true,
+            "--surface-planes" => surface_planes = true,
+            "--surface-patches" => surface_patches = true,
+            "--surface-complex-patches" => surface_complex_patches = true,
+            "--surface-promotion-min-probes" => {
+                surface_promotion_min_probes =
+                    next(&mut index, "--surface-promotion-min-probes")?.parse()?;
+                ensure!(
+                    (4..=28).contains(&surface_promotion_min_probes),
+                    "surface promotion minimum probes must be 4..28"
+                );
+            }
+            "--surface-dense-promotions" => surface_dense_promotions = true,
+            "--surface-local-parallax" => surface_local_parallax = true,
+            "--surface-local-parallax-views" => {
+                surface_local_parallax_views =
+                    next(&mut index, "--surface-local-parallax-views")?.parse()?;
+                ensure!(
+                    matches!(surface_local_parallax_views, 4 | 6 | 12),
+                    "surface local-parallax views must be 4, 6, or 12"
+                );
+            }
+            "--surface-local-parallax-resolution" => {
+                surface_local_parallax_resolution =
+                    next(&mut index, "--surface-local-parallax-resolution")?.parse()?;
+                ensure!(
+                    matches!(surface_local_parallax_resolution, 192 | 256 | 384),
+                    "surface local-parallax resolution must be 192, 256, or 384"
+                );
+            }
+            "--surface-local-parallax-rings" => {
+                surface_local_parallax_rings =
+                    next(&mut index, "--surface-local-parallax-rings")?.parse()?;
+                ensure!(
+                    matches!(surface_local_parallax_rings, 1 | 2),
+                    "surface local-parallax rings must be 1 or 2"
                 );
             }
             "--fill-interior" => fill_interior = true,
@@ -402,11 +981,49 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         }
         index += 1;
     }
-    let output = output.ok_or_else(|| anyhow!("voxel-export requires --out <scene.glb>"))?;
+    let output =
+        output.ok_or_else(|| anyhow!("voxel-export requires --out <scene.glb|scene.fptvox>"))?;
     let resolution =
         resolution.ok_or_else(|| anyhow!("voxel-export requires --voxel-resolution N"))?;
-
+    ensure!(
+        mandel_mesh_source
+            || (mandelbulber_binary.is_none()
+                && mandel_mesh_resolution.is_none()
+                && !mandel_mesh_opencl
+                && mandel_mesh_ply_output.is_none()
+                && mandel_reference_output.is_none()
+                && mandel_reference_size.is_none()),
+        "Mandelbulber mesh options require --surface-source mandelbulber-mesh"
+    );
+    ensure!(
+        mandel_reference_output.is_some() || mandel_reference_size.is_none(),
+        "--mandel-reference-size requires --mandel-reference-out"
+    );
+    ensure!(
+        usize::from(surface_normals)
+            + usize::from(surface_planes)
+            + usize::from(surface_patches)
+            + usize::from(surface_complex_patches)
+            <= 1,
+        "choose only one surface payload mode"
+    );
+    ensure!(
+        !surface_local_parallax || surface_patches,
+        "--surface-local-parallax requires --surface-patches"
+    );
+    ensure!(
+        surface_local_parallax_views % surface_local_parallax_rings == 0,
+        "surface local-parallax views must divide evenly across rings"
+    );
     if scene_argument == "builtin:menger-sponge" {
+        ensure!(
+            !mandel_mesh_source
+                && !surface_normals
+                && !surface_planes
+                && !surface_patches
+                && !surface_complex_patches,
+            "surface payloads require the authoritative Metal evaluator"
+        );
         let bounds = Aabb::new(
             bounds_min.unwrap_or([-1.25; 3]),
             bounds_max.unwrap_or([1.25; 3]),
@@ -423,7 +1040,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             grid.occupied_voxels() > 0,
             "voxel build produced no occupied cells; adjust --bounds-min/--bounds-max or --surface-band"
         );
-        let (format, summary) = export_voxel_artifact(&grid, &output)?;
+        let (format, summary) = export_voxel_artifact(&grid, VoxelSurfacePayload::None, &output)?;
         println!(
             "{}",
             serde_json::to_string_pretty(&json!({
@@ -481,11 +1098,145 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     } else {
         1.0
     };
+    if mandel_mesh_source {
+        ensure!(
+            is_mandel,
+            "Mandelbulber mesh export requires a .fract scene"
+        );
+        ensure!(
+            !surface_normals
+                && !surface_planes
+                && !surface_patches
+                && !surface_complex_patches
+                && !surface_local_parallax
+                && !surface_band_set
+                && !fill_interior,
+            "Mandelbulber mesh export already produces FPTVOX6 surface patches and cannot be combined with other surface or fill modes"
+        );
+        ensure!(
+            output
+                .extension()
+                .and_then(|extension| extension.to_str())
+                .is_some_and(|extension| extension.eq_ignore_ascii_case("fptvox")),
+            "Mandelbulber mesh export requires .fptvox output"
+        );
+        let binary = mandelbulber_binary.as_deref().ok_or_else(|| {
+            anyhow!("--surface-source mandelbulber-mesh requires --mandelbulber-bin <path>")
+        })?;
+        let scene = MandelbulberScene::load(&scene_path)?;
+        let reference = if let Some(reference_output) = mandel_reference_output.as_deref() {
+            let (width, height) = mandel_reference_size.unwrap_or((scene.width, scene.height));
+            Some(mandel_mesh::render_mandelbulber_reference(
+                binary,
+                &scene_path,
+                reference_output,
+                width,
+                height,
+                mandel_mesh_opencl,
+            )?)
+        } else {
+            None
+        };
+        let mesh_result =
+            mandel_mesh::voxelize_mandelbulber_mesh(&mandel_mesh::MandelMeshOptions {
+                binary,
+                scene: &scene_path,
+                raw_ply_output: mandel_mesh_ply_output.as_deref(),
+                bounds: export_bounds,
+                voxel_resolution: resolution,
+                mesh_resolution: mandel_mesh_resolution.unwrap_or(resolution),
+                max_iterations: scene.max_iterations,
+                use_opencl: mandel_mesh_opencl,
+                roughness: loaded.config.fractal_style[4],
+                specular: loaded.config.fractal_style[5],
+                emission: loaded.config.fractal_style[6],
+            })?;
+        ensure!(
+            mesh_result.grid.occupied_voxels() > 0,
+            "Mandelbulber mesh did not intersect the requested voxel bounds"
+        );
+        let (format, artifact) = export_voxel_artifact(
+            &mesh_result.grid,
+            VoxelSurfacePayload::BoundedPatches(&mesh_result.patches),
+            &output,
+        )?;
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&json!({
+                "contract_version":6,
+                "evaluator":"mandelbulber-marching-cubes-ply",
+                "format":format,
+                "output":output,
+                "resolution":mesh_result.grid.resolution,
+                "mesh_resolution":mandel_mesh_resolution.unwrap_or(resolution),
+                "bounds_min":mesh_result.grid.bounds.min,
+                "bounds_max":mesh_result.grid.bounds.max,
+                "max_iterations":scene.max_iterations,
+                "opencl":mandel_mesh_opencl,
+                "mandelbulber_reference":reference,
+                "mandelbulber_ply":mandel_mesh_ply_output,
+                "surface_payload":"unbounded-primary-plus-bounded-secondary",
+                "mesh":mesh_result.summary,
+                "summary":artifact,
+            }))?
+        );
+        return Ok(());
+    }
+    ensure!(
+        !surface_local_parallax || is_mandel,
+        "--surface-local-parallax currently requires a Mandelbulber scene"
+    );
+    let local_parallax_loaded = if surface_local_parallax {
+        let mut sampling_arguments = render_arguments.clone();
+        sampling_arguments.extend([
+            "--width".to_owned(),
+            surface_local_parallax_resolution.to_string(),
+            "--height".to_owned(),
+            surface_local_parallax_resolution.to_string(),
+        ]);
+        Some(load_scene_config(&parse_render_args(&sampling_arguments)?)?)
+    } else {
+        None
+    };
+    let local_parallax_config = local_parallax_loaded
+        .as_ref()
+        .map_or(loaded.config, |sampling| sampling.config);
+    let local_parallax_target_distance = if surface_local_parallax {
+        let scene = MandelbulberScene::load(&scene_path)?;
+        Some(
+            scene
+                .target
+                .iter()
+                .zip(scene.camera)
+                .map(|(target, camera)| (target - camera).powi(2))
+                .sum::<f64>()
+                .sqrt() as f32,
+        )
+    } else {
+        None
+    };
+    let local_parallax_metallib = if surface_local_parallax {
+        let source = local_parallax_loaded
+            .as_ref()
+            .expect("local-parallax sampling scene")
+            .runtime_metal_source
+            .as_deref()
+            .context("local-parallax sampling requires generated Mandelbulber Metal source")?;
+        let retained = mandelbulber::compiler::retain_metal_kernels(
+            std::str::from_utf8(source)?,
+            &["sdf_diagnostic_kernel", "sdf_structural_diagnostic_kernel"],
+        )?;
+        Some(cached_diagnostic_metallib(
+            &retained,
+            MandelMetalOptimization::O0,
+        )?)
+    } else {
+        None
+    };
     loaded.config.renderer_backend = RENDERER_VOXEL;
     loaded.config.voxel_resolution = resolution;
     loaded.config.voxel_storage = VOXEL_STORAGE_DENSE;
     loaded.config.voxel_build_mode = VOXEL_BUILD_STAGING;
-    loaded.config.voxel_coverage_mode = VOXEL_COVERAGE_LEGACY;
     loaded.config.voxel_surface_band = surface_band;
     loaded.config.voxel_fill_interior = u32::from(fill_interior);
     loaded.config.voxel_bounds_min = export_bounds.min.map(|value| value * world_scale);
@@ -502,6 +1253,31 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         .checked_pow(3)
         .ok_or_else(|| anyhow!("voxel cell count overflow"))?;
     let mut cells = vec![VoxelCell::default(); cell_count];
+    let mut surface_payload_mode = if surface_complex_patches {
+        VOXEL_SURFACE_COMPLEX_PATCH
+    } else if surface_patches {
+        VOXEL_SURFACE_BOUNDED_PATCH
+    } else if surface_planes {
+        VOXEL_SURFACE_PLANE
+    } else if surface_normals {
+        VOXEL_SURFACE_NORMAL
+    } else {
+        VOXEL_SURFACE_NONE
+    };
+    let complex_patch_mode = surface_payload_mode == VOXEL_SURFACE_COMPLEX_PATCH;
+    let bounded_patch_mode = matches!(
+        surface_payload_mode,
+        VOXEL_SURFACE_BOUNDED_PATCH | VOXEL_SURFACE_COMPLEX_PATCH
+    );
+    let mut surface_word_stride = if surface_payload_mode == VOXEL_SURFACE_COMPLEX_PATCH {
+        5usize
+    } else if surface_payload_mode == VOXEL_SURFACE_BOUNDED_PATCH {
+        3usize
+    } else {
+        1usize
+    };
+    let mut dense_surface = (surface_payload_mode != VOXEL_SURFACE_NONE)
+        .then(|| vec![0_u32; cell_count * surface_word_stride]);
     let mut build_ms = 0.0_f64;
     let mut error = [0_i8; 1024];
     let status = unsafe {
@@ -510,6 +1286,11 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             &loaded.config,
             cells.as_mut_ptr().cast(),
             cells.len() * std::mem::size_of::<VoxelCell>(),
+            surface_payload_mode,
+            dense_surface
+                .as_mut()
+                .map_or(std::ptr::null_mut(), |surface| surface.as_mut_ptr()),
+            dense_surface.as_ref().map_or(0, Vec::len),
             &mut build_ms,
             error.as_mut_ptr(),
             error.len(),
@@ -520,13 +1301,124 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         "Metal voxel export failed: {}",
         bridge_error(&error)
     );
+    let promoted_surface_candidates = if bounded_patch_mode {
+        cells
+            .iter()
+            .filter(|cell| cell.packed_color & 0x4000_0000 != 0)
+            .count()
+    } else {
+        0
+    };
+    let mut promoted_surface_probe_histogram = [0usize; 32];
+    if bounded_patch_mode {
+        for cell in cells
+            .iter()
+            .filter(|cell| cell.packed_color & 0x4000_0000 != 0)
+        {
+            promoted_surface_probe_histogram[((cell.packed_color >> 24) & 0x1f) as usize] += 1;
+        }
+    }
+    let occupied_surface_candidates = if bounded_patch_mode {
+        cells
+            .iter()
+            .filter(|cell| cell.packed_color & 0x8000_0000 != 0)
+            .count()
+    } else {
+        0
+    };
+    let retain_promoted_surface_cells = bounded_patch_mode
+        && surface_dense_promotions
+        && retain_dense_surface_promotions(occupied_surface_candidates, cell_count);
+    let mut retained_promoted_surface_candidates = 0usize;
+    let mut minimum_tier_promoted_cells = vec![false; cell_count];
+    if bounded_patch_mode {
+        let surface = dense_surface
+            .as_deref()
+            .expect("bounded-patch surface payload");
+        let mut initially_retained = cells
+            .iter()
+            .enumerate()
+            .map(|(index, cell)| {
+                if cell.packed_color & 0x8000_0000 == 0 || surface[index * surface_word_stride] == 0
+                {
+                    return false;
+                }
+                if cell.packed_color & 0x4000_0000 == 0 {
+                    return true;
+                }
+                let probe_sample_count = (cell.packed_color >> 24) & 0x1f;
+                if retain_promoted_surface_cells {
+                    return true;
+                }
+                if !retain_sparse_surface_promotion(
+                    probe_sample_count,
+                    surface_promotion_min_probes,
+                ) {
+                    return false;
+                }
+                surface_payload_mode != VOXEL_SURFACE_COMPLEX_PATCH
+                    || probe_sample_count > surface_promotion_min_probes
+                    || (surface[index * surface_word_stride + 1] == 0
+                        && surface[index * surface_word_stride + 3] != 0)
+            })
+            .collect::<Vec<_>>();
+        if complex_patch_mode {
+            let strongly_retained = initially_retained
+                .iter()
+                .enumerate()
+                .map(|(index, retained)| {
+                    *retained
+                        && (cells[index].packed_color & 0x4000_0000 == 0
+                            || ((cells[index].packed_color >> 24) & 0x1f)
+                                > surface_promotion_min_probes)
+                })
+                .collect::<Vec<_>>();
+            filter_supported_minimum_tier(
+                &mut initially_retained,
+                &strongly_retained,
+                resolution,
+                10,
+            );
+        }
+        for (index, cell) in cells.iter_mut().enumerate() {
+            if cell.packed_color & 0x4000_0000 == 0 {
+                continue;
+            }
+            if initially_retained[index] {
+                minimum_tier_promoted_cells[index] = complex_patch_mode
+                    && ((cell.packed_color >> 24) & 0x1f) == surface_promotion_min_probes;
+                cell.packed_color &= !0x7f00_0000;
+                retained_promoted_surface_candidates += 1;
+            } else {
+                *cell = VoxelCell::default();
+            }
+        }
+    }
+    if complex_patch_mode {
+        let expanded = dense_surface.take().expect("complex-patch surface payload");
+        let mut compact = vec![0_u32; cell_count * 3];
+        for index in 0..cell_count {
+            let source = index * 5;
+            let target = index * 3;
+            if minimum_tier_promoted_cells[index] {
+                compact[target] = NON_INTERSECTING_PRIMARY_PATCH;
+                compact[target + 1] = expanded[source + 3];
+                compact[target + 2] = expanded[source + 4];
+            } else {
+                compact[target..target + 3].copy_from_slice(&expanded[source..source + 3]);
+            }
+        }
+        dense_surface = Some(compact);
+        surface_payload_mode = VOXEL_SURFACE_BOUNDED_PATCH;
+        surface_word_stride = 3;
+    }
     let scene_bytes = fs::read(&scene_path)?;
     let source_sha256 = format!("{:x}", Sha256::digest(&scene_bytes));
     let source_label = scene_path
         .file_stem()
         .and_then(|value| value.to_str())
         .unwrap_or("fractal");
-    let grid = VoxelGrid::from_dense_cells(
+    let mut grid = VoxelGrid::from_dense_cells(
         [resolution; 3],
         export_bounds,
         CoordinateSystem::YUpRightHanded,
@@ -538,8 +1430,101 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         grid.occupied_voxels() > 0,
         "voxel build produced no occupied cells; adjust --bounds-min/--bounds-max or --surface-band"
     );
+    let source_occupied_voxels = grid.occupied_voxels();
+    let mut sparse_surface = dense_surface.as_ref().map(|surface| {
+        grid.voxels
+            .iter()
+            .flat_map(|voxel| {
+                let [x, y, z] = voxel.coordinate.map(|value| value as usize);
+                let index =
+                    x + y * resolution as usize + z * resolution as usize * resolution as usize;
+                let base = index * surface_word_stride;
+                surface[base..base + surface_word_stride].iter().copied()
+            })
+            .collect::<Vec<_>>()
+    });
+    if surface_payload_mode == VOXEL_SURFACE_PLANE || bounded_patch_mode {
+        let planes = sparse_surface
+            .take()
+            .expect("plane payload must be allocated");
+        let mut filtered_voxels = Vec::with_capacity(grid.voxels.len());
+        let mut filtered_planes = Vec::with_capacity(planes.len());
+        for (voxel, patch) in grid
+            .voxels
+            .drain(..)
+            .zip(planes.chunks_exact(surface_word_stride))
+        {
+            if patch[0] != 0 {
+                filtered_voxels.push(voxel);
+                filtered_planes.extend_from_slice(patch);
+            }
+        }
+        grid.voxels = filtered_voxels;
+        sparse_surface = Some(filtered_planes);
+        ensure!(
+            grid.occupied_voxels() > 0,
+            "surface-plane build produced no valid surface cells; adjust bounds, resolution, or coverage"
+        );
+    }
+    let surface_filtered_voxels = source_occupied_voxels.saturating_sub(grid.occupied_voxels());
     drop(cells);
-    let (format, summary) = export_voxel_artifact(&grid, &output)?;
+    let mut sparse_patches = (surface_payload_mode == VOXEL_SURFACE_BOUNDED_PATCH).then(|| {
+        sparse_surface
+            .as_deref()
+            .expect("bounded patch payload must be allocated")
+            .chunks_exact(3)
+            .map(|patch| [patch[0], patch[1], patch[2]])
+            .collect::<Vec<_>>()
+    });
+    let mut local_parallax_summary = None;
+    if surface_local_parallax {
+        let views = local_parallax_camera_views(
+            &local_parallax_config,
+            export_bounds,
+            resolution,
+            world_scale,
+            local_parallax_target_distance.expect("local-parallax target distance"),
+            surface_local_parallax_views,
+            surface_local_parallax_rings,
+        );
+        let (samples, diagnostic_gpu_ms) = capture_local_parallax_samples(
+            local_parallax_metallib
+                .as_deref()
+                .expect("local-parallax diagnostic metallib"),
+            &local_parallax_config,
+            &views,
+            world_scale,
+            surface_local_parallax_resolution,
+        )?;
+        let mut summary = augment_with_local_parallax_samples(
+            &mut grid,
+            sparse_patches
+                .as_mut()
+                .expect("local-parallax bounded patches"),
+            &samples,
+        )?;
+        summary.diagnostic_gpu_ms = diagnostic_gpu_ms;
+        local_parallax_summary = Some(summary);
+    }
+    let surface_payload = match surface_payload_mode {
+        VOXEL_SURFACE_NORMAL => VoxelSurfacePayload::Normals(
+            sparse_surface
+                .as_deref()
+                .expect("normal payload must be allocated"),
+        ),
+        VOXEL_SURFACE_PLANE => VoxelSurfacePayload::Planes(
+            sparse_surface
+                .as_deref()
+                .expect("plane payload must be allocated"),
+        ),
+        VOXEL_SURFACE_BOUNDED_PATCH => VoxelSurfacePayload::BoundedPatches(
+            sparse_patches
+                .as_deref()
+                .expect("bounded patch payload must be allocated"),
+        ),
+        _ => VoxelSurfacePayload::None,
+    };
+    let (format, summary) = export_voxel_artifact(&grid, surface_payload, &output)?;
     println!(
         "{}",
         serde_json::to_string_pretty(&json!({
@@ -554,6 +1539,31 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             "metal_compile_ms":compile_ms,
             "metal_build_ms":build_ms,
             "metal_cache_hit":cache_hit,
+            "coverage_mode":"legacy",
+            "surface_patch_promoted_candidates":promoted_surface_candidates,
+            "surface_patch_promoted_retained_count":retained_promoted_surface_candidates,
+            "surface_patch_promotion_min_probes":surface_promotion_min_probes,
+            "surface_patch_promoted_probe_histogram":promoted_surface_probe_histogram,
+            "surface_patch_promoted_retained":retain_promoted_surface_cells,
+            "surface_patch_dense_promotions_enabled":surface_dense_promotions,
+            "surface_patch_coherent_promotions_enabled":surface_complex_patches,
+            "surface_local_parallax":surface_local_parallax,
+            "surface_local_parallax_views":surface_local_parallax_views,
+            "surface_local_parallax_resolution":surface_local_parallax_resolution,
+            "surface_local_parallax_rings":surface_local_parallax_rings,
+            "surface_local_parallax_summary":local_parallax_summary,
+            "surface_patch_candidate_occupancy_pct":if cell_count > 0 {
+                occupied_surface_candidates as f64 / cell_count as f64 * 100.0
+            } else { 0.0 },
+            "surface_payload":match surface_payload_mode {
+                VOXEL_SURFACE_NORMAL => "octahedral-normal-u16x2",
+                VOXEL_SURFACE_PLANE => "octahedral-normal-u12x2-plus-offset-u8",
+                VOXEL_SURFACE_BOUNDED_PATCH => "two-bounded-dominant-axis-plane-patches",
+                _ => "none",
+            },
+            "source_occupied_voxels":source_occupied_voxels,
+            "surface_filtered_voxels":surface_filtered_voxels,
+            "surface_final_voxels":grid.occupied_voxels(),
             "summary":summary
         }))?
     );
@@ -1697,6 +2707,10 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         },
         "width": config.width,
         "height": config.height,
+        "camera_position": config.camera_position,
+        "camera_yaw_pitch": config.camera_yaw_pitch,
+        "camera_roll": config.camera_roll,
+        "camera_fov": config.camera_fov,
         "samples": config.samples,
         "preview": config.preview != 0,
         "glass_mode": if config.glass_mode == GlassMode::Analytic as u32 { "analytic" } else { "pathtrace" },
@@ -2037,6 +3051,7 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
 
 fn render(args: &RenderArgs) -> Result<()> {
     let mut loaded = load_scene_config(args)?;
+    apply_camera_args(&mut loaded.config, args);
     loaded.config.sdf_accumulation_mode = args.sdf_accumulation_mode as u32;
     apply_optimization_args(&mut loaded.config, args);
     if args.sdf_function_stitching == SdfFunctionStitching::Auto && loaded.config.preview != 0 {
@@ -2315,12 +3330,22 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         bail!("automatic backend selection is unavailable for diagnostic renders");
     }
     let mut loaded = load_scene_config(args)?;
+    apply_camera_args(&mut loaded.config, args);
     loaded.config.preview = 1;
     loaded.config.samples = args.samples.unwrap_or(1);
     apply_optimization_args(&mut loaded.config, args);
     fs::create_dir_all(&args.out_dir)?;
     let output = output_path(args, &loaded.output_name);
     let output_c = c_path(&output)?;
+    if args.structural_dump.is_some() && loaded.config.renderer_backend == RENDERER_VOXEL {
+        bail!("--structural-dump currently requires the continuous SDF renderer");
+    }
+    if let Some(path) = args.structural_dump.as_ref().and_then(|path| path.parent()) {
+        if !path.as_os_str().is_empty() {
+            fs::create_dir_all(path)?;
+        }
+    }
+    let structural_output_c = args.structural_dump.as_deref().map(c_path).transpose()?;
     let diagnostic = FptDiagnosticConfig {
         mode: args.diagnostic_mode as u32,
         _pad0: args.sdf_bounce_index,
@@ -2339,6 +3364,8 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
             let source = std::str::from_utf8(source)?;
             let retained = if loaded.config.renderer_backend == RENDERER_VOXEL {
                 &["voxel_build_kernel", "voxel_diagnostic_kernel"][..]
+            } else if args.structural_dump.is_some() {
+                &["sdf_diagnostic_kernel", "sdf_structural_diagnostic_kernel"][..]
             } else {
                 &["sdf_diagnostic_kernel"][..]
             };
@@ -2384,6 +3411,9 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         fpt_metal_diagnostic_render(
             metallib_c.as_ptr(),
             output_c.as_ptr(),
+            structural_output_c
+                .as_ref()
+                .map_or(std::ptr::null(), |path| path.as_ptr()),
             std::ptr::null(),
             0,
             &loaded.config,
@@ -2395,6 +3425,37 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
     };
     if status != 0 {
         bail!("{}", bridge_error(&error));
+    }
+    if let Some(path) = &args.structural_dump {
+        let expected_bytes = u64::from(loaded.config.width)
+            .checked_mul(u64::from(loaded.config.height))
+            .and_then(|pixels| pixels.checked_mul(32))
+            .context("structural diagnostic size overflow")?;
+        let actual_bytes = fs::metadata(path)
+            .with_context(|| format!("missing structural diagnostic {}", path.display()))?
+            .len();
+        ensure!(
+            actual_bytes == expected_bytes,
+            "structural diagnostic size mismatch: expected {expected_bytes}, found {actual_bytes}"
+        );
+        let manifest = serde_json::json!({
+            "format": "FptStructuralDiagnostic",
+            "version": 1,
+            "width": loaded.config.width,
+            "height": loaded.config.height,
+            "record_bytes": 32,
+            "byte_order": "little-endian",
+            "row_order": "top-to-bottom",
+            "records": {
+                "position_distance": "float4: world_x, world_y, world_z, ray_distance",
+                "normal_hit": "float4: normal_x, normal_y, normal_z, hit_flag"
+            },
+            "binary": path.file_name().map(|name| name.to_string_lossy()),
+        });
+        fs::write(
+            format!("{}.json", path.display()),
+            format!("{}\n", serde_json::to_string_pretty(&manifest)?),
+        )?;
     }
     let stats = MetalRenderStats {
         elapsed_ms,
@@ -4137,6 +5198,107 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dense_surface_promotion_gate_is_deterministic_at_ninety_percent() {
+        assert!(!retain_dense_surface_promotions(0, 0));
+        assert!(!retain_dense_surface_promotions(899, 1000));
+        assert!(retain_dense_surface_promotions(900, 1000));
+        assert!(retain_dense_surface_promotions(1000, 1000));
+    }
+
+    #[test]
+    fn sparse_surface_promotion_requires_full_probe_support() {
+        assert!(!retain_sparse_surface_promotion(26, 27));
+        assert!(retain_sparse_surface_promotion(27, 27));
+        assert!(retain_sparse_surface_promotion(31, 27));
+        assert!(!retain_sparse_surface_promotion(27, 28));
+    }
+
+    #[test]
+    fn minimum_tier_surface_promotion_requires_ten_strong_neighbors() {
+        let mut retained = vec![false; 27];
+        let mut strong = vec![false; 27];
+        let center = 13usize;
+        retained[center] = true;
+        for index in [0usize, 1, 2, 3, 4, 5, 6, 7, 8, 9] {
+            retained[index] = true;
+            strong[index] = true;
+        }
+        filter_supported_minimum_tier(&mut retained, &strong, 3, 10);
+        assert!(retained[center]);
+
+        strong[9] = false;
+        filter_supported_minimum_tier(&mut retained, &strong, 3, 10);
+        assert!(!retained[center]);
+        assert!(retained[0], "strong cells are never filtered");
+    }
+
+    #[test]
+    fn local_parallax_samples_only_fill_adjacent_cells() {
+        let material = VoxelCell {
+            packed_color: VoxelCell::OCCUPIED_MASK | 0x0012_3456,
+            packed_properties: 0x1020_3040,
+            emission: 2.0,
+        };
+        let mut grid = VoxelGrid {
+            contract_version: 1,
+            resolution: [4, 4, 4],
+            bounds: Aabb::new([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+            coordinate_system: CoordinateSystem::YUpRightHanded,
+            source_label: "test".into(),
+            source_sha256: "00".into(),
+            voxels: vec![SparseVoxel {
+                coordinate: [1, 1, 1],
+                cell: material,
+            }],
+        };
+        let mut patches = vec![[1, 0, 0]];
+        let samples = [
+            StructuralSurfaceSample {
+                position: [1.5, 1.5, 1.5],
+                normal: [1.0, 0.0, 0.0],
+            },
+            StructuralSurfaceSample {
+                position: [2.5, 1.5, 1.5],
+                normal: [1.0, 0.0, 0.0],
+            },
+            StructuralSurfaceSample {
+                position: [3.5, 3.5, 3.5],
+                normal: [0.0, 1.0, 0.0],
+            },
+        ];
+        let summary = augment_with_local_parallax_samples(&mut grid, &mut patches, &samples)
+            .expect("augment local surface");
+        assert_eq!(summary.added_cells, 1);
+        assert_eq!(summary.existing_cells_updated, 1);
+        assert_eq!(summary.rejected_non_adjacent_cells, 1);
+        assert_eq!(grid.voxels.len(), 2);
+        assert_eq!(grid.voxels[0].coordinate, [1, 1, 1]);
+        assert_eq!(grid.voxels[1].coordinate, [2, 1, 1]);
+        assert_eq!(grid.voxels[1].cell, material);
+        assert_eq!(patches[1][0], NON_INTERSECTING_PRIMARY_PATCH);
+        assert_ne!(patches[0][1], 0);
+        assert_ne!(patches[1][1], 0);
+    }
+
+    #[test]
+    fn local_parallax_camera_sampling_preserves_validated_default() {
+        let mut config = FptRenderConfig::default();
+        config.camera_position = [0.0, 0.0, -8.0];
+        config.camera_yaw_pitch = [0.0, 0.0];
+        let bounds = Aabb::new([-4.0; 3], [4.0; 3]);
+        let default_views = local_parallax_camera_views(&config, bounds, 192, 1.0, 8.0, 12, 2);
+        assert_eq!(default_views.len(), 12);
+        let reduced_views = local_parallax_camera_views(&config, bounds, 192, 1.0, 8.0, 6, 1);
+        assert_eq!(reduced_views.len(), 6);
+        assert!(default_views.iter().all(|(position, yaw_pitch)| {
+            position
+                .iter()
+                .chain(yaw_pitch)
+                .all(|value| value.is_finite())
+        }));
+    }
 
     fn run_async_jit_validation(
         metallib: &CString,

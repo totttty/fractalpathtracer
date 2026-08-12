@@ -62,6 +62,11 @@ pub const VOXEL_STORAGE_TEMPLATE_BRICKS: u32 = 3;
 pub const VOXEL_COVERAGE_LEGACY: u32 = 0;
 pub const VOXEL_COVERAGE_LIPSCHITZ: u32 = 1;
 pub const VOXEL_COVERAGE_INTERVAL: u32 = 2;
+pub const VOXEL_SURFACE_NONE: u32 = 0;
+pub const VOXEL_SURFACE_NORMAL: u32 = 1;
+pub const VOXEL_SURFACE_PLANE: u32 = 2;
+pub const VOXEL_SURFACE_BOUNDED_PATCH: u32 = 3;
+pub const VOXEL_SURFACE_COMPLEX_PATCH: u32 = 4;
 pub const VOXEL_BUILD_STAGING: u32 = 0;
 pub const VOXEL_BUILD_DIRECT: u32 = 1;
 pub const VOXEL_LEAF_REFINEMENT_NONE: u32 = 0;
@@ -420,6 +425,7 @@ unsafe extern "C" {
     pub fn fpt_metal_diagnostic_render(
         metallib_path: *const c_char,
         output_path: *const c_char,
+        structural_output_path: *const c_char,
         shader_source: *const c_char,
         shader_source_len: usize,
         config: *const FptRenderConfig,
@@ -444,6 +450,9 @@ unsafe extern "C" {
         config: *const FptRenderConfig,
         cells: *mut u8,
         cells_len: usize,
+        surface_payload_mode: u32,
+        packed_surface: *mut u32,
+        packed_surface_len: usize,
         build_ms: *mut f64,
         error: *mut c_char,
         error_len: usize,

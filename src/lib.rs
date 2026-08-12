@@ -18,8 +18,13 @@ pub mod tools;
 pub mod voxel;
 
 pub use fptvox::{
-    FPTVOX_HEADER_SIZE, FPTVOX_MAGIC, FPTVOX_RECORD_SIZE, FPTVOX_VERSION, FptvoxExportSummary,
-    export_fptvox,
+    FPTVOX_BOUNDED_PATCH_MAGIC, FPTVOX_BOUNDED_PATCH_RECORD_SIZE, FPTVOX_BOUNDED_PATCH_VERSION,
+    FPTVOX_HEADER_SIZE, FPTVOX_MAGIC, FPTVOX_PLANE_MAGIC, FPTVOX_PLANE_PAIR_MAGIC,
+    FPTVOX_PLANE_PAIR_RECORD_SIZE, FPTVOX_PLANE_PAIR_VERSION, FPTVOX_PLANE_RECORD_SIZE,
+    FPTVOX_PLANE_VERSION, FPTVOX_RECORD_SIZE, FPTVOX_SURFACE_MAGIC, FPTVOX_SURFACE_RECORD_SIZE,
+    FPTVOX_SURFACE_VERSION, FPTVOX_VERSION, FptvoxExportSummary, export_fptvox,
+    export_fptvox_with_bounded_patches, export_fptvox_with_normals, export_fptvox_with_plane_pairs,
+    export_fptvox_with_planes,
 };
 pub use mandelbulber::{
     MandelbulberFormulaSlot, MandelbulberGradientStop, MandelbulberMaterial, MandelbulberScene,

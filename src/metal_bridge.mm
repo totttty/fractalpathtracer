@@ -4300,6 +4300,9 @@ extern "C" int fpt_metal_voxel_build(
     const struct FptRenderConfig *config,
     void *cells,
     size_t cells_len,
+    uint32_t surface_payload_mode,
+    uint32_t *packed_surface,
+    size_t packed_surface_len,
     double *build_ms,
     char *error,
     size_t error_len) {
@@ -4321,14 +4324,37 @@ extern "C" int fpt_metal_voxel_build(
                       cells_len, cell_count * sizeof(VoxelCellCpp));
             return 1;
         }
+        const size_t surface_word_stride =
+            surface_payload_mode == FPT_VOXEL_SURFACE_COMPLEX_PATCH ? 5u
+            : (surface_payload_mode == FPT_VOXEL_SURFACE_BOUNDED_PATCH ? 3u : 1u);
+        const size_t expected_surface_words =
+            surface_payload_mode == FPT_VOXEL_SURFACE_NONE ? 0u : cell_count * surface_word_stride;
+        if (surface_payload_mode > FPT_VOXEL_SURFACE_COMPLEX_PATCH ||
+            (surface_payload_mode == FPT_VOXEL_SURFACE_NONE) != (packed_surface == nullptr) ||
+            (packed_surface && packed_surface_len != expected_surface_words)) {
+            set_error(error, error_len,
+                      "surface output mode %u has %zu records; expected %zu",
+                      surface_payload_mode, packed_surface_len,
+                      expected_surface_words);
+            return 1;
+        }
 
         id<MTLDevice> device = MTLCreateSystemDefaultDevice();
         NSError *ns_error = nil;
         id<MTLLibrary> library = device ? [device
             newLibraryWithURL:[NSURL fileURLWithPath:ns_string(metallib_path)]
                         error:&ns_error] : nil;
+        NSString *function_name = surface_payload_mode == FPT_VOXEL_SURFACE_COMPLEX_PATCH
+            ? @"voxel_build_surface_complex_patch_kernel"
+            : (surface_payload_mode == FPT_VOXEL_SURFACE_BOUNDED_PATCH
+            ? @"voxel_build_surface_patch_kernel"
+            : (surface_payload_mode == FPT_VOXEL_SURFACE_PLANE
+            ? @"voxel_build_surface_plane_kernel"
+            : (surface_payload_mode == FPT_VOXEL_SURFACE_NORMAL
+                ? @"voxel_build_surface_kernel"
+                : @"voxel_build_kernel")));
         id<MTLFunction> function = library
-            ? [library newFunctionWithName:@"voxel_build_kernel"] : nil;
+            ? [library newFunctionWithName:function_name] : nil;
         id<MTLComputePipelineState> pipeline = function
             ? [device newComputePipelineStateWithFunction:function error:&ns_error] : nil;
         id<MTLCommandQueue> queue = device ? [device newCommandQueue] : nil;
@@ -4337,7 +4363,11 @@ extern "C" int fpt_metal_voxel_build(
         id<MTLBuffer> config_buffer = device ? [device
             newBufferWithBytes:config length:sizeof(*config)
                        options:MTLResourceStorageModeShared] : nil;
-        if (!pipeline || !queue || !cells_buffer || !config_buffer) {
+        id<MTLBuffer> surface_buffer = packed_surface && device ? [device
+            newBufferWithLength:expected_surface_words * sizeof(uint32_t)
+                        options:MTLResourceStorageModeShared] : nil;
+        if (!pipeline || !queue || !cells_buffer || !config_buffer ||
+            (packed_surface && !surface_buffer)) {
             set_error(error, error_len, "failed to create Metal voxel-build resources: %s",
                       ns_error.localizedDescription.UTF8String ?: "Metal unavailable");
             return 1;
@@ -4349,6 +4379,7 @@ extern "C" int fpt_metal_voxel_build(
         [encoder setComputePipelineState:pipeline];
         [encoder setBuffer:cells_buffer offset:0 atIndex:0];
         [encoder setBuffer:config_buffer offset:0 atIndex:1];
+        if (surface_buffer) [encoder setBuffer:surface_buffer offset:0 atIndex:2];
         [encoder dispatchThreads:MTLSizeMake(resolution, resolution, resolution)
            threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
         [encoder endEncoding];
@@ -4361,6 +4392,10 @@ extern "C" int fpt_metal_voxel_build(
         }
         if (build_ms) *build_ms = -[started timeIntervalSinceNow] * 1000.0;
         std::memcpy(cells, cells_buffer.contents, cells_len);
+        if (packed_surface) {
+            std::memcpy(packed_surface, surface_buffer.contents,
+                        expected_surface_words * sizeof(uint32_t));
+        }
         return 0;
     }
 }
@@ -5934,6 +5969,7 @@ extern "C" int fpt_metal_render(const char *metallib_path,
 
 extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
                                             const char *output_path,
+                                            const char *structural_output_path,
                                             const char *shader_source,
                                             size_t shader_source_len,
                                             const struct FptRenderConfig *config,
@@ -5986,6 +6022,25 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             set_error(error, error_len, "failed to create SDF diagnostic pipeline: %s", ns_error.localizedDescription.UTF8String);
             return 1;
         }
+        const bool write_structural = structural_output_path && structural_output_path[0] != '\0';
+        if (write_structural && use_voxels) {
+            set_error(error, error_len, "structural diagnostic output requires the SDF renderer");
+            return 1;
+        }
+        id<MTLComputePipelineState> structural_pipeline = nil;
+        if (write_structural) {
+            id<MTLFunction> structural_function =
+                [library newFunctionWithName:@"sdf_structural_diagnostic_kernel"];
+            structural_pipeline = structural_function
+                ? [device newComputePipelineStateWithFunction:structural_function error:&ns_error]
+                : nil;
+            if (!structural_pipeline) {
+                set_error(error, error_len,
+                          "failed to create structural diagnostic pipeline: %s",
+                          ns_error.localizedDescription.UTF8String);
+                return 1;
+            }
+        }
         id<MTLComputePipelineState> voxel_build_pipeline = nil;
         if (use_voxels) {
             id<MTLFunction> voxel_build_function = [library newFunctionWithName:@"voxel_build_kernel"];
@@ -6000,6 +6055,9 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
         id<MTLCommandQueue> queue = [device newCommandQueue];
         const size_t pixel_count = static_cast<size_t>(config->width) * config->height;
         id<MTLBuffer> out_buffer = [device newBufferWithLength:pixel_count * 4 options:MTLResourceStorageModeShared];
+        id<MTLBuffer> structural_buffer = write_structural
+            ? [device newBufferWithLength:pixel_count * 32u options:MTLResourceStorageModeShared]
+            : nil;
         id<MTLBuffer> cfg_buffer = [device newBufferWithBytes:config length:sizeof(FptRenderConfig) options:MTLResourceStorageModeShared];
         id<MTLBuffer> diag_buffer = [device newBufferWithBytes:diagnostic length:sizeof(FptDiagnosticConfig) options:MTLResourceStorageModeShared];
         const size_t voxel_count = use_voxels
@@ -6009,7 +6067,8 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             ? [device newBufferWithLength:voxel_count * 12u options:MTLResourceStorageModeShared]
             : nil;
         id<MTLBuffer> voxel_page_table_buffer = nil;
-        if (!queue || !out_buffer || !cfg_buffer || !diag_buffer || (use_voxels && !voxel_buffer)) {
+        if (!queue || !out_buffer || !cfg_buffer || !diag_buffer ||
+            (write_structural && !structural_buffer) || (use_voxels && !voxel_buffer)) {
             set_error(error, error_len, "failed to allocate SDF diagnostic buffers");
             return 1;
         }
@@ -6067,6 +6126,17 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
             MTLSize groups = groups_for_extent(config->width, tile_height, threads_per_group);
             [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
+            if (write_structural) {
+                const MTLSize structural_threads = threadgroup_for_pipeline(structural_pipeline);
+                [encoder setComputePipelineState:structural_pipeline];
+                [encoder setBuffer:structural_buffer offset:0 atIndex:0];
+                [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+                [encoder setBuffer:diag_buffer offset:0 atIndex:2];
+                const MTLSize structural_groups =
+                    groups_for_extent(config->width, tile_height, structural_threads);
+                [encoder dispatchThreadgroups:structural_groups
+                         threadsPerThreadgroup:structural_threads];
+            }
             [encoder endEncoding];
             [command_buffer commit];
             [command_buffer waitUntilCompleted];
@@ -6089,6 +6159,25 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
         std::vector<uint8_t> rgba(pixel_count * 4);
         std::memcpy(rgba.data(), out_buffer.contents, rgba.size());
         if (!write_png(output_path, config->width, config->height, rgba, error, error_len)) return 1;
+        if (write_structural) {
+            const std::filesystem::path structural_path(structural_output_path);
+            if (structural_path.has_parent_path()) {
+                std::filesystem::create_directories(structural_path.parent_path());
+            }
+            std::ofstream structural_file(structural_path, std::ios::binary);
+            if (!structural_file) {
+                set_error(error, error_len, "failed to create structural diagnostic output %s",
+                          structural_output_path);
+                return 1;
+            }
+            structural_file.write(static_cast<const char *>(structural_buffer.contents),
+                                  static_cast<std::streamsize>(pixel_count * 32u));
+            if (!structural_file) {
+                set_error(error, error_len, "failed to write structural diagnostic output %s",
+                          structural_output_path);
+                return 1;
+            }
+        }
         return 0;
     }
 }
