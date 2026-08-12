@@ -16,6 +16,8 @@ fpt-metal voxel-export scene.fract \
   --mandelbulber-bin /path/to/mandelbulber2 \
   --mandel-mesh-resolution 384 \
   --mandel-mesh-ply-out scene.mandelbulber.ply \
+  --mandel-mesh-auto-bounds \
+  --mandel-mesh-auto-bounds-margin 0.10 \
   --mandel-reference-out scene.mandelbulber.png \
   --mandel-reference-size 900x600 \
   --mandel-mesh-opencl
@@ -32,6 +34,17 @@ but 2,073,182 triangles at 384 samples; the latter conservatively reduced to 237
 it only in temporary storage. `--mandel-reference-out` renders the original `.fract` through
 the same external Mandelbulber binary and records its timing and dimensions in the export
 report. `--mandel-reference-size` defaults to the scene's own image dimensions.
+
+`--mandel-mesh-auto-bounds` is an opt-in two-pass policy for thin objects that occupy only a
+small fraction of the requested cube. The first authoritative mesh establishes object bounds.
+The exporter then builds a scene-centered cube whose side is the mesh's largest dimension plus
+the total margin selected by `--mandel-mesh-auto-bounds-margin` (default `0.10`). The candidate
+is accepted only when the discovery volume has no occupied boundary cells, the new cube is
+strictly inside the original domain, and the candidate has no occupied cells on any of its six
+faces. Otherwise the original volume and PLY are retained. Export JSON records the candidate,
+acceptance state, boundary counts, and fallback reason under `auto_bounds`.
+It also reports discovery, candidate, and total pass time so the two-pass export
+cost remains explicit.
 
 ## Pipeline
 

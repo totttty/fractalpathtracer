@@ -24,6 +24,24 @@ pub struct MandelMeshOptions<'a> {
     pub roughness: f32,
     pub specular: f32,
     pub emission: f32,
+    pub auto_bounds: bool,
+    pub auto_bounds_margin: f32,
+}
+
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct MandelMeshAutoBoundsSummary {
+    pub requested: bool,
+    pub accepted: bool,
+    pub reason: String,
+    pub margin: f32,
+    pub original_bounds: Aabb,
+    pub discovery_mesh_bounds: Option<Aabb>,
+    pub candidate_bounds: Option<Aabb>,
+    pub discovery_boundary_cells: usize,
+    pub candidate_boundary_cells: Option<usize>,
+    pub discovery_pass_ms: f64,
+    pub candidate_pass_ms: Option<f64>,
+    pub total_pass_ms: f64,
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -39,12 +57,14 @@ pub struct MandelMeshSummary {
     pub occupied_cells: usize,
     pub cells_with_secondary_patch: usize,
     pub discarded_patch_clusters: u64,
+    pub mesh_bounds: Aabb,
 }
 
 pub struct MandelMeshVoxelization {
     pub grid: VoxelGrid,
     pub patches: Vec<[u32; 3]>,
     pub summary: MandelMeshSummary,
+    pub auto_bounds: MandelMeshAutoBoundsSummary,
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -140,6 +160,60 @@ struct MeshVertex {
 struct PlyMesh {
     vertices: Vec<MeshVertex>,
     triangles: Vec<[u32; 3]>,
+}
+
+fn mesh_bounds(mesh: &PlyMesh) -> Result<Aabb> {
+    ensure!(
+        !mesh.vertices.is_empty(),
+        "cannot derive bounds from an empty mesh"
+    );
+    let min = std::array::from_fn(|axis| {
+        mesh.vertices
+            .iter()
+            .map(|vertex| vertex.position[axis])
+            .fold(f32::INFINITY, f32::min)
+    });
+    let max = std::array::from_fn(|axis| {
+        mesh.vertices
+            .iter()
+            .map(|vertex| vertex.position[axis])
+            .fold(f32::NEG_INFINITY, f32::max)
+    });
+    ensure!(
+        (0..3).all(|axis| min[axis].is_finite() && max[axis].is_finite() && min[axis] < max[axis]),
+        "Mandelbulber mesh bounds are invalid"
+    );
+    Ok(Aabb::new(min, max))
+}
+
+fn derive_auto_bounds(mesh: Aabb, original: Aabb, margin: f32) -> Option<Aabb> {
+    let size = mesh.size();
+    let side = size.into_iter().fold(0.0_f32, f32::max) * (1.0 + margin);
+    if !side.is_finite() || side <= 0.0 {
+        return None;
+    }
+    let center: [f32; 3] = std::array::from_fn(|axis| (mesh.min[axis] + mesh.max[axis]) * 0.5);
+    let half = side * 0.5;
+    let candidate = Aabb::new(
+        center.map(|value| value - half),
+        center.map(|value| value + half),
+    );
+    (0..3)
+        .all(|axis| {
+            candidate.min[axis] > original.min[axis] && candidate.max[axis] < original.max[axis]
+        })
+        .then_some(candidate)
+}
+
+fn boundary_cell_count(grid: &VoxelGrid) -> usize {
+    grid.voxels
+        .iter()
+        .filter(|voxel| {
+            (0..3).any(|axis| {
+                voxel.coordinate[axis] == 0 || voxel.coordinate[axis] + 1 == grid.resolution[axis]
+            })
+        })
+        .count()
 }
 
 struct TemporaryDirectory(PathBuf);
@@ -321,7 +395,113 @@ pub fn voxelize_mandelbulber_mesh(
         (2..=1024).contains(&options.mesh_resolution),
         "Mandelbulber mesh resolution must be 2..1024"
     );
+    ensure!(
+        options.auto_bounds_margin.is_finite()
+            && (0.01..=1.0).contains(&options.auto_bounds_margin),
+        "automatic mesh bounds margin must be 0.01..1.0"
+    );
 
+    let total_started = Instant::now();
+    let mut discovery_options = options.clone();
+    discovery_options.auto_bounds = false;
+    let discovery_started = Instant::now();
+    let mut discovery = voxelize_mandelbulber_mesh_once(&discovery_options)?;
+    let discovery_pass_ms = discovery_started.elapsed().as_secs_f64() * 1000.0;
+    let discovery_mesh_bounds = discovery.summary.mesh_bounds;
+    let discovery_boundary_cells = boundary_cell_count(&discovery.grid);
+    let mut auto_bounds = MandelMeshAutoBoundsSummary {
+        requested: options.auto_bounds,
+        accepted: false,
+        reason: if options.auto_bounds {
+            "candidate_not_evaluated".to_owned()
+        } else {
+            "disabled".to_owned()
+        },
+        margin: options.auto_bounds_margin,
+        original_bounds: options.bounds,
+        discovery_mesh_bounds: Some(discovery_mesh_bounds),
+        candidate_bounds: None,
+        discovery_boundary_cells,
+        candidate_boundary_cells: None,
+        discovery_pass_ms,
+        candidate_pass_ms: None,
+        total_pass_ms: total_started.elapsed().as_secs_f64() * 1000.0,
+    };
+    if !options.auto_bounds {
+        discovery.auto_bounds = auto_bounds;
+        return Ok(discovery);
+    }
+    if discovery_boundary_cells != 0 {
+        auto_bounds.reason = "discovery_touches_volume_boundary".to_owned();
+        discovery.auto_bounds = auto_bounds;
+        return Ok(discovery);
+    }
+    let Some(candidate_bounds) = derive_auto_bounds(
+        discovery_mesh_bounds,
+        options.bounds,
+        options.auto_bounds_margin,
+    ) else {
+        auto_bounds.reason = "candidate_not_strictly_inside_original_bounds".to_owned();
+        discovery.auto_bounds = auto_bounds;
+        return Ok(discovery);
+    };
+    auto_bounds.candidate_bounds = Some(candidate_bounds);
+
+    let candidate_raw = options.raw_ply_output.map(|_| {
+        std::env::temp_dir().join(format!(
+            "fpt-mandel-auto-bounds-{}-{}.ply",
+            std::process::id(),
+            TEMPORARY_DIRECTORY_SEQUENCE.fetch_add(1, Ordering::Relaxed),
+        ))
+    });
+    let mut candidate_options = options.clone();
+    candidate_options.auto_bounds = false;
+    candidate_options.bounds = candidate_bounds;
+    candidate_options.raw_ply_output = candidate_raw.as_deref();
+    let candidate_started = Instant::now();
+    let candidate_result = voxelize_mandelbulber_mesh_once(&candidate_options);
+    auto_bounds.candidate_pass_ms = Some(candidate_started.elapsed().as_secs_f64() * 1000.0);
+    auto_bounds.total_pass_ms = total_started.elapsed().as_secs_f64() * 1000.0;
+    let mut candidate = match candidate_result {
+        Ok(candidate) => candidate,
+        Err(error) => {
+            if let Some(path) = candidate_raw.as_deref() {
+                let _ = fs::remove_file(path);
+            }
+            auto_bounds.reason = format!("candidate_export_failed: {error}");
+            discovery.auto_bounds = auto_bounds;
+            return Ok(discovery);
+        }
+    };
+    let candidate_boundary_cells = boundary_cell_count(&candidate.grid);
+    auto_bounds.candidate_boundary_cells = Some(candidate_boundary_cells);
+    if candidate_boundary_cells != 0 {
+        if let Some(path) = candidate_raw.as_deref() {
+            let _ = fs::remove_file(path);
+        }
+        auto_bounds.reason = "candidate_touches_volume_boundary".to_owned();
+        discovery.auto_bounds = auto_bounds;
+        return Ok(discovery);
+    }
+    if let (Some(staged), Some(output)) = (candidate_raw.as_deref(), options.raw_ply_output) {
+        fs::copy(staged, output).with_context(|| {
+            format!(
+                "replace baseline Mandelbulber mesh {} with accepted auto-bounds mesh {}",
+                output.display(),
+                staged.display()
+            )
+        })?;
+        let _ = fs::remove_file(staged);
+    }
+    auto_bounds.accepted = true;
+    auto_bounds.reason = "accepted_zero_boundary_contact".to_owned();
+    candidate.auto_bounds = auto_bounds;
+    Ok(candidate)
+}
+
+fn voxelize_mandelbulber_mesh_once(
+    options: &MandelMeshOptions<'_>,
+) -> Result<MandelMeshVoxelization> {
     let temporary = TemporaryDirectory::create()?;
     let ply_path = temporary.path().join("surface.ply");
     let source_min = y_up_to_mandelbulber(options.bounds.min);
@@ -406,6 +586,10 @@ pub fn voxelize_mandelbulber_mesh(
     let voxelize_started = Instant::now();
     let mut stats = VoxelizeStats::default();
     let (grid, patches) = mesh_to_grid(&mesh, options, &mut stats)?;
+    ensure!(
+        grid.occupied_voxels() > 0,
+        "Mandelbulber mesh did not intersect the requested voxel bounds"
+    );
     let voxelize_ms = voxelize_started.elapsed().as_secs_f64() * 1000.0;
     let summary = MandelMeshSummary {
         mesh_export_ms,
@@ -419,11 +603,26 @@ pub fn voxelize_mandelbulber_mesh(
         occupied_cells: grid.voxels.len(),
         cells_with_secondary_patch: patches.iter().filter(|patch| patch[1] != 0).count(),
         discarded_patch_clusters: stats.discarded_clusters,
+        mesh_bounds: mesh_bounds(&mesh)?,
     };
     Ok(MandelMeshVoxelization {
         grid,
         patches,
         summary,
+        auto_bounds: MandelMeshAutoBoundsSummary {
+            requested: false,
+            accepted: false,
+            reason: "single_pass".to_owned(),
+            margin: options.auto_bounds_margin,
+            original_bounds: options.bounds,
+            discovery_mesh_bounds: None,
+            candidate_bounds: None,
+            discovery_boundary_cells: 0,
+            candidate_boundary_cells: None,
+            discovery_pass_ms: 0.0,
+            candidate_pass_ms: None,
+            total_pass_ms: 0.0,
+        },
     })
 }
 
@@ -1006,5 +1205,44 @@ mod tests {
                 .to_string()
                 .contains("property order")
         );
+    }
+
+    #[test]
+    fn automatic_bounds_build_a_centered_cube_with_total_margin() {
+        let mesh = Aabb::new([-1.0, -0.1, -2.0], [3.0, 0.1, 2.0]);
+        let bounds = derive_auto_bounds(mesh, Aabb::new([-10.0; 3], [10.0; 3]), 0.10)
+            .expect("strictly contained candidate");
+        assert_eq!(bounds, Aabb::new([-1.2, -2.2, -2.2], [3.2, 2.2, 2.2]));
+    }
+
+    #[test]
+    fn automatic_bounds_reject_candidates_outside_the_original_domain() {
+        let mesh = Aabb::new([-1.0; 3], [1.0; 3]);
+        assert!(derive_auto_bounds(mesh, Aabb::new([-1.0; 3], [1.0; 3]), 0.10).is_none());
+    }
+
+    #[test]
+    fn boundary_gate_checks_all_six_volume_faces() {
+        let cell = VoxelCell::from_material(SurfaceMaterial::default());
+        let make = |coordinate| SparseVoxel { coordinate, cell };
+        let mut grid = VoxelGrid {
+            contract_version: 1,
+            resolution: [8; 3],
+            bounds: Aabb::new([-1.0; 3], [1.0; 3]),
+            coordinate_system: CoordinateSystem::YUpRightHanded,
+            source_label: "test".to_owned(),
+            source_sha256: "0".repeat(64),
+            voxels: vec![make([2, 3, 4])],
+        };
+        assert_eq!(boundary_cell_count(&grid), 0);
+        grid.voxels.extend([
+            make([0, 3, 4]),
+            make([7, 3, 4]),
+            make([2, 0, 4]),
+            make([2, 7, 4]),
+            make([2, 3, 0]),
+            make([2, 3, 7]),
+        ]);
+        assert_eq!(boundary_cell_count(&grid), 6);
     }
 }

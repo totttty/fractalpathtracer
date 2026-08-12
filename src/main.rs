@@ -257,7 +257,7 @@ fn usage() {
   fpt-metal diagnostic-batch <jobs.json> [--report <report.json>] [--workers N] [--offset N] [--limit N]\n\
   fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--structural-dump <file.bin>] [--camera-position x,y,z] [--camera-yaw-pitch yaw,pitch] [--camera-roll radians] [--camera-fov degrees] [--fpt-root <dir>] [--width N] [--height N]\n\
   fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
-  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
+  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-mesh-auto-bounds] [--mandel-mesh-auto-bounds-margin 0.01..1.0] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -841,6 +841,9 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut mandel_mesh_resolution = None::<u32>;
     let mut mandel_mesh_opencl = false;
     let mut mandel_mesh_ply_output = None::<PathBuf>;
+    let mut mandel_mesh_auto_bounds = false;
+    let mut mandel_mesh_auto_bounds_margin = 0.10_f32;
+    let mut mandel_mesh_auto_bounds_margin_set = false;
     let mut mandel_reference_output = None::<PathBuf>;
     let mut mandel_reference_size = None::<(u32, u32)>;
     let mut surface_band = 1.0_f32;
@@ -913,6 +916,17 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             "--mandel-mesh-opencl" => mandel_mesh_opencl = true,
             "--mandel-mesh-ply-out" => {
                 mandel_mesh_ply_output = Some(next(&mut index, "--mandel-mesh-ply-out")?.into())
+            }
+            "--mandel-mesh-auto-bounds" => mandel_mesh_auto_bounds = true,
+            "--mandel-mesh-auto-bounds-margin" => {
+                mandel_mesh_auto_bounds_margin =
+                    next(&mut index, "--mandel-mesh-auto-bounds-margin")?.parse()?;
+                mandel_mesh_auto_bounds_margin_set = true;
+                ensure!(
+                    mandel_mesh_auto_bounds_margin.is_finite()
+                        && (0.01..=1.0).contains(&mandel_mesh_auto_bounds_margin),
+                    "automatic mesh bounds margin must be 0.01..1.0"
+                );
             }
             "--mandel-reference-out" => {
                 mandel_reference_output = Some(next(&mut index, "--mandel-reference-out")?.into())
@@ -991,9 +1005,15 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 && mandel_mesh_resolution.is_none()
                 && !mandel_mesh_opencl
                 && mandel_mesh_ply_output.is_none()
+                && !mandel_mesh_auto_bounds
+                && !mandel_mesh_auto_bounds_margin_set
                 && mandel_reference_output.is_none()
                 && mandel_reference_size.is_none()),
         "Mandelbulber mesh options require --surface-source mandelbulber-mesh"
+    );
+    ensure!(
+        mandel_mesh_auto_bounds || !mandel_mesh_auto_bounds_margin_set,
+        "--mandel-mesh-auto-bounds-margin requires --mandel-mesh-auto-bounds"
     );
     ensure!(
         mandel_reference_output.is_some() || mandel_reference_size.is_none(),
@@ -1150,6 +1170,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 roughness: loaded.config.fractal_style[4],
                 specular: loaded.config.fractal_style[5],
                 emission: loaded.config.fractal_style[6],
+                auto_bounds: mandel_mesh_auto_bounds,
+                auto_bounds_margin: mandel_mesh_auto_bounds_margin,
             })?;
         ensure!(
             mesh_result.grid.occupied_voxels() > 0,
@@ -1177,6 +1199,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 "mandelbulber_ply":mandel_mesh_ply_output,
                 "surface_payload":"unbounded-primary-plus-bounded-secondary",
                 "mesh":mesh_result.summary,
+                "auto_bounds":mesh_result.auto_bounds,
                 "summary":artifact,
             }))?
         );
