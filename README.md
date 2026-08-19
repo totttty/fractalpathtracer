@@ -187,6 +187,257 @@ recover another local surface without changing the V1 default. V6 also probes
 cells rejected by the primary fit. Probe-derived cells are retained only when
 the resulting surface candidate covers at least 90% of the export grid; sparse
 scenes deterministically fall back to the established V6 cell set.
+
+`--surface-triangles` writes the new `FPTVOX7` exact-surface contract. Metal
+samples the specialized FPT distance field on a regular lattice, Rust runs
+marching cubes and clips every triangle into the requested NAADF cells, and
+Metal samples the packed material tuple only for occupied cells. Each cell
+points into a compact stream of three 30-bit, cell-local triangle vertices;
+NAADF intersects those triangles for primary, shadow, secondary, and
+transmissive rays. This bypasses Mandelbulber, PLY, GLB, and MagicaVoxel:
+
+```sh
+fpt-metal voxel-export scene.fract --out scene.fptvox \
+  --voxel-resolution 96 --surface-triangles \
+  --surface-triangle-resolution 192
+```
+
+Finite surfaces whose requested volume clips occupied cells can opt into one
+conservative retry:
+
+```sh
+fpt-metal voxel-export scene.fract --out scene.fptvox \
+  --voxel-resolution 96 --surface-triangles \
+  --surface-triangle-resolution 192 \
+  --surface-triangle-auto-bounds \
+  --surface-triangle-auto-bounds-margin 0.10
+```
+
+The retry expands all bounds and grid dimensions together, preserving voxel
+size. It is accepted only when the expanded result has zero occupied boundary
+cells; otherwise the original export is retained byte-for-byte. The path is
+explicitly opt-in because intentionally clipped and unbounded fractals should
+keep their authored framing.
+
+`--surface-triangle-threshold-scale` is an explicit experimental control for
+matching a fixed continuous-render camera whose distance-dependent DE
+acceptance band cannot be represented by one view-independent mesh. The
+default `1.0` remains compatible with Mandelbulber's mesh threshold; changing
+the scale changes the extracted surface and must not be used for PLY parity
+claims.
+
+The command reports separate Metal topology, Rust marching-cubes, clipping,
+and Metal material times. It also reports `topology_policy` and
+`topology_threshold_scale`. The normal policy
+is `mandelbulber-distance-threshold`; `distance-floor-fallback` identifies a
+scene whose current generated FPT estimator did not cross Mandelbulber's mesh
+threshold, so structural equivalence still needs evaluator work.
+
+Current differential validation at `96^3` output / `192^3` topology sampling
+matches Mandelbulber PLY occupancy exactly on Menger FabsAddConditional4D,
+Mix Pinski 4D, and Menger IterationWeight4D. Christmas Ornaments reaches
+`0.963922` cell IoU. PBR and emission tuples match on common cells; hybrid
+palette colour remains the main material-parity limitation. A separate
+`48^3` / `96^3` interoperability sweep exported and dispatched all 50 ranked
+scenes through native NAADF. The former failure, `asurfKlein_difsGreek`, now
+produces a valid but very small eight-cell surface at this resolution, so this
+sweep validates the producer/consumer seam rather than claiming fine-detail
+structural parity for every scene.
+
+Reference provenance is enforced separately from interoperability. A review of
+the earlier ranked-50 high-resolution report found that 49 of its 50 stored PLY
+references used Mandelbulber OpenCL even though the report was later described
+as CPU/double. That report remains useful as historical OpenCL comparison data,
+but it is no longer accepted as the authoritative structural baseline. The
+current parity harness rejects any reference whose export report does not say
+`opencl: false`. A fresh CPU/double cell-only sweep at `48^3` output / `96^3`
+topology completed 49 of 50 scenes with mean/median cell IoU
+`0.9488 / 0.9785`; 35 of 49 reached at least `0.95`. One thin scene was empty
+in the CPU reference at this intentionally coarse sampling rate. High-resolution
+CPU/double visual reports must be regenerated before freezing a new release
+baseline.
+
+The exact triangle path currently trades speed for structure. At `854x480`,
+4 SPP and 4 bounces, representative V7 scenes measured 1.56x to 3.46x the GPU
+time of their fitted PLY/V6 counterparts. Runtime triangle-group AABBs were
+byte-exact but rejected: they improved Menger by 7.9% and IterationWeight by
+5.3%, while regressing Christmas by 23.4% and Mix Pinski by 3.6%.
+
+For authored-view surfaces, `--surface-view-indexed-triangles` writes the
+experimental `FPTVOX8` layout. V8 stores each globally quantized source
+triangle once and gives each occupied cell a compact list of triangle indices,
+instead of storing a separately clipped triangle fan in every intersected V7
+cell. The native NAADF consumer uses a dedicated function-constant path, so V7
+and ordinary voxel kernels do not carry the indexed traversal branch.
+
+```sh
+fpt-metal voxel-export scene.fract --out scene.fptvox \
+  --voxel-resolution 192 --surface-view-indexed-triangles \
+  --surface-view-splats --surface-triangle-resolution 300 \
+  --surface-triangle-auto-bounds \
+  --mandelbulber-root "$MANDELBULBER_ROOT"
+```
+
+V8 remains opt-in and authored-view-only. The producer and native loader reject
+any cell requiring more than 1,024 triangle references; use the default
+`--surface-view-triangles` V7 path for those scenes. The guarded alternative
+`--surface-view-indexed-triangles-auto` builds the same candidate statistics and
+writes V8 only when fan-out is safe and references reduce V7 triangle tests by
+at least 28%; otherwise it writes ordinary V7.
+
+The ranked-50 gate found 25 fan-out-safe scenes. The conservative auto rule
+selected 17 and fell back to V7 for 33; all 50 outputs were byte-identical to
+the corresponding explicit layout. Every selected scene improved in alternating
+paired NAADF timing: `-9.1%` to `-40.8%`, median `-20.4%`. Their median
+intersection reduction was 31.7%, median payload reduction was 14.9%, and
+median authored-capture IoU changed from `0.91763` to `0.91774`. V7 remains the
+default; auto and explicit V8 are deliberate authored-view optimization modes.
+
+For scenes whose high-frequency surface falls between the regular topology
+lattice, `--surface-view-triangles` is an explicit camera-visible experiment:
+
+```sh
+fpt-metal voxel-export scene.fract --out scene.fptvox \
+  --voxel-resolution 192 --surface-view-triangles \
+  --surface-view-splats \
+  --surface-triangle-resolution 300 \
+  --surface-triangle-auto-bounds \
+  --mandelbulber-root "$MANDELBULBER_ROOT"
+```
+
+It traces the authored continuous view in Metal, connects only neighboring hit
+samples that pass depth, normal, and maximum-edge discontinuity guards, clips
+those triangles directly into FPTVOX7 cells in Rust, and writes no intermediate
+PLY. The export report identifies `view_dependent: true`, capture resolution,
+accepted/rejected triangle counts, and diagnostic GPU time. This mode is useful
+for structural diagnosis and camera-matched cached assets; it is not a complete
+all-view replacement for lattice V7. On the current `300x300` pilots it exactly
+reproduced the temporary PLY prototype on ranks 26 and 34, while avoiding the
+large false planes produced by dense V6 patches on rank 34.
+
+`--surface-view-splats` fills continuous hit samples that cannot participate
+in a connected depth-grid triangle with a tangent micro-quad. Each half-width
+is `0.85x` the projected pixel footprint and remains capped below half an
+output voxel, so the mode cannot create the large foreground facets produced
+by the rejected ray-hit-plane hybrid. At `300x300`, authored-view mask IoU for
+ranks 24/26/34 changed from `0.672/0.922/0.481` with connected triangles alone
+to `0.918/0.938/0.941`; miss rates fell to `7.91%/5.64%/5.73%`, with only
+`0.24-0.66%` extra pixels. The option remains explicit because the result is a
+camera-matched surface rather than a closed asset.
+
+The triangulator continues to reject adjacent triangles whose sampled normals
+disagree. It tags the affected vertices and expands only their existing
+fallback splats from the default `0.85x` footprint / `0.45x` cell cap to at
+least `1.0x` / `0.49x`. This fills small screen-space gaps without accepting a
+foreshortened triangle or increasing the connected-triangle workload. Across
+all 49 renderable ranked scenes it raised median authored-view IoU from
+`0.8890` to `0.9002`; 47 scenes improved and two were unchanged. Median FPTVOX
+payload growth was `0.26%`. Reports expose affected samples as
+`expanded_low_normal_splats`.
+
+Captures whose finite-hit occupancy is at least `99.9%` use a separate dense
+view rule for isolated splats: their footprint/cell cap is raised to at least
+`1.5x / 0.49x`. This addresses subpixel holes in full-viewport fractals without
+thickening isolated object silhouettes. In the ranked-50 gate the selector
+activated on 22 scenes, improved every selected scene, and left the other 28
+scenes byte-for-byte and metric-for-metric unchanged. Overall median IoU rose
+from `0.9007` to `0.9221`; the selected cohort's median improvement was
+`0.0322`, with median payload growth of `5.20%`. Short alternating exact-surface
+timing canaries on ranks 8/27/40 measured paired GPU medians of
+`-5.9%/-5.8%/-12.1%`, consistent with denser first-hit coverage terminating
+rays earlier. Reports expose affected samples as `expanded_dense_view_splats`.
+
+The corresponding NAADF comparison camera now preserves explicit pole poses
+instead of applying the interactive mouse-look pitch clamp. A fresh 50-scene
+rerun changed only the two authored cameras at exactly `-90` degrees: rank 20
+improved from `0.9283` to `0.9361` mask IoU and rank 36 from `0.7690` to
+`0.8266`; the other 48 masks and every FPTVOX payload were unchanged. Two
+follow-up reconstruction experiments remain rejected. Replacing fallback
+splats with low-normal connected triangles raised rank 12 from `0.7874` to
+`0.8490`, but regressed its exact-surface paired GPU median by `7.48%`.
+Packing the same captures into a `96^3` rather than `192^3` surface grid cut
+median payload size by `27.7%` and moved median IoU from `0.9221` to `0.9243`,
+but materially regressed ranks 42 (`-0.130` IoU) and 40 (`-0.089`), so the
+requested `192^3` grid remains the parity checkpoint.
+
+The initial ranked-50 census completed 49 scenes; rank 48 produced no finite
+hit in the ordinary unbounded structural march. Across those successful scenes,
+median mask IoU rose
+from `0.730` to `0.889`, median extra coverage was `0.036%`, and no scene lost
+IoU. Ranks 12, 17, 31, and 36 exceeded `2%` extra coverage. Lowering the cell
+cap from `0.45` to `0.30`, or the footprint scale from `0.85` to `0.65`, reduced
+their extra coverage but lowered IoU in all four cases, so the original values
+remain the explicit-mode defaults. Alternating 60-frame timing canaries measured
+paired GPU changes of `+3.24%`, `-6.88%`, and `-17.90%` on ranks 24, 26, and
+34 respectively. The mode is therefore a structural reconstruction tradeoff,
+not a universal runtime optimization.
+
+Camera-matched exports can additionally use `--surface-view-auto-fit-bounds`
+with `--surface-triangle-auto-bounds`. The guarded mode fits the output grid to
+captured hits only when their largest extent is at most `1%` of the requested
+extent; otherwise it keeps the existing expand-only policy. Across the same
+ranked-50 gate it selected only rank 46 (`iter fog 005`), whose mask IoU
+increased from `0.0065` to `0.8635`. All other 48 successful scene metrics were
+exactly unchanged. Forcing
+fitted bounds on every scene was rejected because median IoU fell from `0.889`
+to `0.784`.
+
+If the ordinary authored-view march has zero true hits, the exporter now
+retries only the requested finite voxel AABB. That exceptional retry uses at
+least a `1024x1024` structural capture and retains edge-bounded
+low-normal-agreement triangles additively alongside fallback splats. The cache
+manifest records the requested and effective resolutions, export bounds, and
+whether the bounded retry was selected. This recovered rank 48
+(`RoadToExascale`): the requested 300px NAADF view reaches `0.9878` mask IoU,
+with `0.91%` miss and `0.32%` extra coverage. Ranks 12, 24, and 44 remained
+byte-identical to their previous accepted FPTVOX files. The older continuous
+beauty image for rank 48 was not a valid surface oracle because its legacy
+path kernel shaded a stalled, non-converged march position; the explicit hit
+diagnostic correctly reports no unbounded hit.
+
+An independent geometry gate regenerated Mandelbulber CPU/double PLY surfaces
+at `48^3` output / `96^3` mesh sampling (rank 26 required mesh 192), retained
+the exact FPTVOX7 references, and rendered both paths through the same NAADF
+visibility pipeline. Automatic visible-bound expansion was rejected for this
+comparison because it measured geometry outside the fixed Mandel volume: it
+reported `13.88%` median extra coverage. With identical fixed bounds, 47 scenes
+completed and median Mandel mask IoU changed from `0.600` for connected
+triangles to `0.735` with splats; median extra coverage was `1.315%`. Ranks 11
+and 40 had no reconstructable captured surface inside the fixed volume, and
+rank 48 had no unbounded authored-camera hits at that checkpoint. Splats
+regressed ranks 17, 30, 32, 36,
+and 38, so they are not a general Mandel-parity solution. Rank 24 was also
+checked against a retained `192^3 / mesh 384` CPU/double reference and measured
+only `0.0036` IoU. The authored Mandelbulber render and continuous FPT render
+both contain its large recursive spherical forms, while the CPU mesh and
+lattice are sparse in that view. The mesh is therefore not a valid structural
+oracle for this formula; this result must not be used to remove the continuous
+surfaces. Camera-matched capture remains the applicable rank-24 reference.
+
+Repeated camera-matched experiments can add
+`--surface-view-capture-cache capture.bin`. A missing cache is populated; an
+existing cache is reused only when its JSON sidecar exactly matches the
+generated Metal source hash, camera bit patterns, FOV, requested/effective
+sampling resolution, fallback selection, export bounds, world scale, and
+structural-record contract. A rank-26 smoke test reduced the
+same export from `3.84 s` to `0.12 s` and produced a byte-identical FPTVOX7
+artifact. The cache currently applies only to the authored view, not auxiliary
+multi-view captures.
+
+`--surface-view-auxiliary-views 4|6|12` additionally captures small parallax
+views. Fusion keeps authored-view cells and adds only cells absent from the
+primary surface. This removed the naive five-view payload explosion in the
+rank-26 pilot (`7.1 MB` down to `1.56 MB`), but did not improve the authored
+view enough to offset its extra cells (`7.03` versus `8.88 ms` in the noisy
+one-frame gate). It is therefore a research option, not a recommended default.
+
+The optional automatic-bounds flag expands, but never shrinks, the requested
+volume to contain all finite hits in the authored view plus the configured
+margin and uses an aspect-matched grid so voxel size remains isotropic. This
+matters for repeated/unbounded fractals whose original finite
+bounds clip visible layers; omitting it intentionally retains the fixed-volume
+contract.
+
 `--surface-complex-patches` is an opt-in camera-independent completion mode
 that still writes ordinary FPTVOX6. It evaluates a bounded primary fit for
 probe-derived cells, admits the first weaker support tier only when it has one

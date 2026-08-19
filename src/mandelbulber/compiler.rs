@@ -308,7 +308,9 @@ pub fn specialize_scene_with_kernel_specialization(
             &configured_values,
             scene.linear_de_offset,
             scene.force_delta_de,
+            scene.force_analytic_de,
             scene.delta_de_function,
+            scene.global_box_folding || scene.global_spherical_folding,
             direct_hybrid_loop,
             formula_optimization,
         )
@@ -1005,7 +1007,7 @@ fn standalone_color_index_source(
     aux.temp1000 = 1000.0f;
     float color_min = 1000.0f;
     float bailout = max(setv(cfg, 2), 1.0f);
-    int max_iterations = clamp(int(setv(cfg, 1)) * 4, 1, 4096);
+    int max_iterations = clamp(int(setv(cfg, 1)), 1, 4096);
     for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         aux.i = uint(iteration);
         aux.old_z = z;
@@ -1209,7 +1211,7 @@ fn boolean_formula_color_evaluator_source(
     aux.temp1000 = 1000.0f;
     float color_min = 1000.0f;
     float bailout = {bailout};
-    int max_iterations = clamp(int(setv(cfg, 1)) * 4, 1, 4096);
+    int max_iterations = clamp(int(setv(cfg, 1)), 1, 4096);
     for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         aux.i = uint(iteration);
         aux.old_z = z;
@@ -1426,6 +1428,8 @@ fn specialize_fpt_shader_boolean(
             formula.source.id,
             set_values,
         );
+        let (history_declaration, history_update, additional_bailout) =
+            boolean_additional_bailout_source(formula);
         evaluators.push_str(&format!(
             r#"static float mandelBooleanDistance{index}(float3 point,
                                             constant FptRenderConfig &cfg) {{
@@ -1442,16 +1446,16 @@ fn specialize_fpt_shader_boolean(
     aux.actualScale = {actual_scale};
     aux.color = 1.0f;
     aux.temp1000 = 1000.0f;
-    int max_iterations = clamp(int(setv(cfg, 1)), 1, 4096);
+{history_declaration}    int max_iterations = clamp(int(setv(cfg, 1)), 1, 4096);
     float bailout = {bailout};
     for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         aux.i = uint(iteration);
-        aux.old_z = z;
+{history_update}        aux.old_z = z;
         z = mandelApplyGlobalFoldings(z, cfg, aux);
         z = {namespace}::{function_name}(z, {namespace}::kMandelFormulaParameters, aux);
 {post_iteration}        aux.r = length(z);
         if (aux.r > bailout) break;
-    }}
+{additional_bailout}    }}
     return max(float({distance_expression}), 0.0f);
 }}
 
@@ -1459,6 +1463,9 @@ fn specialize_fpt_shader_boolean(
             initial_w = metal_float(scene.initial_waxis as f32),
             bailout = metal_float(scene.formula_slots[*index].bailout as f32),
             function_name = formula.function_name,
+            history_declaration = history_declaration,
+            history_update = history_update,
+            additional_bailout = additional_bailout,
         ));
         let position = scene.formula_positions[*index].map(|value| value as f32);
         let rotation = rotation2_matrix(
@@ -3067,12 +3074,27 @@ static float4 mandelApplyGlobalFoldings(float4 z,
     if (cfg.vset_values[101] > 0.5f) {
         float limit = cfg.vset_values[102];
         float value = cfg.vset_values[103];
-        if (z.x > limit) z.x = value - z.x;
-        else if (z.x < -limit) z.x = -value - z.x;
-        if (z.y > limit) z.y = value - z.y;
-        else if (z.y < -limit) z.y = -value - z.y;
-        if (z.z > limit) z.z = value - z.z;
-        else if (z.z < -limit) z.z = -value - z.z;
+        if (z.x > limit) {
+            z.x = value - z.x;
+            aux.color *= 0.9f;
+        } else if (z.x < -limit) {
+            z.x = -value - z.x;
+            aux.color *= 0.9f;
+        }
+        if (z.y > limit) {
+            z.y = value - z.y;
+            aux.color *= 0.9f;
+        } else if (z.y < -limit) {
+            z.y = -value - z.y;
+            aux.color *= 0.9f;
+        }
+        if (z.z > limit) {
+            z.z = value - z.z;
+            aux.color *= 0.9f;
+        } else if (z.z < -limit) {
+            z.z = -value - z.z;
+            aux.color *= 0.9f;
+        }
         aux.r = length(z);
     }
     if (cfg.vset_values[104] > 0.5f) {
@@ -3087,6 +3109,7 @@ static float4 mandelApplyGlobalFoldings(float4 z,
         }
         z *= factor;
         aux.DE *= factor;
+        if (factor != 1.0f) aux.color *= 0.9f;
         aux.r = length(z);
     }
     return z;
@@ -3588,6 +3611,8 @@ fn standalone_delta_fragment(
     let marker = "// FPT_MANDELBULBER_GENERATED_INSERTION_POINT";
     let de_function = overridden_de_function(&formula.source.de_function_type, delta_de_function)?;
     let distance_expression = delta_distance_expression(de_function)?;
+    let delta_source = standalone_delta_source(formula.source.id);
+    let radial_derivative_source = standalone_delta_derivative_source();
     let additional_bailout = i32::from(uses_additional_bailout(formula));
     Ok(format!(
         r#"#define FPT_MANDEL_GENERATED_FIELD 1
@@ -3666,14 +3691,10 @@ static float4 mandelbulberGeneratedFieldSample(float3 p,
     float3 scaled = p / world_scale;
     MandelDeltaOrbitResult base = mandelDeltaOrbit(
         scaled, cfg, -iteration_multiplier, iteration_budget);
-    // Mandelbulber's fp64 implementation can tie this probe to a much smaller
-    // fraction of the detail threshold. Metal is fp32-only; 1e-4 is the
-    // empirically stable floor across explicit-delta and Newton fixtures.
-    float delta = max(1.0e-4f, 1.0e-4f * length(scaled));
-    float rx = mandelDeltaOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations, 0).radius;
-    float ry = mandelDeltaOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations, 0).radius;
-    float rz = mandelDeltaOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations, 0).radius;
-    float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;
+    // Most fp32 formulas need the validated 1e-4 floor. Formula-specific
+    // source can instead mirror a smaller authoritative OpenCL stencil.
+{delta_source}
+{radial_derivative_source}
     float radial_gradient = length(radial_derivative);
     float distance = radial_gradient > 0.0f ? ({distance_expression}) : base.radius;
     distance = clamp(distance, 0.0f, 10.0f) * world_scale;
@@ -3688,6 +3709,24 @@ static float4 mandelbulberGeneratedFieldSample(float3 p,
     ))
 }
 
+fn standalone_delta_source(formula_id: i32) -> &'static str {
+    if formula_id == 85 {
+        // Mandelbulber's CPU Delta-DE probe is below useful fp32 precision for
+        // this formula. This smaller stable Metal probe preserves substantially
+        // more surface detail, but remains an fp32 approximation.
+        "    float delta = max(1.0e-7f, 5.0e-7f * length(scaled));"
+    } else {
+        "    float delta = max(1.0e-4f, 1.0e-4f * length(scaled));"
+    }
+}
+
+fn standalone_delta_derivative_source() -> &'static str {
+    r#"    float rx = mandelDeltaOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations, 0).radius;
+    float ry = mandelDeltaOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations, 0).radius;
+    float rz = mandelDeltaOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations, 0).radius;
+    float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;"#
+}
+
 fn delta_distance_expression(function: &str) -> Result<&'static str> {
     match function {
         "linearDEFunction" => Ok("0.5f * base.radius / radial_gradient"),
@@ -3698,6 +3737,34 @@ fn delta_distance_expression(function: &str) -> Result<&'static str> {
     }
 }
 
+fn hybrid_delta_scale(global_folding: bool) -> f32 {
+    // The prior 1e-4 floor erased detail in compact hybrid scenes. This is the
+    // smallest fp32-stable probe validated against Mandelbulber's mesh output;
+    // global folds retain their independently validated scale.
+    if global_folding { 1.2e-5 } else { 6.25e-6 }
+}
+
+fn hybrid_delta_zero_gradient_distance() -> &'static str {
+    "0.0f"
+}
+
+fn hybrid_delta_probe_source(
+    delta_source: &str,
+    derivative_source: &str,
+    global_folding: bool,
+) -> String {
+    if global_folding {
+        // Global folds are discontinuous and retain their separately validated
+        // fixed probe scale. The mesh specialization deliberately has no marker
+        // to match in this source.
+        format!("{delta_source}\n{derivative_source}")
+    } else {
+        format!(
+            "    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_BEGIN\n{delta_source}\n    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_END\n{derivative_source}"
+        )
+    }
+}
+
 pub fn specialize_fpt_shader_hybrid(
     base_source: &str,
     slots: &[RuntimeFormulaSlot<'_>],
@@ -3705,7 +3772,9 @@ pub fn specialize_fpt_shader_hybrid(
     set_values: &[f32; 40],
     linear_de_offset: f64,
     force_delta_de: bool,
+    force_analytic_de: bool,
     delta_de_function: u32,
+    global_folding: bool,
     direct_hybrid_loop: bool,
     formula_optimization: SceneFormulaOptimizationPolicy,
 ) -> Result<String> {
@@ -3786,21 +3855,34 @@ pub fn specialize_fpt_shader_hybrid(
         );
     }
     let uses_delta = force_delta_de
-        || slots
-            .iter()
-            .any(|slot| slot.formula.source.de_type == "deltaDEType");
+        || (!force_analytic_de
+            && slots
+                .iter()
+                .any(|slot| slot.formula.source.de_type == "deltaDEType"));
     let sample_body = if uses_delta {
         let finalizer = hybrid_delta_distance_expression(slots, delta_de_function)?;
+        // Global folds introduce piecewise discontinuities before each hybrid
+        // formula. Mandelbulber's fp64 Delta-DE uses a much smaller, detail-
+        // derived perturbation there; this is the smallest stable fp32 scale
+        // that preserves the same extracted surface without zero derivatives.
+        let delta_scale = metal_float(hybrid_delta_scale(global_folding));
+        let zero_gradient_distance = hybrid_delta_zero_gradient_distance();
+        let delta_source =
+            format!("    float delta = max({delta_scale}, {delta_scale} * length(scaled));");
+        let derivative_source = r#"    float rx = mandelHybridOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations, 0).radius;
+    float ry = mandelHybridOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations, 0).radius;
+    float rz = mandelHybridOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations, 0).radius;
+    float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;"#;
+        let delta_probe_source =
+            hybrid_delta_probe_source(&delta_source, &derivative_source, global_folding);
         format!(
             r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
         scaled, cfg, -iteration_multiplier, iteration_budget);
-    float delta = max(1.0e-4f, 1.0e-4f * length(scaled));
-    float rx = mandelHybridOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations, 0).radius;
-    float ry = mandelHybridOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations, 0).radius;
-    float rz = mandelHybridOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations, 0).radius;
-    float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;
+{delta_probe_source}
     float radial_gradient = length(radial_derivative);
-    float distance = radial_gradient > 0.0f ? ({finalizer}) : base.radius;
+    // Mandelbulber's Delta-DE treats a zero radial gradient as an interior
+    // sample. Falling back to the orbit radius creates a false exterior spike.
+    float distance = radial_gradient > 0.0f ? ({finalizer}) : {zero_gradient_distance};
     distance = clamp(distance, 0.0f, 10.0f) * world_scale;
     float iteration_state = base.escaped
         ? -float(base.iterations)
@@ -3993,6 +4075,44 @@ static float4 mandelbulberGeneratedFieldSample(float3 p,
     let specialized = base_source.replacen(marker, &fragment, 1);
     dump_specialized_shader_if_requested(&specialized)?;
     Ok(specialized)
+}
+
+/// Replace only the hybrid Delta-DE sampling distance used by the dedicated
+/// mesh-export metallib. Ordinary rendering keeps its independently tuned
+/// probe distance and generated source unchanged.
+pub fn specialize_mesh_delta_probe(source: &str) -> Result<String> {
+    const BEGIN: &str = "    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_BEGIN";
+    const END: &str = "    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_END";
+    let Some(begin) = source.find(BEGIN) else {
+        ensure!(
+            !source.contains(END),
+            "generated Mandel source has an unmatched mesh Delta-DE marker"
+        );
+        return Ok(source.to_owned());
+    };
+    ensure!(
+        !source[begin + BEGIN.len()..].contains(BEGIN),
+        "generated Mandel source has multiple mesh Delta-DE declarations"
+    );
+    let body_start = begin + BEGIN.len();
+    let relative_end = source[body_start..]
+        .find(END)
+        .context("generated Mandel source has an unmatched mesh Delta-DE marker")?;
+    let body_end = body_start + relative_end;
+    let replacement = r#"
+    float detail_size = max(cfg.vset_values[117] / world_scale, 1.0e-20f);
+    // Slot 131 is preview-only in the ordinary renderer and is repurposed as
+    // an offline mesh-export scratch value by the dedicated voxel metallib.
+    float relative_delta = max(cfg.vset_values[131], 1.0e-15f);
+    float delta = max(length(scaled) * 5.0e-7f,
+                      detail_size * relative_delta);
+"#;
+    Ok(format!(
+        "{}{}{}",
+        &source[..body_start],
+        replacement,
+        &source[body_end..]
+    ))
 }
 
 fn periodic_hybrid_sequence_expression(sequence: &[u8]) -> Option<String> {
@@ -4222,6 +4342,22 @@ fn uses_additional_bailout(formula: &ParsedFormula) -> bool {
         formula.source.de_function_type.as_str(),
         "pseudoKleinianDEFunction" | "josKleinianDEFunction"
     )
+}
+
+fn boolean_additional_bailout_source(
+    formula: &ParsedFormula,
+) -> (&'static str, &'static str, &'static str) {
+    if uses_additional_bailout(formula) {
+        (
+            "    float4 last_last_z = float4(0.0f);\n",
+            "        last_last_z = aux.old_z;\n",
+            r#"        if (length(z - aux.old_z) / aux.r < 0.1f / bailout) break;
+        if (length(z - last_last_z) / aux.r < 0.1f / bailout) break;
+"#,
+        )
+    } else {
+        ("", "", "")
+    }
 }
 
 fn formula_function_attribute(noinline_formulas: bool) -> &'static str {
@@ -7021,6 +7157,14 @@ target 0 0 0;
 
         formula.source.de_function_type = "pseudoKleinianDEFunction".to_owned();
         assert!(uses_additional_bailout(&formula));
+        let (declaration, update, source) = boolean_additional_bailout_source(&formula);
+        assert!(declaration.contains("last_last_z"));
+        assert!(update.contains("last_last_z = aux.old_z"));
+        assert!(source.contains("length(z - aux.old_z) / aux.r"));
+        assert!(source.contains("length(z - last_last_z) / aux.r"));
+
+        formula.source.de_function_type = "linearDEFunction".to_owned();
+        assert_eq!(boolean_additional_bailout_source(&formula), ("", "", ""));
     }
 
     #[test]
@@ -7032,6 +7176,38 @@ target 0 0 0;
         assert!(palette.contains("kMandelSurfaceGradientCount = 3u"));
         assert!(palette.contains("* 3.0f + 0.25f"));
         assert!(palette.contains("float4(1.0f, 0.99609375f, 0.0f, 0.0f)"));
+    }
+
+    #[test]
+    fn global_foldings_preserve_mandelbulber_color_accumulation() {
+        let source = orbit_state_declaration();
+        assert_eq!(source.matches("aux.color *= 0.9f;").count(), 7);
+        assert!(source.contains("if (factor != 1.0f) aux.color *= 0.9f;"));
+    }
+
+    #[test]
+    fn hybrids_use_their_validated_fp32_delta_scales() {
+        assert_eq!(hybrid_delta_scale(false), 6.25e-6);
+        assert_eq!(hybrid_delta_scale(true), 1.2e-5);
+        assert_eq!(hybrid_delta_zero_gradient_distance(), "0.0f");
+    }
+
+    #[test]
+    fn riemann_bulb_uses_one_sided_delta_stencil() {
+        assert_eq!(
+            standalone_delta_source(85),
+            "    float delta = max(1.0e-7f, 5.0e-7f * length(scaled));"
+        );
+        let riemann = standalone_delta_derivative_source();
+        assert!(riemann.contains("scaled + float3(delta, 0.0f, 0.0f)"));
+        assert!(!riemann.contains("scaled - float3(delta, 0.0f, 0.0f)"));
+        assert!(riemann.contains("abs(float3(rx, ry, rz) - base.radius) / delta"));
+
+        assert_eq!(
+            standalone_delta_source(2),
+            "    float delta = max(1.0e-4f, 1.0e-4f * length(scaled));"
+        );
+        assert!(!standalone_delta_derivative_source().contains("rxn"));
     }
 
     #[test]
@@ -7426,6 +7602,46 @@ kernel void also_discarded(uint gid [[thread_position_in_grid]]) {
     fn boolean_formula_scale_is_an_object_size() {
         assert!((boolean_point_scale(2.0) - 0.5).abs() < f32::EPSILON);
         assert!((boolean_point_scale(0.0625) - 16.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn mesh_delta_specialization_rewrites_only_marked_hybrid_source() {
+        let source = "prefix\n    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_BEGIN\n    float delta = 6.25e-6f;\n    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_END\nsuffix";
+        let specialized = specialize_mesh_delta_probe(source).expect("specialized source");
+        assert!(specialized.starts_with("prefix\n"));
+        assert!(specialized.ends_with("\nsuffix"));
+        assert!(specialized.contains("cfg.vset_values[117] / world_scale"));
+        assert!(specialized.contains("cfg.vset_values[131]"));
+        assert!(specialized.contains("length(scaled) * 5.0e-7f"));
+        assert!(!specialized.contains("6.25e-6f"));
+
+        let analytic = "unmarked analytic source";
+        assert_eq!(
+            specialize_mesh_delta_probe(analytic).expect("unchanged analytic source"),
+            analytic
+        );
+    }
+
+    #[test]
+    fn mesh_delta_specialization_rejects_invalid_markers() {
+        let unmatched = "    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_BEGIN";
+        assert!(specialize_mesh_delta_probe(unmatched).is_err());
+
+        let duplicate = "    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_BEGIN\n    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_BEGIN\n    // FPT_MANDEL_HYBRID_DELTA_DECLARATION_END";
+        assert!(specialize_mesh_delta_probe(duplicate).is_err());
+    }
+
+    #[test]
+    fn global_fold_delta_source_is_not_mesh_specialization_eligible() {
+        let ordinary = hybrid_delta_probe_source("delta", "derivative", false);
+        assert!(ordinary.contains("FPT_MANDEL_HYBRID_DELTA_DECLARATION_BEGIN"));
+
+        let global_fold = hybrid_delta_probe_source("delta", "derivative", true);
+        assert_eq!(global_fold, "delta\nderivative");
+        assert_eq!(
+            specialize_mesh_delta_probe(&global_fold).expect("unchanged global-fold source"),
+            global_fold
+        );
     }
 
     #[test]

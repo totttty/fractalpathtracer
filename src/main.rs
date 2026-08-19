@@ -6,8 +6,10 @@ use fpt_metal::mandelbulber::{self, MandelbulberScene};
 use fpt_metal::scene::*;
 use fpt_metal::tools;
 use fpt_metal::{
-    Aabb, CoordinateSystem, FractalScene, SparseVoxel, VoxelCell, VoxelGrid,
-    VoxelizationParameters, VoxelizationRequest, export_fptvox, export_fptvox_with_bounded_patches,
+    Aabb, CoordinateSystem, FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL, FptvoxTriangle,
+    FptvoxTriangleCell, FptvoxTriangleSurface, FractalScene, SparseVoxel, SurfaceMaterial,
+    VoxelCell, VoxelGrid, VoxelizationParameters, VoxelizationRequest, export_fptvox,
+    export_fptvox_indexed_triangle_surface, export_fptvox_with_bounded_patches,
     export_fptvox_with_normals, export_fptvox_with_planes, export_glb, voxelize,
 };
 use serde::{Deserialize, Serialize};
@@ -255,9 +257,9 @@ fn usage() {
   Research-only: function-stitching variants, canonical/shared/affine generated forms, dual/tiny libraries, bound-grid, and regional backends\n\
   fpt-metal render-batch <jobs.json>\n\
   fpt-metal diagnostic-batch <jobs.json> [--report <report.json>] [--workers N] [--offset N] [--limit N]\n\
-  fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--structural-dump <file.bin>] [--camera-position x,y,z] [--camera-yaw-pitch yaw,pitch] [--camera-roll radians] [--camera-fov degrees] [--fpt-root <dir>] [--width N] [--height N]\n\
+  fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--diagnostic-clip-voxel-bounds [--diagnostic-bounds-min x,y,z --diagnostic-bounds-max x,y,z]] [--structural-dump <file.bin>] [--camera-position x,y,z] [--camera-yaw-pitch yaw,pitch] [--camera-roll radians] [--camera-fov degrees] [--fpt-root <dir>] [--width N] [--height N]\n\
   fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
-  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-mesh-auto-bounds] [--mandel-mesh-auto-bounds-margin 0.01..1.0] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
+  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-in <mesh.ply>] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-mesh-auto-bounds] [--mandel-mesh-auto-bounds-margin 0.01..1.0] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches|--surface-triangles|--surface-view-triangles|--surface-view-indexed-triangles|--surface-view-indexed-triangles-auto] [--surface-view-splats] [--surface-view-fit-bounds|--surface-view-auto-fit-bounds] [--surface-view-splat-scale 0.25..1.5] [--surface-view-splat-cell-cap 0.1..0.49] [--surface-view-capture-cache <capture.bin>] [--surface-view-auxiliary-views 0|4|6|12] [--surface-triangle-resolution N] [--surface-triangle-anisotropic] [--surface-triangle-threshold-scale 0.25..4] [--surface-triangle-auto-bounds] [--surface-triangle-auto-bounds-margin 0.001..1] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -387,11 +389,178 @@ fn filter_supported_minimum_tier(
 }
 
 const NON_INTERSECTING_PRIMARY_PATCH: u32 = 0xff80_0fff;
+const STRUCTURAL_DIAGNOSTIC_RECORD_BYTES: usize = 64;
+const DENSE_STRUCTURAL_VIEW_OCCUPANCY_PER_MILLE: usize = 999;
+const INDEXED_TRIANGLE_AUTO_MIN_INTERSECTION_REDUCTION_PCT: f64 = 28.0;
+
+fn indexed_triangle_intersection_reduction_pct(
+    reference_count: usize,
+    clipped_triangle_count: usize,
+) -> f64 {
+    if clipped_triangle_count == 0 {
+        0.0
+    } else {
+        100.0 * (1.0 - reference_count as f64 / clipped_triangle_count as f64)
+    }
+}
+
+fn select_indexed_triangle_auto(
+    maximum_cell_references: u32,
+    reference_count: usize,
+    clipped_triangle_count: usize,
+) -> bool {
+    maximum_cell_references <= FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL
+        && indexed_triangle_intersection_reduction_pct(reference_count, clipped_triangle_count)
+            >= INDEXED_TRIANGLE_AUTO_MIN_INTERSECTION_REDUCTION_PCT
+}
 
 #[derive(Clone, Copy)]
 struct StructuralSurfaceSample {
     position: [f32; 3],
     normal: [f32; 3],
+}
+
+#[derive(Default, Serialize)]
+struct ViewTriangleSurfaceSummary {
+    captured_views: usize,
+    captured_pixels: usize,
+    maximum_capture_resolution: u32,
+    bounds_fallback_captures: usize,
+    in_bounds_hits: usize,
+    connected_hit_pixels: usize,
+    splat_hit_pixels: usize,
+    emitted_triangles: usize,
+    emitted_splat_triangles: usize,
+    emitted_low_normal_triangles: usize,
+    expanded_low_normal_splats: usize,
+    expanded_dense_view_splats: usize,
+    rejected_discontinuities: usize,
+    diagnostic_gpu_ms: f64,
+}
+
+#[derive(Default, Serialize)]
+struct ViewTriangleFusionSummary {
+    primary_cells: usize,
+    auxiliary_cells_added: usize,
+    overlapping_cells_discarded: usize,
+    auxiliary_triangles_retained: usize,
+    overlapping_triangles_discarded: usize,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+struct StructuralCaptureCacheManifest {
+    version: u32,
+    record_bytes: usize,
+    requested_sampling_resolution: u32,
+    effective_sampling_resolution: u32,
+    empty_unbounded_fallback_to_bounds: bool,
+    bounds_fallback_selected: bool,
+    generated_source_sha256: String,
+    camera_position_bits: [u32; 3],
+    camera_yaw_pitch_bits: [u32; 2],
+    camera_roll_bits: u32,
+    camera_fov_bits: u32,
+    world_scale_bits: u32,
+    voxel_bounds_min_bits: [u32; 3],
+    voxel_bounds_max_bits: [u32; 3],
+}
+
+fn structural_capture_cache_manifest(
+    generated_source: &[u8],
+    config: &FptRenderConfig,
+    sampling_resolution: u32,
+    world_scale: f32,
+) -> StructuralCaptureCacheManifest {
+    StructuralCaptureCacheManifest {
+        version: 3,
+        record_bytes: STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
+        requested_sampling_resolution: sampling_resolution,
+        effective_sampling_resolution: sampling_resolution,
+        empty_unbounded_fallback_to_bounds: true,
+        bounds_fallback_selected: false,
+        generated_source_sha256: format!("{:x}", Sha256::digest(generated_source)),
+        camera_position_bits: config.camera_position.map(f32::to_bits),
+        camera_yaw_pitch_bits: config.camera_yaw_pitch.map(f32::to_bits),
+        camera_roll_bits: config.camera_roll.to_bits(),
+        camera_fov_bits: config.camera_fov.to_bits(),
+        world_scale_bits: world_scale.to_bits(),
+        voxel_bounds_min_bits: config.voxel_bounds_min.map(f32::to_bits),
+        voxel_bounds_max_bits: config.voxel_bounds_max.map(f32::to_bits),
+    }
+}
+
+fn structural_capture_cache_manifest_path(path: &Path) -> PathBuf {
+    let mut sidecar = path.as_os_str().to_owned();
+    sidecar.push(".json");
+    PathBuf::from(sidecar)
+}
+
+fn read_structural_capture_cache(
+    path: &Path,
+    expected: &StructuralCaptureCacheManifest,
+) -> Result<(Vec<u8>, u32, bool)> {
+    let manifest_path = structural_capture_cache_manifest_path(path);
+    let manifest: StructuralCaptureCacheManifest =
+        serde_json::from_slice(&fs::read(&manifest_path).with_context(|| {
+            format!(
+                "read structural capture manifest {}",
+                manifest_path.display()
+            )
+        })?)?;
+    let effective_sampling_resolution = manifest.effective_sampling_resolution;
+    let bounds_fallback_selected = manifest.bounds_fallback_selected;
+    let mut normalized = manifest.clone();
+    normalized.effective_sampling_resolution = expected.effective_sampling_resolution;
+    normalized.bounds_fallback_selected = expected.bounds_fallback_selected;
+    ensure!(
+        &normalized == expected,
+        "structural capture cache contract mismatch: {}",
+        manifest_path.display()
+    );
+    ensure!(
+        (2..=1024).contains(&effective_sampling_resolution)
+            && ((!bounds_fallback_selected
+                && effective_sampling_resolution == expected.requested_sampling_resolution)
+                || (bounds_fallback_selected
+                    && effective_sampling_resolution >= expected.requested_sampling_resolution)),
+        "structural capture cache has invalid effective resolution"
+    );
+    let bytes = fs::read(path)
+        .with_context(|| format!("read structural capture cache {}", path.display()))?;
+    let expected_bytes = effective_sampling_resolution as usize
+        * effective_sampling_resolution as usize
+        * expected.record_bytes;
+    ensure!(
+        bytes.len() == expected_bytes,
+        "structural capture cache has {} bytes; expected {expected_bytes}",
+        bytes.len()
+    );
+    Ok((
+        bytes,
+        effective_sampling_resolution,
+        bounds_fallback_selected,
+    ))
+}
+
+fn write_structural_capture_cache(
+    path: &Path,
+    manifest: &StructuralCaptureCacheManifest,
+    bytes: &[u8],
+    effective_sampling_resolution: u32,
+    bounds_fallback_selected: bool,
+) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let mut manifest = manifest.clone();
+    manifest.effective_sampling_resolution = effective_sampling_resolution;
+    manifest.bounds_fallback_selected = bounds_fallback_selected;
+    fs::write(path, bytes)?;
+    fs::write(
+        structural_capture_cache_manifest_path(path),
+        serde_json::to_vec_pretty(&manifest)?,
+    )?;
+    Ok(())
 }
 
 struct SurfaceSampleAccumulator {
@@ -474,6 +643,14 @@ fn normalize3(value: [f32; 3]) -> Option<[f32; 3]> {
         let inverse = length_squared.sqrt().recip();
         value.map(|component| component * inverse)
     })
+}
+
+fn cross3(a: [f32; 3], b: [f32; 3]) -> [f32; 3] {
+    [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
 }
 
 fn pack_surface_plane(normal: [f32; 3], offset: f32) -> u32 {
@@ -733,6 +910,8 @@ fn capture_local_parallax_samples(
                 max_distance: config.render[4],
                 normal_mix: 1.0,
                 dispatch_origin: [0, 0],
+                flags: 0,
+                _pad1: 0,
             };
             let mut elapsed_ms = 0.0;
             let mut error = [0_i8; 4096];
@@ -758,10 +937,13 @@ fn capture_local_parallax_samples(
             total_elapsed_ms += elapsed_ms;
             let bytes = fs::read(&structural)?;
             ensure!(
-                bytes.len() == sampling_resolution as usize * sampling_resolution as usize * 32,
+                bytes.len()
+                    == sampling_resolution as usize
+                        * sampling_resolution as usize
+                        * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
                 "invalid local-parallax structural dump"
             );
-            for record in bytes.chunks_exact(32) {
+            for record in bytes.chunks_exact(STRUCTURAL_DIAGNOSTIC_RECORD_BYTES) {
                 let read = |offset: usize| {
                     f32::from_le_bytes(record[offset..offset + 4].try_into().expect("f32 bytes"))
                 };
@@ -780,18 +962,522 @@ fn capture_local_parallax_samples(
     result
 }
 
+fn capture_structural_surface(
+    metallib: &Path,
+    base_config: &FptRenderConfig,
+    sampling_resolution: u32,
+    clip_voxel_bounds: bool,
+) -> Result<(Vec<u8>, f64)> {
+    let directory = std::env::temp_dir().join(format!(
+        "fpt-view-triangles-{}-{}",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    fs::create_dir_all(&directory)?;
+    let result = (|| {
+        let output = directory.join("view.png");
+        let structural = directory.join("view.bin");
+        let output_c = c_path(&output)?;
+        let structural_c = c_path(&structural)?;
+        let metallib_c = c_path(metallib)?;
+        let mut config = *base_config;
+        config.renderer_backend = RENDERER_SDF;
+        config.preview = 1;
+        config.samples = 1;
+        config.width = sampling_resolution;
+        config.height = sampling_resolution;
+        let diagnostic = FptDiagnosticConfig {
+            mode: DiagnosticMode::HitMask as u32,
+            _pad0: 0,
+            max_distance: config.render[4],
+            normal_mix: 1.0,
+            dispatch_origin: [0, 0],
+            flags: u32::from(clip_voxel_bounds),
+            _pad1: 0,
+        };
+        let mut elapsed_ms = 0.0;
+        let mut error = [0_i8; 4096];
+        let status = unsafe {
+            fpt_metal_diagnostic_render(
+                metallib_c.as_ptr(),
+                output_c.as_ptr(),
+                structural_c.as_ptr(),
+                std::ptr::null(),
+                0,
+                &config,
+                &diagnostic,
+                &mut elapsed_ms,
+                error.as_mut_ptr(),
+                error.len(),
+            )
+        };
+        ensure!(
+            status == 0,
+            "view-triangle diagnostic failed: {}",
+            bridge_error(&error)
+        );
+        let bytes = fs::read(&structural)?;
+        ensure!(
+            bytes.len()
+                == sampling_resolution as usize
+                    * sampling_resolution as usize
+                    * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
+            "invalid view-triangle structural dump"
+        );
+        Ok((bytes, elapsed_ms))
+    })();
+    let _ = fs::remove_dir_all(&directory);
+    result
+}
+
+fn capture_structural_surface_with_bounds_fallback(
+    metallib: &Path,
+    config: &FptRenderConfig,
+    sampling_resolution: u32,
+    world_scale: f32,
+) -> Result<(Vec<u8>, f64, u32, bool)> {
+    let (bytes, gpu_ms) = capture_structural_surface(metallib, config, sampling_resolution, false)?;
+    if structural_visible_bounds(&bytes, world_scale).is_ok() {
+        return Ok((bytes, gpu_ms, sampling_resolution, false));
+    }
+    let fallback_resolution = sampling_resolution.max(1024);
+    let (bounded_bytes, bounded_gpu_ms) =
+        capture_structural_surface(metallib, config, fallback_resolution, true)?;
+    Ok((
+        bounded_bytes,
+        gpu_ms + bounded_gpu_ms,
+        fallback_resolution,
+        true,
+    ))
+}
+
+#[derive(Clone, Copy)]
+struct StructuralMeshVertex {
+    world_position: [f32; 3],
+    normalized_position: [f32; 3],
+    normal: [f32; 3],
+    color: [f32; 3],
+    depth: f32,
+    hit: bool,
+}
+
+fn structural_mesh_vertex(
+    record: &[u8],
+    export_bounds: Aabb,
+    world_scale: f32,
+) -> StructuralMeshVertex {
+    let read = |offset: usize| {
+        f32::from_le_bytes(record[offset..offset + 4].try_into().expect("f32 bytes"))
+    };
+    let world_position = [read(0), read(4), read(8)];
+    let export_position = world_position.map(|value| value / world_scale);
+    let normalized_position = std::array::from_fn(|axis| {
+        (export_position[axis] - export_bounds.min[axis])
+            / (export_bounds.max[axis] - export_bounds.min[axis])
+    });
+    let finite = world_position.iter().all(|value| value.is_finite())
+        && normalized_position.iter().all(|value| value.is_finite());
+    let in_bounds = normalized_position
+        .iter()
+        .all(|value| (-1.0e-5..=1.0 + 1.0e-5).contains(value));
+    StructuralMeshVertex {
+        world_position,
+        normalized_position,
+        normal: [read(16), read(20), read(24)],
+        color: [read(48), read(52), read(56)].map(|value| value.clamp(0.0, 1.0)),
+        depth: read(12),
+        hit: read(28) > 0.5 && finite && in_bounds,
+    }
+}
+
+fn structural_visible_bounds(bytes: &[u8], world_scale: f32) -> Result<Aabb> {
+    let mut minimum = [f32::INFINITY; 3];
+    let mut maximum = [f32::NEG_INFINITY; 3];
+    let mut hits = 0usize;
+    for record in bytes.chunks_exact(STRUCTURAL_DIAGNOSTIC_RECORD_BYTES) {
+        let read = |offset: usize| {
+            f32::from_le_bytes(record[offset..offset + 4].try_into().expect("f32 bytes"))
+        };
+        if read(28) <= 0.5 {
+            continue;
+        }
+        let position = [read(0), read(4), read(8)].map(|value| value / world_scale);
+        if !position.iter().all(|value| value.is_finite()) {
+            continue;
+        }
+        for axis in 0..3 {
+            minimum[axis] = minimum[axis].min(position[axis]);
+            maximum[axis] = maximum[axis].max(position[axis]);
+        }
+        hits += 1;
+    }
+    ensure!(
+        hits > 0,
+        "structural capture contains no finite surface hits"
+    );
+    Ok(Aabb::new(minimum, maximum))
+}
+
+fn union_bounds(left: Aabb, right: Aabb) -> Aabb {
+    Aabb::new(
+        std::array::from_fn(|axis| left.min[axis].min(right.min[axis])),
+        std::array::from_fn(|axis| left.max[axis].max(right.max[axis])),
+    )
+}
+
+fn fit_structural_visible_bounds(
+    visible: Aabb,
+    requested: Aabb,
+    margin: f32,
+    sampling_resolution: u32,
+) -> Aabb {
+    let visible_size = visible.size();
+    let requested_size = requested.size();
+    let requested_max_extent = requested_size.into_iter().fold(0.0_f32, f32::max);
+    let sampling_cell = requested_max_extent / sampling_resolution.max(1) as f32;
+    Aabb::new(
+        std::array::from_fn(|axis| {
+            let padded_extent = visible_size[axis].max(sampling_cell);
+            (visible.min[axis] - padded_extent * margin * 0.5).max(requested.min[axis])
+        }),
+        std::array::from_fn(|axis| {
+            let padded_extent = visible_size[axis].max(sampling_cell);
+            (visible.max[axis] + padded_extent * margin * 0.5).min(requested.max[axis])
+        }),
+    )
+}
+
+fn structural_visible_extent_ratio(visible: Aabb, requested: Aabb) -> f32 {
+    let visible_extent = visible.size().into_iter().fold(0.0_f32, f32::max);
+    let requested_extent = requested.size().into_iter().fold(0.0_f32, f32::max);
+    visible_extent / requested_extent.max(f32::MIN_POSITIVE)
+}
+
+fn merge_view_triangle_surfaces(
+    surfaces: Vec<FptvoxTriangleSurface>,
+) -> Result<(FptvoxTriangleSurface, ViewTriangleFusionSummary)> {
+    let mut surfaces = surfaces.into_iter();
+    let primary = surfaces
+        .next()
+        .ok_or_else(|| anyhow!("view-triangle fusion requires a primary surface"))?;
+    let resolution = primary.resolution;
+    let sampling_resolution = primary.sampling_resolution;
+    let bounds = primary.bounds;
+    let coordinate_system = primary.coordinate_system;
+    let linear_index = |coordinate: [u32; 3]| {
+        u64::from(coordinate[0])
+            + u64::from(coordinate[1]) * u64::from(resolution[0])
+            + u64::from(coordinate[2]) * u64::from(resolution[0]) * u64::from(resolution[1])
+    };
+    let mut records = BTreeMap::<u64, ([u32; 3], VoxelCell, Vec<FptvoxTriangle>)>::new();
+    let mut summary = ViewTriangleFusionSummary {
+        primary_cells: primary.cells.len(),
+        ..Default::default()
+    };
+    for cell in primary.cells {
+        let start = cell.first_triangle as usize;
+        let end = start + cell.triangle_count as usize;
+        records.insert(
+            linear_index(cell.coordinate),
+            (
+                cell.coordinate,
+                cell.cell,
+                primary.triangles[start..end].to_vec(),
+            ),
+        );
+    }
+    for surface in surfaces {
+        ensure!(
+            surface.resolution == resolution
+                && surface.sampling_resolution == sampling_resolution
+                && surface.bounds == bounds
+                && surface.coordinate_system == coordinate_system,
+            "view-triangle surfaces must share one grid contract"
+        );
+        for cell in surface.cells {
+            let start = cell.first_triangle as usize;
+            let end = start + cell.triangle_count as usize;
+            let linear = linear_index(cell.coordinate);
+            if records.contains_key(&linear) {
+                summary.overlapping_cells_discarded += 1;
+                summary.overlapping_triangles_discarded += cell.triangle_count as usize;
+                continue;
+            }
+            summary.auxiliary_cells_added += 1;
+            summary.auxiliary_triangles_retained += cell.triangle_count as usize;
+            records.insert(
+                linear,
+                (
+                    cell.coordinate,
+                    cell.cell,
+                    surface.triangles[start..end].to_vec(),
+                ),
+            );
+        }
+    }
+    let mut cells = Vec::with_capacity(records.len());
+    let mut triangles = Vec::new();
+    for (_, (coordinate, cell, cell_triangles)) in records {
+        let first_triangle =
+            u32::try_from(triangles.len()).context("V7 triangle offset exceeds u32")?;
+        let triangle_count =
+            u32::try_from(cell_triangles.len()).context("V7 cell triangle count exceeds u32")?;
+        triangles.extend(cell_triangles);
+        cells.push(FptvoxTriangleCell {
+            coordinate,
+            cell,
+            first_triangle,
+            triangle_count,
+        });
+    }
+    Ok((
+        FptvoxTriangleSurface {
+            resolution,
+            sampling_resolution,
+            bounds,
+            coordinate_system,
+            cells,
+            triangles,
+        },
+        summary,
+    ))
+}
+
+fn structural_surface_triangles(
+    bytes: &[u8],
+    sampling_resolution: u32,
+    locality_resolution: u32,
+    camera_fov_degrees: f32,
+    export_bounds: Aabb,
+    world_scale: f32,
+    discontinuity_scale: f32,
+    emit_isolated_splats: bool,
+    emit_low_normal_triangles: bool,
+    splat_pixel_scale: f32,
+    splat_cell_cap: f32,
+    diagnostic_gpu_ms: f64,
+) -> Result<(
+    Vec<[fpt_metal::fptvox7::MeshSurfaceVertex; 3]>,
+    ViewTriangleSurfaceSummary,
+)> {
+    let extent = sampling_resolution as usize;
+    ensure!(
+        bytes.len() == extent * extent * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
+        "structural surface byte count mismatch"
+    );
+    let vertices = bytes
+        .chunks_exact(STRUCTURAL_DIAGNOSTIC_RECORD_BYTES)
+        .map(|record| structural_mesh_vertex(record, export_bounds, world_scale))
+        .collect::<Vec<_>>();
+    let in_bounds_hits = vertices.iter().filter(|vertex| vertex.hit).count();
+    let dense_view = in_bounds_hits.saturating_mul(1000)
+        >= vertices
+            .len()
+            .saturating_mul(DENSE_STRUCTURAL_VIEW_OCCUPANCY_PER_MILLE);
+    let mut triangles = Vec::new();
+    let mut connected_vertices = vec![false; vertices.len()];
+    let mut low_normal_vertices = vec![false; vertices.len()];
+    let mut emitted_low_normal_triangles = 0usize;
+    let mut rejected_discontinuities = 0usize;
+    let tangent = (camera_fov_degrees.to_radians() * 0.5).tan();
+    let mesh_step_world = export_bounds.size().into_iter().fold(0.0_f32, f32::max) * world_scale
+        / locality_resolution as f32;
+    let mesh_edge_limit_squared = 3.0 * mesh_step_world.powi(2) * 1.05_f32.powi(2);
+    for y in 0..extent - 1 {
+        for x in 0..extent - 1 {
+            let indices = [
+                x + y * extent,
+                x + 1 + y * extent,
+                x + 1 + (y + 1) * extent,
+                x + (y + 1) * extent,
+            ];
+            let valid = indices.map(|index| vertices[index].hit);
+            if valid.iter().filter(|value| **value).count() < 3 {
+                continue;
+            }
+            let candidates = if valid[0] && valid[2] {
+                [[0usize, 1, 2], [0, 2, 3]]
+            } else {
+                [[0usize, 1, 3], [1, 2, 3]]
+            };
+            for candidate in candidates {
+                if !candidate.iter().all(|index| valid[*index]) {
+                    continue;
+                }
+                let samples = candidate.map(|index| vertices[indices[index]]);
+                let pixel_footprint = samples
+                    .iter()
+                    .map(|sample| sample.depth)
+                    .fold(0.0_f32, f32::max)
+                    * 2.0
+                    * tangent
+                    / sampling_resolution as f32;
+                let maximum_edge_squared = [(0, 1), (1, 2), (2, 0)]
+                    .into_iter()
+                    .map(|(left, right)| {
+                        samples[left]
+                            .world_position
+                            .iter()
+                            .zip(samples[right].world_position)
+                            .map(|(left, right)| (left - right).powi(2))
+                            .sum::<f32>()
+                    })
+                    .fold(0.0_f32, f32::max);
+                let normal_agreement = [(0, 1), (1, 2), (2, 0)]
+                    .into_iter()
+                    .map(|(left, right)| dot3(samples[left].normal, samples[right].normal).abs())
+                    .fold(1.0_f32, f32::min);
+                if maximum_edge_squared > (discontinuity_scale * pixel_footprint).powi(2)
+                    || maximum_edge_squared > mesh_edge_limit_squared
+                {
+                    rejected_discontinuities += 1;
+                    continue;
+                }
+                if normal_agreement < 0.25 {
+                    for index in candidate.map(|index| indices[index]) {
+                        low_normal_vertices[index] = true;
+                    }
+                    if emit_low_normal_triangles {
+                        triangles.push(samples.map(|sample| {
+                            fpt_metal::fptvox7::MeshSurfaceVertex {
+                                position: sample
+                                    .normalized_position
+                                    .map(|value| value.clamp(0.0, 1.0)),
+                                color: sample.color,
+                            }
+                        }));
+                        emitted_low_normal_triangles += 1;
+                    }
+                    rejected_discontinuities += 1;
+                    continue;
+                }
+                for index in candidate.map(|index| indices[index]) {
+                    connected_vertices[index] = true;
+                }
+                triangles.push(samples.map(|sample| {
+                    fpt_metal::fptvox7::MeshSurfaceVertex {
+                        position: sample
+                            .normalized_position
+                            .map(|value| value.clamp(0.0, 1.0)),
+                        color: sample.color,
+                    }
+                }));
+            }
+        }
+    }
+    let connected_hit_pixels = connected_vertices.iter().filter(|value| **value).count();
+    let mut splat_hit_pixels = 0usize;
+    let mut emitted_splat_triangles = 0usize;
+    let mut expanded_low_normal_splats = 0usize;
+    let mut expanded_dense_view_splats = 0usize;
+    if emit_isolated_splats {
+        for (index, sample) in vertices.iter().enumerate() {
+            if !sample.hit || connected_vertices[index] {
+                continue;
+            }
+            let Some(normal) = normalize3(sample.normal) else {
+                continue;
+            };
+            let helper = if normal[1].abs() > 0.9 {
+                [1.0, 0.0, 0.0]
+            } else {
+                [0.0, 1.0, 0.0]
+            };
+            let Some(tangent_axis) = normalize3(cross3(helper, normal)) else {
+                continue;
+            };
+            let Some(bitangent_axis) = normalize3(cross3(normal, tangent_axis)) else {
+                continue;
+            };
+            let pixel_footprint = sample.depth * 2.0 * tangent / sampling_resolution as f32;
+            let low_normal = low_normal_vertices[index];
+            let effective_scale = if dense_view {
+                splat_pixel_scale.max(1.5)
+            } else if low_normal {
+                splat_pixel_scale.max(1.0)
+            } else {
+                splat_pixel_scale
+            };
+            let effective_cell_cap = if dense_view || low_normal {
+                splat_cell_cap.max(0.49)
+            } else {
+                splat_cell_cap
+            };
+            let half_size =
+                (pixel_footprint * effective_scale).min(mesh_step_world * effective_cell_cap);
+            if !half_size.is_finite() || half_size <= 0.0 {
+                continue;
+            }
+            let offsets = [
+                [-1.0_f32, -1.0_f32],
+                [1.0_f32, -1.0_f32],
+                [1.0_f32, 1.0_f32],
+                [-1.0_f32, 1.0_f32],
+            ];
+            let corners = offsets.map(|offset| {
+                let world = std::array::from_fn::<_, 3, _>(|axis| {
+                    sample.world_position[axis]
+                        + half_size
+                            * (tangent_axis[axis] * offset[0] + bitangent_axis[axis] * offset[1])
+                });
+                fpt_metal::fptvox7::MeshSurfaceVertex {
+                    position: std::array::from_fn(|axis| {
+                        let export_position = world[axis] / world_scale;
+                        ((export_position - export_bounds.min[axis])
+                            / (export_bounds.max[axis] - export_bounds.min[axis]))
+                            .clamp(0.0, 1.0)
+                    }),
+                    color: sample.color,
+                }
+            });
+            triangles.push([corners[0], corners[1], corners[2]]);
+            triangles.push([corners[0], corners[2], corners[3]]);
+            splat_hit_pixels += 1;
+            emitted_splat_triangles += 2;
+            expanded_low_normal_splats += usize::from(low_normal);
+            expanded_dense_view_splats += usize::from(dense_view);
+        }
+    }
+    let summary = ViewTriangleSurfaceSummary {
+        captured_views: 1,
+        captured_pixels: extent * extent,
+        maximum_capture_resolution: sampling_resolution,
+        bounds_fallback_captures: 0,
+        in_bounds_hits,
+        connected_hit_pixels,
+        splat_hit_pixels,
+        emitted_triangles: triangles.len(),
+        emitted_splat_triangles,
+        emitted_low_normal_triangles,
+        expanded_low_normal_splats,
+        expanded_dense_view_splats,
+        rejected_discontinuities,
+        diagnostic_gpu_ms,
+    };
+    Ok((triangles, summary))
+}
+
 fn cached_mandel_voxel_metallib(
     generated_source: &[u8],
     optimization: MandelMetalOptimization,
 ) -> Result<(PathBuf, f64, bool)> {
+    let mesh_source = mandelbulber::compiler::specialize_mesh_delta_probe(std::str::from_utf8(
+        generated_source,
+    )?)?;
     let retained = mandelbulber::compiler::retain_metal_kernels(
-        std::str::from_utf8(generated_source)?,
+        &mesh_source,
         &[
             "voxel_build_kernel",
             "voxel_build_surface_kernel",
             "voxel_build_surface_plane_kernel",
             "voxel_build_surface_patch_kernel",
             "voxel_build_surface_complex_patch_kernel",
+            "fpt_topology_grid_kernel",
+            "fpt_topology_grid_3d_kernel",
+            "fpt_material_sample_kernel",
         ],
     )?;
     let mut digest = Sha256::new();
@@ -840,6 +1526,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut mandelbulber_binary = None::<PathBuf>;
     let mut mandel_mesh_resolution = None::<u32>;
     let mut mandel_mesh_opencl = false;
+    let mut mandel_mesh_ply_input = None::<PathBuf>;
     let mut mandel_mesh_ply_output = None::<PathBuf>;
     let mut mandel_mesh_auto_bounds = false;
     let mut mandel_mesh_auto_bounds_margin = 0.10_f32;
@@ -852,6 +1539,26 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut surface_planes = false;
     let mut surface_patches = false;
     let mut surface_complex_patches = false;
+    let mut surface_triangles = false;
+    let mut surface_view_triangles = false;
+    let mut surface_view_indexed_triangles = false;
+    let mut surface_view_indexed_triangles_auto = false;
+    let mut surface_view_splats = false;
+    let mut surface_view_fit_bounds = false;
+    let mut surface_view_auto_fit_bounds = false;
+    let mut surface_view_auxiliary_views = 0u32;
+    let mut surface_view_capture_cache = None::<PathBuf>;
+    let mut surface_view_splat_scale = 0.85_f32;
+    let mut surface_view_splat_cell_cap = 0.45_f32;
+    let mut surface_view_splat_scale_set = false;
+    let mut surface_view_splat_cell_cap_set = false;
+    let mut surface_triangle_resolution = None::<u32>;
+    let mut surface_triangle_anisotropic = false;
+    let mut surface_triangle_threshold_scale = 1.0_f32;
+    let mut surface_triangle_threshold_scale_set = false;
+    let mut surface_triangle_auto_bounds = false;
+    let mut surface_triangle_auto_bounds_margin = 0.10_f32;
+    let mut surface_triangle_auto_bounds_margin_set = false;
     let mut surface_promotion_min_probes = 27u32;
     let mut surface_dense_promotions = false;
     let mut surface_local_parallax = false;
@@ -914,6 +1621,9 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 mandel_mesh_resolution = Some(value);
             }
             "--mandel-mesh-opencl" => mandel_mesh_opencl = true,
+            "--mandel-mesh-ply-in" => {
+                mandel_mesh_ply_input = Some(next(&mut index, "--mandel-mesh-ply-in")?.into())
+            }
             "--mandel-mesh-ply-out" => {
                 mandel_mesh_ply_output = Some(next(&mut index, "--mandel-mesh-ply-out")?.into())
             }
@@ -956,6 +1666,85 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             "--surface-planes" => surface_planes = true,
             "--surface-patches" => surface_patches = true,
             "--surface-complex-patches" => surface_complex_patches = true,
+            "--surface-triangles" => surface_triangles = true,
+            "--surface-view-triangles" => {
+                surface_triangles = true;
+                surface_view_triangles = true;
+            }
+            "--surface-view-indexed-triangles" => {
+                surface_triangles = true;
+                surface_view_triangles = true;
+                surface_view_indexed_triangles = true;
+            }
+            "--surface-view-indexed-triangles-auto" => {
+                surface_triangles = true;
+                surface_view_triangles = true;
+                surface_view_indexed_triangles_auto = true;
+            }
+            "--surface-view-splats" => surface_view_splats = true,
+            "--surface-view-fit-bounds" => surface_view_fit_bounds = true,
+            "--surface-view-auto-fit-bounds" => surface_view_auto_fit_bounds = true,
+            "--surface-view-capture-cache" => {
+                surface_view_capture_cache =
+                    Some(next(&mut index, "--surface-view-capture-cache")?.into())
+            }
+            "--surface-view-splat-scale" => {
+                surface_view_splat_scale =
+                    next(&mut index, "--surface-view-splat-scale")?.parse()?;
+                surface_view_splat_scale_set = true;
+                ensure!(
+                    surface_view_splat_scale.is_finite()
+                        && (0.25..=1.5).contains(&surface_view_splat_scale),
+                    "surface view splat scale must be 0.25..1.5"
+                );
+            }
+            "--surface-view-splat-cell-cap" => {
+                surface_view_splat_cell_cap =
+                    next(&mut index, "--surface-view-splat-cell-cap")?.parse()?;
+                surface_view_splat_cell_cap_set = true;
+                ensure!(
+                    surface_view_splat_cell_cap.is_finite()
+                        && (0.1..=0.49).contains(&surface_view_splat_cell_cap),
+                    "surface view splat cell cap must be 0.1..0.49"
+                );
+            }
+            "--surface-view-auxiliary-views" => {
+                let value = next(&mut index, "--surface-view-auxiliary-views")?.parse()?;
+                ensure!(
+                    matches!(value, 0 | 4 | 6 | 12),
+                    "surface view auxiliary views must be 0, 4, 6, or 12"
+                );
+                surface_view_auxiliary_views = value;
+            }
+            "--surface-triangle-resolution" => {
+                let value = next(&mut index, "--surface-triangle-resolution")?.parse()?;
+                ensure!(
+                    (2..=1024).contains(&value),
+                    "surface triangle resolution must be 2..1024"
+                );
+                surface_triangle_resolution = Some(value);
+            }
+            "--surface-triangle-anisotropic" => surface_triangle_anisotropic = true,
+            "--surface-triangle-threshold-scale" => {
+                let value: f32 = next(&mut index, "--surface-triangle-threshold-scale")?.parse()?;
+                ensure!(
+                    value.is_finite() && (0.25..=4.0).contains(&value),
+                    "surface triangle threshold scale must be 0.25..4"
+                );
+                surface_triangle_threshold_scale = value;
+                surface_triangle_threshold_scale_set = true;
+            }
+            "--surface-triangle-auto-bounds" => surface_triangle_auto_bounds = true,
+            "--surface-triangle-auto-bounds-margin" => {
+                let value: f32 =
+                    next(&mut index, "--surface-triangle-auto-bounds-margin")?.parse()?;
+                ensure!(
+                    value.is_finite() && (0.001..=1.0).contains(&value),
+                    "surface triangle automatic bounds margin must be 0.001..1.0"
+                );
+                surface_triangle_auto_bounds_margin = value;
+                surface_triangle_auto_bounds_margin_set = true;
+            }
             "--surface-promotion-min-probes" => {
                 surface_promotion_min_probes =
                     next(&mut index, "--surface-promotion-min-probes")?.parse()?;
@@ -1004,6 +1793,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             || (mandelbulber_binary.is_none()
                 && mandel_mesh_resolution.is_none()
                 && !mandel_mesh_opencl
+                && mandel_mesh_ply_input.is_none()
                 && mandel_mesh_ply_output.is_none()
                 && !mandel_mesh_auto_bounds
                 && !mandel_mesh_auto_bounds_margin_set
@@ -1024,8 +1814,72 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             + usize::from(surface_planes)
             + usize::from(surface_patches)
             + usize::from(surface_complex_patches)
+            + usize::from(surface_triangles)
             <= 1,
         "choose only one surface payload mode"
+    );
+    ensure!(
+        surface_triangles
+            || (surface_triangle_resolution.is_none()
+                && !surface_triangle_anisotropic
+                && !surface_triangle_threshold_scale_set
+                && !surface_triangle_auto_bounds
+                && !surface_view_fit_bounds
+                && !surface_view_auto_fit_bounds
+                && !surface_triangle_auto_bounds_margin_set),
+        "surface triangle controls require --surface-triangles"
+    );
+    ensure!(
+        surface_triangle_auto_bounds
+            || surface_view_fit_bounds
+            || surface_view_auto_fit_bounds
+            || !surface_triangle_auto_bounds_margin_set,
+        "--surface-triangle-auto-bounds-margin requires an automatic or fitted bounds mode"
+    );
+    ensure!(
+        !(surface_view_fit_bounds && surface_view_auto_fit_bounds),
+        "choose only one of --surface-view-fit-bounds and --surface-view-auto-fit-bounds"
+    );
+    ensure!(
+        !(surface_triangle_auto_bounds && surface_view_fit_bounds),
+        "choose only one of --surface-triangle-auto-bounds and --surface-view-fit-bounds"
+    );
+    ensure!(
+        !surface_view_fit_bounds || surface_view_triangles,
+        "--surface-view-fit-bounds requires --surface-view-triangles"
+    );
+    ensure!(
+        !surface_view_auto_fit_bounds || surface_view_triangles,
+        "--surface-view-auto-fit-bounds requires --surface-view-triangles"
+    );
+    ensure!(
+        !surface_view_splats || surface_view_triangles,
+        "--surface-view-splats requires --surface-view-triangles"
+    );
+    ensure!(
+        surface_view_splats || (!surface_view_splat_scale_set && !surface_view_splat_cell_cap_set),
+        "surface view splat controls require --surface-view-splats"
+    );
+    ensure!(
+        surface_view_auxiliary_views == 0 || surface_view_triangles,
+        "--surface-view-auxiliary-views requires --surface-view-triangles"
+    );
+    ensure!(
+        surface_view_capture_cache.is_none() || surface_view_triangles,
+        "--surface-view-capture-cache requires --surface-view-triangles"
+    );
+    ensure!(
+        surface_view_capture_cache.is_none() || surface_view_auxiliary_views == 0,
+        "--surface-view-capture-cache currently supports the authored view only"
+    );
+    ensure!(
+        !(surface_view_indexed_triangles && surface_view_indexed_triangles_auto),
+        "choose only one of --surface-view-indexed-triangles and --surface-view-indexed-triangles-auto"
+    );
+    ensure!(
+        (!surface_view_indexed_triangles && !surface_view_indexed_triangles_auto)
+            || surface_view_auxiliary_views == 0,
+        "indexed view triangles currently support the authored view only"
     );
     ensure!(
         !surface_local_parallax || surface_patches,
@@ -1041,7 +1895,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 && !surface_normals
                 && !surface_planes
                 && !surface_patches
-                && !surface_complex_patches,
+                && !surface_complex_patches
+                && !surface_triangles,
             "surface payloads require the authoritative Metal evaluator"
         );
         let bounds = Aabb::new(
@@ -1131,7 +1986,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 && !surface_local_parallax
                 && !surface_band_set
                 && !fill_interior,
-            "Mandelbulber mesh export already produces FPTVOX6 surface patches and cannot be combined with other surface or fill modes"
+            "Mandelbulber mesh export cannot combine its selected surface payload with other surface or fill modes"
         );
         ensure!(
             output
@@ -1140,14 +1995,21 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 .is_some_and(|extension| extension.eq_ignore_ascii_case("fptvox")),
             "Mandelbulber mesh export requires .fptvox output"
         );
-        let binary = mandelbulber_binary.as_deref().ok_or_else(|| {
-            anyhow!("--surface-source mandelbulber-mesh requires --mandelbulber-bin <path>")
-        })?;
+        ensure!(
+            mandelbulber_binary.is_some() || mandel_mesh_ply_input.is_some(),
+            "--surface-source mandelbulber-mesh requires --mandelbulber-bin <path> or --mandel-mesh-ply-in <mesh.ply>"
+        );
+        ensure!(
+            mandel_mesh_ply_input.is_none() || !mandel_mesh_opencl,
+            "--mandel-mesh-opencl does not apply to an existing PLY input"
+        );
         let scene = MandelbulberScene::load(&scene_path)?;
         let reference = if let Some(reference_output) = mandel_reference_output.as_deref() {
             let (width, height) = mandel_reference_size.unwrap_or((scene.width, scene.height));
             Some(mandel_mesh::render_mandelbulber_reference(
-                binary,
+                mandelbulber_binary
+                    .as_deref()
+                    .context("Mandelbulber reference rendering requires --mandelbulber-bin")?,
                 &scene_path,
                 reference_output,
                 width,
@@ -1159,11 +2021,14 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         };
         let mesh_result =
             mandel_mesh::voxelize_mandelbulber_mesh(&mandel_mesh::MandelMeshOptions {
-                binary,
+                binary: mandelbulber_binary.as_deref(),
                 scene: &scene_path,
+                ply_input: mandel_mesh_ply_input.as_deref(),
                 raw_ply_output: mandel_mesh_ply_output.as_deref(),
                 bounds: export_bounds,
                 voxel_resolution: resolution,
+                voxel_resolution_3d: surface_triangle_anisotropic
+                    .then(|| fpt_metal::fptvox7::aspect_resolutions(export_bounds, resolution)),
                 mesh_resolution: mandel_mesh_resolution.unwrap_or(resolution),
                 max_iterations: scene.max_iterations,
                 use_opencl: mandel_mesh_opencl,
@@ -1172,11 +2037,38 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 emission: loaded.config.fractal_style[6],
                 auto_bounds: mandel_mesh_auto_bounds,
                 auto_bounds_margin: mandel_mesh_auto_bounds_margin,
+                surface_triangles,
             })?;
         ensure!(
             mesh_result.grid.occupied_voxels() > 0,
             "Mandelbulber mesh did not intersect the requested voxel bounds"
         );
+        if let Some(surface) = mesh_result.triangle_surface.as_ref() {
+            let artifact = fpt_metal::export_fptvox_triangle_surface(surface, &output)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "contract_version":7,
+                    "evaluator":"mandelbulber-marching-cubes-ply-exact",
+                    "format":"fptvox",
+                    "output":output,
+                    "resolution":surface.resolution,
+                    "sampling_resolution":surface.sampling_resolution,
+                    "bounds_min":surface.bounds.min,
+                    "bounds_max":surface.bounds.max,
+                    "max_iterations":scene.max_iterations,
+                    "opencl":mandel_mesh_opencl,
+                    "mandelbulber_reference":reference,
+                    "mandelbulber_ply_input":mandel_mesh_ply_input,
+                    "mandelbulber_ply":mandel_mesh_ply_output,
+                    "surface_payload":"cell-clipped-triangles",
+                    "mesh":mesh_result.summary,
+                    "auto_bounds":mesh_result.auto_bounds,
+                    "summary":artifact,
+                }))?
+            );
+            return Ok(());
+        }
         let (format, artifact) = export_voxel_artifact(
             &mesh_result.grid,
             VoxelSurfacePayload::BoundedPatches(&mesh_result.patches),
@@ -1209,13 +2101,23 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         !surface_local_parallax || is_mandel,
         "--surface-local-parallax currently requires a Mandelbulber scene"
     );
-    let local_parallax_loaded = if surface_local_parallax {
+    ensure!(
+        !surface_view_triangles || is_mandel,
+        "--surface-view-triangles currently requires a Mandelbulber scene"
+    );
+    let structural_capture_enabled = surface_local_parallax || surface_view_triangles;
+    let structural_capture_resolution = if surface_view_triangles {
+        surface_triangle_resolution.unwrap_or(resolution)
+    } else {
+        surface_local_parallax_resolution
+    };
+    let local_parallax_loaded = if structural_capture_enabled {
         let mut sampling_arguments = render_arguments.clone();
         sampling_arguments.extend([
             "--width".to_owned(),
-            surface_local_parallax_resolution.to_string(),
+            structural_capture_resolution.to_string(),
             "--height".to_owned(),
-            surface_local_parallax_resolution.to_string(),
+            structural_capture_resolution.to_string(),
         ]);
         Some(load_scene_config(&parse_render_args(&sampling_arguments)?)?)
     } else {
@@ -1224,27 +2126,28 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let local_parallax_config = local_parallax_loaded
         .as_ref()
         .map_or(loaded.config, |sampling| sampling.config);
-    let local_parallax_target_distance = if surface_local_parallax {
-        let scene = MandelbulberScene::load(&scene_path)?;
-        Some(
-            scene
-                .target
-                .iter()
-                .zip(scene.camera)
-                .map(|(target, camera)| (target - camera).powi(2))
-                .sum::<f64>()
-                .sqrt() as f32,
-        )
-    } else {
-        None
-    };
-    let local_parallax_metallib = if surface_local_parallax {
+    let local_parallax_target_distance =
+        if surface_local_parallax || surface_view_auxiliary_views > 0 {
+            let scene = MandelbulberScene::load(&scene_path)?;
+            Some(
+                scene
+                    .target
+                    .iter()
+                    .zip(scene.camera)
+                    .map(|(target, camera)| (target - camera).powi(2))
+                    .sum::<f64>()
+                    .sqrt() as f32,
+            )
+        } else {
+            None
+        };
+    let structural_capture_metallib = if structural_capture_enabled {
         let source = local_parallax_loaded
             .as_ref()
-            .expect("local-parallax sampling scene")
+            .expect("structural sampling scene")
             .runtime_metal_source
             .as_deref()
-            .context("local-parallax sampling requires generated Mandelbulber Metal source")?;
+            .context("structural sampling requires generated Mandelbulber Metal source")?;
         let retained = mandelbulber::compiler::retain_metal_kernels(
             std::str::from_utf8(source)?,
             &["sdf_diagnostic_kernel", "sdf_structural_diagnostic_kernel"],
@@ -1272,6 +2175,569 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         } else {
             (default_metallib_path()?, 0.0, true)
         };
+    if surface_triangles {
+        ensure!(
+            output
+                .extension()
+                .and_then(|extension| extension.to_str())
+                .is_some_and(|extension| extension.eq_ignore_ascii_case("fptvox")),
+            "surface triangles require .fptvox output"
+        );
+        ensure!(
+            !surface_band_set && !fill_interior && !surface_local_parallax,
+            "surface triangles cannot be combined with surface-band, fill-interior, or local-parallax modes"
+        );
+        let sampling_resolution = surface_triangle_resolution.unwrap_or(resolution);
+        let triangle_material = is_mandel
+            .then(|| MandelbulberScene::load(&scene_path))
+            .transpose()?;
+        let output_grid = if surface_triangle_anisotropic {
+            fpt_metal::fptvox7::aspect_resolutions(export_bounds, resolution)
+        } else {
+            [resolution; 3]
+        };
+        let sampling_grid = if is_mandel {
+            fpt_metal::fptvox7::mandelbulber_mesh_resolutions(export_bounds, sampling_resolution)
+        } else if surface_triangle_anisotropic {
+            fpt_metal::fptvox7::aspect_resolutions(export_bounds, sampling_resolution)
+        } else {
+            [sampling_resolution; 3]
+        };
+        let material = triangle_material.as_ref().map(|scene| &scene.material);
+        if surface_view_triangles {
+            let sampling_scene = local_parallax_loaded
+                .as_ref()
+                .expect("view-triangle sampling scene");
+            let mut capture_config = sampling_scene.config;
+            capture_config.voxel_bounds_min = export_bounds.min.map(|value| value * world_scale);
+            capture_config.voxel_bounds_max = export_bounds.max.map(|value| value * world_scale);
+            let capture_manifest = structural_capture_cache_manifest(
+                sampling_scene
+                    .runtime_metal_source
+                    .as_deref()
+                    .expect("view-triangle generated Metal source"),
+                &capture_config,
+                sampling_resolution,
+                world_scale,
+            );
+            let (
+                primary_bytes,
+                primary_gpu_ms,
+                primary_capture_resolution,
+                primary_bounds_fallback,
+                capture_cache_hit,
+            ) = if let Some(cache_path) = surface_view_capture_cache.as_deref() {
+                let manifest_path = structural_capture_cache_manifest_path(cache_path);
+                let cache_exists = cache_path.exists() || manifest_path.exists();
+                ensure!(
+                    !cache_exists || (cache_path.is_file() && manifest_path.is_file()),
+                    "structural capture cache requires both {} and {}",
+                    cache_path.display(),
+                    manifest_path.display()
+                );
+                if cache_exists {
+                    let (bytes, effective_resolution, bounds_fallback) =
+                        read_structural_capture_cache(cache_path, &capture_manifest)?;
+                    (bytes, 0.0, effective_resolution, bounds_fallback, true)
+                } else {
+                    let (bytes, gpu_ms, effective_resolution, bounds_fallback) =
+                        capture_structural_surface_with_bounds_fallback(
+                            structural_capture_metallib
+                                .as_deref()
+                                .expect("view-triangle diagnostic metallib"),
+                            &capture_config,
+                            sampling_resolution,
+                            world_scale,
+                        )?;
+                    write_structural_capture_cache(
+                        cache_path,
+                        &capture_manifest,
+                        &bytes,
+                        effective_resolution,
+                        bounds_fallback,
+                    )?;
+                    (bytes, gpu_ms, effective_resolution, bounds_fallback, false)
+                }
+            } else {
+                let (bytes, gpu_ms, effective_resolution, bounds_fallback) =
+                    capture_structural_surface_with_bounds_fallback(
+                        structural_capture_metallib
+                            .as_deref()
+                            .expect("view-triangle diagnostic metallib"),
+                        &capture_config,
+                        sampling_resolution,
+                        world_scale,
+                    )?;
+                (bytes, gpu_ms, effective_resolution, bounds_fallback, false)
+            };
+            let mut captures = vec![(
+                primary_bytes,
+                primary_gpu_ms,
+                primary_capture_resolution,
+                primary_bounds_fallback,
+            )];
+            if surface_view_auxiliary_views > 0 {
+                let rings = if surface_view_auxiliary_views == 12 {
+                    2
+                } else {
+                    1
+                };
+                let views = local_parallax_camera_views(
+                    &capture_config,
+                    export_bounds,
+                    resolution,
+                    world_scale,
+                    local_parallax_target_distance.expect("view-triangle target distance"),
+                    surface_view_auxiliary_views,
+                    rings,
+                );
+                for (position, yaw_pitch) in views {
+                    let mut view_config = capture_config;
+                    view_config.camera_position = position;
+                    view_config.camera_yaw_pitch = yaw_pitch;
+                    view_config.camera_roll = 0.0;
+                    let (bytes, gpu_ms) = capture_structural_surface(
+                        structural_capture_metallib
+                            .as_deref()
+                            .expect("view-triangle diagnostic metallib"),
+                        &view_config,
+                        sampling_resolution,
+                        false,
+                    )?;
+                    captures.push((bytes, gpu_ms, sampling_resolution, false));
+                }
+            }
+            let visible_bounds = captures
+                .iter()
+                .map(|(bytes, _, _, _)| structural_visible_bounds(bytes, world_scale))
+                .collect::<Result<Vec<_>>>()?
+                .into_iter()
+                .reduce(union_bounds)
+                .expect("at least the authored capture");
+            let visible_extent_ratio =
+                structural_visible_extent_ratio(visible_bounds, export_bounds);
+            let auto_fit_selected = surface_view_auto_fit_bounds && visible_extent_ratio <= 0.01;
+            let effective_bounds = if surface_view_fit_bounds || auto_fit_selected {
+                fit_structural_visible_bounds(
+                    visible_bounds,
+                    export_bounds,
+                    surface_triangle_auto_bounds_margin,
+                    sampling_resolution,
+                )
+            } else if surface_triangle_auto_bounds {
+                let visible_size = visible_bounds.size();
+                Aabb::new(
+                    std::array::from_fn(|axis| {
+                        export_bounds.min[axis].min(
+                            visible_bounds.min[axis]
+                                - visible_size[axis] * surface_triangle_auto_bounds_margin * 0.5,
+                        )
+                    }),
+                    std::array::from_fn(|axis| {
+                        export_bounds.max[axis].max(
+                            visible_bounds.max[axis]
+                                + visible_size[axis] * surface_triangle_auto_bounds_margin * 0.5,
+                        )
+                    }),
+                )
+            } else {
+                export_bounds
+            };
+            let effective_output_grid = if surface_triangle_anisotropic
+                || surface_triangle_auto_bounds
+                || surface_view_fit_bounds
+                || surface_view_auto_fit_bounds
+            {
+                fpt_metal::fptvox7::aspect_resolutions(effective_bounds, resolution)
+            } else {
+                [resolution; 3]
+            };
+            let discontinuity_scale = surface_triangle_threshold_scale * 2.0;
+            let mut view_triangle_streams = Vec::with_capacity(captures.len());
+            let mut view_summary = ViewTriangleSurfaceSummary::default();
+            for (bytes, diagnostic_gpu_ms, capture_resolution, bounds_fallback) in &captures {
+                let (view_triangles, summary) = structural_surface_triangles(
+                    bytes,
+                    *capture_resolution,
+                    *effective_output_grid
+                        .iter()
+                        .max()
+                        .expect("nonempty output grid"),
+                    capture_config.camera_fov,
+                    effective_bounds,
+                    world_scale,
+                    discontinuity_scale,
+                    surface_view_splats,
+                    surface_view_splats && *bounds_fallback,
+                    surface_view_splat_scale,
+                    surface_view_splat_cell_cap,
+                    *diagnostic_gpu_ms,
+                )?;
+                view_triangle_streams.push(view_triangles);
+                view_summary.captured_views += summary.captured_views;
+                view_summary.captured_pixels += summary.captured_pixels;
+                view_summary.maximum_capture_resolution = view_summary
+                    .maximum_capture_resolution
+                    .max(*capture_resolution);
+                view_summary.bounds_fallback_captures += usize::from(*bounds_fallback);
+                view_summary.in_bounds_hits += summary.in_bounds_hits;
+                view_summary.connected_hit_pixels += summary.connected_hit_pixels;
+                view_summary.splat_hit_pixels += summary.splat_hit_pixels;
+                view_summary.emitted_triangles += summary.emitted_triangles;
+                view_summary.emitted_splat_triangles += summary.emitted_splat_triangles;
+                view_summary.emitted_low_normal_triangles += summary.emitted_low_normal_triangles;
+                view_summary.expanded_low_normal_splats += summary.expanded_low_normal_splats;
+                view_summary.expanded_dense_view_splats += summary.expanded_dense_view_splats;
+                view_summary.rejected_discontinuities += summary.rejected_discontinuities;
+                view_summary.diagnostic_gpu_ms += summary.diagnostic_gpu_ms;
+            }
+            ensure!(
+                view_triangle_streams
+                    .iter()
+                    .any(|triangles| !triangles.is_empty()),
+                "view-triangle capture produced no connected surface triangles"
+            );
+            let material_template = SurfaceMaterial {
+                base_color: [1.0; 3],
+                roughness: loaded.config.fractal_style[4].clamp(0.0, 1.0),
+                specular: loaded.config.fractal_style[5].clamp(0.0, 1.0),
+                transmission: 0.0,
+                ior: 1.5,
+                emission_strength: loaded.config.fractal_style[6].max(0.0),
+            };
+            if surface_view_indexed_triangles || surface_view_indexed_triangles_auto {
+                let triangles = view_triangle_streams
+                    .pop()
+                    .expect("single indexed view-triangle stream");
+                let indexed =
+                    fpt_metal::fptvox7::build_indexed_triangle_surface_from_normalized_mesh_3d(
+                        triangles.iter().copied(),
+                        effective_output_grid,
+                        [view_summary.maximum_capture_resolution; 3],
+                        effective_bounds,
+                        material_template,
+                    )?;
+                let clipped = fpt_metal::fptvox7::build_triangle_surface_from_normalized_mesh_3d(
+                    triangles.iter().copied(),
+                    triangles.len(),
+                    effective_output_grid,
+                    [view_summary.maximum_capture_resolution; 3],
+                    effective_bounds,
+                    material_template,
+                )?;
+                let source_triangle_count = indexed.triangles.len();
+                let reference_count = indexed.references.len();
+                let clipped_triangle_count = clipped.triangles.len();
+                let mut cell_reference_counts = indexed
+                    .cells
+                    .iter()
+                    .map(|cell| cell.reference_count)
+                    .collect::<Vec<_>>();
+                cell_reference_counts.sort_unstable();
+                let maximum_cell_references = *cell_reference_counts
+                    .last()
+                    .expect("indexed surface has occupied cells");
+                let p99_cell_references =
+                    cell_reference_counts[(cell_reference_counts.len() - 1) * 99 / 100];
+                let intersection_reduction_pct = indexed_triangle_intersection_reduction_pct(
+                    reference_count,
+                    clipped_triangle_count,
+                );
+                let auto_selected = select_indexed_triangle_auto(
+                    maximum_cell_references,
+                    reference_count,
+                    clipped_triangle_count,
+                );
+                if surface_view_indexed_triangles {
+                    ensure!(
+                        maximum_cell_references <= FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL,
+                        "indexed triangle surface requires {maximum_cell_references} references in one cell; limit is {FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL}; use --surface-view-triangles"
+                    );
+                }
+                let selected = surface_view_indexed_triangles || auto_selected;
+                let selection_reason = if surface_view_indexed_triangles {
+                    "explicit"
+                } else if auto_selected {
+                    "eligible"
+                } else if maximum_cell_references > FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL
+                {
+                    "cell-reference-safety-limit"
+                } else {
+                    "insufficient-intersection-reduction"
+                };
+                let selector = json!({
+                    "mode":if surface_view_indexed_triangles { "explicit" } else { "auto" },
+                    "selected":selected,
+                    "selected_layout":if selected { "indexed-v8" } else { "clipped-v7" },
+                    "reason":selection_reason,
+                    "minimum_intersection_reduction_pct":INDEXED_TRIANGLE_AUTO_MIN_INTERSECTION_REDUCTION_PCT,
+                    "maximum_supported_cell_triangle_references":FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL,
+                    "maximum_cell_triangle_references":maximum_cell_references,
+                    "p99_cell_triangle_references":p99_cell_references,
+                    "intersection_reduction_pct":intersection_reduction_pct,
+                });
+                if selected {
+                    let artifact = export_fptvox_indexed_triangle_surface(&indexed, &output)?;
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&json!({
+                            "contract_version":8,
+                            "evaluator":"fpt-metal-authored-view-depth-indexed-mesh",
+                            "format":"fptvox",
+                            "output":output,
+                            "resolution":indexed.resolution,
+                            "sampling_resolution":indexed.sampling_resolution,
+                            "bounds_min":indexed.bounds.min,
+                            "bounds_max":indexed.bounds.max,
+                            "surface_payload":"cell-indexed-source-triangles",
+                            "view_dependent":true,
+                            "source_triangles":source_triangle_count,
+                            "cell_triangle_references":reference_count,
+                            "maximum_cell_triangle_references":maximum_cell_references,
+                            "p99_cell_triangle_references":p99_cell_references,
+                            "maximum_supported_cell_triangle_references":FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL,
+                            "v7_clipped_triangles":clipped_triangle_count,
+                            "intersection_reduction_pct":intersection_reduction_pct,
+                            "indexed_selector":selector,
+                            "surface":view_summary,
+                            "summary":artifact,
+                        }))?
+                    );
+                } else {
+                    let artifact = fpt_metal::export_fptvox_triangle_surface(&clipped, &output)?;
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&json!({
+                            "contract_version":7,
+                            "evaluator":"fpt-metal-authored-view-depth-mesh",
+                            "format":"fptvox",
+                            "output":output,
+                            "resolution":clipped.resolution,
+                            "sampling_resolution":clipped.sampling_resolution,
+                            "anisotropic_grid":effective_output_grid != [resolution; 3],
+                            "bounds_min":clipped.bounds.min,
+                            "bounds_max":clipped.bounds.max,
+                            "requested_bounds_min":export_bounds.min,
+                            "requested_bounds_max":export_bounds.max,
+                            "visible_bounds_min":visible_bounds.min,
+                            "visible_bounds_max":visible_bounds.max,
+                            "automatic_visible_bounds":surface_triangle_auto_bounds,
+                            "fit_visible_bounds":surface_view_fit_bounds,
+                            "auto_fit_visible_bounds":surface_view_auto_fit_bounds,
+                            "auto_fit_selected":auto_fit_selected,
+                            "visible_extent_ratio":visible_extent_ratio,
+                            "bounds_policy":if surface_view_fit_bounds {
+                                "fit-captured-surface"
+                            } else if auto_fit_selected {
+                                "auto-fit-captured-surface"
+                            } else if surface_triangle_auto_bounds {
+                                "expand-to-captured-surface"
+                            } else {
+                                "requested"
+                            },
+                            "automatic_bounds_margin":surface_triangle_auto_bounds_margin,
+                            "surface_payload":"cell-clipped-triangles",
+                            "view_dependent":true,
+                            "isolated_sample_splats":surface_view_splats,
+                            "splat_pixel_scale":surface_view_splat_scale,
+                            "splat_cell_cap":surface_view_splat_cell_cap,
+                            "auxiliary_views":surface_view_auxiliary_views,
+                            "capture_cache":{
+                                "path":surface_view_capture_cache.as_ref(),
+                                "hit":capture_cache_hit,
+                            },
+                            "discontinuity_scale":discontinuity_scale,
+                            "compile_ms":compile_ms,
+                            "compile_cache_hit":cache_hit,
+                            "source_triangles":source_triangle_count,
+                            "cell_triangle_references":reference_count,
+                            "maximum_cell_triangle_references":maximum_cell_references,
+                            "p99_cell_triangle_references":p99_cell_references,
+                            "v7_clipped_triangles":clipped_triangle_count,
+                            "intersection_reduction_pct":intersection_reduction_pct,
+                            "indexed_selector":selector,
+                            "surface":view_summary,
+                            "fusion":null,
+                            "summary":artifact,
+                        }))?
+                    );
+                }
+                return Ok(());
+            }
+            let mut surfaces = view_triangle_streams
+                .into_iter()
+                .map(|triangles| {
+                    fpt_metal::fptvox7::build_triangle_surface_from_normalized_mesh_3d(
+                        triangles.iter().copied(),
+                        triangles.len(),
+                        effective_output_grid,
+                        [view_summary.maximum_capture_resolution; 3],
+                        effective_bounds,
+                        material_template,
+                    )
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let (surface, fusion_summary) = if surfaces.len() == 1 {
+                (surfaces.pop().expect("single view surface"), None)
+            } else {
+                let (surface, summary) = merge_view_triangle_surfaces(surfaces)?;
+                (surface, Some(summary))
+            };
+            let artifact = fpt_metal::export_fptvox_triangle_surface(&surface, &output)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "contract_version":7,
+                    "evaluator":"fpt-metal-authored-view-depth-mesh",
+                    "format":"fptvox",
+                    "output":output,
+                    "resolution":surface.resolution,
+                    "sampling_resolution":surface.sampling_resolution,
+                    "anisotropic_grid":effective_output_grid != [resolution; 3],
+                    "bounds_min":surface.bounds.min,
+                    "bounds_max":surface.bounds.max,
+                    "requested_bounds_min":export_bounds.min,
+                    "requested_bounds_max":export_bounds.max,
+                    "visible_bounds_min":visible_bounds.min,
+                    "visible_bounds_max":visible_bounds.max,
+                    "automatic_visible_bounds":surface_triangle_auto_bounds,
+                    "fit_visible_bounds":surface_view_fit_bounds,
+                    "auto_fit_visible_bounds":surface_view_auto_fit_bounds,
+                    "auto_fit_selected":auto_fit_selected,
+                    "visible_extent_ratio":visible_extent_ratio,
+                    "bounds_policy":if surface_view_fit_bounds {
+                        "fit-captured-surface"
+                    } else if auto_fit_selected {
+                        "auto-fit-captured-surface"
+                    } else if surface_triangle_auto_bounds {
+                        "expand-to-captured-surface"
+                    } else {
+                        "requested"
+                    },
+                    "automatic_bounds_margin":surface_triangle_auto_bounds_margin,
+                    "surface_payload":"cell-clipped-triangles",
+                    "view_dependent":true,
+                    "isolated_sample_splats":surface_view_splats,
+                    "splat_pixel_scale":surface_view_splat_scale,
+                    "splat_cell_cap":surface_view_splat_cell_cap,
+                    "auxiliary_views":surface_view_auxiliary_views,
+                    "capture_cache":{
+                        "path":surface_view_capture_cache,
+                        "hit":capture_cache_hit,
+                    },
+                    "discontinuity_scale":discontinuity_scale,
+                    "compile_ms":compile_ms,
+                    "compile_cache_hit":cache_hit,
+                    "surface":view_summary,
+                    "fusion":fusion_summary,
+                    "summary":artifact,
+                }))?
+            );
+            return Ok(());
+        }
+        let mut triangle_build = fpt_metal::fptvox7::build_triangle_surface_grid(
+            &metallib,
+            &loaded.config,
+            output_grid,
+            sampling_grid,
+            export_bounds,
+            world_scale,
+            material,
+            surface_triangle_threshold_scale,
+        )?;
+        let initial_boundary_cells = triangle_build.summary.boundary_cells;
+        let initial_boundary_face_cells = triangle_build.summary.boundary_face_cells;
+        let mut auto_bounds = json!({
+            "requested":surface_triangle_auto_bounds,
+            "attempted":false,
+            "accepted":false,
+            "requested_margin":surface_triangle_auto_bounds_margin,
+            "effective_margin":null,
+            "initial_bounds_min":export_bounds.min,
+            "initial_bounds_max":export_bounds.max,
+            "initial_output_resolution":output_grid,
+            "initial_sampling_resolution":sampling_grid,
+            "initial_boundary_cells":initial_boundary_cells,
+            "initial_boundary_face_cells":initial_boundary_face_cells,
+            "candidate_bounds_min":null,
+            "candidate_bounds_max":null,
+            "candidate_output_resolution":null,
+            "candidate_sampling_resolution":null,
+            "candidate_boundary_cells":null,
+            "candidate_boundary_face_cells":null,
+            "reason":if surface_triangle_auto_bounds { "surface-does-not-touch-bounds" } else { "disabled" },
+        });
+        if surface_triangle_auto_bounds && initial_boundary_cells > 0 {
+            match fpt_metal::fptvox7::expand_bounds_preserving_voxel_size(
+                export_bounds,
+                output_grid,
+                sampling_grid,
+                surface_triangle_auto_bounds_margin,
+            ) {
+                Ok((candidate_bounds, candidate_output, candidate_sampling, effective_margin)) => {
+                    auto_bounds["attempted"] = json!(true);
+                    auto_bounds["effective_margin"] = json!(effective_margin);
+                    auto_bounds["candidate_bounds_min"] = json!(candidate_bounds.min);
+                    auto_bounds["candidate_bounds_max"] = json!(candidate_bounds.max);
+                    auto_bounds["candidate_output_resolution"] = json!(candidate_output);
+                    auto_bounds["candidate_sampling_resolution"] = json!(candidate_sampling);
+                    match fpt_metal::fptvox7::build_triangle_surface_grid(
+                        &metallib,
+                        &loaded.config,
+                        candidate_output,
+                        candidate_sampling,
+                        candidate_bounds,
+                        world_scale,
+                        material,
+                        surface_triangle_threshold_scale,
+                    ) {
+                        Ok(candidate) => {
+                            auto_bounds["candidate_boundary_cells"] =
+                                json!(candidate.summary.boundary_cells);
+                            auto_bounds["candidate_boundary_face_cells"] =
+                                json!(candidate.summary.boundary_face_cells);
+                            if candidate.summary.boundary_cells == 0 {
+                                auto_bounds["accepted"] = json!(true);
+                                auto_bounds["reason"] = json!("candidate-clears-boundary");
+                                triangle_build = candidate;
+                            } else {
+                                auto_bounds["reason"] = json!("candidate-still-touches-bounds");
+                            }
+                        }
+                        Err(error) => {
+                            auto_bounds["reason"] =
+                                json!(format!("candidate-build-failed: {error}"));
+                        }
+                    }
+                }
+                Err(error) => {
+                    auto_bounds["reason"] = json!(format!("expansion-unavailable: {error}"));
+                }
+            }
+        }
+        let artifact = fpt_metal::export_fptvox_triangle_surface(&triangle_build.surface, &output)?;
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&json!({
+                "contract_version":7,
+                "evaluator":"fpt-metal-marching-cubes",
+                "format":"fptvox",
+                "output":output,
+                "resolution":triangle_build.surface.resolution,
+                "sampling_resolution":triangle_build.surface.sampling_resolution,
+                "anisotropic_grid":surface_triangle_anisotropic || sampling_grid != [sampling_resolution; 3],
+                "bounds_min":triangle_build.surface.bounds.min,
+                "bounds_max":triangle_build.surface.bounds.max,
+                "surface_payload":"cell-clipped-triangles",
+                "compile_ms":compile_ms,
+                "compile_cache_hit":cache_hit,
+                "surface":triangle_build.summary,
+                "auto_bounds":auto_bounds,
+                "summary":artifact,
+            }))?
+        );
+        return Ok(());
+    }
     let cell_count = (resolution as usize)
         .checked_pow(3)
         .ok_or_else(|| anyhow!("voxel cell count overflow"))?;
@@ -1511,7 +2977,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             surface_local_parallax_rings,
         );
         let (samples, diagnostic_gpu_ms) = capture_local_parallax_samples(
-            local_parallax_metallib
+            structural_capture_metallib
                 .as_deref()
                 .expect("local-parallax diagnostic metallib"),
             &local_parallax_config,
@@ -3357,6 +4823,13 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
     loaded.config.preview = 1;
     loaded.config.samples = args.samples.unwrap_or(1);
     apply_optimization_args(&mut loaded.config, args);
+    if let (Some(bounds_min), Some(bounds_max)) =
+        (args.diagnostic_bounds_min, args.diagnostic_bounds_max)
+    {
+        let world_scale = loaded.config.set_values[mandelbulber::PARAM_WORLD_SCALE].max(1.0);
+        loaded.config.voxel_bounds_min = bounds_min.map(|value| value * world_scale);
+        loaded.config.voxel_bounds_max = bounds_max.map(|value| value * world_scale);
+    }
     fs::create_dir_all(&args.out_dir)?;
     let output = output_path(args, &loaded.output_name);
     let output_c = c_path(&output)?;
@@ -3377,6 +4850,8 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
             .unwrap_or(loaded.config.render[4]),
         normal_mix: 1.0,
         dispatch_origin: [0, 0],
+        flags: u32::from(args.diagnostic_clip_voxel_bounds),
+        _pad1: 0,
     };
     let mut elapsed_ms = 0.0;
     let mut error = [0_i8; 4096];
@@ -3452,7 +4927,7 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
     if let Some(path) = &args.structural_dump {
         let expected_bytes = u64::from(loaded.config.width)
             .checked_mul(u64::from(loaded.config.height))
-            .and_then(|pixels| pixels.checked_mul(32))
+            .and_then(|pixels| pixels.checked_mul(64))
             .context("structural diagnostic size overflow")?;
         let actual_bytes = fs::metadata(path)
             .with_context(|| format!("missing structural diagnostic {}", path.display()))?
@@ -3463,15 +4938,28 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         );
         let manifest = serde_json::json!({
             "format": "FptStructuralDiagnostic",
-            "version": 1,
+            "version": 2,
             "width": loaded.config.width,
             "height": loaded.config.height,
-            "record_bytes": 32,
+            "record_bytes": 64,
             "byte_order": "little-endian",
             "row_order": "top-to-bottom",
+            "coordinate_system": "right-handed-y-up",
+            "world_scale": loaded.config.set_values[mandelbulber::PARAM_WORLD_SCALE],
+            "diagnostic_clip_voxel_bounds": args.diagnostic_clip_voxel_bounds,
+            "voxel_bounds_min_world": loaded.config.voxel_bounds_min,
+            "voxel_bounds_max_world": loaded.config.voxel_bounds_max,
+            "camera": {
+                "position": loaded.config.camera_position,
+                "yaw_pitch": loaded.config.camera_yaw_pitch,
+                "roll": loaded.config.camera_roll,
+                "fov_degrees": loaded.config.camera_fov,
+            },
             "records": {
                 "position_distance": "float4: world_x, world_y, world_z, ray_distance",
-                "normal_hit": "float4: normal_x, normal_y, normal_z, hit_flag"
+                "normal_hit": "float4: normal_x, normal_y, normal_z, hit_flag",
+                "material_coordinate": "float4: normalized_color_index, palette_position, reserved, reserved",
+                "material_color": "float4: linear_r, linear_g, linear_b, hit_flag"
             },
             "binary": path.file_name().map(|name| name.to_string_lossy()),
         });
@@ -4543,7 +6031,9 @@ fn mandel_parity(args: &[String]) -> Result<()> {
             &config.set_values,
             scene.linear_de_offset,
             scene.force_delta_de,
+            scene.force_analytic_de,
             scene.delta_de_function,
+            scene.global_box_folding || scene.global_spherical_folding,
             false,
             mandelbulber::compiler::SceneFormulaOptimizationPolicy::default(),
         )?)
@@ -5223,6 +6713,29 @@ mod tests {
     use super::*;
 
     #[test]
+    fn structural_auto_fit_selector_only_accepts_catastrophic_bounds_waste() {
+        let requested = Aabb::new([-4.0; 3], [4.0; 3]);
+        let catastrophic = Aabb::new([-0.004; 3], [0.004; 3]);
+        let merely_loose = Aabb::new([-0.6; 3], [0.6; 3]);
+        assert!(structural_visible_extent_ratio(catastrophic, requested) <= 0.01);
+        assert!(structural_visible_extent_ratio(merely_loose, requested) > 0.01);
+
+        let fitted = fit_structural_visible_bounds(catastrophic, requested, 0.02, 300);
+        assert!(fitted.size().into_iter().all(|extent| extent > 0.008));
+        assert!(fitted.min.into_iter().all(|value| value >= -4.0));
+        assert!(fitted.max.into_iter().all(|value| value <= 4.0));
+    }
+
+    #[test]
+    fn indexed_triangle_auto_requires_safe_fanout_and_validated_work_reduction() {
+        assert!(select_indexed_triangle_auto(1024, 72, 100));
+        assert!(!select_indexed_triangle_auto(1025, 1, 100));
+        assert!(!select_indexed_triangle_auto(100, 73, 100));
+        assert!(!select_indexed_triangle_auto(100, 0, 0));
+        assert!((indexed_triangle_intersection_reduction_pct(72, 100) - 28.0).abs() < 1.0e-12);
+    }
+
+    #[test]
     fn dense_surface_promotion_gate_is_deterministic_at_ninety_percent() {
         assert!(!retain_dense_surface_promotions(0, 0));
         assert!(!retain_dense_surface_promotions(899, 1000));
@@ -5321,6 +6834,283 @@ mod tests {
                 .chain(yaw_pitch)
                 .all(|value| value.is_finite())
         }));
+    }
+
+    #[test]
+    fn structural_depth_grid_emits_two_bounded_triangles_for_a_connected_quad() {
+        let mut bytes = vec![0_u8; 4 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+        for (index, position) in [
+            [0.25_f32, 0.25, 1.0],
+            [0.75, 0.25, 1.0],
+            [0.25, 0.75, 1.0],
+            [0.75, 0.75, 1.0],
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let record = &mut bytes[index * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES
+                ..(index + 1) * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+            for (axis, value) in position.into_iter().enumerate() {
+                record[axis * 4..axis * 4 + 4].copy_from_slice(&value.to_le_bytes());
+            }
+            record[12..16].copy_from_slice(&1.0_f32.to_le_bytes());
+            record[24..28].copy_from_slice(&1.0_f32.to_le_bytes());
+            record[28..32].copy_from_slice(&1.0_f32.to_le_bytes());
+            for offset in [48usize, 52, 56] {
+                record[offset..offset + 4].copy_from_slice(&1.0_f32.to_le_bytes());
+            }
+        }
+        let (triangles, summary) = structural_surface_triangles(
+            &bytes,
+            2,
+            2,
+            90.0,
+            Aabb::new([0.0; 3], [2.0; 3]),
+            1.0,
+            2.0,
+            false,
+            false,
+            0.85,
+            0.45,
+            0.0,
+        )
+        .expect("triangulate connected depth grid");
+        assert_eq!(summary.in_bounds_hits, 4);
+        assert_eq!(summary.captured_views, 1);
+        assert_eq!(summary.connected_hit_pixels, 4);
+        assert_eq!(summary.splat_hit_pixels, 0);
+        assert_eq!(summary.emitted_triangles, 2);
+        assert_eq!(triangles.len(), 2);
+    }
+
+    #[test]
+    fn structural_depth_grid_splats_an_isolated_hit_when_enabled() {
+        let mut bytes = vec![0_u8; 9 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+        let record = &mut bytes
+            [4 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES..5 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+        for (axis, value) in [1.0_f32, 1.0, 1.0].into_iter().enumerate() {
+            record[axis * 4..axis * 4 + 4].copy_from_slice(&value.to_le_bytes());
+        }
+        record[12..16].copy_from_slice(&1.0_f32.to_le_bytes());
+        record[24..28].copy_from_slice(&1.0_f32.to_le_bytes());
+        record[28..32].copy_from_slice(&1.0_f32.to_le_bytes());
+        for offset in [48usize, 52, 56] {
+            record[offset..offset + 4].copy_from_slice(&1.0_f32.to_le_bytes());
+        }
+        let (triangles, summary) = structural_surface_triangles(
+            &bytes,
+            3,
+            8,
+            60.0,
+            Aabb::new([0.0; 3], [2.0; 3]),
+            1.0,
+            2.0,
+            true,
+            false,
+            0.85,
+            0.45,
+            0.0,
+        )
+        .expect("splat isolated structural hit");
+        assert_eq!(summary.in_bounds_hits, 1);
+        assert_eq!(summary.connected_hit_pixels, 0);
+        assert_eq!(summary.splat_hit_pixels, 1);
+        assert_eq!(summary.emitted_splat_triangles, 2);
+        assert_eq!(triangles.len(), 2);
+    }
+
+    #[test]
+    fn structural_depth_grid_expands_splats_for_a_dense_view() {
+        let mut bytes = vec![0_u8; STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+        for (axis, value) in [1.0_f32, 1.0, 1.0].into_iter().enumerate() {
+            bytes[axis * 4..axis * 4 + 4].copy_from_slice(&value.to_le_bytes());
+        }
+        bytes[12..16].copy_from_slice(&1.0_f32.to_le_bytes());
+        bytes[24..28].copy_from_slice(&1.0_f32.to_le_bytes());
+        bytes[28..32].copy_from_slice(&1.0_f32.to_le_bytes());
+        for offset in [48usize, 52, 56] {
+            bytes[offset..offset + 4].copy_from_slice(&1.0_f32.to_le_bytes());
+        }
+
+        let (triangles, summary) = structural_surface_triangles(
+            &bytes,
+            1,
+            8,
+            60.0,
+            Aabb::new([0.0; 3], [2.0; 3]),
+            1.0,
+            2.0,
+            true,
+            false,
+            0.85,
+            0.45,
+            0.0,
+        )
+        .expect("expand a dense-view structural splat");
+
+        assert_eq!(summary.in_bounds_hits, 1);
+        assert_eq!(summary.expanded_dense_view_splats, 1);
+        assert_eq!(summary.emitted_splat_triangles, 2);
+        assert_eq!(triangles.len(), 2);
+        assert!((triangles[0][0].position[0] - 0.43875).abs() < 1.0e-5);
+        assert!((triangles[0][0].position[1] - 0.43875).abs() < 1.0e-5);
+    }
+
+    #[test]
+    fn structural_depth_grid_expands_only_low_normal_fallback_splats() {
+        let mut bytes = vec![0_u8; 4 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+        let samples = [
+            ([0.75_f32, 0.75, 1.0], [0.0_f32, 0.0, 1.0]),
+            ([1.25, 0.75, 1.0], [0.0, 0.0, 1.0]),
+            ([0.75, 1.25, 1.0], [1.0, 0.0, 0.0]),
+            ([1.25, 1.25, 1.0], [1.0, 0.0, 0.0]),
+        ];
+        for (index, (position, normal)) in samples.into_iter().enumerate() {
+            let record = &mut bytes[index * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES
+                ..(index + 1) * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+            for (axis, value) in position.into_iter().enumerate() {
+                record[axis * 4..axis * 4 + 4].copy_from_slice(&value.to_le_bytes());
+            }
+            record[12..16].copy_from_slice(&1.0_f32.to_le_bytes());
+            for (axis, value) in normal.into_iter().enumerate() {
+                let offset = 16 + axis * 4;
+                record[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+            }
+            record[28..32].copy_from_slice(&1.0_f32.to_le_bytes());
+            for offset in [48usize, 52, 56] {
+                record[offset..offset + 4].copy_from_slice(&1.0_f32.to_le_bytes());
+            }
+        }
+
+        let (triangles, summary) = structural_surface_triangles(
+            &bytes,
+            2,
+            2,
+            90.0,
+            Aabb::new([0.0; 3], [2.0; 3]),
+            1.0,
+            2.0,
+            true,
+            false,
+            0.85,
+            0.45,
+            0.0,
+        )
+        .expect("splat low-normal structural samples");
+
+        assert_eq!(summary.connected_hit_pixels, 0);
+        assert_eq!(summary.splat_hit_pixels, 4);
+        assert_eq!(summary.expanded_low_normal_splats, 4);
+        assert_eq!(summary.emitted_splat_triangles, 8);
+        assert_eq!(triangles.len(), 8);
+        assert!((triangles[0][0].position[0] - 0.13).abs() < 1.0e-5);
+        assert!((triangles[0][0].position[1] - 0.13).abs() < 1.0e-5);
+
+        let (additive_triangles, additive_summary) = structural_surface_triangles(
+            &bytes,
+            2,
+            2,
+            90.0,
+            Aabb::new([0.0; 3], [2.0; 3]),
+            1.0,
+            2.0,
+            true,
+            true,
+            0.85,
+            0.45,
+            0.0,
+        )
+        .expect("retain bounded low-normal triangles additively");
+        assert_eq!(additive_summary.connected_hit_pixels, 0);
+        assert_eq!(additive_summary.emitted_low_normal_triangles, 2);
+        assert_eq!(additive_summary.emitted_splat_triangles, 8);
+        assert_eq!(additive_triangles.len(), 10);
+    }
+
+    #[test]
+    fn view_triangle_fusion_keeps_primary_cells_and_only_adds_new_cells() {
+        let material = VoxelCell::from_material(SurfaceMaterial::default());
+        let triangle = |word| FptvoxTriangle {
+            vertices: [word; 3],
+        };
+        let surface = |cells: Vec<FptvoxTriangleCell>, triangles| FptvoxTriangleSurface {
+            resolution: [2, 1, 1],
+            sampling_resolution: [2; 3],
+            bounds: Aabb::new([0.0; 3], [1.0; 3]),
+            coordinate_system: CoordinateSystem::YUpRightHanded,
+            cells,
+            triangles,
+        };
+        let primary = surface(
+            vec![FptvoxTriangleCell {
+                coordinate: [0, 0, 0],
+                cell: material,
+                first_triangle: 0,
+                triangle_count: 1,
+            }],
+            vec![triangle(1)],
+        );
+        let auxiliary = surface(
+            vec![
+                FptvoxTriangleCell {
+                    coordinate: [0, 0, 0],
+                    cell: material,
+                    first_triangle: 0,
+                    triangle_count: 1,
+                },
+                FptvoxTriangleCell {
+                    coordinate: [1, 0, 0],
+                    cell: material,
+                    first_triangle: 1,
+                    triangle_count: 1,
+                },
+            ],
+            vec![triangle(2), triangle(3)],
+        );
+        let (merged, summary) = merge_view_triangle_surfaces(vec![primary, auxiliary])
+            .expect("merge primary and auxiliary view cells");
+        assert_eq!(merged.cells.len(), 2);
+        assert_eq!(merged.triangles, vec![triangle(1), triangle(3)]);
+        assert_eq!(summary.primary_cells, 1);
+        assert_eq!(summary.auxiliary_cells_added, 1);
+        assert_eq!(summary.overlapping_cells_discarded, 1);
+        assert_eq!(summary.auxiliary_triangles_retained, 1);
+        assert_eq!(summary.overlapping_triangles_discarded, 1);
+    }
+
+    #[test]
+    fn structural_capture_cache_round_trips_and_rejects_stale_contracts() {
+        let directory = std::env::temp_dir().join(format!(
+            "fpt-structural-cache-test-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        ));
+        let path = directory.join("capture.bin");
+        let config = FptRenderConfig::default();
+        let manifest = structural_capture_cache_manifest(b"generated", &config, 2, 1000.0);
+        let bytes = vec![7_u8; 4 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+        write_structural_capture_cache(&path, &manifest, &bytes, 2, false)
+            .expect("write capture cache");
+        let (cached, effective_resolution, bounds_fallback) =
+            read_structural_capture_cache(&path, &manifest).expect("read capture cache");
+        assert_eq!(cached, bytes);
+        assert_eq!(effective_resolution, 2);
+        assert!(!bounds_fallback);
+
+        let fallback_bytes = vec![9_u8; 16 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+        write_structural_capture_cache(&path, &manifest, &fallback_bytes, 4, true)
+            .expect("write bounded fallback cache");
+        let (cached, effective_resolution, bounds_fallback) =
+            read_structural_capture_cache(&path, &manifest).expect("read fallback cache");
+        assert_eq!(cached, fallback_bytes);
+        assert_eq!(effective_resolution, 4);
+        assert!(bounds_fallback);
+        let stale = structural_capture_cache_manifest(b"changed", &config, 2, 1000.0);
+        assert!(read_structural_capture_cache(&path, &stale).is_err());
+        fs::remove_dir_all(directory).expect("remove capture cache fixture");
     }
 
     fn run_async_jit_validation(

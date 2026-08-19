@@ -190,6 +190,7 @@ pub struct FptRenderConfig {
     pub camera_fov: f32,
     pub camera_dof: f32,
     pub focus_distance: f32,
+    pub camera_image_y_sign: f32,
     pub render: [f32; 8],
     pub world: [f32; 7],
     pub world_one_color: [f32; 3],
@@ -210,6 +211,9 @@ pub struct FptRenderConfig {
     pub _pad_style: [u32; 3],
     pub fractal_style: [f32; 12],
     pub program_material: [f32; 8],
+    pub mandel_appearance_mode: u32,
+    pub _pad_mandel_appearance: [u32; 3],
+    pub mandel_appearance: [f32; 20],
     pub sdf_program: [FptSdfInstruction; SDF_PROGRAM_MAX_OPS],
     pub gradient_stops: [[f32; 4]; SDF_GRADIENT_MAX_STOPS],
     pub hdri_path: [u8; HDRI_PATH_CAPACITY],
@@ -386,6 +390,8 @@ pub struct FptDiagnosticConfig {
     pub max_distance: f32,
     pub normal_mix: f32,
     pub dispatch_origin: [u32; 2],
+    pub flags: u32,
+    pub _pad1: u32,
 }
 
 #[repr(C)]
@@ -442,6 +448,39 @@ unsafe extern "C" {
         points_xyzw: *const f32,
         point_count: usize,
         samples: *mut FptMandelbulberFieldSample,
+        error: *mut c_char,
+        error_len: usize,
+    ) -> c_int;
+    pub fn fpt_metal_sample_topology(
+        metallib_path: *const c_char,
+        config: *const FptRenderConfig,
+        points_xyzw: *const f32,
+        point_count: usize,
+        samples: *mut f32,
+        error: *mut c_char,
+        error_len: usize,
+    ) -> c_int;
+    pub fn fpt_metal_sample_topology_grid(
+        metallib_path: *const c_char,
+        config: *const FptRenderConfig,
+        resolution_x: u32,
+        resolution_y: u32,
+        resolution_z: u32,
+        samples: *mut f32,
+        sample_count: usize,
+        colors: *mut f32,
+        color_count: usize,
+        elapsed_ms: *mut f64,
+        error: *mut c_char,
+        error_len: usize,
+    ) -> c_int;
+    pub fn fpt_metal_sample_materials(
+        metallib_path: *const c_char,
+        config: *const FptRenderConfig,
+        points_xyzw: *const f32,
+        point_count: usize,
+        cells: *mut u8,
+        cells_len: usize,
         error: *mut c_char,
         error_len: usize,
     ) -> c_int;
@@ -513,9 +552,9 @@ mod tests {
         assert_eq!(std::mem::size_of::<FptIndexedPrimitive>(), 32);
         assert_eq!(std::mem::size_of::<FptTypedSoAProgram>(), 5136);
         assert_eq!(std::mem::size_of::<FptStitchPipelineStats>(), 72);
-        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 30448);
+        assert_eq!(std::mem::size_of::<FptRenderConfig>(), 30548);
         assert_eq!(std::mem::size_of::<FptSdfProfileStats>(), 288);
-        assert_eq!(std::mem::size_of::<FptDiagnosticConfig>(), 24);
+        assert_eq!(std::mem::size_of::<FptDiagnosticConfig>(), 32);
         assert_eq!(std::mem::size_of::<FptMandelbulberFieldSample>(), 16);
         assert_eq!(std::mem::size_of::<FptAsyncJitStats>(), 40);
     }

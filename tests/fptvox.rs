@@ -1,10 +1,17 @@
 use fpt_metal::{
     Aabb, CoordinateSystem, FPTVOX_BOUNDED_PATCH_MAGIC, FPTVOX_BOUNDED_PATCH_RECORD_SIZE,
-    FPTVOX_BOUNDED_PATCH_VERSION, FPTVOX_HEADER_SIZE, FPTVOX_MAGIC, FPTVOX_PLANE_MAGIC,
-    FPTVOX_PLANE_PAIR_MAGIC, FPTVOX_PLANE_PAIR_RECORD_SIZE, FPTVOX_PLANE_PAIR_VERSION,
-    FPTVOX_PLANE_RECORD_SIZE, FPTVOX_PLANE_VERSION, FPTVOX_RECORD_SIZE, FPTVOX_SURFACE_MAGIC,
-    FPTVOX_SURFACE_RECORD_SIZE, FPTVOX_SURFACE_VERSION, FPTVOX_VERSION, FractalErrorCode,
-    SparseVoxel, SurfaceMaterial, VoxelCell, VoxelGrid, export_fptvox,
+    FPTVOX_BOUNDED_PATCH_VERSION, FPTVOX_HEADER_SIZE, FPTVOX_INDEXED_TRIANGLE_CELL_RECORD_SIZE,
+    FPTVOX_INDEXED_TRIANGLE_HEADER_SIZE, FPTVOX_INDEXED_TRIANGLE_MAGIC,
+    FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL, FPTVOX_INDEXED_TRIANGLE_RECORD_SIZE,
+    FPTVOX_INDEXED_TRIANGLE_REFERENCE_SIZE, FPTVOX_INDEXED_TRIANGLE_VERSION, FPTVOX_MAGIC,
+    FPTVOX_PLANE_MAGIC, FPTVOX_PLANE_PAIR_MAGIC, FPTVOX_PLANE_PAIR_RECORD_SIZE,
+    FPTVOX_PLANE_PAIR_VERSION, FPTVOX_PLANE_RECORD_SIZE, FPTVOX_PLANE_VERSION, FPTVOX_RECORD_SIZE,
+    FPTVOX_SURFACE_MAGIC, FPTVOX_SURFACE_RECORD_SIZE, FPTVOX_SURFACE_VERSION,
+    FPTVOX_TRIANGLE_CELL_RECORD_SIZE, FPTVOX_TRIANGLE_HEADER_SIZE, FPTVOX_TRIANGLE_MAGIC,
+    FPTVOX_TRIANGLE_RECORD_SIZE, FPTVOX_TRIANGLE_VERSION, FPTVOX_VERSION, FptvoxIndexedTriangle,
+    FptvoxIndexedTriangleCell, FptvoxIndexedTriangleSurface, FptvoxTriangle, FptvoxTriangleCell,
+    FptvoxTriangleSurface, FractalErrorCode, SparseVoxel, SurfaceMaterial, VoxelCell, VoxelGrid,
+    export_fptvox, export_fptvox_indexed_triangle_surface, export_fptvox_triangle_surface,
     export_fptvox_with_bounded_patches, export_fptvox_with_normals, export_fptvox_with_plane_pairs,
     export_fptvox_with_planes,
 };
@@ -126,6 +133,143 @@ fn header_and_record_are_byte_exact() {
     assert_eq!(summary.voxel_count, 1);
     assert_eq!(summary.bytes, 88);
     fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn triangle_surface_is_byte_exact_and_versioned() {
+    let cell = VoxelCell {
+        packed_color: 0x8122_3344,
+        packed_properties: 0xaabb_ccdd,
+        emission: 1.5,
+    };
+    let surface = FptvoxTriangleSurface {
+        resolution: [2, 3, 4],
+        sampling_resolution: [5, 6, 7],
+        bounds: Aabb::new([-1.0, -2.0, -3.0], [4.0, 5.0, 6.0]),
+        coordinate_system: CoordinateSystem::YUpRightHanded,
+        cells: vec![FptvoxTriangleCell {
+            coordinate: [1, 2, 3],
+            cell,
+            first_triangle: 0,
+            triangle_count: 1,
+        }],
+        triangles: vec![FptvoxTriangle {
+            vertices: [0, 1023, 1023 << 10],
+        }],
+    };
+    let output = temporary_artifact("triangle-exact");
+    let summary = export_fptvox_triangle_surface(&surface, &output).unwrap();
+    let bytes = fs::read(&output).unwrap();
+
+    assert_eq!(bytes[0..8], FPTVOX_TRIANGLE_MAGIC);
+    assert_eq!(u32_at(&bytes, 8), FPTVOX_TRIANGLE_HEADER_SIZE);
+    assert_eq!(u32_at(&bytes, 12), FPTVOX_TRIANGLE_VERSION);
+    assert_eq!(
+        [u32_at(&bytes, 16), u32_at(&bytes, 20), u32_at(&bytes, 24)],
+        [2, 3, 4]
+    );
+    assert_eq!(
+        [u32_at(&bytes, 64), u32_at(&bytes, 68), u32_at(&bytes, 72)],
+        [5, 6, 7]
+    );
+    assert_eq!(u32_at(&bytes, 76), FPTVOX_TRIANGLE_CELL_RECORD_SIZE);
+    assert_eq!(u64_at(&bytes, 80), 1);
+    assert_eq!(u32_at(&bytes, 88), FPTVOX_TRIANGLE_RECORD_SIZE);
+    assert_eq!(u32_at(&bytes, 92), 0);
+    let cell_offset = FPTVOX_TRIANGLE_HEADER_SIZE as usize;
+    assert_eq!(u32_at(&bytes, cell_offset + 12), 0x8122_3344);
+    assert_eq!(u32_at(&bytes, cell_offset + 16), 0xaabb_ccdd);
+    assert_eq!(f32_at(&bytes, cell_offset + 20), 1.5);
+    assert_eq!(u32_at(&bytes, cell_offset + 24), 0);
+    assert_eq!(u32_at(&bytes, cell_offset + 28), 1);
+    let triangle_offset = cell_offset + FPTVOX_TRIANGLE_CELL_RECORD_SIZE as usize;
+    assert_eq!(
+        [
+            u32_at(&bytes, triangle_offset),
+            u32_at(&bytes, triangle_offset + 4),
+            u32_at(&bytes, triangle_offset + 8)
+        ],
+        [0, 1023, 1023 << 10]
+    );
+    assert_eq!(summary.voxel_count, 1);
+    assert_eq!(summary.bytes, 140);
+    assert_eq!(bytes.len(), 140);
+    fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn indexed_triangle_surface_is_byte_exact_and_versioned() {
+    let cell = VoxelCell {
+        packed_color: 0x8122_3344,
+        packed_properties: 0xaabb_ccdd,
+        emission: 1.5,
+    };
+    let surface = FptvoxIndexedTriangleSurface {
+        resolution: [2, 3, 4],
+        sampling_resolution: [5, 6, 7],
+        bounds: Aabb::new([-1.0, -2.0, -3.0], [4.0, 5.0, 6.0]),
+        coordinate_system: CoordinateSystem::YUpRightHanded,
+        cells: vec![FptvoxIndexedTriangleCell {
+            coordinate: [1, 2, 3],
+            cell,
+            first_reference: 0,
+            reference_count: 1,
+        }],
+        triangles: vec![FptvoxIndexedTriangle {
+            vertices: [[0, 1, 2], [3, 4, 5], [6, 7, 65535]],
+        }],
+        references: vec![0],
+    };
+    let output = temporary_artifact("indexed-triangle-exact");
+    let summary = export_fptvox_indexed_triangle_surface(&surface, &output).unwrap();
+    let bytes = fs::read(&output).unwrap();
+
+    assert_eq!(bytes[0..8], FPTVOX_INDEXED_TRIANGLE_MAGIC);
+    assert_eq!(u32_at(&bytes, 8), FPTVOX_INDEXED_TRIANGLE_HEADER_SIZE);
+    assert_eq!(u32_at(&bytes, 12), FPTVOX_INDEXED_TRIANGLE_VERSION);
+    assert_eq!(u32_at(&bytes, 76), FPTVOX_INDEXED_TRIANGLE_CELL_RECORD_SIZE);
+    assert_eq!(u64_at(&bytes, 80), 1);
+    assert_eq!(u32_at(&bytes, 88), FPTVOX_INDEXED_TRIANGLE_RECORD_SIZE);
+    assert_eq!(u64_at(&bytes, 96), 1);
+    assert_eq!(u32_at(&bytes, 104), FPTVOX_INDEXED_TRIANGLE_REFERENCE_SIZE);
+    let cell_offset = FPTVOX_INDEXED_TRIANGLE_HEADER_SIZE as usize;
+    assert_eq!(u32_at(&bytes, cell_offset + 24), 0);
+    assert_eq!(u32_at(&bytes, cell_offset + 28), 1);
+    let triangle_offset = cell_offset + FPTVOX_INDEXED_TRIANGLE_CELL_RECORD_SIZE as usize;
+    assert_eq!(
+        &bytes[triangle_offset..triangle_offset + 18],
+        &[0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 255, 255]
+    );
+    assert_eq!(u32_at(&bytes, triangle_offset + 20), 0);
+    assert_eq!(summary.voxel_count, 1);
+    assert_eq!(summary.bytes, 168);
+    assert_eq!(bytes.len(), 168);
+    fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn indexed_triangle_surface_rejects_unsafe_cell_fanout() {
+    let reference_count = FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL + 1;
+    let surface = FptvoxIndexedTriangleSurface {
+        resolution: [1; 3],
+        sampling_resolution: [2; 3],
+        bounds: Aabb::new([0.0; 3], [1.0; 3]),
+        coordinate_system: CoordinateSystem::YUpRightHanded,
+        cells: vec![FptvoxIndexedTriangleCell {
+            coordinate: [0; 3],
+            cell: VoxelCell::from_material(SurfaceMaterial::default()),
+            first_reference: 0,
+            reference_count,
+        }],
+        triangles: vec![FptvoxIndexedTriangle {
+            vertices: [[0; 3], [0, 0, 1], [0, 1, 0]],
+        }],
+        references: vec![0; reference_count as usize],
+    };
+    let output = temporary_artifact("indexed-triangle-unsafe-fanout");
+    let error = export_fptvox_indexed_triangle_surface(&surface, &output).unwrap_err();
+    assert_eq!(error.code, FractalErrorCode::Artifact);
+    assert!(!output.exists());
 }
 
 #[test]

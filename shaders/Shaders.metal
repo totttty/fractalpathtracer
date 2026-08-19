@@ -165,6 +165,7 @@ struct FptRenderConfig {
     float camera_fov;
     float camera_dof;
     float focus_distance;
+    float camera_image_y_sign;
 
     float render[8];
     float world[7];
@@ -186,6 +187,9 @@ struct FptRenderConfig {
     uint _pad_style[3];
     float fractal_style[12];
     float program_material[8];
+    uint mandel_appearance_mode;
+    uint _pad_mandel_appearance[3];
+    float mandel_appearance[20];
     FptSdfInstruction sdf_program[FPT_SDF_PROGRAM_MAX_OPS];
     float gradient_stops[FPT_SDF_GRADIENT_MAX_STOPS][4];
     uchar hdri_path[256];
@@ -265,7 +269,11 @@ struct FptDiagnosticConfig {
     float max_distance;
     float normal_mix;
     uint2 dispatch_origin;
+    uint flags;
+    uint _pad1;
 };
+
+constant uint FPT_DIAGNOSTIC_CLIP_VOXEL_BOUNDS = 1u;
 
 struct FptSdfProfileConfig {
     uint frame_index;
@@ -421,6 +429,13 @@ static float setv(constant FptRenderConfig &cfg, int i) {
 
 static float3 cameraPos(constant FptRenderConfig &cfg) {
     return float3(cfg.camera_position[0], cfg.camera_position[1], cfg.camera_position[2]);
+}
+
+static uint cameraOutputIndex(uint2 pixel, constant FptRenderConfig &cfg) {
+    const uint y = cfg.camera_image_y_sign < 0.0f
+        ? pixel.y
+        : cfg.height - 1u - pixel.y;
+    return y * cfg.width + pixel.x;
 }
 
 static float2 cameraYawPitch(constant FptRenderConfig &cfg) {
@@ -974,6 +989,51 @@ static float mandelbulberNormalOrbitRadius(float3 p,
     return log(max(abs(radius), 1.0e-30f));
 }
 
+static float mandelbulberPrimitiveUnionDistance(
+    float3 p, constant FptRenderConfig &cfg) {
+    float distance = inf;
+    uint count = min(cfg.sdf_flat_union_count,
+                     FPT_SDF_FLAT_UNION_MAX_PRIMITIVES);
+    for (uint index = 0u; index < count; ++index) {
+        const FptPrimitiveInstance primitive =
+            cfg.sdf_flat_union_instances[index];
+        if (primitive.opcode == SDF_OP_PLANE) {
+            float4 plane = float4(primitive.data[0], primitive.data[1],
+                                  primitive.data[2], primitive.data[3]);
+            // Mandelbulber clamps solid plane interiors to zero. Keeping that
+            // convention suppresses enclosed fractal isosurfaces without
+            // changing the plane boundary selected by marching cubes.
+            distance = min(distance, max(dot(p, plane.xyz) + plane.w, 0.0f));
+        } else if (primitive.opcode == SDF_OP_SPHERE) {
+            float3 local = float3(
+                dot(float3(primitive.transform[0], primitive.transform[1],
+                           primitive.transform[2]), p) + primitive.transform[3],
+                dot(float3(primitive.transform[4], primitive.transform[5],
+                           primitive.transform[6]), p) + primitive.transform[7],
+                dot(float3(primitive.transform[8], primitive.transform[9],
+                           primitive.transform[10]), p) + primitive.transform[11]);
+            float sphere_distance = length(local) - primitive.data[0];
+            if ((primitive._pad0 & 1u) != 0u) {
+                sphere_distance = abs(sphere_distance);
+            }
+            sphere_distance = max(sphere_distance - primitive.data[1], 0.0f);
+            distance = min(distance, sphere_distance);
+        }
+    }
+    return distance;
+}
+
+static float mandelbulberTopologyDistance(
+    float fractal_distance, float3 p, float iso_distance,
+    constant FptRenderConfig &cfg) {
+    float distance = fractal_distance - iso_distance;
+    if (cfg.sdf_flat_union_count > 0u) {
+        distance = min(distance,
+                       mandelbulberPrimitiveUnionDistance(p, cfg) - iso_distance);
+    }
+    return distance;
+}
+
 static DeResult deMandelbulber(float3 p,
                               constant FptRenderConfig &cfg) {
     float4 sample = mandelbulberFieldSample(p, cfg, 1);
@@ -993,6 +1053,9 @@ static DeResult deMandelbulber(float3 p,
         } else if (result.d < threshold) {
             result.d = threshold * 1.01f;
         }
+    }
+    if (cfg.sdf_flat_union_count > 0u) {
+        result.d = min(result.d, mandelbulberPrimitiveUnionDistance(p, cfg));
     }
     result.orbit = abs(sample.w) / max(setv(cfg, 1), 1.0f);
     return result;
@@ -4135,6 +4198,76 @@ static bool voxelRayAabb(float3 origin,
     return isfinite(entry_t) && isfinite(far_t) && far_t >= entry_t;
 }
 
+// Diagnostic-only volume-domain marcher. Production rendering intentionally
+// keeps using marchMandelbulber; this path exists to compare the same finite
+// domain exported to FPTVOX/PLY rather than the unbounded authored fractal.
+static MandelbulberMarchResult marchMandelbulberDiagnostic(
+    float3 direction,
+    float3 origin,
+    int iteration_count,
+    constant FptRenderConfig &cfg,
+    constant FptDiagnosticConfig &diag) {
+    if ((diag.flags & FPT_DIAGNOSTIC_CLIP_VOXEL_BOUNDS) == 0u) {
+        return marchMandelbulber(direction, origin, iteration_count, cfg);
+    }
+
+    float near_t = 0.0f;
+    float far_t = 0.0f;
+    float3 entry_normal = float3(0.0f);
+    if (!voxelRayAabb(origin, direction, voxelBoundsMin(cfg), voxelBoundsMax(cfg),
+                      near_t, far_t, entry_normal)) {
+        return MandelbulberMarchResult{origin, false};
+    }
+
+    float entry_t = max(near_t, 0.0f);
+    float maximum_travel = min(far_t - entry_t, cfg.render[4] - entry_t);
+    if (!(maximum_travel >= 0.0f) || !isfinite(maximum_travel)) {
+        return MandelbulberMarchResult{origin, false};
+    }
+
+    float3 position = origin + direction * entry_t;
+    float3 start = position;
+    float distance = 0.0f;
+    float threshold = mandelbulberMarchThreshold(position, cfg);
+    float step = 0.0f;
+    bool found = false;
+    int maximum_iterations = sdfMarchIterationLimit(iteration_count, cfg);
+    for (int iteration = 0; iteration < maximum_iterations; ++iteration) {
+        threshold = mandelbulberMarchThreshold(position, cfg);
+        distance = mapSdf(position, cfg);
+        if (!isfinite(distance)) break;
+        if (distance < threshold) {
+            found = true;
+            break;
+        }
+        step = sdfMarchStep(distance, threshold, cfg);
+        float3 next_position = position + direction * step;
+        if (all(next_position == position)) break;
+        if (dot(next_position - start, direction) > maximum_travel) break;
+        position = next_position;
+    }
+    if (!found) return MandelbulberMarchResult{position, false};
+
+    float search_limit = 1.0f - 0.001f * max(cfg.vset_values[129], 0.0f);
+    step *= 0.5f;
+    for (int refinement = 0; refinement < 30; ++refinement) {
+        if (distance < threshold && distance > threshold * search_limit) break;
+        float3 next_position = position;
+        if (distance > threshold) {
+            next_position = position + direction * step;
+        } else if (distance < threshold * search_limit) {
+            next_position = position - direction * step;
+        }
+        if (all(next_position == position)) break;
+        float next_travel = dot(next_position - start, direction);
+        if (next_travel < 0.0f || next_travel > maximum_travel) break;
+        position = next_position;
+        distance = mapSdf(position, cfg);
+        step *= 0.5f;
+    }
+    return MandelbulberMarchResult{position, true};
+}
+
 // Direction-aware half-open ownership prevents an entry point on a grid
 // boundary from selecting the cell the ray is leaving. Zero-direction axes
 // use an inclusive slab and clamp the volume's maximum face to the last cell.
@@ -5413,6 +5546,106 @@ static VoxelCell buildVoxelCell(float3 position,
     return cell;
 }
 
+kernel void fpt_topology_sample_kernel(
+    device const float4 *points [[buffer(0)]],
+    device float *samples [[buffer(1)]],
+    constant FptRenderConfig &cfg [[buffer(2)]],
+    uint gid [[thread_position_in_grid]]) {
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        const float4 field = mandelbulberFieldSample(points[gid].xyz, cfg, 1);
+        const float magnitude = max(abs(field.x), 1.0e-7f);
+        const float fractal = field.w > 0.0f ? -magnitude : magnitude;
+        samples[gid] = mandelbulberTopologyDistance(
+            fractal, points[gid].xyz, 0.0f, cfg);
+    } else {
+        samples[gid] = userSdf(points[gid].xyz, cfg).distance;
+    }
+}
+
+static void fptTopologyGridSample(
+    device float *samples,
+    device float *colorIndices,
+    constant FptRenderConfig &cfg,
+    uint3 resolution,
+    uint3 gid) {
+    if (any(gid >= resolution)) return;
+    const float3 amount = float3(gid) / float3(resolution - 1u);
+    const float3 position = mix(voxelBoundsMin(cfg), voxelBoundsMax(cfg), amount);
+    float sample;
+    float meshColorIndex = 0.0f;
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        const float4 field = mandelbulberFieldSample(position, cfg, 1);
+        const float3 spacing = (voxelBoundsMax(cfg) - voxelBoundsMin(cfg)) /
+            float3(resolution - 1u);
+        // Match Mandelbulber's mesh exporter: marching cubes operates on the
+        // unsigned distance field at dist_thresh, not at the DE zero set.
+        const float dynamicThreshold = 0.5f * max(spacing.x, max(spacing.y, spacing.z)) /
+            max(cfg.vset_values[129], 1.0e-7f);
+        const float threshold = cfg.vset_values[115] != 0.0f
+            ? dynamicThreshold
+            : cfg.vset_values[117];
+        const float isoDistance = max(threshold, 1.0e-7f);
+        // CalculateDistanceSimple only promotes max-iteration samples to
+        // interior when iteration-threshold mode is enabled. Ordinary mesh
+        // export classifies the clamped distance against dist_thresh.
+        const bool maxIterationInterior =
+            cfg.vset_values[115] == 2.0f && field.w > 0.0f;
+        const float fractalDistance = maxIterationInterior
+            ? -max(abs(field.x), isoDistance) + isoDistance
+            : field.x;
+        sample = mandelbulberTopologyDistance(
+            fractalDistance, position, isoDistance, cfg);
+#if defined(FPT_MANDEL_GENERATED_MATERIAL)
+        meshColorIndex = mandelbulberGeneratedColorIndex(
+            mandelbulberGlobalPoint(position, cfg), cfg);
+#else
+        meshColorIndex = 0.0f;
+#endif
+    } else {
+        const SDFResult result = userSdf(position, cfg);
+        sample = result.distance;
+        meshColorIndex = 0.0f;
+    }
+    const uint index = gid.x + gid.y * resolution.x +
+        gid.z * resolution.x * resolution.y;
+    samples[index] = sample;
+    colorIndices[index] = meshColorIndex;
+}
+
+kernel void fpt_topology_grid_kernel(
+    device float *samples [[buffer(0)]],
+    device float *colorIndices [[buffer(1)]],
+    constant FptRenderConfig &cfg [[buffer(2)]],
+    uint3 gid [[thread_position_in_grid]]) {
+    fptTopologyGridSample(samples, colorIndices, cfg,
+                          uint3(max(cfg.voxel_resolution, 2u)), gid);
+}
+
+kernel void fpt_topology_grid_3d_kernel(
+    device float *samples [[buffer(0)]],
+    device float *colorIndices [[buffer(1)]],
+    constant FptRenderConfig &cfg [[buffer(2)]],
+    constant uint4 &grid [[buffer(3)]],
+    uint3 gid [[thread_position_in_grid]]) {
+    fptTopologyGridSample(samples, colorIndices, cfg, max(grid.xyz, uint3(2u)), gid);
+}
+
+kernel void fpt_material_sample_kernel(
+    device const float4 *points [[buffer(0)]],
+    device VoxelCell *samples [[buffer(1)]],
+    constant FptRenderConfig &cfg [[buffer(2)]],
+    uint gid [[thread_position_in_grid]]) {
+    const Material material = userSdf(points[gid].xyz, cfg).material;
+    VoxelCell cell;
+    cell.packed_color = packVoxelUnorm4(float4(material.rgb, 0.0f)) | 0x80000000u;
+    cell.packed_properties = packVoxelUnorm4(float4(material.roughness,
+                                                    material.specular,
+                                                    material.translucency,
+                                                    (material.ior - 1.0f) / 1.5f));
+    cell.emission = material.emission;
+    samples[gid] = cell;
+}
+
 static uint packVoxelSurfaceNormal(float3 normal) {
     normal = normalize(normal);
     const float denominator = max(abs(normal.x) + abs(normal.y) + abs(normal.z), 1.0e-8f);
@@ -6181,6 +6414,18 @@ static float3 backgroundGradient(float3 dir, constant FptRenderConfig &cfg) {
     float t = clamp((dir.y + 1.0f) / 2.0f, 0.0f, 1.0f);
     float3 a = float3(cfg.background_gradient[0], cfg.background_gradient[1], cfg.background_gradient[2]);
     float3 b = float3(cfg.background_gradient[3], cfg.background_gradient[4], cfg.background_gradient[5]);
+    if (cfg.world[6] == 2.0f) {
+        float3 middle = float3(cfg.world_one_color[0], cfg.world_one_color[1], cfg.world_one_color[2]);
+        float3 color = t < 0.5f
+            ? mix(b, middle, t * 2.0f)
+            : mix(middle, a, t * 2.0f - 1.0f);
+        return pow(max(color * cfg.world[1], float3(0.0f)),
+                   float3(1.0f / max(cfg.world[5], 1.0e-6f)));
+    }
+    if (cfg.world[6] == 3.0f) {
+        return pow(max(a * cfg.world[1], float3(0.0f)),
+                   float3(1.0f / max(cfg.world[5], 1.0e-6f)));
+    }
     return mix(b, a, t);
 }
 
@@ -6256,6 +6501,21 @@ static float3 sunContribution(float3 rp, float2 xy, float seed, constant FptRend
     Material mat = userSdf(rp, cfg).material;
     float3 n = normalAt(rp, cfg);
     return sunContributionWithSurface(rp, xy, seed, mat, n, cfg);
+}
+
+static float3 mandelbulberCompatibilitySurface(
+    float3 position,
+    float3 normal,
+    float3 view_direction,
+    Material material,
+    constant FptRenderConfig &cfg) {
+    (void)position;
+    (void)view_direction;
+    // Use the same camera-relative key for every scene. This mode is a
+    // geometry diagnostic, so authored lighting must not affect the result.
+    float3 light_direction = -mandelbulberCameraRay(float2(0.0f), cfg);
+    (void)material;
+    return float3(max(dot(normal, light_direction), 0.0f));
 }
 
 static float estimateFocusDistance(constant FptRenderConfig &cfg) {
@@ -6369,9 +6629,12 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
             break;
         }
         Material material = userSdf(rp, cfg).material;
+        float3 n = normalAt(rp, cfg);
+        if (cfg.mandel_appearance_mode != 0u) {
+            return mandelbulberCompatibilitySurface(rp, n, dr, material, cfg);
+        }
         if (material.emission > 0.001f) pixellight += material.rgb * material.emission;
 
-        float3 n = normalAt(rp, cfg);
         if (cfg.sun[0] == 1.0f) pixellight += sunContributionWithSurface(rp, xy, frame, material, n, cfg);
         float r1 = hash13(float3(xy, frame * 1.37f + float(i)));
         float r2 = hash13(float3(xy, frame * 7.91f + float(i)));
@@ -6413,7 +6676,7 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
         }
     }
     float3 col = pixellight * pixelcolor;
-    if (cfg.world[6] == 1.0f) col = mix(col, gradient_col, sky_mask);
+    if (cfg.world[6] != 0.0f) col = mix(col, gradient_col, sky_mask);
     return min(col, float3(8.0f));
 }
 
@@ -6556,7 +6819,7 @@ static float3 renderRegionalProgramPath(float2 xy,
         }
     }
     float3 color = pixel_light * pixel_color;
-    if (cfg.world[6] == 1.0f) color = mix(color, gradient_color, sky_mask);
+    if (cfg.world[6] != 0.0f) color = mix(color, gradient_color, sky_mask);
     return min(color, float3(8.0f));
 }
 
@@ -6786,7 +7049,7 @@ static float3 renderBoundGridPath(float2 xy,
         }
     }
     float3 color = pixel_light * pixel_color;
-    if (cfg.world[6] == 1.0f) color = mix(color, gradient_color, sky_mask);
+    if (cfg.world[6] != 0.0f) color = mix(color, gradient_color, sky_mask);
     return min(color, float3(8.0f));
 }
 
@@ -7008,7 +7271,7 @@ static float3 renderVoxelPath(float2 xy,
         }
     }
     float3 color = pixel_light * pixel_color;
-    if (cfg.world[6] == 1.0f) color = mix(color, gradient_color, sky_mask);
+    if (cfg.world[6] != 0.0f) color = mix(color, gradient_color, sky_mask);
     return min(color, float3(8.0f));
 }
 
@@ -7104,7 +7367,7 @@ static float3 viewportShade(float3 rp,
                             float hit_lod,
                             constant FptRenderConfig &cfg) {
     float3 sky_col = clamp(environment(dr, cfg), 0.0f, 1.0f);
-    if (cfg.world[6] == 1.0f) sky_col = backgroundGradient(dr, cfg);
+    if (cfg.world[6] != 0.0f) sky_col = backgroundGradient(dr, cfg);
     if (!hit) return sky_col;
     float3 n = normalAt(rp, cfg);
     float3 li = normalize(float3(1.0f, 0.3f, 0.0f));
@@ -7152,7 +7415,7 @@ static float3 voxelViewport(float2 xy,
     float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
     float3 direction = rotateCamera(normalize(float3(xy, focal_length)), cameraYawPitch(cfg), cfg.camera_roll);
     VoxelHit hit = traceVoxel(cameraPos(cfg), direction, cfg, cells, page_table);
-    float3 sky_color = cfg.world[6] == 1.0f
+    float3 sky_color = cfg.world[6] != 0.0f
         ? backgroundGradient(direction, cfg)
         : clamp(environment(direction, cfg), 0.0f, 1.0f);
     if (!hit.hit) return sky_color;
@@ -7208,6 +7471,15 @@ static float3 toneMap(float3 color, constant FptRenderConfig &cfg) {
 }
 
 static float3 postProcess(float3 color, constant FptRenderConfig &cfg) {
+    if (cfg.post[0] < 0.0f) {
+        color *= cfg.post[1];
+        color = (color - float3(0.5f)) * cfg.post[4] + float3(0.5f);
+        color = max(color, float3(0.0f));
+        float l = sqrt(dot(color * color, float3(0.299f, 0.587f, 0.114f)));
+        color = mix(float3(l), color, cfg.post[3]);
+        color = clamp(color, 0.0f, 1.0f);
+        return pow(color, float3(1.0f / max(-cfg.post[0], 1.0e-6f)));
+    }
     color = toneMap(color, cfg);
     color = color * cfg.post[1] + cfg.post[2];
     color = (color - float3(0.5f)) * cfg.post[4] + float3(0.5f);
@@ -7714,7 +7986,7 @@ static float3 sdfDiagnostic(float2 xy, constant FptRenderConfig &cfg, constant F
         : max(cfg.render[3], 0.0005f);
     if (cfg.sdf_id == SDF_MANDELBULBER) {
         MandelbulberMarchResult march_result =
-            marchMandelbulber(rd, rp, steps, cfg);
+            marchMandelbulberDiagnostic(rd, rp, steps, cfg, diag);
         rp = march_result.position;
         hit = march_result.found;
     } else {
@@ -7772,7 +8044,7 @@ kernel void sdf_diagnostic_kernel(device uchar4 *out [[buffer(0)]],
     if (pixel.x >= cfg.width || pixel.y >= cfg.height) return;
     float2 uv = sdfScreenUv(pixel, cfg);
     float3 color = sdfDiagnostic(uv, cfg, diag);
-    uint idx = (cfg.height - 1u - pixel.y) * cfg.width + pixel.x;
+    uint idx = cameraOutputIndex(pixel, cfg);
     out[idx] = uchar4(uchar(clamp(color.r, 0.0f, 1.0f) * 255.0f),
                       uchar(clamp(color.g, 0.0f, 1.0f) * 255.0f),
                       uchar(clamp(color.b, 0.0f, 1.0f) * 255.0f),
@@ -7782,6 +8054,8 @@ kernel void sdf_diagnostic_kernel(device uchar4 *out [[buffer(0)]],
 struct FptStructuralDiagnosticSample {
     float4 positionDistance;
     float4 normalHit;
+    float4 materialCoordinate;
+    float4 materialColor;
 };
 
 kernel void sdf_structural_diagnostic_kernel(
@@ -7801,7 +8075,7 @@ kernel void sdf_structural_diagnostic_kernel(
             direction = mandelbulberCameraRay(xy, cfg);
             const int steps = min(int(max(cfg.render[1], 32.0f)), 10000);
             const MandelbulberMarchResult result =
-                marchMandelbulber(direction, position, steps, cfg);
+                marchMandelbulberDiagnostic(direction, position, steps, cfg, diag);
             position = result.position;
             hit = result.found;
         } else {
@@ -7826,9 +8100,23 @@ kernel void sdf_structural_diagnostic_kernel(
     }
     const float ray_distance = hit ? length(position - ray_origin) : -1.0f;
     const float3 normal = hit ? normalAt(position, cfg) : float3(0.0f);
-    const uint index = (cfg.height - 1u - pixel.y) * cfg.width + pixel.x;
+    float color_coordinate = 0.0f;
+    float palette_position = 0.0f;
+    float3 material_color = float3(0.0f);
+#if defined(FPT_MANDEL_GENERATED_MATERIAL)
+    if (hit) {
+        color_coordinate = mandelbulberGeneratedColorCoordinate(position, cfg);
+        palette_position = mandelbulberGeneratedPalettePosition(position, cfg);
+        material_color = mandelbulberGeneratedMaterial(position, cfg).rgb;
+    }
+#else
+    if (hit) material_color = userSdf(position, cfg).material.rgb;
+#endif
+    const uint index = cameraOutputIndex(pixel, cfg);
     out[index].positionDistance = float4(hit ? position : float3(0.0f), ray_distance);
     out[index].normalHit = float4(normal, hit ? 1.0f : 0.0f);
+    out[index].materialCoordinate = float4(color_coordinate, palette_position, 0.0f, 0.0f);
+    out[index].materialColor = float4(material_color, hit ? 1.0f : 0.0f);
 }
 
 static float3 voxelDiagnostic(float2 xy,
@@ -7897,14 +8185,14 @@ kernel void voxel_diagnostic_kernel(device uchar4 *out [[buffer(0)]],
     float2 uv = suv - 0.5f;
     uv.x *= float(cfg.width) / float(cfg.height);
     float3 color = voxelDiagnostic(uv, cfg, diag, cells, page_table);
-    uint index = (cfg.height - 1u - pixel.y) * cfg.width + pixel.x;
+    uint index = cameraOutputIndex(pixel, cfg);
     out[index] = uchar4(uchar(clamp(color.r, 0.0f, 1.0f) * 255.0f),
                         uchar(clamp(color.g, 0.0f, 1.0f) * 255.0f),
                         uchar(clamp(color.b, 0.0f, 1.0f) * 255.0f),
                         255);
 }
 static uint outputIndex(uint2 gid, constant FptRenderConfig &cfg) {
-    return (cfg.height - 1u - gid.y) * cfg.width + gid.x;
+    return cameraOutputIndex(gid, cfg);
 }
 
 static float3 highlightAt(device const float4 *accum, uint2 gid, constant FptRenderConfig &cfg) {

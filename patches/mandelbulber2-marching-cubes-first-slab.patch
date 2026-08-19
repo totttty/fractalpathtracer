@@ -1,0 +1,16 @@
+diff --git a/mandelbulber2/src/marchingcubes.cpp b/mandelbulber2/src/marchingcubes.cpp
+index 4fbb0b4b9..c5a9b0b75 100644
+--- a/mandelbulber2/src/marchingcubes.cpp
++++ b/mandelbulber2/src/marchingcubes.cpp
+@@ -196,10 +196,7 @@ void MarchingCubes::RunMarchingCube()
+ 		{
+ 			calculateVoxelPlane(i);
+ 		}
+-		if (i > 0)
+-		{
+-			calculateEdges(i);
+-		}
++		calculateEdges(i);
+ 		if (*stop || systemData.globalStopRequest) break;
+ 	}
+ 

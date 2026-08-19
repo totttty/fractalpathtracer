@@ -33,9 +33,9 @@ static_assert(sizeof(FptAffineTransform) == 64u,
               "FptAffineTransform layout must match Rust and Metal");
 static_assert(sizeof(FptIndexedPrimitive) == 32u,
               "FptIndexedPrimitive layout must match Rust and Metal");
-static_assert(sizeof(FptRenderConfig) == 30448u,
+static_assert(sizeof(FptRenderConfig) == 30548u,
               "FptRenderConfig layout must match Rust and Metal");
-static_assert(sizeof(FptDiagnosticConfig) == 24u,
+static_assert(sizeof(FptDiagnosticConfig) == 32u,
               "FptDiagnosticConfig layout must match Rust and Metal");
 
 void set_error(char *error, size_t error_len, const char *fmt, ...) {
@@ -4295,6 +4295,184 @@ extern "C" int fpt_mandelbulber_sample_field(
     }
 }
 
+static int fpt_metal_sample_points(const char *metallib_path,
+                                   const struct FptRenderConfig *config,
+                                   const float *points_xyzw,
+                                   size_t point_count,
+                                   void *samples,
+                                   size_t sample_stride,
+                                   const char *kernel_name,
+                                   char *error,
+                                   size_t error_len) {
+    @autoreleasepool {
+        if (!metallib_path || !config || !points_xyzw || !samples ||
+            point_count == 0u || sample_stride == 0u) {
+            set_error(error, error_len, "missing FPT point-sampling input");
+            return 1;
+        }
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        NSError *ns_error = nil;
+        id<MTLLibrary> library = device ? [device
+            newLibraryWithURL:[NSURL fileURLWithPath:ns_string(metallib_path)]
+                        error:&ns_error] : nil;
+        id<MTLFunction> function = library
+            ? [library newFunctionWithName:ns_string(kernel_name)] : nil;
+        id<MTLComputePipelineState> pipeline = function
+            ? [device newComputePipelineStateWithFunction:function error:&ns_error] : nil;
+        id<MTLCommandQueue> queue = device ? [device newCommandQueue] : nil;
+        const size_t points_bytes = point_count * sizeof(float) * 4u;
+        const size_t samples_bytes = point_count * sample_stride;
+        id<MTLBuffer> points_buffer = device ? [device
+            newBufferWithBytes:points_xyzw length:points_bytes
+                       options:MTLResourceStorageModeShared] : nil;
+        id<MTLBuffer> samples_buffer = device ? [device
+            newBufferWithLength:samples_bytes options:MTLResourceStorageModeShared] : nil;
+        id<MTLBuffer> config_buffer = device ? [device
+            newBufferWithBytes:config length:sizeof(*config)
+                       options:MTLResourceStorageModeShared] : nil;
+        if (!pipeline || !queue || !points_buffer || !samples_buffer || !config_buffer) {
+            set_error(error, error_len, "failed to create FPT point-sampling resources: %s",
+                      ns_error.localizedDescription.UTF8String ?: "Metal unavailable");
+            return 1;
+        }
+        id<MTLCommandBuffer> command = [queue commandBuffer];
+        id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
+        [encoder setComputePipelineState:pipeline];
+        [encoder setBuffer:points_buffer offset:0 atIndex:0];
+        [encoder setBuffer:samples_buffer offset:0 atIndex:1];
+        [encoder setBuffer:config_buffer offset:0 atIndex:2];
+        const NSUInteger group_width = std::min<NSUInteger>(
+            pipeline.maxTotalThreadsPerThreadgroup, 256u);
+        [encoder dispatchThreads:MTLSizeMake(point_count, 1u, 1u)
+           threadsPerThreadgroup:MTLSizeMake(group_width, 1u, 1u)];
+        [encoder endEncoding];
+        [command commit];
+        [command waitUntilCompleted];
+        if (command.status == MTLCommandBufferStatusError) {
+            set_error(error, error_len, "FPT point-sampling dispatch failed: %s",
+                      command.error.localizedDescription.UTF8String);
+            return 1;
+        }
+        std::memcpy(samples, samples_buffer.contents, samples_bytes);
+        return 0;
+    }
+}
+
+extern "C" int fpt_metal_sample_topology(
+    const char *metallib_path,
+    const struct FptRenderConfig *config,
+    const float *points_xyzw,
+    size_t point_count,
+    float *samples,
+    char *error,
+    size_t error_len) {
+    return fpt_metal_sample_points(metallib_path, config, points_xyzw,
+                                   point_count, samples, sizeof(float),
+                                   "fpt_topology_sample_kernel", error, error_len);
+}
+
+extern "C" int fpt_metal_sample_topology_grid(
+    const char *metallib_path,
+    const struct FptRenderConfig *config,
+    uint32_t resolution_x,
+    uint32_t resolution_y,
+    uint32_t resolution_z,
+    float *samples,
+    size_t sample_count,
+    float *colors,
+    size_t color_count,
+    double *elapsed_ms,
+    char *error,
+    size_t error_len) {
+    @autoreleasepool {
+        if (!metallib_path || !config || !samples || !colors ||
+            resolution_x < 2u || resolution_y < 2u || resolution_z < 2u) {
+            set_error(error, error_len, "missing FPT topology-grid input");
+            return 1;
+        }
+        const uint32_t resolutions[4] = {
+            resolution_x, resolution_y, resolution_z, 0u
+        };
+        const size_t expected = static_cast<size_t>(resolution_x) *
+            resolution_y * resolution_z;
+        if (sample_count != expected || color_count != expected) {
+            set_error(error, error_len,
+                      "topology grid has %zu samples/%zu colors; expected %zu",
+                      sample_count, color_count, expected);
+            return 1;
+        }
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        NSError *ns_error = nil;
+        id<MTLLibrary> library = device ? [device
+            newLibraryWithURL:[NSURL fileURLWithPath:ns_string(metallib_path)]
+                        error:&ns_error] : nil;
+        id<MTLFunction> function = library
+            ? [library newFunctionWithName:@"fpt_topology_grid_3d_kernel"] : nil;
+        id<MTLComputePipelineState> pipeline = function
+            ? [device newComputePipelineStateWithFunction:function error:&ns_error] : nil;
+        id<MTLCommandQueue> queue = device ? [device newCommandQueue] : nil;
+        id<MTLBuffer> samples_buffer = device ? [device
+            newBufferWithLength:sample_count * sizeof(float)
+                       options:MTLResourceStorageModeShared] : nil;
+        id<MTLBuffer> colors_buffer = device ? [device
+            newBufferWithLength:color_count * sizeof(float)
+                       options:MTLResourceStorageModeShared] : nil;
+        id<MTLBuffer> config_buffer = device ? [device
+            newBufferWithBytes:config length:sizeof(*config)
+                       options:MTLResourceStorageModeShared] : nil;
+        id<MTLBuffer> resolution_buffer = device ? [device
+            newBufferWithBytes:resolutions length:sizeof(resolutions)
+                       options:MTLResourceStorageModeShared] : nil;
+        if (!pipeline || !queue || !samples_buffer || !colors_buffer || !config_buffer ||
+            !resolution_buffer) {
+            set_error(error, error_len, "failed to create FPT topology-grid resources: %s",
+                      ns_error.localizedDescription.UTF8String ?: "Metal unavailable");
+            return 1;
+        }
+        NSDate *started = [NSDate date];
+        id<MTLCommandBuffer> command = [queue commandBuffer];
+        id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
+        [encoder setComputePipelineState:pipeline];
+        [encoder setBuffer:samples_buffer offset:0 atIndex:0];
+        [encoder setBuffer:colors_buffer offset:0 atIndex:1];
+        [encoder setBuffer:config_buffer offset:0 atIndex:2];
+        [encoder setBuffer:resolution_buffer offset:0 atIndex:3];
+        [encoder dispatchThreads:MTLSizeMake(resolution_x, resolution_y, resolution_z)
+           threadsPerThreadgroup:MTLSizeMake(4u, 4u, 4u)];
+        [encoder endEncoding];
+        [command commit];
+        [command waitUntilCompleted];
+        if (command.status == MTLCommandBufferStatusError) {
+            set_error(error, error_len, "FPT topology-grid dispatch failed: %s",
+                      command.error.localizedDescription.UTF8String);
+            return 1;
+        }
+        if (elapsed_ms) *elapsed_ms = -[started timeIntervalSinceNow] * 1000.0;
+        std::memcpy(samples, samples_buffer.contents, sample_count * sizeof(float));
+        std::memcpy(colors, colors_buffer.contents, color_count * sizeof(float));
+        return 0;
+    }
+}
+
+extern "C" int fpt_metal_sample_materials(
+    const char *metallib_path,
+    const struct FptRenderConfig *config,
+    const float *points_xyzw,
+    size_t point_count,
+    void *cells,
+    size_t cells_len,
+    char *error,
+    size_t error_len) {
+    if (point_count > SIZE_MAX / sizeof(VoxelCellCpp) ||
+        cells_len != point_count * sizeof(VoxelCellCpp)) {
+        set_error(error, error_len, "invalid FPT material-sample output size");
+        return 1;
+    }
+    return fpt_metal_sample_points(metallib_path, config, points_xyzw,
+                                   point_count, cells, sizeof(VoxelCellCpp),
+                                   "fpt_material_sample_kernel", error, error_len);
+}
+
 extern "C" int fpt_metal_voxel_build(
     const char *metallib_path,
     const struct FptRenderConfig *config,
@@ -6056,7 +6234,7 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
         const size_t pixel_count = static_cast<size_t>(config->width) * config->height;
         id<MTLBuffer> out_buffer = [device newBufferWithLength:pixel_count * 4 options:MTLResourceStorageModeShared];
         id<MTLBuffer> structural_buffer = write_structural
-            ? [device newBufferWithLength:pixel_count * 32u options:MTLResourceStorageModeShared]
+            ? [device newBufferWithLength:pixel_count * 64u options:MTLResourceStorageModeShared]
             : nil;
         id<MTLBuffer> cfg_buffer = [device newBufferWithBytes:config length:sizeof(FptRenderConfig) options:MTLResourceStorageModeShared];
         id<MTLBuffer> diag_buffer = [device newBufferWithBytes:diagnostic length:sizeof(FptDiagnosticConfig) options:MTLResourceStorageModeShared];
@@ -6171,7 +6349,7 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
                 return 1;
             }
             structural_file.write(static_cast<const char *>(structural_buffer.contents),
-                                  static_cast<std::streamsize>(pixel_count * 32u));
+                                  static_cast<std::streamsize>(pixel_count * 64u));
             if (!structural_file) {
                 set_error(error, error_len, "failed to write structural diagnostic output %s",
                           structural_output_path);

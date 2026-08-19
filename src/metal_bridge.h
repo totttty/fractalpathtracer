@@ -198,6 +198,7 @@ struct FptRenderConfig {
     float camera_fov;
     float camera_dof;
     float focus_distance;
+    float camera_image_y_sign;
 
     float render[8];
     float world[7];
@@ -220,6 +221,9 @@ struct FptRenderConfig {
     uint32_t _pad_style[3];
     float fractal_style[12];
     float program_material[8];
+    uint32_t mandel_appearance_mode;
+    uint32_t _pad_mandel_appearance[3];
+    float mandel_appearance[20];
     struct FptSdfInstruction sdf_program[FPT_SDF_PROGRAM_MAX_OPS];
     float gradient_stops[FPT_SDF_GRADIENT_MAX_STOPS][4];
     uint8_t hdri_path[FPT_HDRI_PATH_CAPACITY];
@@ -400,6 +404,8 @@ struct FptDiagnosticConfig {
     float max_distance;
     float normal_mix;
     uint32_t dispatch_origin[2];
+    uint32_t flags;
+    uint32_t _pad1;
 };
 
 struct FptMandelbulberFieldSample {
@@ -453,6 +459,36 @@ int fpt_mandelbulber_sample_field(
     struct FptMandelbulberFieldSample *samples,
     char *error,
     size_t error_len);
+
+int fpt_metal_sample_topology(const char *metallib_path,
+                              const struct FptRenderConfig *config,
+                              const float *points_xyzw,
+                              size_t point_count,
+                              float *samples,
+                              char *error,
+                              size_t error_len);
+
+int fpt_metal_sample_topology_grid(const char *metallib_path,
+                                   const struct FptRenderConfig *config,
+                                   uint32_t resolution_x,
+                                   uint32_t resolution_y,
+                                   uint32_t resolution_z,
+                                   float *samples,
+                                   size_t sample_count,
+                                   float *colors,
+                                   size_t color_count,
+                                   double *elapsed_ms,
+                                   char *error,
+                                   size_t error_len);
+
+int fpt_metal_sample_materials(const char *metallib_path,
+                               const struct FptRenderConfig *config,
+                               const float *points_xyzw,
+                               size_t point_count,
+                               void *cells,
+                               size_t cells_len,
+                               char *error,
+                               size_t error_len);
 
 int fpt_metal_voxel_build(const char *metallib_path,
                           const struct FptRenderConfig *config,

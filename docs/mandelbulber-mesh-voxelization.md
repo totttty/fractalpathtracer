@@ -1,5 +1,24 @@
 # Mandelbulber Mesh Voxelization
 
+## Correct Mandelbulber marching-cubes reference
+
+Mandelbulber 2 currently skips edge extraction for its first marching-cubes
+slab. The following slab can then reuse uninitialized shared-vertex indices,
+producing nonlocal triangles and omitting valid first-slab geometry. Apply the
+included source patch before building the binary used for authoritative parity
+captures:
+
+```bash
+git -C /path/to/mandelbulber2 apply \
+  /path/to/FPT-metal/patches/mandelbulber2-marching-cubes-first-slab.patch
+```
+
+The FPT PLY importer also discards triangles whose edges exceed one local cube
+diagonal (with a small numerical tolerance). This protects ordinary imports
+from corrupt output, but it cannot reconstruct the omitted slab; use the
+patched reference binary for exact parity measurements. The export report's
+`discarded_nonlocal_triangles` field should be zero with a corrected binary.
+
 `fpt-metal voxel-export` has an opt-in experimental route that uses Mandelbulber's own
 distance evaluator and marching-cubes mesh exporter before producing native FPTVOX6 surface
 cells. It is intended for structural experiments where the default point-sampled Metal
@@ -19,8 +38,7 @@ fpt-metal voxel-export scene.fract \
   --mandel-mesh-auto-bounds \
   --mandel-mesh-auto-bounds-margin 0.10 \
   --mandel-reference-out scene.mandelbulber.png \
-  --mandel-reference-size 900x600 \
-  --mandel-mesh-opencl
+  --mandel-reference-size 900x600
 ```
 
 Use `--mandel-mesh-resolution N` when the marching-cubes sampling resolution should differ
@@ -34,6 +52,46 @@ but 2,073,182 triangles at 384 samples; the latter conservatively reduced to 237
 it only in temporary storage. `--mandel-reference-out` renders the original `.fract` through
 the same external Mandelbulber binary and records its timing and dimensions in the export
 report. `--mandel-reference-size` defaults to the scene's own image dimensions.
+
+The structural parity harness uses Mandelbulber's CPU/double mesh exporter as its authoritative
+reference. `--mandel-mesh-opencl` is an explicit performance experiment: it now passes numeric
+enum values required by Mandelbulber's command-line decoder, but Mandelbulber's OpenCL slicer can
+produce topology that differs materially from its CPU marching-cubes path. Do not use it to
+produce the CPU parity baseline.
+
+Parity reports use a tessellation-invariant structural score: the minimum of occupied-cell IoU
+and per-cell triangle-area overlap. Cell IoU alone is not a surface-fidelity metric. A candidate
+can occupy almost exactly the same coarse output cells while omitting internal sheets or changing
+sub-cell surface placement. Triangle-count overlap remains a diagnostic column, not a gate:
+equivalent surfaces can be subdivided into different numbers of valid triangles.
+
+Some chaotic formulas are precision-sensitive across evaluator backends. In the ranked validation
+suite, `Jos Leys Kleinian sphereInversion` reached `0.9741` occupied-cell IoU at a 511-sample mesh
+grid, but retained only `84.86%` of the CPU-reference triangles and scored `0.8426` on per-cell
+triangle-count overlap. An exact lattice capture showed that this was not an iso-threshold bias:
+the disagreeing samples were generally far from the threshold and increasing the sampling rate
+did not close the surface gap. Mandelbulber CPU/double PLY extraction remains the authoritative
+fallback when exact topology is required for such a scene. Metal fp32 and Mandelbulber OpenCL
+outputs must be reported as backend-specific approximations rather than CPU-parity results.
+
+`riemann bulb msltoe mod2 001` remains precision-sensitive. The original Formula85 specialization
+used a two-sided minimum derivative heuristic. It produced high occupied-cell IoU but substantial
+surface excess: at a 192-sample grid its structural score was `0.7490`, and at 384 it fell to
+`0.6426`. Matching Mandelbulber's one-sided Delta-DE stencil raises those scores to `0.8928` and
+`0.8254`, respectively. At 192 samples, visible IoU improves from `0.99859` to `0.99927`, mean
+normal error falls from `20.20` to `14.36` degrees, and depth MAE falls from `0.4467%` to `0.2959%`.
+This is the retained Formula85 path, but it is still an fp32 approximation: at 384 samples it emits
+`23.63%` more clipped triangles and `21.00%` more triangle area than the CPU/double reference.
+Mandelbulber CPU/double PLY extraction therefore remains authoritative when exact topology is
+required. Do not treat either high cell IoU or increased sampling resolution as proof of parity.
+
+Direct V7 mesh extraction uses a dedicated Delta-DE probe for eligible hybrid scenes. Authored
+advanced-quality scenes retain their `deltade_relative_delta`; other eligible scenes use a
+`0.05` detail-relative probe with a `5e-7 * length(point)` fp32 stability floor. Against the
+CPU/double PLY reference, `hybrid005` improved from `0.93379` to `0.93755` cell IoU at 48/96
+sampling, from `0.93938` to `0.94251` at 96/192, and from `0.94779` to `0.94995` at 192/384.
+A scan of the other 49 ranked scenes produced byte-identical occupied-cell sets. The probe is
+isolated to offline mesh extraction and does not change continuous rendering.
 
 `--mandel-mesh-auto-bounds` is an opt-in two-pass policy for thin objects that occupy only a
 small fraction of the requested cube. The first authoritative mesh establishes object bounds.

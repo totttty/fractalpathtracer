@@ -190,6 +190,9 @@ pub struct RenderArgs {
     pub sdf_bounce_index: u32,
     pub diagnostic_mode: DiagnosticMode,
     pub diagnostic_max_distance: Option<f32>,
+    pub diagnostic_clip_voxel_bounds: bool,
+    pub diagnostic_bounds_min: Option<[f32; 3]>,
+    pub diagnostic_bounds_max: Option<[f32; 3]>,
     pub structural_dump: Option<PathBuf>,
     pub camera_position: Option<[f32; 3]>,
     pub camera_yaw_pitch: Option<[f32; 2]>,
@@ -264,6 +267,9 @@ impl RenderArgs {
             sdf_bounce_index: 0,
             diagnostic_mode: DiagnosticMode::Depth,
             diagnostic_max_distance: None,
+            diagnostic_clip_voxel_bounds: false,
+            diagnostic_bounds_min: None,
+            diagnostic_bounds_max: None,
             structural_dump: None,
             camera_position: None,
             camera_yaw_pitch: None,
@@ -618,6 +624,21 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                 );
                 out.diagnostic_max_distance = Some(value);
             }
+            "--diagnostic-clip-voxel-bounds" => {
+                out.diagnostic_clip_voxel_bounds = true;
+            }
+            "--diagnostic-bounds-min" => {
+                out.diagnostic_bounds_min = Some(parse_csv_f32(
+                    next_value(args, &mut i, "--diagnostic-bounds-min")?,
+                    "--diagnostic-bounds-min",
+                )?);
+            }
+            "--diagnostic-bounds-max" => {
+                out.diagnostic_bounds_max = Some(parse_csv_f32(
+                    next_value(args, &mut i, "--diagnostic-bounds-max")?,
+                    "--diagnostic-bounds-max",
+                )?);
+            }
             "--structural-dump" => {
                 out.structural_dump = Some(PathBuf::from(next_value(
                     args,
@@ -653,6 +674,22 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
             value => bail!("unknown argument: {value}"),
         }
         i += 1;
+    }
+    ensure!(
+        out.diagnostic_bounds_min.is_some() == out.diagnostic_bounds_max.is_some(),
+        "diagnostic bounds require both --diagnostic-bounds-min and --diagnostic-bounds-max"
+    );
+    ensure!(
+        out.diagnostic_bounds_min.is_none() || out.diagnostic_clip_voxel_bounds,
+        "diagnostic bounds require --diagnostic-clip-voxel-bounds"
+    );
+    if let (Some(bounds_min), Some(bounds_max)) =
+        (out.diagnostic_bounds_min, out.diagnostic_bounds_max)
+    {
+        ensure!(
+            (0..3).all(|axis| bounds_min[axis] < bounds_max[axis]),
+            "diagnostic bounds minimum must be below maximum on every axis"
+        );
     }
     Ok(out)
 }
@@ -828,6 +865,7 @@ pub fn default_config() -> FptRenderConfig {
         camera_roll: 0.0,
         camera_fov: 90.0,
         camera_dof: 0.01,
+        camera_image_y_sign: 1.0,
         render: [5.0, 312.0, 0.0005, 0.0005, 1000.0, 0.25, 0.0, 0.0],
         world: [0.0, 1.0, 120.0, 30.0, 1.0, 1.0, 0.0],
         world_one_color: [1.0; 3],
@@ -2782,6 +2820,49 @@ mod tests {
             ];
             assert!(parse_render_args(&invalid).is_err());
         }
+    }
+
+    #[test]
+    fn diagnostic_voxel_bounds_parse_and_require_clipping() {
+        let args = vec![
+            "scene.fract".to_owned(),
+            "--diagnostic-clip-voxel-bounds".to_owned(),
+            "--diagnostic-bounds-min".to_owned(),
+            "-2,-1,0".to_owned(),
+            "--diagnostic-bounds-max".to_owned(),
+            "3,4,5".to_owned(),
+        ];
+        let parsed = parse_render_args(&args).unwrap();
+        assert!(parsed.diagnostic_clip_voxel_bounds);
+        assert_eq!(parsed.diagnostic_bounds_min, Some([-2.0, -1.0, 0.0]));
+        assert_eq!(parsed.diagnostic_bounds_max, Some([3.0, 4.0, 5.0]));
+
+        let missing_max = vec![
+            "scene.fract".to_owned(),
+            "--diagnostic-clip-voxel-bounds".to_owned(),
+            "--diagnostic-bounds-min".to_owned(),
+            "-2,-1,0".to_owned(),
+        ];
+        assert!(parse_render_args(&missing_max).is_err());
+
+        let unclipped = vec![
+            "scene.fract".to_owned(),
+            "--diagnostic-bounds-min".to_owned(),
+            "-2,-1,0".to_owned(),
+            "--diagnostic-bounds-max".to_owned(),
+            "3,4,5".to_owned(),
+        ];
+        assert!(parse_render_args(&unclipped).is_err());
+
+        let inverted = vec![
+            "scene.fract".to_owned(),
+            "--diagnostic-clip-voxel-bounds".to_owned(),
+            "--diagnostic-bounds-min".to_owned(),
+            "3,-1,0".to_owned(),
+            "--diagnostic-bounds-max".to_owned(),
+            "3,4,5".to_owned(),
+        ];
+        assert!(parse_render_args(&inverted).is_err());
     }
 
     #[test]

@@ -11,6 +11,7 @@ anyhow = "1.0"
 base64 = "0.22"
 flate2 = "1.1"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+marching-cubes = "0.1.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10"

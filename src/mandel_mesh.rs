@@ -1,5 +1,12 @@
 use anyhow::{Context, Result, anyhow, bail, ensure};
-use fpt_metal::{Aabb, CoordinateSystem, SparseVoxel, SurfaceMaterial, VoxelCell, VoxelGrid};
+use fpt_metal::fptvox7::{
+    MeshSurfaceVertex, aspect_resolutions, build_triangle_surface_from_normalized_mesh,
+    build_triangle_surface_from_normalized_mesh_3d,
+};
+use fpt_metal::{
+    Aabb, CoordinateSystem, FptvoxTriangleSurface, SparseVoxel, SurfaceMaterial, VoxelCell,
+    VoxelGrid,
+};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs;
@@ -10,15 +17,20 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const NORMAL_CLUSTER_COSINE: f32 = 0.94;
 const AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO: f64 = 0.50;
+const MANDELBULBER_OPENCL_DEVICE_TYPE_GPU: &str = "opencl_device_type=0";
+const MANDELBULBER_OPENCL_MODE_FULL: &str = "opencl_mode=3";
+const MANDELBULBER_OPENCL_PRECISION_SINGLE: &str = "opencl_precision=0";
 static TEMPORARY_DIRECTORY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Clone, Debug)]
 pub struct MandelMeshOptions<'a> {
-    pub binary: &'a Path,
+    pub binary: Option<&'a Path>,
     pub scene: &'a Path,
+    pub ply_input: Option<&'a Path>,
     pub raw_ply_output: Option<&'a Path>,
     pub bounds: Aabb,
     pub voxel_resolution: u32,
+    pub voxel_resolution_3d: Option<[u32; 3]>,
     pub mesh_resolution: u32,
     pub max_iterations: u32,
     pub use_opencl: bool,
@@ -27,6 +39,7 @@ pub struct MandelMeshOptions<'a> {
     pub emission: f32,
     pub auto_bounds: bool,
     pub auto_bounds_margin: f32,
+    pub surface_triangles: bool,
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -55,6 +68,7 @@ pub struct MandelMeshSummary {
     pub ply_bytes: u64,
     pub mesh_vertices: usize,
     pub mesh_triangles: usize,
+    pub discarded_nonlocal_triangles: usize,
     pub triangle_cell_tests: u64,
     pub triangle_cell_intersections: u64,
     pub occupied_cells: usize,
@@ -66,6 +80,7 @@ pub struct MandelMeshSummary {
 pub struct MandelMeshVoxelization {
     pub grid: VoxelGrid,
     pub patches: Vec<[u32; 3]>,
+    pub triangle_surface: Option<FptvoxTriangleSurface>,
     pub summary: MandelMeshSummary,
     pub auto_bounds: MandelMeshAutoBoundsSummary,
 }
@@ -163,6 +178,27 @@ struct MeshVertex {
 struct PlyMesh {
     vertices: Vec<MeshVertex>,
     triangles: Vec<[u32; 3]>,
+}
+
+fn discard_nonlocal_marching_cubes_triangles(
+    mesh: &mut PlyMesh,
+    bounds: Aabb,
+    mesh_resolution: u32,
+) -> usize {
+    let step = bounds.size().into_iter().fold(0.0_f32, f32::max) / mesh_resolution as f32;
+    let maximum_edge_squared = 3.0 * step * step * 1.05 * 1.05;
+    let original_count = mesh.triangles.len();
+    mesh.triangles.retain(|triangle| {
+        let vertices = triangle.map(|index| mesh.vertices[index as usize].position);
+        [(0, 1), (1, 2), (2, 0)].into_iter().all(|(first, second)| {
+            subtract(vertices[first], vertices[second])
+                .into_iter()
+                .map(|value| value * value)
+                .sum::<f32>()
+                <= maximum_edge_squared
+        })
+    });
+    original_count - mesh.triangles.len()
 }
 
 fn mesh_bounds(mesh: &PlyMesh) -> Result<Aabb> {
@@ -385,10 +421,23 @@ pub fn voxelize_mandelbulber_mesh(
     options: &MandelMeshOptions<'_>,
 ) -> Result<MandelMeshVoxelization> {
     ensure!(
-        options.binary.is_file(),
-        "Mandelbulber binary does not exist: {}",
-        options.binary.display()
+        options.binary.is_some() || options.ply_input.is_some(),
+        "Mandelbulber mesh export requires a binary or an existing PLY input"
     );
+    if let Some(binary) = options.binary {
+        ensure!(
+            binary.is_file(),
+            "Mandelbulber binary does not exist: {}",
+            binary.display()
+        );
+    }
+    if let Some(ply_input) = options.ply_input {
+        ensure!(
+            ply_input.is_file(),
+            "Mandelbulber PLY input does not exist: {}",
+            ply_input.display()
+        );
+    }
     ensure!(
         options.scene.is_file(),
         "Mandelbulber scene does not exist: {}",
@@ -525,61 +574,69 @@ fn voxelize_mandelbulber_mesh_once(
     options: &MandelMeshOptions<'_>,
 ) -> Result<MandelMeshVoxelization> {
     let temporary = TemporaryDirectory::create()?;
-    let ply_path = temporary.path().join("surface.ply");
-    let source_min = y_up_to_mandelbulber(options.bounds.min);
-    let source_max = y_up_to_mandelbulber(options.bounds.max);
-    let vector = |value: [f32; 3]| format!("{} {} {}", value[0], value[1], value[2]);
-    let overrides = [
-        "voxel_custom_limit_enabled=1".to_owned(),
-        format!("voxel_limit_min={}", vector(source_min)),
-        format!("voxel_limit_max={}", vector(source_max)),
-        format!("voxel_samples_x={}", options.mesh_resolution),
-        format!("voxel_samples_y={}", options.mesh_resolution),
-        format!("voxel_samples_z={}", options.mesh_resolution),
-        format!("voxel_max_iter={}", options.max_iterations),
-        format!("voxel_image_path={}", temporary.path().display()),
-        format!("mesh_output_filename={}", ply_path.display()),
-        "mesh_color=1".to_owned(),
-        "mesh_file_mode=0".to_owned(),
-        format!("opencl_enabled={}", u8::from(options.use_opencl)),
-        "opencl_platform=0".to_owned(),
-        "opencl_device_type=gpu".to_owned(),
-        "opencl_mode=full".to_owned(),
-        "opencl_precision=single".to_owned(),
-    ]
-    .join("#");
-
-    let export_started = Instant::now();
-    let mut command = Command::new(options.binary);
-    command.arg("--voxel").arg("ply");
-    if options.use_opencl {
-        command.arg("-g");
-    }
-    let output = command
-        .arg("-n")
-        .arg(options.scene)
-        .arg("-O")
-        .arg(overrides)
-        .output()
-        .with_context(|| {
+    let generated_ply = temporary.path().join("surface.ply");
+    let (ply_path, mesh_export_ms) = if let Some(ply_input) = options.ply_input {
+        (ply_input, 0.0)
+    } else {
+        let binary = options.binary.context("Mandelbulber binary is required")?;
+        let source_min = y_up_to_mandelbulber(options.bounds.min);
+        let source_max = y_up_to_mandelbulber(options.bounds.max);
+        let overrides = [
+            "voxel_custom_limit_enabled=1".to_owned(),
             format!(
-                "run Mandelbulber mesh exporter {}",
-                options.binary.display()
-            )
-        })?;
-    let mesh_export_ms = export_started.elapsed().as_secs_f64() * 1000.0;
-    if !output.status.success() {
-        bail!(
-            "Mandelbulber mesh export failed with {}: {}",
-            output.status,
-            String::from_utf8_lossy(&output.stderr).trim()
+                "voxel_limit_min={}",
+                mandelbulber_vector_override(source_min)
+            ),
+            format!(
+                "voxel_limit_max={}",
+                mandelbulber_vector_override(source_max)
+            ),
+            format!("voxel_samples_x={}", options.mesh_resolution),
+            format!("voxel_samples_y={}", options.mesh_resolution),
+            format!("voxel_samples_z={}", options.mesh_resolution),
+            format!("voxel_max_iter={}", options.max_iterations),
+            format!("voxel_image_path={}", temporary.path().display()),
+            format!("mesh_output_filename={}", generated_ply.display()),
+            "mesh_color=1".to_owned(),
+            "mesh_file_mode=0".to_owned(),
+            format!("opencl_enabled={}", u8::from(options.use_opencl)),
+            "opencl_platform=0".to_owned(),
+            // Mandelbulber's -O decoder requires integer values for enum
+            // parameters; their display labels silently decode as zero.
+            MANDELBULBER_OPENCL_DEVICE_TYPE_GPU.to_owned(),
+            MANDELBULBER_OPENCL_MODE_FULL.to_owned(),
+            MANDELBULBER_OPENCL_PRECISION_SINGLE.to_owned(),
+        ]
+        .join("#");
+
+        let export_started = Instant::now();
+        let mut command = Command::new(binary);
+        command.arg("--voxel").arg("ply");
+        if options.use_opencl {
+            command.arg("-g");
+        }
+        let output = command
+            .arg("-n")
+            .arg(options.scene)
+            .arg("-O")
+            .arg(overrides)
+            .output()
+            .with_context(|| format!("run Mandelbulber mesh exporter {}", binary.display()))?;
+        let mesh_export_ms = export_started.elapsed().as_secs_f64() * 1000.0;
+        if !output.status.success() {
+            bail!(
+                "Mandelbulber mesh export failed with {}: {}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr).trim()
+            );
+        }
+        ensure!(
+            generated_ply.is_file(),
+            "Mandelbulber completed without producing {}",
+            generated_ply.display()
         );
-    }
-    ensure!(
-        ply_path.is_file(),
-        "Mandelbulber completed without producing {}",
-        ply_path.display()
-    );
+        (generated_ply.as_path(), mesh_export_ms)
+    };
     let ply_bytes = ply_path.metadata()?.len();
     if let Some(output) = options.raw_ply_output {
         if let Some(parent) = output
@@ -588,17 +645,24 @@ fn voxelize_mandelbulber_mesh_once(
         {
             fs::create_dir_all(parent).with_context(|| format!("create {}", parent.display()))?;
         }
-        fs::copy(&ply_path, output).with_context(|| {
-            format!(
-                "preserve Mandelbulber mesh {} as {}",
-                ply_path.display(),
-                output.display()
-            )
-        })?;
+        if output != ply_path {
+            fs::copy(ply_path, output).with_context(|| {
+                format!(
+                    "preserve Mandelbulber mesh {} as {}",
+                    ply_path.display(),
+                    output.display()
+                )
+            })?;
+        }
     }
 
     let parse_started = Instant::now();
-    let mesh = read_binary_ply(&ply_path)?;
+    let mut mesh = read_binary_ply(&ply_path)?;
+    let discarded_nonlocal_triangles = discard_nonlocal_marching_cubes_triangles(
+        &mut mesh,
+        options.bounds,
+        options.mesh_resolution,
+    );
     ensure!(
         !mesh.vertices.is_empty() && !mesh.triangles.is_empty(),
         "Mandelbulber mesh is empty inside the requested bounds"
@@ -607,7 +671,70 @@ fn voxelize_mandelbulber_mesh_once(
 
     let voxelize_started = Instant::now();
     let mut stats = VoxelizeStats::default();
-    let (grid, patches) = mesh_to_grid(&mesh, options, &mut stats)?;
+    let (grid, patches, triangle_surface) = if options.surface_triangles {
+        let size = options.bounds.size();
+        let triangles = mesh.triangles.iter().map(|triangle| {
+            triangle.map(|index| {
+                let vertex = mesh.vertices[index as usize];
+                MeshSurfaceVertex {
+                    position: std::array::from_fn(|axis| {
+                        (vertex.position[axis] - options.bounds.min[axis]) / size[axis]
+                    }),
+                    color: vertex.color,
+                }
+            })
+        });
+        let material = SurfaceMaterial {
+            base_color: [1.0; 3],
+            roughness: options.roughness.clamp(0.0, 1.0),
+            specular: options.specular.clamp(0.0, 1.0),
+            transmission: 0.0,
+            ior: 1.5,
+            emission_strength: options.emission.max(0.0),
+        };
+        let surface = if let Some(resolution) = options.voxel_resolution_3d {
+            build_triangle_surface_from_normalized_mesh_3d(
+                triangles,
+                mesh.triangles.len(),
+                resolution,
+                aspect_resolutions(options.bounds, options.mesh_resolution),
+                options.bounds,
+                material,
+            )?
+        } else {
+            build_triangle_surface_from_normalized_mesh(
+                triangles,
+                mesh.triangles.len(),
+                options.voxel_resolution,
+                options.mesh_resolution,
+                options.bounds,
+                material,
+            )?
+        };
+        let source_bytes = fs::read(options.scene)?;
+        let source_sha256 = format!("{:x}", Sha256::digest(&source_bytes));
+        let grid = VoxelGrid {
+            contract_version: 1,
+            resolution: surface.resolution,
+            bounds: surface.bounds,
+            coordinate_system: surface.coordinate_system,
+            source_label: options.scene.display().to_string(),
+            source_sha256,
+            voxels: surface
+                .cells
+                .iter()
+                .map(|cell| SparseVoxel {
+                    coordinate: cell.coordinate,
+                    cell: cell.cell,
+                })
+                .collect(),
+        };
+        stats.intersections = surface.triangles.len() as u64;
+        (grid, Vec::new(), Some(surface))
+    } else {
+        let (grid, patches) = mesh_to_grid(&mesh, options, &mut stats)?;
+        (grid, patches, None)
+    };
     ensure!(
         grid.occupied_voxels() > 0,
         "Mandelbulber mesh did not intersect the requested voxel bounds"
@@ -620,6 +747,7 @@ fn voxelize_mandelbulber_mesh_once(
         ply_bytes,
         mesh_vertices: mesh.vertices.len(),
         mesh_triangles: mesh.triangles.len(),
+        discarded_nonlocal_triangles,
         triangle_cell_tests: stats.tests,
         triangle_cell_intersections: stats.intersections,
         occupied_cells: grid.voxels.len(),
@@ -630,6 +758,7 @@ fn voxelize_mandelbulber_mesh_once(
     Ok(MandelMeshVoxelization {
         grid,
         patches,
+        triangle_surface,
         summary,
         auto_bounds: MandelMeshAutoBoundsSummary {
             requested: false,
@@ -930,6 +1059,15 @@ fn y_up_to_mandelbulber(value: [f32; 3]) -> [f32; 3] {
     [value[0], value[2], value[1]]
 }
 
+fn mandelbulber_vector_override(value: [f32; 3]) -> String {
+    format!(
+        "{:.17} {:.17} {:.17}",
+        f64::from(value[0]),
+        f64::from(value[1]),
+        f64::from(value[2])
+    )
+}
+
 fn mandelbulber_to_y_up(value: [f32; 3]) -> [f32; 3] {
     [value[0], value[2], value[1]]
 }
@@ -1107,6 +1245,51 @@ fn pack_surface_plane(normal: [f32; 3], offset: f32) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn opencl_cli_overrides_use_mandelbulber_numeric_enums() {
+        assert_eq!(MANDELBULBER_OPENCL_DEVICE_TYPE_GPU, "opencl_device_type=0");
+        assert_eq!(MANDELBULBER_OPENCL_MODE_FULL, "opencl_mode=3");
+        assert_eq!(MANDELBULBER_OPENCL_PRECISION_SINGLE, "opencl_precision=0");
+    }
+
+    #[test]
+    fn vector_overrides_preserve_the_exact_f32_bounds_in_double() {
+        let values = [
+            1.680698275566101_f32,
+            2.0853164196014404,
+            -3.2698488235473633,
+        ];
+        let parsed = mandelbulber_vector_override(values)
+            .split_whitespace()
+            .map(|value| value.parse::<f64>().expect("double component"))
+            .collect::<Vec<_>>();
+        assert_eq!(parsed, values.map(f64::from));
+    }
+
+    #[test]
+    fn nonlocal_marching_cube_faces_are_discarded() {
+        let vertex = |position| MeshVertex {
+            position,
+            color: [1.0; 3],
+        };
+        let mut mesh = PlyMesh {
+            vertices: vec![
+                vertex([0.0, 0.0, 0.0]),
+                vertex([0.01, 0.0, 0.0]),
+                vertex([0.0, 0.01, 0.0]),
+                vertex([1.0, 1.0, 1.0]),
+            ],
+            triangles: vec![[0, 1, 2], [0, 1, 3]],
+        };
+        let discarded = discard_nonlocal_marching_cubes_triangles(
+            &mut mesh,
+            Aabb::new([0.0; 3], [1.0; 3]),
+            100,
+        );
+        assert_eq!(discarded, 1);
+        assert_eq!(mesh.triangles, vec![[0, 1, 2]]);
+    }
 
     fn sample_binary_ply(vertex_properties: &[&str]) -> Vec<u8> {
         let mut bytes = format!(

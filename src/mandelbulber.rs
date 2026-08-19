@@ -1,4 +1,7 @@
-use crate::ffi::{FptRenderConfig, SDF_MANDELBULBER};
+use crate::ffi::{
+    FptPrimitiveInstance, FptRenderConfig, SDF_FLAT_UNION_MAX_PRIMITIVES, SDF_MANDELBULBER,
+    SDF_OP_PLANE, SDF_OP_SPHERE,
+};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use std::collections::BTreeMap;
 use std::fs;
@@ -73,6 +76,9 @@ pub const VPARAM_SCREEN_LOD_RATE: usize = 130;
 /// iteration fraction; positive integer values select an exact refinement
 /// tile. Offline renders leave this at zero.
 pub const VPARAM_INTERACTIVE_REFINEMENT: usize = 131;
+/// Relative Delta-DE probe used by offline mesh extraction when the scene does
+/// not provide an advanced-quality override.
+pub const MESH_DELTA_RELATIVE_DEFAULT: f32 = 0.05;
 /// Preview-only spatial mode. Negative values select a replicated moving
 /// preview stride; positive values encode an exact interlace stride/pass.
 pub const VPARAM_INTERACTIVE_SPATIAL: usize = 132;
@@ -97,6 +103,12 @@ pub struct MandelbulberMaterial {
     pub coloring_speed: f64,
     pub palette_offset: f64,
     pub surface_gradient: Vec<MandelbulberGradientStop>,
+    pub shading: f64,
+    pub specular: f64,
+    pub specular_width: f64,
+    pub specular_plastic_enabled: bool,
+    pub surface_roughness: f64,
+    pub reflectance: f64,
     pub parameters: BTreeMap<String, String>,
 }
 
@@ -113,6 +125,24 @@ pub struct MandelbulberFormulaSlot {
     pub check_for_bailout: bool,
     pub bailout: f64,
     pub parameters: BTreeMap<String, String>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MandelbulberPrimitivePlane {
+    pub position: [f64; 3],
+    pub rotation: [f64; 3],
+    pub material_id: u32,
+    pub calculation_order: u32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MandelbulberPrimitiveSphere {
+    pub position: [f64; 3],
+    pub radius: f64,
+    pub wall_thickness: f64,
+    pub empty: bool,
+    pub material_id: u32,
+    pub calculation_order: u32,
 }
 
 impl MandelbulberFormulaSlot {
@@ -133,7 +163,10 @@ pub struct MandelbulberScene {
     pub formula_rotations: [[f64; 3]; FORMULA_SLOT_COUNT],
     pub formula_repeats: [[f64; 3]; FORMULA_SLOT_COUNT],
     pub formula_scales: [f64; FORMULA_SLOT_COUNT],
+    pub primitive_planes: Vec<MandelbulberPrimitivePlane>,
+    pub primitive_spheres: Vec<MandelbulberPrimitiveSphere>,
     pub force_delta_de: bool,
+    pub force_analytic_de: bool,
     /// Mandelbulber's `delta_DE_function`: zero selects the formula-preferred
     /// finalizer, while 1..=6 force linear, logarithmic, pseudo-Kleinian,
     /// Jos-Kleinian, custom, or max-axis distance respectively.
@@ -145,7 +178,34 @@ pub struct MandelbulberScene {
     pub target: [f64; 3],
     pub camera_top: [f64; 3],
     pub camera_projection: u32,
+    pub legacy_coordinate_system: bool,
     pub fov_degrees: f64,
+    pub background_three_colors: bool,
+    pub background_colors: [[f32; 3]; 3],
+    pub background_brightness: f64,
+    pub background_gamma: f64,
+    pub image_brightness: f64,
+    pub image_contrast: f64,
+    pub image_gamma: f64,
+    pub image_saturation: f64,
+    pub main_light_enabled: bool,
+    pub main_light_rotation: [f64; 3],
+    pub main_light_intensity: f64,
+    pub main_light_color: [f32; 3],
+    pub main_light_soft_shadow_degrees: f64,
+    pub main_light_cast_shadows: bool,
+    pub main_light_penetrating: bool,
+    pub ambient_occlusion_enabled: bool,
+    pub ambient_occlusion_mode: u32,
+    pub ambient_occlusion: f64,
+    pub ambient_occlusion_quality: u32,
+    pub ambient_occlusion_fast_tune: f64,
+    pub auxiliary_light_enabled: bool,
+    pub auxiliary_light_position: [f64; 3],
+    pub auxiliary_light_intensity: f64,
+    pub auxiliary_light_color: [f32; 3],
+    pub auxiliary_light_cast_shadows: bool,
+    pub auxiliary_light_penetrating: bool,
     pub max_iterations: u32,
     pub bailout: f64,
     pub use_default_bailout: bool,
@@ -197,6 +257,7 @@ pub struct MandelbulberScene {
     pub fractal_repeat: [f64; 3],
     pub de_factor: f64,
     pub advanced_quality: bool,
+    pub delta_de_relative_delta: f64,
     pub abs_min_marching_step: f64,
     pub abs_max_marching_step: f64,
     pub rel_min_marching_step: f64,
@@ -444,6 +505,36 @@ fn parse_gradient(value: &str) -> Result<Vec<MandelbulberGradientStop>> {
     Ok(stops)
 }
 
+fn parse_legacy_palette(value: &str) -> Result<Vec<MandelbulberGradientStop>> {
+    let colors = value.split_whitespace().collect::<Vec<_>>();
+    ensure!(
+        colors.len() >= 2,
+        "palette must contain at least two colors"
+    );
+    ensure!(colors.len() <= 4096, "palette contains too many colors");
+
+    let count = colors.len() as f32;
+    let mut stops = colors
+        .into_iter()
+        .enumerate()
+        .map(|(index, color)| {
+            // Mandelbulber's pre-2.19 settings migration truncates each
+            // evenly spaced stop to four decimal digits before loading it as
+            // a surface gradient.
+            let position = ((index as f32 / count) * 10_000.0).trunc() / 10_000.0;
+            Ok(MandelbulberGradientStop {
+                position,
+                color: parse_rgb8(color)?,
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    stops.push(MandelbulberGradientStop {
+        position: 1.0,
+        color: stops[0].color,
+    });
+    Ok(stops)
+}
+
 impl MandelbulberScene {
     /// Rebase a periodic Jos-Kleinian field before converting its camera to
     /// fp32. Old example scenes can be hundreds of units from the origin while
@@ -628,15 +719,137 @@ impl MandelbulberScene {
             "secondary formula slots require hybrid_fractal_enable or boolean_operators"
         );
         let formula_id = formula_slots[0].formula_id;
-        let force_delta_de = if document
+        let mut primitive_planes = Vec::new();
+        for index in 1..=SDF_FLAT_UNION_MAX_PRIMITIVES {
+            let prefix = format!("primitive_plane_{index}");
+            if !document.boolean("main_parameters", &format!("{prefix}_enabled"), false)? {
+                continue;
+            }
+            ensure!(
+                document.integer("main_parameters", &format!("{prefix}_boolean_operator"), 1,)?
+                    == 1,
+                "{prefix} currently requires Mandelbulber's OR boolean operator"
+            );
+            ensure!(
+                !document.boolean("main_parameters", &format!("{prefix}_empty"), false)?,
+                "{prefix} empty-shell mode is not yet supported"
+            );
+            ensure!(
+                document.number("main_parameters", &format!("{prefix}_wall_thickness"), 0.0,)?
+                    == 0.0,
+                "{prefix} wall thickness is not yet supported"
+            );
+            ensure!(
+                !document.boolean(
+                    "main_parameters",
+                    &format!("{prefix}_smooth_de_combine_enable"),
+                    false,
+                )?,
+                "{prefix} smooth distance combination is not yet supported"
+            );
+            primitive_planes.push(MandelbulberPrimitivePlane {
+                position: document.vec3(
+                    "main_parameters",
+                    &format!("{prefix}_position"),
+                    [0.0; 3],
+                )?,
+                rotation: document.vec3(
+                    "main_parameters",
+                    &format!("{prefix}_rotation"),
+                    [0.0; 3],
+                )?,
+                material_id: document.integer(
+                    "main_parameters",
+                    &format!("{prefix}_material_id"),
+                    1,
+                )?,
+                calculation_order: document.integer(
+                    "main_parameters",
+                    &format!("{prefix}_calculation_order"),
+                    1,
+                )?,
+            });
+        }
+        primitive_planes.sort_by_key(|plane| plane.calculation_order);
+        let mut primitive_spheres = Vec::new();
+        for index in 1..=SDF_FLAT_UNION_MAX_PRIMITIVES {
+            let prefix = format!("primitive_sphere_{index}");
+            if !document.boolean("main_parameters", &format!("{prefix}_enabled"), false)? {
+                continue;
+            }
+            ensure!(
+                document.integer("main_parameters", &format!("{prefix}_boolean_operator"), 1)? == 1,
+                "{prefix} currently requires Mandelbulber's OR boolean operator"
+            );
+            ensure!(
+                !document.boolean(
+                    "main_parameters",
+                    &format!("{prefix}_smooth_de_combine_enable"),
+                    false,
+                )?,
+                "{prefix} smooth distance combination is not yet supported"
+            );
+            ensure!(
+                document.vec3("main_parameters", &format!("{prefix}_repeat"), [0.0; 3],)?
+                    == [0.0; 3],
+                "{prefix} repetition is not yet supported"
+            );
+            ensure!(
+                !document.boolean("main_parameters", &format!("{prefix}_limits_enable"), false,)?,
+                "{prefix} limits are not yet supported"
+            );
+            let radius = document.number("main_parameters", &format!("{prefix}_radius"), 1.0)?;
+            ensure!(
+                radius.is_finite() && radius > 0.0,
+                "{prefix} radius must be finite and positive"
+            );
+            let wall_thickness =
+                document.number("main_parameters", &format!("{prefix}_wall_thickness"), 0.0)?;
+            ensure!(
+                wall_thickness.is_finite() && wall_thickness >= 0.0,
+                "{prefix} wall thickness must be finite and non-negative"
+            );
+            primitive_spheres.push(MandelbulberPrimitiveSphere {
+                position: document.vec3(
+                    "main_parameters",
+                    &format!("{prefix}_position"),
+                    [0.0; 3],
+                )?,
+                radius,
+                wall_thickness,
+                empty: document.boolean("main_parameters", &format!("{prefix}_empty"), false)?,
+                material_id: document.integer(
+                    "main_parameters",
+                    &format!("{prefix}_material_id"),
+                    1,
+                )?,
+                calculation_order: document.integer(
+                    "main_parameters",
+                    &format!("{prefix}_calculation_order"),
+                    1,
+                )?,
+            });
+        }
+        primitive_spheres.sort_by_key(|sphere| sphere.calculation_order);
+        ensure!(
+            primitive_planes.len() + primitive_spheres.len() <= SDF_FLAT_UNION_MAX_PRIMITIVES,
+            "enabled Mandelbulber primitives exceed the supported limit"
+        );
+        let (force_delta_de, force_analytic_de) = if document
             .value("main_parameters", "delta_DE_method")
             .is_some()
         {
             let method = document.integer("main_parameters", "delta_DE_method", 0)?;
             ensure!(method <= 2, "delta_DE_method must be 0..2");
-            method == 1
+            (method == 1, method == 2)
+        } else if let Some(legacy) = document.value("main_parameters", "analityc_DE_mode") {
+            match legacy {
+                "true" => (false, true),
+                "false" => (true, false),
+                value => bail!("invalid main_parameters.analityc_DE_mode boolean: {value}"),
+            }
         } else {
-            !document.boolean("main_parameters", "analityc_DE_mode", true)?
+            (false, false)
         };
         let delta_de_function = document.integer("main_parameters", "delta_DE_function", 0)?;
         ensure!(delta_de_function <= 6, "delta_DE_function must be 0..6");
@@ -670,6 +883,8 @@ impl MandelbulberScene {
             "fish_eye_cut" | "3" => 3,
             value => bail!("unsupported perspective_type {value}"),
         };
+        let legacy_coordinate_system =
+            document.boolean("main_parameters", "legacy_coordinate_system", false)?;
         let stored_fov = document.number("main_parameters", "fov", DEFAULT_FOV_DEGREES)?;
         let fov_degrees = migrated_fov_degrees(&document.version, camera_projection, stored_fov)?;
         let maximum_fov = if camera_projection == 0 { 180.0 } else { 720.0 };
@@ -693,6 +908,8 @@ impl MandelbulberScene {
         let fractal_repeat = document.vec3("main_parameters", "repeat", [0.0; 3])?;
         let de_factor = document.number("main_parameters", "DE_factor", 1.0)?;
         let advanced_quality = document.boolean("main_parameters", "advanced_quality", false)?;
+        let delta_de_relative_delta =
+            document.number("main_parameters", "deltade_relative_delta", 0.01)?;
         let abs_min_marching_step =
             document.number("main_parameters", "abs_min_marching_step", 1.0e-15)?;
         let abs_max_marching_step =
@@ -709,6 +926,7 @@ impl MandelbulberScene {
                 && detail_size_max >= detail_size_min
                 && smoothness > 0.0
                 && de_factor > 0.0
+                && delta_de_relative_delta > 0.0
                 && abs_min_marching_step > 0.0
                 && abs_max_marching_step >= abs_min_marching_step
                 && rel_min_marching_step > 0.0
@@ -868,12 +1086,29 @@ impl MandelbulberScene {
             .map(parse_rgb16)
             .transpose()?
             .unwrap_or([50000.0 / 65535.0; 3]);
-        let surface_gradient = parse_gradient(
-            document
-                .value("main_parameters", "mat1_surface_color_gradient")
-                .unwrap_or(DEFAULT_SURFACE_GRADIENT),
-        )
-        .context("invalid main_parameters.mat1_surface_color_gradient")?;
+        let surface_gradient = if let Some(value) =
+            document.value("main_parameters", "mat1_surface_color_gradient")
+        {
+            parse_gradient(value).context("invalid main_parameters.mat1_surface_color_gradient")?
+        } else if version_is_before(&document.version, 2, 19)?
+            && let Some(value) = document.value("main_parameters", "mat1_surface_color_palette")
+        {
+            parse_legacy_palette(value)
+                .context("invalid main_parameters.mat1_surface_color_palette")?
+        } else {
+            parse_gradient(DEFAULT_SURFACE_GRADIENT).expect("valid built-in surface gradient")
+        };
+        let legacy_gradient_size = (surface_gradient.len() - 1) as f64;
+        let mut coloring_speed = document.number("main_parameters", "mat1_coloring_speed", 1.0)?;
+        let mut palette_offset =
+            document.number("main_parameters", "mat1_coloring_palette_offset", 0.0)?;
+        if version_is_before(&document.version, 2, 19)? {
+            // settings.cpp migrates pre-2.19 palette coordinates after the
+            // legacy palette has been converted to a positioned gradient.
+            palette_offset /= legacy_gradient_size;
+            coloring_speed *= 10.0 / legacy_gradient_size;
+        }
+        let legacy_material_defaults = version_is_before(&document.version, 2, 14)?;
         let material = MandelbulberMaterial {
             surface_color,
             use_colors_from_palette: document.boolean(
@@ -886,15 +1121,98 @@ impl MandelbulberScene {
                 "mat1_surface_gradient_enable",
                 true,
             )?,
-            coloring_speed: document.number("main_parameters", "mat1_coloring_speed", 1.0)?,
-            palette_offset: document.number(
-                "main_parameters",
-                "mat1_coloring_palette_offset",
-                0.0,
-            )?,
+            coloring_speed,
+            palette_offset,
             surface_gradient,
+            shading: document.number("main_parameters", "mat1_shading", 1.0)?,
+            specular: document.number(
+                "main_parameters",
+                "mat1_specular",
+                if legacy_material_defaults { 1.0 } else { 5.0 },
+            )?,
+            specular_width: document.number("main_parameters", "mat1_specular_width", 0.05)?,
+            specular_plastic_enabled: document.boolean(
+                "main_parameters",
+                "mat1_specular_plastic_enable",
+                true,
+            )?,
+            surface_roughness: document.number(
+                "main_parameters",
+                "mat1_surface_roughness",
+                0.01,
+            )?,
+            reflectance: document.number("main_parameters", "mat1_reflectance", 0.0)?,
             parameters: material_parameters,
         };
+        let background_colors = [
+            document
+                .value("main_parameters", "background_color_1")
+                .map(parse_rgb16)
+                .transpose()?
+                .unwrap_or([0.0, 38_306.0 / 65_535.0, 1.0]),
+            document
+                .value("main_parameters", "background_color_2")
+                .map(parse_rgb16)
+                .transpose()?
+                .unwrap_or([1.0; 3]),
+            document
+                .value("main_parameters", "background_color_3")
+                .map(parse_rgb16)
+                .transpose()?
+                .unwrap_or([0.0, 10_000.0 / 65_535.0, 500.0 / 65_535.0]),
+        ];
+        let modern_lights = !version_is_before(&document.version, 2, 25)?;
+        let main_light_rotation = if modern_lights {
+            document.vec3("main_parameters", "light1_rotation", [-45.0, 45.0, 0.0])?
+        } else {
+            [
+                document.number("main_parameters", "main_light_alpha", -45.0)?,
+                document.number("main_parameters", "main_light_beta", 45.0)?,
+                0.0,
+            ]
+        };
+        let main_light_color = document
+            .value(
+                "main_parameters",
+                if modern_lights {
+                    "light1_color"
+                } else {
+                    "main_light_colour"
+                },
+            )
+            .map(parse_rgb16)
+            .transpose()?
+            .unwrap_or([1.0; 3]);
+        let auxiliary_light_position = if modern_lights {
+            document.vec3("main_parameters", "light2_position", [3.0, -3.0, 3.0])?
+        } else {
+            document.vec3("main_parameters", "aux_light_position_1", [3.0, -3.0, 3.0])?
+        };
+        let auxiliary_light_color = document
+            .value(
+                "main_parameters",
+                if modern_lights {
+                    "light2_color"
+                } else {
+                    "aux_light_colour_1"
+                },
+            )
+            .map(parse_rgb16)
+            .transpose()?
+            .unwrap_or([
+                45_761.0 / 65_535.0,
+                53_633.0 / 65_535.0,
+                59_498.0 / 65_535.0,
+            ]);
+        let legacy_auxiliary_defined = !modern_lights
+            && [
+                "aux_light_position_1",
+                "aux_light_intensity_1",
+                "aux_light_colour_1",
+                "aux_light_enabled_1",
+            ]
+            .iter()
+            .any(|key| document.value("main_parameters", key).is_some());
 
         Ok(Self {
             source_version: document.version.clone(),
@@ -907,7 +1225,10 @@ impl MandelbulberScene {
             formula_rotations,
             formula_repeats,
             formula_scales,
+            primitive_planes,
+            primitive_spheres,
             force_delta_de,
+            force_analytic_de,
             delta_de_function,
             repeat_from: repeat_from as usize,
             width,
@@ -916,7 +1237,122 @@ impl MandelbulberScene {
             target,
             camera_top,
             camera_projection,
+            legacy_coordinate_system,
             fov_degrees,
+            background_three_colors: document.boolean(
+                "main_parameters",
+                "background_3_colors_enable",
+                true,
+            )?,
+            background_colors,
+            background_brightness: document.number(
+                "main_parameters",
+                "background_brightness",
+                1.0,
+            )?,
+            background_gamma: document.number("main_parameters", "background_gamma", 1.0)?,
+            image_brightness: document.number("main_parameters", "brightness", 1.0)?,
+            image_contrast: document.number("main_parameters", "contrast", 1.0)?,
+            image_gamma: document.number("main_parameters", "gamma", 1.0)?,
+            image_saturation: document.number("main_parameters", "saturation", 1.0)?,
+            main_light_enabled: document.boolean(
+                "main_parameters",
+                if modern_lights {
+                    "light1_enabled"
+                } else {
+                    "main_light_enable"
+                },
+                true,
+            )?,
+            main_light_rotation,
+            main_light_intensity: document.number(
+                "main_parameters",
+                if modern_lights {
+                    "light1_intensity"
+                } else {
+                    "main_light_intensity"
+                },
+                1.0,
+            )?,
+            main_light_color,
+            main_light_soft_shadow_degrees: document.number(
+                "main_parameters",
+                if modern_lights {
+                    "light1_soft_shadow_cone"
+                } else {
+                    "shadows_cone_angle"
+                },
+                1.0,
+            )?,
+            main_light_cast_shadows: document.boolean(
+                "main_parameters",
+                if modern_lights {
+                    "light1_cast_shadows"
+                } else {
+                    "shadows_enabled"
+                },
+                true,
+            )?,
+            main_light_penetrating: document.boolean(
+                "main_parameters",
+                if modern_lights {
+                    "light1_penetrating"
+                } else {
+                    "penetrating_lights"
+                },
+                true,
+            )?,
+            ambient_occlusion_enabled: document.boolean(
+                "main_parameters",
+                "ambient_occlusion_enabled",
+                false,
+            )?,
+            ambient_occlusion_mode: document.integer(
+                "main_parameters",
+                "ambient_occlusion_mode",
+                2,
+            )?,
+            ambient_occlusion: document.number("main_parameters", "ambient_occlusion", 1.0)?,
+            ambient_occlusion_quality: document.integer(
+                "main_parameters",
+                "ambient_occlusion_quality",
+                4,
+            )?,
+            ambient_occlusion_fast_tune: document.number(
+                "main_parameters",
+                "ambient_occlusion_fast_tune",
+                1.0,
+            )?,
+            auxiliary_light_enabled: if modern_lights {
+                document.boolean("main_parameters", "light2_enabled", false)?
+            } else if legacy_auxiliary_defined {
+                document.boolean("main_parameters", "aux_light_enabled_1", true)?
+            } else {
+                false
+            },
+            auxiliary_light_position,
+            // Mandelbulber's pre-2.25 migration divides legacy auxiliary
+            // light intensities by four before constructing light #2.
+            auxiliary_light_intensity: document.number(
+                "main_parameters",
+                if modern_lights {
+                    "light2_intensity"
+                } else {
+                    "aux_light_intensity_1"
+                },
+                if modern_lights { 0.325 } else { 1.3 },
+            )? / if modern_lights { 1.0 } else { 4.0 },
+            auxiliary_light_color,
+            auxiliary_light_cast_shadows: document.boolean(
+                "main_parameters",
+                "light2_cast_shadows",
+                true,
+            )?,
+            auxiliary_light_penetrating: document.boolean(
+                "main_parameters",
+                "light2_penetrating",
+                true,
+            )?,
             max_iterations,
             bailout: if formula_id == 3 {
                 10.0
@@ -1024,6 +1460,7 @@ impl MandelbulberScene {
             fractal_repeat,
             de_factor,
             advanced_quality,
+            delta_de_relative_delta,
             abs_min_marching_step,
             abs_max_marching_step,
             rel_min_marching_step,
@@ -1122,7 +1559,7 @@ impl MandelbulberScene {
     }
 
     pub fn hybrid_coloring_sequence(&self) -> Result<Vec<u8>> {
-        self.hybrid_sequence_with_limit(self.max_iterations.saturating_mul(4))
+        self.hybrid_sequence_with_limit(self.max_iterations)
     }
 
     fn hybrid_sequence_with_limit(&self, iteration_limit: u32) -> Result<Vec<u8>> {
@@ -1174,10 +1611,80 @@ impl MandelbulberScene {
         Ok(sequence)
     }
 
+    pub fn mesh_delta_relative_delta(&self) -> f32 {
+        if self.advanced_quality {
+            self.delta_de_relative_delta as f32
+        } else {
+            MESH_DELTA_RELATIVE_DEFAULT
+        }
+    }
+
     pub fn apply_to_config(&self, config: &mut FptRenderConfig) {
         config.sdf_id = SDF_MANDELBULBER;
         config.width = self.width;
         config.height = self.height;
+
+        config.sdf_flat_union_count =
+            (self.primitive_planes.len() + self.primitive_spheres.len()) as u32;
+        config
+            .sdf_flat_union_instances
+            .fill(FptPrimitiveInstance::default());
+        for (target, plane) in config
+            .sdf_flat_union_instances
+            .iter_mut()
+            .zip(&self.primitive_planes)
+        {
+            let rotation = rotation2_matrix(plane.rotation.map(f64::to_radians));
+            let normal = map_mandel_vector(rotation[2]);
+            let position = map_mandel_point(plane.position).map(|value| value * WORLD_SCALE);
+            *target = FptPrimitiveInstance {
+                transform: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+                data: [
+                    normal[0] as f32,
+                    normal[1] as f32,
+                    normal[2] as f32,
+                    -dot(normal, position) as f32,
+                ],
+                opcode: SDF_OP_PLANE,
+                distance_scale: 1.0,
+                source_instruction: plane.material_id,
+                _pad0: 0,
+            };
+        }
+        for (target, sphere) in config
+            .sdf_flat_union_instances
+            .iter_mut()
+            .skip(self.primitive_planes.len())
+            .zip(&self.primitive_spheres)
+        {
+            let position = map_mandel_point(sphere.position).map(|value| value * WORLD_SCALE);
+            *target = FptPrimitiveInstance {
+                transform: [
+                    1.0,
+                    0.0,
+                    0.0,
+                    -position[0] as f32,
+                    0.0,
+                    1.0,
+                    0.0,
+                    -position[1] as f32,
+                    0.0,
+                    0.0,
+                    1.0,
+                    -position[2] as f32,
+                ],
+                data: [
+                    (sphere.radius * WORLD_SCALE) as f32,
+                    (sphere.wall_thickness * WORLD_SCALE) as f32,
+                    0.0,
+                    0.0,
+                ],
+                opcode: SDF_OP_SPHERE,
+                distance_scale: 1.0,
+                source_instruction: sphere.material_id,
+                _pad0: u32::from(sphere.empty),
+            };
+        }
 
         let (source_camera, source_target) = self
             .periodic_camera_rebase()
@@ -1196,6 +1703,11 @@ impl MandelbulberScene {
             map_mandel_vector(self.camera_top),
             config.camera_yaw_pitch,
         ) as f32;
+        config.camera_image_y_sign = if self.legacy_coordinate_system {
+            -1.0
+        } else {
+            1.0
+        };
         // Mandelbulber spans [-0.5, 0.5] on the image plane and multiplies by
         // 2*tan(fov/2). Metal-FPT uses the same span with 1/tan(fov/2) as its
         // focal length, so its configured angle must absorb that factor of 2.
@@ -1240,11 +1752,41 @@ impl MandelbulberScene {
             0.0
         };
         config.world = [3.0, 1.0, 125.0, 30.0, 0.45, 1.0, 1.0];
-        config.world_one_color = [0.72, 0.80, 0.95];
-        config.background_gradient = [0.08, 0.11, 0.16, 0.008, 0.012, 0.02];
-        config.sun = [1.0, 130.0, 32.0, 1.6, 0.055];
-        config.sun_color = [1.0, 0.82, 0.68];
-        config.post[1] = 1.0;
+        config.world_one_color = self.background_colors[1];
+        config.background_gradient[..3].copy_from_slice(&self.background_colors[0]);
+        config.background_gradient[3..].copy_from_slice(&self.background_colors[2]);
+        // Background modes 2 and 3 reproduce Mandelbulber's three-color and
+        // one-color backgrounds respectively. The existing FPT gradient mode
+        // remains mode 1 for ordinary JSON scenes.
+        config.world[1] = self.background_brightness as f32;
+        config.world[5] = self.background_gamma as f32;
+        config.world[6] = if self.background_three_colors {
+            2.0
+        } else {
+            3.0
+        };
+        let light_direction = self.main_light_direction();
+        let light_horizontal = light_direction[0].hypot(light_direction[2]);
+        config.sun = [
+            u32::from(self.main_light_enabled) as f32,
+            light_direction[0].atan2(light_direction[2]).to_degrees() as f32,
+            light_direction[1].atan2(light_horizontal).to_degrees() as f32,
+            self.main_light_intensity as f32,
+            self.main_light_soft_shadow_degrees.to_radians() as f32,
+        ];
+        config.sun_color = self.main_light_color;
+        // Negative tone-map values select Mandelbulber's image-adjustment
+        // order in the shader. Its default gamma is identity rather than the
+        // sRGB transfer used by native FPT scenes.
+        config.post = [
+            -(self.image_gamma.max(1.0e-6) as f32),
+            self.image_brightness as f32,
+            0.0,
+            self.image_saturation as f32,
+            self.image_contrast as f32,
+            0.0,
+            0.0,
+        ];
 
         config.set_values[PARAM_WORLD_SCALE] = WORLD_SCALE as f32;
         config.set_values[PARAM_MAX_ITERATIONS] = self.max_iterations as f32;
@@ -1335,11 +1877,35 @@ impl MandelbulberScene {
         config.fractal_style[3] = 1.0;
         config.fractal_style[4] = 0.72;
         config.fractal_style[5] = 0.08;
-        // Deep Mandelbulb close-ups can trap every short path and fully
-        // self-shadow under Metal-FPT's sun-only direct lighting. Preserve a
-        // small visible albedo floor without changing the procedural field.
         config.fractal_style[6] = if analytic_formula { 0.04 } else { 0.0 };
         config.fractal_style[8..11].copy_from_slice(&self.material.surface_color);
+
+        // Mandel compatibility renders intentionally use a deterministic,
+        // unshadowed Lambert surface so geometry comparisons are independent
+        // of either renderer's AO, specular, reflection, and post-effect paths.
+        config.mandel_appearance_mode = 1;
+        config.world[1] = 1.0;
+        config.world[5] = 1.0;
+        config.world[6] = 3.0;
+        config.background_gradient[..3].fill(0.0);
+        config.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
+    }
+
+    fn main_light_direction(&self) -> [f64; 3] {
+        let forward = normalize(map_mandel_vector(subtract(self.target, self.camera)))
+            .expect("camera direction is non-zero");
+        let top = normalize(map_mandel_vector(self.camera_top)).expect("camera top is non-zero");
+        let right = normalize(cross(forward, top)).expect("camera basis is non-degenerate");
+        // Mandelbulber retains 180.8 in this legacy conversion path. Match it
+        // exactly because all pre-2.25 main-light angles pass through it.
+        let rotation = self
+            .main_light_rotation
+            .map(|degrees| degrees / 180.8 * std::f64::consts::PI);
+        let mut direction = scale(forward, -1.0);
+        direction = rotate_around_axis(direction, forward, rotation[2]);
+        direction = rotate_around_axis(direction, right, -rotation[1]);
+        direction = rotate_around_axis(direction, top, rotation[0]);
+        normalize(direction).expect("rotated light direction is non-zero")
     }
 
     #[cfg_attr(not(test), allow(dead_code))]
@@ -2519,6 +3085,25 @@ fn dot(left: [f64; 3], right: [f64; 3]) -> f64 {
     left[0] * right[0] + left[1] * right[1] + left[2] * right[2]
 }
 
+fn cross(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
+    [
+        left[1] * right[2] - left[2] * right[1],
+        left[2] * right[0] - left[0] * right[2],
+        left[0] * right[1] - left[1] * right[0],
+    ]
+}
+
+fn rotate_around_axis(value: [f64; 3], axis: [f64; 3], angle: f64) -> [f64; 3] {
+    let (sine, cosine) = angle.sin_cos();
+    let cross = cross(axis, value);
+    let along = scale(axis, dot(axis, value) * (1.0 - cosine));
+    [
+        value[0] * cosine + cross[0] * sine + along[0],
+        value[1] * cosine + cross[1] * sine + along[1],
+        value[2] * cosine + cross[2] * sine + along[2],
+    ]
+}
+
 fn subtract(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
     [left[0] - right[0], left[1] - right[1], left[2] - right[2]]
 }
@@ -2634,6 +3219,104 @@ IFS_scale 1,4;
     }
 
     #[test]
+    fn parser_migrates_pre_219_surface_color_palette() {
+        let source = IFS_SCENE
+            .replace("# version 2.33", "# version 2.13")
+            .replace(
+                "detail_level 2;",
+                "detail_level 2;\nmat1_coloring_palette_offset 9;\nmat1_coloring_speed 3;\nmat1_surface_color_palette ff0000 00ff00 0000ff;",
+            );
+        let scene = MandelbulberScene::parse(&source).expect("legacy palette scene");
+        let stops = &scene.material.surface_gradient;
+        assert_eq!(stops.len(), 4);
+        assert_eq!(stops[0].position, 0.0);
+        assert_eq!(stops[1].position, 0.3333);
+        assert_eq!(stops[2].position, 0.6666);
+        assert_eq!(stops[3].position, 1.0);
+        assert_eq!(stops[0].color, [255.0 / 256.0, 0.0, 0.0]);
+        assert_eq!(stops[1].color, [0.0, 255.0 / 256.0, 0.0]);
+        assert_eq!(stops[2].color, [0.0, 0.0, 255.0 / 256.0]);
+        assert_eq!(stops[3].color, stops[0].color);
+        assert_eq!(scene.material.palette_offset, 3.0);
+        assert_eq!(scene.material.coloring_speed, 10.0);
+    }
+
+    #[test]
+    fn parser_migrates_pre_219_default_gradient_palette_coordinates() {
+        let source = IFS_SCENE
+            .replace("# version 2.33", "# version 2.14")
+            .replace(
+                "detail_level 2;",
+                "detail_level 2;\nmat1_coloring_palette_offset 174,56;\nmat1_coloring_speed 0,1;",
+            );
+        let scene = MandelbulberScene::parse(&source).expect("legacy default-gradient scene");
+        assert_eq!(scene.material.surface_gradient.len(), 11);
+        assert!((scene.material.palette_offset - 17.456).abs() < 1.0e-12);
+        assert!((scene.material.coloring_speed - 0.1).abs() < 1.0e-12);
+    }
+
+    #[test]
+    fn config_uses_neutral_appearance_for_geometry_comparison() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nbackground_3_colors_enable false;\nbackground_color_1 2800 6200 aa00;\nbackground_brightness 0,8;\nbackground_gamma 1,25;\nbrightness 0,9;\ncontrast 1,1;\ngamma 0,7;\nsaturation 0,75;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("appearance scene");
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+
+        assert_eq!(config.mandel_appearance_mode, 1);
+        assert_eq!(config.world[6], 3.0);
+        assert_eq!(config.world[1], 1.0);
+        assert_eq!(config.world[5], 1.0);
+        assert_eq!(config.background_gradient[..3], [0.0, 0.0, 0.0]);
+        assert_eq!(config.post, [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn config_maps_legacy_mandelbulber_directional_light() {
+        let source = IFS_SCENE
+            .replace("# version 2.33", "# version 2.13")
+            .replace(
+                "detail_level 2;",
+                "detail_level 2;\nmain_light_alpha -35;\nmain_light_beta -25;\nmain_light_colour ff00 8000 4000;\nmain_light_intensity 0,7;\nshadows_cone_angle 2;",
+            );
+        let scene = MandelbulberScene::parse(&source).expect("legacy light scene");
+        let direction = scene.main_light_direction();
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+
+        assert_eq!(config.sun[0], 1.0);
+        assert!((config.sun[3] - 0.7).abs() < 1.0e-6);
+        assert!((config.sun[4] - 2.0_f32.to_radians()).abs() < 1.0e-6);
+        assert_eq!(
+            config.sun_color,
+            [
+                0xff00 as f32 / 65_535.0,
+                0x8000 as f32 / 65_535.0,
+                0x4000 as f32 / 65_535.0
+            ]
+        );
+
+        let yaw = f64::from(config.sun[1]).to_radians();
+        let pitch = f64::from(config.sun[2]).to_radians();
+        let reconstructed = [
+            yaw.sin() * pitch.cos(),
+            pitch.sin(),
+            yaw.cos() * pitch.cos(),
+        ];
+        assert!(dot(direction, reconstructed) > 1.0 - 1.0e-12);
+    }
+
+    #[test]
+    fn parser_uses_pre_214_material_defaults() {
+        let source = IFS_SCENE.replace("# version 2.33", "# version 2.13");
+        let scene = MandelbulberScene::parse(&source).expect("legacy material scene");
+        assert_eq!(scene.material.shading, 1.0);
+        assert_eq!(scene.material.specular, 1.0);
+    }
+
+    #[test]
     fn parser_migrates_pre_221_projection_fov_to_degrees() {
         let legacy_perspective = IFS_SCENE
             .replace("# version 2.33", "# version 2.20")
@@ -2676,6 +3359,11 @@ IFS_scale 1,4;
                 .unwrap()
                 .force_delta_de
         );
+        assert!(
+            !MandelbulberScene::parse(&forced_delta)
+                .unwrap()
+                .force_analytic_de
+        );
 
         let forced_analytic = IFS_SCENE.replace(
             "[main_parameters]",
@@ -2685,6 +3373,11 @@ IFS_scale 1,4;
             !MandelbulberScene::parse(&forced_analytic)
                 .unwrap()
                 .force_delta_de
+        );
+        assert!(
+            MandelbulberScene::parse(&forced_analytic)
+                .unwrap()
+                .force_analytic_de
         );
 
         let legacy_delta = IFS_SCENE.replace(
@@ -2696,6 +3389,10 @@ IFS_scale 1,4;
                 .unwrap()
                 .force_delta_de
         );
+
+        let preferred = MandelbulberScene::parse(IFS_SCENE).unwrap();
+        assert!(!preferred.force_delta_de);
+        assert!(!preferred.force_analytic_de);
 
         let logarithmic = IFS_SCENE.replace(
             "[main_parameters]",
@@ -2778,9 +3475,23 @@ target 0 0 0;
         assert_eq!(config.sdf_id, SDF_MANDELBULBER);
         assert!(config.focus_distance > 5.0);
         assert!(config.camera_roll.abs() > 1.0);
+        assert_eq!(config.camera_image_y_sign, 1.0);
         assert_eq!(config.set_values[PARAM_IFS_SCALE], 1.4);
         assert_eq!(config.fractal_style_mode, 2);
         assert_eq!(config.render[1], 10_000.0);
+    }
+
+    #[test]
+    fn config_preserves_legacy_image_coordinates() {
+        let source = IFS_SCENE.replace(
+            "[main_parameters]",
+            "[main_parameters]\nlegacy_coordinate_system true;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("parse legacy camera scene");
+        assert!(scene.legacy_coordinate_system);
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+        assert_eq!(config.camera_image_y_sign, -1.0);
     }
 
     #[test]
@@ -2860,7 +3571,7 @@ target 0 0 0;
     fn config_preserves_mandelbulber_threshold_policy() {
         let source = IFS_SCENE.replace(
             "detail_level 2;",
-            "detail_level 2;\nconstant_DE_threshold true;\nDE_thresh 0,00015;\nDE_factor 0,326;\nsmoothness 0,1;",
+            "detail_level 2;\nconstant_DE_threshold true;\nDE_thresh 0,00015;\nDE_factor 0,326;\nsmoothness 0,1;\nadvanced_quality true;\ndeltade_relative_delta 0,004;",
         );
         let scene = MandelbulberScene::parse(&source).expect("parse threshold policy");
         let mut config = FptRenderConfig::default();
@@ -2869,6 +3580,15 @@ target 0 0 0;
         assert!((config.vset_values[VPARAM_CONSTANT_THRESHOLD] - 0.1536).abs() < 1.0e-6);
         assert!((config.vset_values[VPARAM_DE_FACTOR] - 0.326).abs() < 1.0e-6);
         assert!((config.vset_values[VPARAM_SMOOTHNESS] - 0.1).abs() < 1.0e-6);
+        assert_eq!(config.vset_values[VPARAM_ADVANCED_QUALITY], 1.0);
+        assert!((scene.delta_de_relative_delta - 0.004).abs() < 1.0e-12);
+        assert!((scene.mesh_delta_relative_delta() - 0.004).abs() < 1.0e-7);
+
+        let default_scene = MandelbulberScene::parse(IFS_SCENE).expect("default mesh policy");
+        assert_eq!(
+            default_scene.mesh_delta_relative_delta(),
+            MESH_DELTA_RELATIVE_DEFAULT
+        );
     }
 
     #[test]
@@ -2944,6 +3664,50 @@ target 0 0 0;
         let source = source.replace("formula_2 7;", "formula_2 7;\nboolean_operator_1 0;");
         let scene = MandelbulberScene::parse(&source).expect("parse explicit AND");
         assert_eq!(scene.boolean_operators[0], 0, "AND is Mandelbulber value 0");
+    }
+
+    #[test]
+    fn config_maps_mandelbulber_primitive_planes_into_world_space() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nprimitive_plane_1_enabled true;\nprimitive_plane_1_material_id 7;\nprimitive_plane_1_position 1 2 3;\nprimitive_plane_1_rotation 0 0 0;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("primitive plane scene");
+        assert_eq!(scene.primitive_planes.len(), 1);
+        assert_eq!(scene.primitive_planes[0].material_id, 7);
+
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+        assert_eq!(config.sdf_flat_union_count, 1);
+        let plane = config.sdf_flat_union_instances[0];
+        assert_eq!(plane.opcode, SDF_OP_PLANE);
+        assert_eq!(plane.source_instruction, 7);
+        assert_eq!(plane.data[..3], [0.0, 1.0, 0.0]);
+        assert_eq!(plane.data[3], -3.0 * WORLD_SCALE as f32);
+        assert_eq!(plane.distance_scale, 1.0);
+    }
+
+    #[test]
+    fn config_maps_mandelbulber_empty_sphere_shells_into_world_space() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nprimitive_sphere_1_enabled true;\nprimitive_sphere_1_empty true;\nprimitive_sphere_1_material_id 9;\nprimitive_sphere_1_position 1 2 3;\nprimitive_sphere_1_radius 0.5;\nprimitive_sphere_1_wall_thickness 0.125;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("primitive sphere scene");
+        assert_eq!(scene.primitive_spheres.len(), 1);
+
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+        assert_eq!(config.sdf_flat_union_count, 1);
+        let sphere = config.sdf_flat_union_instances[0];
+        assert_eq!(sphere.opcode, SDF_OP_SPHERE);
+        assert_eq!(sphere.source_instruction, 9);
+        assert_eq!(sphere._pad0, 1);
+        assert_eq!(sphere.data[0], 0.5 * WORLD_SCALE as f32);
+        assert_eq!(sphere.data[1], 0.125 * WORLD_SCALE as f32);
+        assert_eq!(sphere.transform[3], -WORLD_SCALE as f32);
+        assert_eq!(sphere.transform[7], -3.0 * WORLD_SCALE as f32);
+        assert_eq!(sphere.transform[11], -2.0 * WORLD_SCALE as f32);
     }
 
     #[test]
