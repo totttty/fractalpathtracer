@@ -584,7 +584,9 @@ the pixel footprint and output-cell locality limits and their normals remain
 coherent. The triangles then use the ordinary in-memory V7 clipping and
 quantization path; there is no PLY or GLB intermediary. The standard
 `--surface-triangle-threshold-scale` multiplies the default `2x` pixel-footprint
-discontinuity limit for this mode.
+discontinuity limit for this mode. `--surface-triangle-resolution` is the
+maximum capture axis; the exporter preserves the authored image aspect on the
+other axis and uses the actual capture height for projected pixel footprints.
 
 This representation includes only geometry visible from the authored camera.
 The JSON report therefore sets `view_dependent: true`; consumers must not treat

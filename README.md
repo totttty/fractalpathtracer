@@ -316,7 +316,10 @@ fpt-metal voxel-export scene.fract --out scene.fptvox \
 It traces the authored continuous view in Metal, connects only neighboring hit
 samples that pass depth, normal, and maximum-edge discontinuity guards, clips
 those triangles directly into FPTVOX7 cells in Rust, and writes no intermediate
-PLY. The export report identifies `view_dependent: true`, capture resolution,
+PLY. `--surface-triangle-resolution` specifies the maximum capture axis; the
+other axis is derived from the authored Mandelbulber image aspect, so a 16:9
+scene requested at `192` captures `192x108` rather than a distorted square.
+The export report identifies `view_dependent: true`, capture resolution,
 accepted/rejected triangle counts, and diagnostic GPU time. This mode is useful
 for structural diagnosis and camera-matched cached assets; it is not a complete
 all-view replacement for lattice V7. On the current `300x300` pilots it exactly

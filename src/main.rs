@@ -408,6 +408,26 @@ const STRUCTURAL_DIAGNOSTIC_RECORD_BYTES: usize = 64;
 const DENSE_STRUCTURAL_VIEW_OCCUPANCY_PER_MILLE: usize = 999;
 const INDEXED_TRIANGLE_AUTO_MIN_INTERSECTION_REDUCTION_PCT: f64 = 28.0;
 
+fn aspect_capture_size(maximum_axis: u32, authored_size: [u32; 2]) -> [u32; 2] {
+    let maximum_axis = maximum_axis.max(2);
+    let [width, height] = authored_size;
+    if width >= height {
+        [
+            maximum_axis,
+            ((u64::from(maximum_axis) * u64::from(height) + u64::from(width) / 2)
+                / u64::from(width))
+            .clamp(2, u64::from(maximum_axis)) as u32,
+        ]
+    } else {
+        [
+            ((u64::from(maximum_axis) * u64::from(width) + u64::from(height) / 2)
+                / u64::from(height))
+            .clamp(2, u64::from(maximum_axis)) as u32,
+            maximum_axis,
+        ]
+    }
+}
+
 fn indexed_triangle_intersection_reduction_pct(
     reference_count: usize,
     clipped_triangle_count: usize,
@@ -469,6 +489,8 @@ struct StructuralCaptureCacheManifest {
     record_bytes: usize,
     requested_sampling_resolution: u32,
     effective_sampling_resolution: u32,
+    requested_capture_size: [u32; 2],
+    effective_capture_size: [u32; 2],
     empty_unbounded_fallback_to_bounds: bool,
     bounds_fallback_selected: bool,
     generated_source_sha256: String,
@@ -484,14 +506,17 @@ struct StructuralCaptureCacheManifest {
 fn structural_capture_cache_manifest(
     generated_source: &[u8],
     config: &FptRenderConfig,
-    sampling_resolution: u32,
+    capture_size: [u32; 2],
     world_scale: f32,
 ) -> StructuralCaptureCacheManifest {
+    let sampling_resolution = *capture_size.iter().max().expect("capture dimensions");
     StructuralCaptureCacheManifest {
-        version: 3,
+        version: 4,
         record_bytes: STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
         requested_sampling_resolution: sampling_resolution,
         effective_sampling_resolution: sampling_resolution,
+        requested_capture_size: capture_size,
+        effective_capture_size: capture_size,
         empty_unbounded_fallback_to_bounds: true,
         bounds_fallback_selected: false,
         generated_source_sha256: format!("{:x}", Sha256::digest(generated_source)),
@@ -514,7 +539,7 @@ fn structural_capture_cache_manifest_path(path: &Path) -> PathBuf {
 fn read_structural_capture_cache(
     path: &Path,
     expected: &StructuralCaptureCacheManifest,
-) -> Result<(Vec<u8>, u32, bool)> {
+) -> Result<(Vec<u8>, [u32; 2], bool)> {
     let manifest_path = structural_capture_cache_manifest_path(path);
     let manifest: StructuralCaptureCacheManifest =
         serde_json::from_slice(&fs::read(&manifest_path).with_context(|| {
@@ -524,9 +549,11 @@ fn read_structural_capture_cache(
             )
         })?)?;
     let effective_sampling_resolution = manifest.effective_sampling_resolution;
+    let effective_capture_size = manifest.effective_capture_size;
     let bounds_fallback_selected = manifest.bounds_fallback_selected;
     let mut normalized = manifest.clone();
     normalized.effective_sampling_resolution = expected.effective_sampling_resolution;
+    normalized.effective_capture_size = expected.effective_capture_size;
     normalized.bounds_fallback_selected = expected.bounds_fallback_selected;
     ensure!(
         &normalized == expected,
@@ -534,42 +561,49 @@ fn read_structural_capture_cache(
         manifest_path.display()
     );
     ensure!(
-        (2..=1024).contains(&effective_sampling_resolution)
+        effective_capture_size
+            .iter()
+            .all(|dimension| (2..=1024).contains(dimension))
+            && effective_sampling_resolution
+                == *effective_capture_size
+                    .iter()
+                    .max()
+                    .expect("capture dimensions")
             && ((!bounds_fallback_selected
-                && effective_sampling_resolution == expected.requested_sampling_resolution)
+                && effective_capture_size == expected.requested_capture_size)
                 || (bounds_fallback_selected
                     && effective_sampling_resolution >= expected.requested_sampling_resolution)),
         "structural capture cache has invalid effective resolution"
     );
     let bytes = fs::read(path)
         .with_context(|| format!("read structural capture cache {}", path.display()))?;
-    let expected_bytes = effective_sampling_resolution as usize
-        * effective_sampling_resolution as usize
+    let expected_bytes = effective_capture_size[0] as usize
+        * effective_capture_size[1] as usize
         * expected.record_bytes;
     ensure!(
         bytes.len() == expected_bytes,
         "structural capture cache has {} bytes; expected {expected_bytes}",
         bytes.len()
     );
-    Ok((
-        bytes,
-        effective_sampling_resolution,
-        bounds_fallback_selected,
-    ))
+    Ok((bytes, effective_capture_size, bounds_fallback_selected))
 }
 
 fn write_structural_capture_cache(
     path: &Path,
     manifest: &StructuralCaptureCacheManifest,
     bytes: &[u8],
-    effective_sampling_resolution: u32,
+    effective_capture_size: [u32; 2],
     bounds_fallback_selected: bool,
 ) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
     let mut manifest = manifest.clone();
-    manifest.effective_sampling_resolution = effective_sampling_resolution;
+    manifest.effective_sampling_resolution = *effective_capture_size
+        .iter()
+        .max()
+        .expect("capture dimensions");
+    manifest.effective_capture_size = effective_capture_size;
     manifest.bounds_fallback_selected = bounds_fallback_selected;
     fs::write(path, bytes)?;
     fs::write(
@@ -981,7 +1015,7 @@ fn capture_local_parallax_samples(
 fn capture_structural_surface(
     metallib: &Path,
     base_config: &FptRenderConfig,
-    sampling_resolution: u32,
+    capture_size: [u32; 2],
     clip_voxel_bounds: bool,
 ) -> Result<(Vec<u8>, f64)> {
     let directory = std::env::temp_dir().join(format!(
@@ -1003,8 +1037,8 @@ fn capture_structural_surface(
         config.renderer_backend = RENDERER_SDF;
         config.preview = 1;
         config.samples = 1;
-        config.width = sampling_resolution;
-        config.height = sampling_resolution;
+        config.width = capture_size[0];
+        config.height = capture_size[1];
         let diagnostic = FptDiagnosticConfig {
             mode: DiagnosticMode::HitMask as u32,
             _pad0: 0,
@@ -1038,8 +1072,8 @@ fn capture_structural_surface(
         let bytes = fs::read(&structural)?;
         ensure!(
             bytes.len()
-                == sampling_resolution as usize
-                    * sampling_resolution as usize
+                == capture_size[0] as usize
+                    * capture_size[1] as usize
                     * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
             "invalid view-triangle structural dump"
         );
@@ -1052,22 +1086,20 @@ fn capture_structural_surface(
 fn capture_structural_surface_with_bounds_fallback(
     metallib: &Path,
     config: &FptRenderConfig,
-    sampling_resolution: u32,
+    capture_size: [u32; 2],
     world_scale: f32,
-) -> Result<(Vec<u8>, f64, u32, bool)> {
-    let (bytes, gpu_ms) = capture_structural_surface(metallib, config, sampling_resolution, false)?;
+) -> Result<(Vec<u8>, f64, [u32; 2], bool)> {
+    let (bytes, gpu_ms) = capture_structural_surface(metallib, config, capture_size, false)?;
     if structural_visible_bounds(&bytes, world_scale).is_ok() {
-        return Ok((bytes, gpu_ms, sampling_resolution, false));
+        return Ok((bytes, gpu_ms, capture_size, false));
     }
-    let fallback_resolution = sampling_resolution.max(1024);
+    let fallback_size = aspect_capture_size(
+        (*capture_size.iter().max().expect("capture dimensions")).max(1024),
+        capture_size,
+    );
     let (bounded_bytes, bounded_gpu_ms) =
-        capture_structural_surface(metallib, config, fallback_resolution, true)?;
-    Ok((
-        bounded_bytes,
-        gpu_ms + bounded_gpu_ms,
-        fallback_resolution,
-        true,
-    ))
+        capture_structural_surface(metallib, config, fallback_size, true)?;
+    Ok((bounded_bytes, gpu_ms + bounded_gpu_ms, fallback_size, true))
 }
 
 #[derive(Clone, Copy)]
@@ -1264,9 +1296,9 @@ fn merge_view_triangle_surfaces(
     ))
 }
 
-fn structural_surface_triangles(
+fn structural_surface_triangles_rect(
     bytes: &[u8],
-    sampling_resolution: u32,
+    capture_size: [u32; 2],
     locality_resolution: u32,
     camera_fov_degrees: f32,
     export_bounds: Aabb,
@@ -1282,9 +1314,10 @@ fn structural_surface_triangles(
     Vec<[fpt_metal::fptvox7::MeshSurfaceVertex; 3]>,
     ViewTriangleSurfaceSummary,
 )> {
-    let extent = sampling_resolution as usize;
+    let width = capture_size[0] as usize;
+    let height = capture_size[1] as usize;
     ensure!(
-        bytes.len() == extent * extent * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
+        bytes.len() == width * height * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
         "structural surface byte count mismatch"
     );
     let vertices = bytes
@@ -1307,13 +1340,13 @@ fn structural_surface_triangles(
     let mesh_step_world = export_bounds.size().into_iter().fold(0.0_f32, f32::max) * world_scale
         / locality_resolution as f32;
     let mesh_edge_limit_squared = 3.0 * mesh_step_world.powi(2) * 1.05_f32.powi(2);
-    for y in 0..extent - 1 {
-        for x in 0..extent - 1 {
+    for y in 0..height - 1 {
+        for x in 0..width - 1 {
             let indices = [
-                x + y * extent,
-                x + 1 + y * extent,
-                x + 1 + (y + 1) * extent,
-                x + (y + 1) * extent,
+                x + y * width,
+                x + 1 + y * width,
+                x + 1 + (y + 1) * width,
+                x + (y + 1) * width,
             ];
             let valid = indices.map(|index| vertices[index].hit);
             if valid.iter().filter(|value| **value).count() < 3 {
@@ -1345,7 +1378,7 @@ fn structural_surface_triangles(
                     .fold(0.0_f32, f32::max)
                     * 2.0
                     * tangent
-                    / sampling_resolution as f32;
+                    / capture_size[1] as f32;
                 let maximum_edge_squared = [(0, 1), (1, 2), (2, 0)]
                     .into_iter()
                     .map(|(left, right)| {
@@ -1459,7 +1492,7 @@ fn structural_surface_triangles(
             let Some(bitangent_axis) = normalize3(cross3(normal, tangent_axis)) else {
                 continue;
             };
-            let pixel_footprint = sample.depth * 2.0 * tangent / sampling_resolution as f32;
+            let pixel_footprint = sample.depth * 2.0 * tangent / capture_size[1] as f32;
             let low_normal = low_normal_vertices[index];
             let effective_scale = if dense_view {
                 splat_pixel_scale.max(1.5)
@@ -1511,8 +1544,8 @@ fn structural_surface_triangles(
     }
     let summary = ViewTriangleSurfaceSummary {
         captured_views: 1,
-        captured_pixels: extent * extent,
-        maximum_capture_resolution: sampling_resolution,
+        captured_pixels: width * height,
+        maximum_capture_resolution: *capture_size.iter().max().expect("capture dimensions"),
         bounds_fallback_captures: 0,
         in_bounds_hits,
         connected_hit_pixels,
@@ -1527,6 +1560,42 @@ fn structural_surface_triangles(
         diagnostic_gpu_ms,
     };
     Ok((triangles, summary))
+}
+
+#[cfg(test)]
+fn structural_surface_triangles(
+    bytes: &[u8],
+    sampling_resolution: u32,
+    locality_resolution: u32,
+    camera_fov_degrees: f32,
+    export_bounds: Aabb,
+    world_scale: f32,
+    discontinuity_scale: f32,
+    emit_isolated_splats: bool,
+    emit_low_normal_triangles: bool,
+    splat_pixel_scale: f32,
+    splat_cell_cap: f32,
+    triangle_dilation: f32,
+    diagnostic_gpu_ms: f64,
+) -> Result<(
+    Vec<[fpt_metal::fptvox7::MeshSurfaceVertex; 3]>,
+    ViewTriangleSurfaceSummary,
+)> {
+    structural_surface_triangles_rect(
+        bytes,
+        [sampling_resolution; 2],
+        locality_resolution,
+        camera_fov_degrees,
+        export_bounds,
+        world_scale,
+        discontinuity_scale,
+        emit_isolated_splats,
+        emit_low_normal_triangles,
+        splat_pixel_scale,
+        splat_cell_cap,
+        triangle_dilation,
+        diagnostic_gpu_ms,
+    )
 }
 
 fn cached_mandel_voxel_metallib(
@@ -2396,13 +2465,21 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     } else {
         surface_local_parallax_resolution
     };
+    let structural_capture_size = if surface_view_triangles {
+        aspect_capture_size(
+            structural_capture_resolution,
+            [loaded.config.width, loaded.config.height],
+        )
+    } else {
+        [structural_capture_resolution; 2]
+    };
     let local_parallax_loaded = if structural_capture_enabled {
         let mut sampling_arguments = render_arguments.clone();
         sampling_arguments.extend([
             "--width".to_owned(),
-            structural_capture_resolution.to_string(),
+            structural_capture_size[0].to_string(),
             "--height".to_owned(),
-            structural_capture_resolution.to_string(),
+            structural_capture_size[1].to_string(),
         ]);
         Some(load_scene_config(&parse_render_args(&sampling_arguments)?)?)
     } else {
@@ -2502,7 +2579,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                     .as_deref()
                     .expect("view-triangle generated Metal source"),
                 &capture_config,
-                sampling_resolution,
+                structural_capture_size,
                 world_scale,
             );
             let (
@@ -2531,7 +2608,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                                 .as_deref()
                                 .expect("view-triangle diagnostic metallib"),
                             &capture_config,
-                            sampling_resolution,
+                            structural_capture_size,
                             world_scale,
                         )?;
                     write_structural_capture_cache(
@@ -2550,7 +2627,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                             .as_deref()
                             .expect("view-triangle diagnostic metallib"),
                         &capture_config,
-                        sampling_resolution,
+                        structural_capture_size,
                         world_scale,
                     )?;
                 (bytes, gpu_ms, effective_resolution, bounds_fallback, false)
@@ -2586,10 +2663,10 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                             .as_deref()
                             .expect("view-triangle diagnostic metallib"),
                         &view_config,
-                        sampling_resolution,
+                        structural_capture_size,
                         false,
                     )?;
-                    captures.push((bytes, gpu_ms, sampling_resolution, false));
+                    captures.push((bytes, gpu_ms, structural_capture_size, false));
                 }
             }
             let visible_bounds = captures
@@ -2640,10 +2717,10 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             let discontinuity_scale = surface_triangle_threshold_scale * 2.0;
             let mut view_triangle_streams = Vec::with_capacity(captures.len());
             let mut view_summary = ViewTriangleSurfaceSummary::default();
-            for (bytes, diagnostic_gpu_ms, capture_resolution, bounds_fallback) in &captures {
-                let (view_triangles, summary) = structural_surface_triangles(
+            for (bytes, diagnostic_gpu_ms, capture_size, bounds_fallback) in &captures {
+                let (view_triangles, summary) = structural_surface_triangles_rect(
                     bytes,
-                    *capture_resolution,
+                    *capture_size,
                     *effective_output_grid
                         .iter()
                         .max()
@@ -2664,7 +2741,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 view_summary.captured_pixels += summary.captured_pixels;
                 view_summary.maximum_capture_resolution = view_summary
                     .maximum_capture_resolution
-                    .max(*capture_resolution);
+                    .max(*capture_size.iter().max().expect("capture dimensions"));
                 view_summary.bounds_fallback_captures += usize::from(*bounds_fallback);
                 view_summary.in_bounds_hits += summary.in_bounds_hits;
                 view_summary.connected_hit_pixels += summary.connected_hit_pixels;
@@ -7634,27 +7711,34 @@ mod tests {
         ));
         let path = directory.join("capture.bin");
         let config = FptRenderConfig::default();
-        let manifest = structural_capture_cache_manifest(b"generated", &config, 2, 1000.0);
+        let manifest = structural_capture_cache_manifest(b"generated", &config, [2, 2], 1000.0);
         let bytes = vec![7_u8; 4 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
-        write_structural_capture_cache(&path, &manifest, &bytes, 2, false)
+        write_structural_capture_cache(&path, &manifest, &bytes, [2, 2], false)
             .expect("write capture cache");
-        let (cached, effective_resolution, bounds_fallback) =
+        let (cached, effective_size, bounds_fallback) =
             read_structural_capture_cache(&path, &manifest).expect("read capture cache");
         assert_eq!(cached, bytes);
-        assert_eq!(effective_resolution, 2);
+        assert_eq!(effective_size, [2, 2]);
         assert!(!bounds_fallback);
 
         let fallback_bytes = vec![9_u8; 16 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
-        write_structural_capture_cache(&path, &manifest, &fallback_bytes, 4, true)
+        write_structural_capture_cache(&path, &manifest, &fallback_bytes, [4, 4], true)
             .expect("write bounded fallback cache");
-        let (cached, effective_resolution, bounds_fallback) =
+        let (cached, effective_size, bounds_fallback) =
             read_structural_capture_cache(&path, &manifest).expect("read fallback cache");
         assert_eq!(cached, fallback_bytes);
-        assert_eq!(effective_resolution, 4);
+        assert_eq!(effective_size, [4, 4]);
         assert!(bounds_fallback);
-        let stale = structural_capture_cache_manifest(b"changed", &config, 2, 1000.0);
+        let stale = structural_capture_cache_manifest(b"changed", &config, [2, 2], 1000.0);
         assert!(read_structural_capture_cache(&path, &stale).is_err());
         fs::remove_dir_all(directory).expect("remove capture cache fixture");
+    }
+
+    #[test]
+    fn structural_capture_preserves_authored_aspect_at_maximum_axis() {
+        assert_eq!(aspect_capture_size(192, [1280, 720]), [192, 108]);
+        assert_eq!(aspect_capture_size(192, [720, 1280]), [108, 192]);
+        assert_eq!(aspect_capture_size(192, [300, 300]), [192, 192]);
     }
 
     fn run_async_jit_validation(
