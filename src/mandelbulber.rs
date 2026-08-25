@@ -5,7 +5,7 @@ use crate::ffi::{
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub mod catalog;
 pub mod compiler;
@@ -109,6 +109,12 @@ pub struct MandelbulberMaterial {
     pub specular_plastic_enabled: bool,
     pub surface_roughness: f64,
     pub reflectance: f64,
+    pub metallic: f64,
+    pub transparency_of_surface: f64,
+    pub transparency_of_interior: f64,
+    pub index_of_refraction: f64,
+    pub transparency_interior_color: [f32; 3],
+    pub luminosity: f64,
     pub parameters: BTreeMap<String, String>,
 }
 
@@ -271,6 +277,9 @@ pub struct MandelbulberScene {
     pub ifs_enabled: [bool; IFS_VECTOR_COUNT],
     pub ifs_directions: [[f64; 3]; IFS_VECTOR_COUNT],
     pub material: MandelbulberMaterial,
+    pub materials: BTreeMap<u32, MandelbulberMaterial>,
+    pub main_parameters: BTreeMap<String, String>,
+    pub source_directory: Option<PathBuf>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -404,6 +413,118 @@ fn parse_number(value: &str) -> Result<f64> {
         .with_context(|| format!("invalid decimal number '{value}'"))
 }
 
+fn parse_bool(value: &str) -> Result<bool> {
+    match value {
+        "true" => Ok(true),
+        "false" => Ok(false),
+        _ => bail!("invalid boolean: {value}"),
+    }
+}
+
+fn parse_number_or_bool(value: &str) -> Result<f64> {
+    match value {
+        "true" => Ok(1.0),
+        "false" => Ok(0.0),
+        _ => parse_number(value),
+    }
+}
+
+fn f32_to_f16_bits(value: f32) -> u16 {
+    let bits = value.to_bits();
+    let sign = ((bits >> 16) & 0x8000) as u16;
+    let exponent = ((bits >> 23) & 0xff) as i32 - 127 + 15;
+    let mantissa = bits & 0x7f_ffff;
+    if exponent <= 0 {
+        if exponent < -10 {
+            return sign;
+        }
+        let shifted = (mantissa | 0x80_0000) >> (1 - exponent);
+        return sign | (((shifted + 0x1000) >> 13) as u16);
+    }
+    if exponent >= 31 {
+        return sign | if mantissa == 0 { 0x7c00 } else { 0x7e00 };
+    }
+    sign | ((exponent as u16) << 10) | (((mantissa + 0x1000) >> 13) as u16 & 0x03ff)
+}
+
+fn load_environment_lut(path: &Path) -> Result<Vec<u16>> {
+    let image = image::ImageReader::open(path)
+        .with_context(|| format!("open Mandelbulber background {}", path.display()))?
+        .with_guessed_format()
+        .context("detect Mandelbulber background format")?
+        .decode()
+        .with_context(|| format!("decode Mandelbulber background {}", path.display()))?
+        .to_rgb32f();
+    let (width, height) = image.dimensions();
+    ensure!(width != 0 && height != 0, "background image is empty");
+    let mut lut = vec![0u16; crate::fptvox::FPTVOX_ENVIRONMENT_LUT_VALUES];
+    for y in 0..crate::fptvox::FPTVOX_ENVIRONMENT_LUT_HEIGHT {
+        let y0 = (y as u64 * u64::from(height)
+            / crate::fptvox::FPTVOX_ENVIRONMENT_LUT_HEIGHT as u64) as u32;
+        let y1 = (((y + 1) as u64 * u64::from(height)
+            / crate::fptvox::FPTVOX_ENVIRONMENT_LUT_HEIGHT as u64) as u32)
+            .max(y0 + 1);
+        for x in 0..crate::fptvox::FPTVOX_ENVIRONMENT_LUT_WIDTH {
+            let x0 = (x as u64 * u64::from(width)
+                / crate::fptvox::FPTVOX_ENVIRONMENT_LUT_WIDTH as u64) as u32;
+            let x1 = (((x + 1) as u64 * u64::from(width)
+                / crate::fptvox::FPTVOX_ENVIRONMENT_LUT_WIDTH as u64) as u32)
+                .max(x0 + 1);
+            let mut sum = [0.0f32; 3];
+            let mut samples = 0u32;
+            for source_y in y0..y1.min(height) {
+                for source_x in x0..x1.min(width) {
+                    let pixel = image.get_pixel(source_x, source_y).0;
+                    for channel in 0..3 {
+                        sum[channel] += pixel[channel].max(0.0);
+                    }
+                    samples += 1;
+                }
+            }
+            let destination = (y * crate::fptvox::FPTVOX_ENVIRONMENT_LUT_WIDTH + x) * 3;
+            for channel in 0..3 {
+                lut[destination + channel] = f32_to_f16_bits(sum[channel] / samples.max(1) as f32);
+            }
+        }
+    }
+    Ok(lut)
+}
+
+fn resolve_mandelbulber_asset(source_directory: Option<&Path>, source: &str) -> PathBuf {
+    let normalized = source.replace('\\', "/");
+    if let Some(relative) = normalized.strip_prefix("$SHARED_DIR/") {
+        if let Some(directory) = source_directory {
+            for ancestor in directory.ancestors() {
+                let candidate = ancestor.join(relative);
+                if candidate.is_file() {
+                    return candidate;
+                }
+            }
+        }
+    }
+
+    let path = PathBuf::from(&normalized);
+    if path.is_absolute() && path.is_file() {
+        return path;
+    }
+    if let Some(directory) = source_directory {
+        let relative = directory.join(&path);
+        if relative.is_file() {
+            return relative;
+        }
+        if let Some(filename) = path.file_name() {
+            for ancestor in directory.ancestors() {
+                let candidate = ancestor.join("textures").join(filename);
+                if candidate.is_file() {
+                    return candidate;
+                }
+            }
+        }
+        return relative;
+    }
+    path
+}
+
 fn version_is_before(version: &str, major: u32, minor: u32) -> Result<bool> {
     let mut components = version.split('.');
     let source_major = components
@@ -535,6 +656,104 @@ fn parse_legacy_palette(value: &str) -> Result<Vec<MandelbulberGradientStop>> {
     Ok(stops)
 }
 
+fn parse_material(document: &FractDocument, material_id: u32) -> Result<MandelbulberMaterial> {
+    let prefix = format!("mat{material_id}_");
+    let parameters = document
+        .sections
+        .get("main_parameters")
+        .into_iter()
+        .flat_map(|values| values.iter())
+        .filter(|(key, _)| key.starts_with(&prefix))
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect::<BTreeMap<_, _>>();
+    let key = |suffix: &str| format!("{prefix}{suffix}");
+    let surface_color = document
+        .value("main_parameters", &key("surface_color"))
+        .map(parse_rgb16)
+        .transpose()?
+        .unwrap_or([50000.0 / 65535.0; 3]);
+    let surface_gradient = if let Some(value) =
+        document.value("main_parameters", &key("surface_color_gradient"))
+    {
+        parse_gradient(value).with_context(|| format!("invalid {prefix}surface_color_gradient"))?
+    } else if material_id == 1
+        && version_is_before(&document.version, 2, 19)?
+        && let Some(value) = document.value("main_parameters", &key("surface_color_palette"))
+    {
+        parse_legacy_palette(value)
+            .with_context(|| format!("invalid {prefix}surface_color_palette"))?
+    } else {
+        parse_gradient(DEFAULT_SURFACE_GRADIENT).expect("valid built-in surface gradient")
+    };
+    let legacy_gradient_size = (surface_gradient.len() - 1) as f64;
+    let mut coloring_speed = document.number("main_parameters", &key("coloring_speed"), 1.0)?;
+    let mut palette_offset =
+        document.number("main_parameters", &key("coloring_palette_offset"), 0.0)?;
+    if material_id == 1 && version_is_before(&document.version, 2, 19)? {
+        palette_offset /= legacy_gradient_size;
+        coloring_speed *= 10.0 / legacy_gradient_size;
+    }
+    let legacy_defaults = material_id == 1 && version_is_before(&document.version, 2, 14)?;
+    let transparency_interior_color = document
+        .value("main_parameters", &key("transparency_interior_color"))
+        .map(parse_rgb16)
+        .transpose()?
+        .unwrap_or([1.0; 3]);
+    Ok(MandelbulberMaterial {
+        surface_color,
+        use_colors_from_palette: document.boolean(
+            "main_parameters",
+            &key("use_colors_from_palette"),
+            true,
+        )?,
+        surface_gradient_enabled: document.boolean(
+            "main_parameters",
+            &key("surface_gradient_enable"),
+            true,
+        )?,
+        coloring_speed,
+        palette_offset,
+        surface_gradient,
+        shading: document.number("main_parameters", &key("shading"), 1.0)?,
+        specular: document.number(
+            "main_parameters",
+            &key("specular"),
+            if legacy_defaults { 1.0 } else { 5.0 },
+        )?,
+        specular_width: document.number("main_parameters", &key("specular_width"), 0.05)?,
+        specular_plastic_enabled: document.boolean(
+            "main_parameters",
+            &key("specular_plastic_enable"),
+            true,
+        )?,
+        surface_roughness: document.number("main_parameters", &key("surface_roughness"), 0.01)?,
+        reflectance: document.number("main_parameters", &key("reflectance"), 0.0)?,
+        metallic: document
+            .value("main_parameters", &key("metallic"))
+            .map(parse_number_or_bool)
+            .transpose()?
+            .unwrap_or(0.0),
+        transparency_of_surface: document.number(
+            "main_parameters",
+            &key("transparency_of_surface"),
+            0.0,
+        )?,
+        transparency_of_interior: document.number(
+            "main_parameters",
+            &key("transparency_of_interior"),
+            0.0,
+        )?,
+        index_of_refraction: document.number(
+            "main_parameters",
+            &key("transparency_index_of_refraction"),
+            1.5,
+        )?,
+        transparency_interior_color,
+        luminosity: document.number("main_parameters", &key("luminosity"), 0.0)?,
+        parameters,
+    })
+}
+
 impl MandelbulberScene {
     /// Rebase a periodic Jos-Kleinian field before converting its camera to
     /// fp32. Old example scenes can be hundreds of units from the origin while
@@ -592,8 +811,10 @@ impl MandelbulberScene {
     pub fn load(path: &Path) -> Result<Self> {
         let source = fs::read_to_string(path)
             .with_context(|| format!("read Mandelbulber scene {}", path.display()))?;
-        Self::parse(&source)
-            .with_context(|| format!("import Mandelbulber scene {}", path.display()))
+        let mut scene = Self::parse(&source)
+            .with_context(|| format!("import Mandelbulber scene {}", path.display()))?;
+        scene.source_directory = path.parent().map(Path::to_path_buf);
+        Ok(scene)
     }
 
     pub fn parse(source: &str) -> Result<Self> {
@@ -1073,77 +1294,30 @@ impl MandelbulberScene {
             }
         }
 
-        let material_parameters = document
+        let material = parse_material(&document, 1)?;
+        let mut material_ids = document
             .sections
             .get("main_parameters")
             .into_iter()
-            .flat_map(|values| values.iter())
-            .filter(|(key, _)| key.starts_with("mat1_"))
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect::<BTreeMap<_, _>>();
-        let surface_color = document
-            .value("main_parameters", "mat1_surface_color")
-            .map(parse_rgb16)
-            .transpose()?
-            .unwrap_or([50000.0 / 65535.0; 3]);
-        let surface_gradient = if let Some(value) =
-            document.value("main_parameters", "mat1_surface_color_gradient")
-        {
-            parse_gradient(value).context("invalid main_parameters.mat1_surface_color_gradient")?
-        } else if version_is_before(&document.version, 2, 19)?
-            && let Some(value) = document.value("main_parameters", "mat1_surface_color_palette")
-        {
-            parse_legacy_palette(value)
-                .context("invalid main_parameters.mat1_surface_color_palette")?
-        } else {
-            parse_gradient(DEFAULT_SURFACE_GRADIENT).expect("valid built-in surface gradient")
-        };
-        let legacy_gradient_size = (surface_gradient.len() - 1) as f64;
-        let mut coloring_speed = document.number("main_parameters", "mat1_coloring_speed", 1.0)?;
-        let mut palette_offset =
-            document.number("main_parameters", "mat1_coloring_palette_offset", 0.0)?;
-        if version_is_before(&document.version, 2, 19)? {
-            // settings.cpp migrates pre-2.19 palette coordinates after the
-            // legacy palette has been converted to a positioned gradient.
-            palette_offset /= legacy_gradient_size;
-            coloring_speed *= 10.0 / legacy_gradient_size;
-        }
-        let legacy_material_defaults = version_is_before(&document.version, 2, 14)?;
-        let material = MandelbulberMaterial {
-            surface_color,
-            use_colors_from_palette: document.boolean(
-                "main_parameters",
-                "mat1_use_colors_from_palette",
-                true,
-            )?,
-            surface_gradient_enabled: document.boolean(
-                "main_parameters",
-                "mat1_surface_gradient_enable",
-                true,
-            )?,
-            coloring_speed,
-            palette_offset,
-            surface_gradient,
-            shading: document.number("main_parameters", "mat1_shading", 1.0)?,
-            specular: document.number(
-                "main_parameters",
-                "mat1_specular",
-                if legacy_material_defaults { 1.0 } else { 5.0 },
-            )?,
-            specular_width: document.number("main_parameters", "mat1_specular_width", 0.05)?,
-            specular_plastic_enabled: document.boolean(
-                "main_parameters",
-                "mat1_specular_plastic_enable",
-                true,
-            )?,
-            surface_roughness: document.number(
-                "main_parameters",
-                "mat1_surface_roughness",
-                0.01,
-            )?,
-            reflectance: document.number("main_parameters", "mat1_reflectance", 0.0)?,
-            parameters: material_parameters,
-        };
+            .flat_map(|values| values.keys())
+            .filter_map(|key| {
+                let suffix = key.strip_prefix("mat")?;
+                let digits = suffix.split('_').next()?;
+                digits.parse::<u32>().ok().filter(|id| *id != 0)
+            })
+            .collect::<Vec<_>>();
+        material_ids.push(1);
+        material_ids.sort_unstable();
+        material_ids.dedup();
+        let materials = material_ids
+            .into_iter()
+            .map(|id| Ok((id, parse_material(&document, id)?)))
+            .collect::<Result<BTreeMap<_, _>>>()?;
+        let main_parameters = document
+            .sections
+            .get("main_parameters")
+            .cloned()
+            .unwrap_or_default();
         let background_colors = [
             document
                 .value("main_parameters", "background_color_1")
@@ -1474,6 +1648,9 @@ impl MandelbulberScene {
             ifs_enabled,
             ifs_directions,
             material,
+            materials,
+            main_parameters,
+            source_directory: None,
         })
     }
 
@@ -1891,7 +2068,7 @@ impl MandelbulberScene {
         config.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
     }
 
-    fn main_light_direction(&self) -> [f64; 3] {
+    pub fn main_light_direction(&self) -> [f64; 3] {
         let forward = normalize(map_mandel_vector(subtract(self.target, self.camera)))
             .expect("camera direction is non-zero");
         let top = normalize(map_mandel_vector(self.camera_top)).expect("camera top is non-zero");
@@ -1906,6 +2083,251 @@ impl MandelbulberScene {
         direction = rotate_around_axis(direction, right, -rotation[1]);
         direction = rotate_around_axis(direction, top, rotation[0]);
         normalize(direction).expect("rotated light direction is non-zero")
+    }
+
+    /// Appearance data that accompanies exported FPTVOX geometry. Positions
+    /// use the same normalized Y-up coordinates as the direct volume export.
+    pub fn fptvox_appearance(&self) -> crate::fptvox::FptvoxAppearance {
+        use crate::fptvox::{
+            FPTVOX_APPEARANCE_AUX_LIGHT_ENABLED, FPTVOX_APPEARANCE_AUX_LIGHT_SHADOWS,
+            FPTVOX_APPEARANCE_MAIN_LIGHT_ENABLED, FPTVOX_APPEARANCE_MAIN_LIGHT_SHADOWS,
+            FPTVOX_APPEARANCE_SPECULAR_PLASTIC, FPTVOX_APPEARANCE_THREE_COLOR_BACKGROUND,
+        };
+        let mut flags = 0u32;
+        if self.background_three_colors {
+            flags |= FPTVOX_APPEARANCE_THREE_COLOR_BACKGROUND;
+        }
+        if self.main_light_enabled {
+            flags |= FPTVOX_APPEARANCE_MAIN_LIGHT_ENABLED;
+        }
+        if self.main_light_cast_shadows {
+            flags |= FPTVOX_APPEARANCE_MAIN_LIGHT_SHADOWS;
+        }
+        if self.auxiliary_light_enabled {
+            flags |= FPTVOX_APPEARANCE_AUX_LIGHT_ENABLED;
+        }
+        if self.auxiliary_light_cast_shadows {
+            flags |= FPTVOX_APPEARANCE_AUX_LIGHT_SHADOWS;
+        }
+        if self.material.specular_plastic_enabled {
+            flags |= FPTVOX_APPEARANCE_SPECULAR_PLASTIC;
+        }
+        crate::fptvox::FptvoxAppearance {
+            flags,
+            // Mandelbulber stores upper, middle, lower; the interchange
+            // contract stores lower, middle, upper for direct interpolation.
+            background_colors: [
+                self.background_colors[2],
+                self.background_colors[1],
+                self.background_colors[0],
+            ],
+            background_brightness: self.background_brightness as f32,
+            background_gamma: self.background_gamma as f32,
+            main_light_direction: self.main_light_direction().map(|value| value as f32),
+            main_light_intensity: self.main_light_intensity as f32,
+            main_light_color: self.main_light_color,
+            main_light_soft_shadow_radians: self.main_light_soft_shadow_degrees.to_radians() as f32,
+            auxiliary_light_position: map_mandel_point(self.auxiliary_light_position)
+                .map(|value| value as f32),
+            auxiliary_light_intensity: self.auxiliary_light_intensity as f32,
+            auxiliary_light_color: self.auxiliary_light_color,
+            image_gamma: self.image_gamma as f32,
+            image_brightness: self.image_brightness as f32,
+            image_contrast: self.image_contrast as f32,
+            image_saturation: self.image_saturation as f32,
+            material_shading: self.material.shading as f32,
+            material_specular: self.material.specular as f32,
+            material_specular_width: self.material.specular_width as f32,
+            material_roughness: self.material.surface_roughness as f32,
+            material_reflectance: self.material.reflectance as f32,
+        }
+    }
+
+    pub fn fptvox_camera(&self) -> crate::fptvox::FptvoxCamera {
+        let (source_camera, source_target) = self
+            .periodic_camera_rebase()
+            .unwrap_or((self.camera, self.target));
+        let position = map_mandel_point(source_camera);
+        let target = map_mandel_point(source_target);
+        let direction = subtract(target, position);
+        let horizontal = direction[0].hypot(direction[2]);
+        let yaw_pitch = [
+            direction[0].atan2(direction[2]) as f32,
+            direction[1].atan2(horizontal) as f32,
+        ];
+        crate::fptvox::FptvoxCamera {
+            position: position.map(|value| value as f32),
+            yaw_pitch,
+            roll: camera_roll(direction, map_mandel_vector(self.camera_top), yaw_pitch) as f32,
+            fov_degrees: if self.camera_projection == 0 {
+                (2.0 * (2.0 * (self.fov_degrees.to_radians() * 0.5).tan()).atan()).to_degrees()
+                    as f32
+            } else {
+                self.fov_degrees as f32
+            },
+            image_y_sign: if self.legacy_coordinate_system {
+                -1.0
+            } else {
+                1.0
+            },
+            projection: self.camera_projection,
+        }
+    }
+
+    pub fn fptvox_materials(&self) -> Vec<crate::fptvox::FptvoxAuthoredMaterial> {
+        self.materials
+            .iter()
+            .map(|(&id, material)| crate::fptvox::FptvoxAuthoredMaterial {
+                id,
+                flags: u32::from(material.specular_plastic_enabled),
+                base_color: material.surface_color,
+                roughness: material.surface_roughness.max(0.0).sqrt().clamp(0.0, 1.0) as f32,
+                specular: (material.specular / 10.0).clamp(0.0, 1.0) as f32,
+                specular_width: material.specular_width as f32,
+                metallic: material.metallic.clamp(0.0, 1.0) as f32,
+                reflectance: material.reflectance.clamp(0.0, 1.0) as f32,
+                transmission: material.transparency_of_surface.clamp(0.0, 1.0) as f32,
+                interior_opacity: material.transparency_of_interior.max(0.0) as f32,
+                ior: material.index_of_refraction.max(1.0) as f32,
+                emission: material.luminosity.max(0.0) as f32,
+                transmission_color: material.transparency_interior_color,
+            })
+            .collect()
+    }
+
+    pub fn fptvox_environment(&self) -> Result<crate::fptvox::FptvoxEnvironment> {
+        use crate::fptvox::*;
+        let value = |key: &str| self.main_parameters.get(key).map(String::as_str);
+        let number = |key: &str, fallback: f64| -> Result<f32> {
+            value(key)
+                .map(parse_number)
+                .transpose()
+                .map(|v| v.unwrap_or(fallback) as f32)
+        };
+        let boolean = |key: &str, fallback: bool| -> Result<bool> {
+            value(key)
+                .map(parse_bool)
+                .transpose()
+                .map(|v| v.unwrap_or(fallback))
+        };
+        let vector = |key: &str, fallback: [f64; 3]| -> Result<[f32; 3]> {
+            value(key)
+                .map(parse_vec3)
+                .transpose()
+                .map(|v| v.unwrap_or(fallback).map(|x| x as f32))
+        };
+        let color = |key: &str, fallback: [f32; 3]| -> Result<[f32; 3]> {
+            value(key)
+                .map(parse_rgb16)
+                .transpose()
+                .map(|v| v.unwrap_or(fallback))
+        };
+
+        let mut environment = FptvoxEnvironment::default();
+        if boolean("basic_fog_enabled", false)? {
+            environment.flags |= FPTVOX_ENVIRONMENT_BASIC_FOG;
+        }
+        if boolean("basic_fog_cast_shadows", false)? {
+            environment.flags |= 1 << 8;
+        }
+        if boolean("volumetric_fog_enabled", false)? {
+            environment.flags |= FPTVOX_ENVIRONMENT_VOLUMETRIC_FOG;
+        }
+        if boolean("iteration_fog_enable", false)? {
+            environment.flags |= FPTVOX_ENVIRONMENT_ITERATION_FOG;
+        }
+        if boolean("clouds_enable", false)? {
+            environment.flags |= FPTVOX_ENVIRONMENT_CLOUDS;
+        }
+        if boolean("clouds_plane_shape", false)? {
+            environment.flags |= 1 << 9;
+        }
+        if boolean("clouds_distance_mode", false)? {
+            environment.flags |= 1 << 10;
+        }
+        if boolean("clouds_sharp_edges", false)? {
+            environment.flags |= 1 << 11;
+        }
+        if boolean("clouds_cast_shadows", true)? {
+            environment.flags |= 1 << 12;
+        }
+        environment.values[0..3].copy_from_slice(&vector("background_rotation", [0.0; 3])?);
+        environment.values[3] = number("background_brightness", 1.0)?;
+        environment.values[4] = number("background_gamma", 1.0)?;
+        environment.values[5] = number("background_h_scale", 1.0)?;
+        environment.values[6] = number("background_v_scale", 1.0)?;
+        environment.values[7] = number("background_texture_offset_x", 0.0)?;
+        environment.values[8] = number("background_texture_offset_y", 0.0)?;
+        environment.values[9] = number("basic_fog_visibility", 20.0)?;
+        environment.values[10..13].copy_from_slice(&color(
+            "basic_fog_color",
+            [59399.0 / 65535.0, 61202.0 / 65535.0, 1.0],
+        )?);
+        environment.values[13] = number("volumetric_fog_density", 0.5)?;
+        environment.values[14] = number("volumetric_fog_distance_factor", 1.0)?;
+        environment.values[15] = number("volumetric_fog_distance_from_surface", 1.0e-15)?;
+        environment.values[16] = number("volumetric_fog_colour_1_distance", 1.0)?;
+        environment.values[17] = number("volumetric_fog_colour_2_distance", 2.0)?;
+        for (index, key) in ["fog_color_1", "fog_color_2", "fog_color_3"]
+            .iter()
+            .enumerate()
+        {
+            environment.values[18 + index * 3..21 + index * 3]
+                .copy_from_slice(&color(key, [1.0; 3])?);
+        }
+        environment.values[27] = number("iteration_fog_opacity", 1000.0)?;
+        environment.values[28] = number("iteration_fog_opacity_trim", 4.0)?;
+        environment.values[29] = number("iteration_fog_opacity_trim_high", 250.0)?;
+        environment.values[30] = number("iteration_fog_color_1_maxiter", 8.0)?;
+        environment.values[31] = number("iteration_fog_color_2_maxiter", 12.0)?;
+        environment.values[32] = number("iteration_fog_brightness_boost", 1.0)?;
+        for (index, key) in [
+            "iteration_fog_color_1",
+            "iteration_fog_color_2",
+            "iteration_fog_color_3",
+        ]
+        .iter()
+        .enumerate()
+        {
+            environment.values[33 + index * 3..36 + index * 3]
+                .copy_from_slice(&color(key, [1.0; 3])?);
+        }
+        environment.values[42] = number("clouds_density", 0.25)?;
+        environment.values[43] = number("clouds_opacity", 10.0)?;
+        environment.values[44] = number("clouds_period", 1.0)?;
+        environment.values[45] = number("clouds_height", 1.0)?;
+        environment.values[46..49].copy_from_slice(
+            &map_mandel_point(vector("clouds_center", [0.0; 3])?.map(f64::from)).map(|x| x as f32),
+        );
+        environment.values[49..52].copy_from_slice(&vector("clouds_rotation", [0.0; 3])?);
+        environment.values[52..55].copy_from_slice(
+            &map_mandel_vector(vector("clouds_speed", [0.0; 3])?.map(f64::from)).map(|x| x as f32),
+        );
+        environment.values[55] = number("clouds_ambient_light", 0.0)?;
+        environment.values[56] = number("clouds_lights_boost", 0.0)?;
+        environment.values[57] = number("clouds_distance", 1.0)?;
+        environment.values[58] = number("clouds_distance_layer", 0.5)?;
+        environment.values[59] = number("clouds_detail_accuracy", 1.0)?;
+        environment.values[60] = number("clouds_DE_approaching", 1.0)?;
+        environment.values[61] = number("clouds_DE_multiplier", 1.0)?;
+        environment.values[62] = number("clouds_sharpness", 100.0)?;
+        environment.values[63] = number("clouds_noise_iterations", 5.0)?;
+        environment.values[64..67].copy_from_slice(&color("clouds_color", [1.0; 3])?);
+        environment.values[67] = number("clouds_random_seed", 12345.0)?;
+
+        if boolean("textured_background", false)? {
+            let source = value("file_background")
+                .filter(|path| !path.is_empty())
+                .context("textured_background requires file_background")?;
+            let path = resolve_mandelbulber_asset(self.source_directory.as_deref(), source);
+            environment.hdri_lut = load_environment_lut(&path)?;
+            environment.flags |= FPTVOX_ENVIRONMENT_HDRI;
+            environment.hdri_map_type = value("textured_background_map_type")
+                .map(parse_number)
+                .transpose()?
+                .unwrap_or(0.0) as u32;
+        }
+        Ok(environment)
     }
 
     #[cfg_attr(not(test), allow(dead_code))]
@@ -3708,6 +4130,45 @@ target 0 0 0;
         assert_eq!(sphere.transform[3], -WORLD_SCALE as f32);
         assert_eq!(sphere.transform[7], -3.0 * WORLD_SCALE as f32);
         assert_eq!(sphere.transform[11], -2.0 * WORLD_SCALE as f32);
+    }
+
+    #[test]
+    fn authored_contract_preserves_material_camera_and_volume_controls() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nperspective_type equirectangular;\nmat1_transparency_of_surface 0,75;\nmat1_transparency_index_of_refraction 1,45;\nmat2_is_defined true;\nmat2_metallic true;\nmat2_luminosity 3;\nbasic_fog_enabled true;\nbasic_fog_visibility 12;\nvolumetric_fog_enabled true;\nvolumetric_fog_density 0,02;\nclouds_enable true;\nclouds_color 1000 2000 3000;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("authored contract scene");
+        assert_eq!(scene.materials.len(), 2);
+        assert_eq!(scene.materials[&1].transparency_of_surface, 0.75);
+        assert_eq!(scene.materials[&2].metallic, 1.0);
+        assert_eq!(scene.materials[&2].luminosity, 3.0);
+        assert_eq!(scene.fptvox_camera().projection, 2);
+        let environment = scene.fptvox_environment().expect("environment contract");
+        assert_eq!(environment.flags & 0x1e, 0x16);
+        assert_eq!(environment.values[9], 12.0);
+        assert!((environment.values[64] - 4096.0 / 65535.0).abs() < 1.0e-6);
+        let materials = scene.fptvox_materials();
+        assert_eq!(materials[0].transmission, 0.75);
+        assert_eq!(materials[1].metallic, 1.0);
+        assert_eq!(materials[1].emission, 3.0);
+    }
+
+    #[test]
+    fn shared_directory_background_paths_resolve_from_the_scene_tree() {
+        let root = std::env::temp_dir().join(format!("fpt-mandel-shared-{}", std::process::id()));
+        let scene_directory = root.join("examples").join("collection");
+        let texture = root.join("textures").join("background.hdr");
+        std::fs::create_dir_all(texture.parent().expect("texture parent"))
+            .expect("create textures");
+        std::fs::create_dir_all(&scene_directory).expect("create scene directory");
+        std::fs::write(&texture, b"fixture").expect("write texture fixture");
+        let resolved = resolve_mandelbulber_asset(
+            Some(&scene_directory),
+            "$SHARED_DIR/textures/background.hdr",
+        );
+        assert_eq!(resolved, texture);
+        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]

@@ -48,6 +48,35 @@ example, `asurfKlein_difsGreek` produced only eight triangles over `[-4,4]^3` at
 but 2,073,182 triangles at 384 samples; the latter conservatively reduced to 237,747 occupied
 192^3 cells.
 
+Mandel mesh exports can preserve cubic world-space cells across highly anisotropic bounds with
+`--mandel-mesh-voxel-min-axis-resolution N`. The minimum world-space axis receives `N` cells;
+the other logical dimensions grow in proportion to their spans. The FPTVOX1 output remains a
+sparse occupied-cell stream, so a grid such as `1039x64x1033` does not allocate its dense
+logical capacity. The CLI accepts up to 1024 cells on the minimum axis for this sparse
+Mandelbulber mesh path; the general dense Metal voxelizer remains capped at 512. The native
+NAADF consumer must use its CPU record builder for grids whose
+dense capacity exceeds the GPU builder's resident-material limit.
+The same resolution control also applies to bounded-patch and exact-surface Mandel mesh
+exports, preventing anisotropic source bounds from silently producing non-cubic cells.
+
+Interior-camera fractals need capture bounds around the camera as well as the visible target.
+`--mandel-mesh-camera-safe-bounds` preserves the requested box but expands any face that lies
+closer to the authored camera than `--mandel-mesh-camera-margin` times the box's largest span
+(default `0.10`). It is deliberately inert when the camera is outside the requested box, so an
+ordinary exterior object shot does not acquire a large empty volume between camera and object.
+The export report records requested and effective bounds plus the canonical world- and
+grid-space camera positions. FPT orientation fields are named explicitly because a consumer's
+camera-forward convention can differ. This mode prevents near-camera clipping; it does not
+claim to bound an infinite fractal or repair holes already present in the marching-cubes mesh.
+
+`--mandel-mesh-voxel-dilation 1` adds a conservative Euclidean one-cell shell around the
+triangle-intersection cells. Radius one adds the six axis neighbours, not all 26 cells of a
+3x3x3 cube. This is useful when a fine one-cell triangle shell becomes subpixel and visibly
+perforated in voxel mode. It is an explicit geometry-quality tradeoff: files and resident
+records grow, while exact-surface exports remain unchanged. Increase the marching-cubes mesh
+resolution before enabling dilation; dilating an undersampled source mesh only enlarges its
+sampling artifacts.
+
 `--mandel-mesh-ply-out` preserves the exact raw PLY emitted by Mandelbulber instead of keeping
 it only in temporary storage. `--mandel-reference-out` renders the original `.fract` through
 the same external Mandelbulber binary and records its timing and dimensions in the export
@@ -58,6 +87,16 @@ reference. `--mandel-mesh-opencl` is an explicit performance experiment: it now 
 enum values required by Mandelbulber's command-line decoder, but Mandelbulber's OpenCL slicer can
 produce topology that differs materially from its CPU marching-cubes path. Do not use it to
 produce the CPU parity baseline.
+
+Image-space parity keeps native NAADF captures in their recorded orientation by default. The
+camera conversion already accounts for the renderer yaw convention; applying an additional
+horizontal mirror worsens depth agreement. `render_fptvox7_parity_sheets.py` records the chosen
+orientation and exposes `--native-capture-orientation mirror-x` only as a diagnostic override.
+Mandelbulber-backed FPT cameras use a half-width image-plane convention, while NAADF constructs
+rays over the full `[-1,1]` NDC span. The parity script therefore converts the internal FPT FOV
+with `2*atan(0.5*tan(fpt_fov/2))` and requests a `(-0.5,-0.5)` pixel offset to reproduce FPT's
+corner-sample convention. Visibility caches include this camera contract so captures made with
+the earlier direct-FOV mapping cannot be reused silently.
 
 Parity reports use a tessellation-invariant structural score: the minimum of occupied-cell IoU
 and per-cell triangle-area overlap. Cell IoU alone is not a surface-fidelity metric. A candidate
@@ -97,15 +136,26 @@ isolated to offline mesh extraction and does not change continuous rendering.
 small fraction of the requested cube. The first authoritative mesh establishes object bounds.
 The exporter then builds a scene-centered cube whose side is the mesh's largest dimension plus
 the total margin selected by `--mandel-mesh-auto-bounds-margin` (default `0.10`). The candidate
-is accepted only when the discovery volume has no occupied boundary cells, the new cube is
-strictly inside the original domain, and the candidate has no occupied cells on any of its six
-faces. Candidates are also limited to 50% secondary-patch cells: denser multi-plane surfaces can
-recover real sub-voxel openings while becoming less representable as a conservative 192^3 shell,
-so they retain the discovery volume instead. Otherwise the original volume and PLY are retained.
+for exact triangles and bounded patches is accepted only when the discovery volume has no
+occupied boundary cells, the new cube is strictly inside the original domain, and the candidate
+has no occupied cells on any of its six faces. Candidates are also limited to 50%
+secondary-patch cells: denser multi-plane surfaces can recover real sub-voxel openings while
+becoming less representable as a conservative 192^3 shell, so they retain the discovery volume
+instead. Otherwise the original volume and PLY are retained.
 Export JSON records the candidate, acceptance state, boundary counts, surface-complexity ratio,
 threshold, and fallback reason under `auto_bounds`.
 It also reports discovery, candidate, and total pass time so the two-pass export
 cost remains explicit.
+
+When combined with `--mandel-mesh-voxel-cells`, auto-bounds may accept a tight candidate whose
+occupied cells reach the candidate boundary. This is an explicit view-volume crop used to spend
+the requested voxel resolution on the visible object instead of a much larger mostly empty
+domain. Its centered cube may extend outside a thin original view volume, and its aspect-aware
+voxel resolution is recomputed for that cube. Reports identify a boundary-touching accepted
+candidate as `accepted_cropped_voxel_cell_bounds`. The discovery volume must still be free of
+occupied boundary cells. Exact triangle and
+bounded-patch exports retain the strict six-face boundary rejection because silently clipping
+those surface representations would change their geometry contract.
 
 ## Pipeline
 

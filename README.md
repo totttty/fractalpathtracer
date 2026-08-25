@@ -176,6 +176,12 @@ the conservative multi-plane surface-complexity ceiling.
 The lossless little-endian `.fptvox` path preserves every occupied cell's
 packed material tuple for direct native volume construction. The intended
 direct pipeline is FPT -> `.fptvox` -> the native Metal NAADF path tracer.
+Mandelbulber exports also embed independently versioned appearance, camera,
+environment, and authored-material trailers. Geometry-only consumers can
+ignore them; the native NAADF viewer consumes them only with
+`--gpu-naadf-appearance mandel-compat`. Indexed FPTVOX8/FPTVOX11 exact-surface
+exports append `FPTCOL2`, with three packed RGB8 values per triangle for
+barycentric first-hit color. Readers remain compatible with flat `FPTCOL1`.
 Experimental `--surface-normals` (`FPTVOX2`) and `--surface-planes`
 (`FPTVOX3`) exports add structural surface data for continuous-FPT parity
 work while leaving the version-1 default unchanged. The library also exposes
@@ -324,6 +330,15 @@ ranks 24/26/34 changed from `0.672/0.922/0.481` with connected triangles alone
 to `0.918/0.938/0.941`; miss rates fell to `7.91%/5.64%/5.73%`, with only
 `0.24-0.66%` extra pixels. The option remains explicit because the result is a
 camera-matched surface rather than a closed asset.
+
+`--surface-view-triangle-dilation 0..1` is an additional conservative
+authored-view repair. It expands only accepted triangles that share a sampled
+vertex with a rejected depth/normal discontinuity; clean interior triangles
+remain unchanged. A value of `0.75` raised the iridescence pilot's authored
+camera coverage from `95.079%` to `99.630%` with no lost baseline hits, while
+increasing clipped triangles by `6.6%`. The option defaults to zero pending a
+wider scene gate. Export JSON records the requested value and the number of
+triangles actually dilated.
 
 The triangulator continues to reject adjacent triangles whose sampled normals
 disagree. It tags the affected vertices and expands only their existing

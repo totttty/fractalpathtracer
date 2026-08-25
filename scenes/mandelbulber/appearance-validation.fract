@@ -1,0 +1,55 @@
+# Mandelbulber settings file
+# version 2.33
+# Authored appearance and transport contract validation scene.
+[main_parameters]
+N 1;
+background_3_colors_enable true;
+background_color_1 0800 1000 2800;
+background_color_2 3000 5000 8000;
+background_color_3 9000 a000 c000;
+basic_fog_enabled true;
+basic_fog_color 1800 2800 4800;
+basic_fog_visibility 12;
+camera 3 -4 2;
+camera_top 0 0 1;
+clouds_color ffff c000 8000;
+clouds_density 0,2;
+clouds_enable true;
+clouds_height 1,5;
+clouds_opacity 0,025;
+clouds_period 2;
+detail_level 1;
+formula_1 1604;
+fov 53,13;
+image_height 180;
+image_width 320;
+initial_waxis 0,35;
+mat1_is_defined true;
+mat1_luminosity 0,15;
+mat1_metallic false;
+mat1_reflectance 0,1;
+mat1_specular 6;
+mat1_specular_width 0,08;
+mat1_surface_color 9000 b000 f000;
+mat1_surface_roughness 0,04;
+mat1_transparency_index_of_refraction 1,45;
+mat1_transparency_interior_color c000 e000 ffff;
+mat1_transparency_of_interior 0,02;
+mat1_transparency_of_surface 0,75;
+target 0 0 0;
+view_distance_max 30;
+volumetric_fog_colour_1_distance 3;
+volumetric_fog_colour_2_distance 8;
+volumetric_fog_density 0,002;
+volumetric_fog_distance_factor 1;
+volumetric_fog_enabled true;
+[fractal_1]
+analyticDE_offset_0 0,25;
+fold_color_aux_color_enabledB_false true;
+fold_color_aux_color_enabled_false true;
+fold_color_difs0 0,05;
+fold_color_difs_0000 0 0,3 0 0;
+fold_color_start_iterations_A 0;
+fold_color_stop_iterations_A 2;
+transf_function_enabled4d_false true;
+transf_offsetR_1 0,9;

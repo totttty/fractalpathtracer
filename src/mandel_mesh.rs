@@ -31,6 +31,8 @@ pub struct MandelMeshOptions<'a> {
     pub bounds: Aabb,
     pub voxel_resolution: u32,
     pub voxel_resolution_3d: Option<[u32; 3]>,
+    pub voxel_min_axis_resolution: Option<u32>,
+    pub voxel_dilation: u32,
     pub mesh_resolution: u32,
     pub max_iterations: u32,
     pub use_opencl: bool,
@@ -40,6 +42,30 @@ pub struct MandelMeshOptions<'a> {
     pub auto_bounds: bool,
     pub auto_bounds_margin: f32,
     pub surface_triangles: bool,
+    pub voxel_cells_only: bool,
+}
+
+pub fn cubic_voxel_resolutions(bounds: Aabb, minimum_axis_resolution: u32) -> [u32; 3] {
+    let size = bounds.size();
+    let minimum_span = size.into_iter().fold(f32::INFINITY, f32::min);
+    let cell_size = minimum_span / minimum_axis_resolution.max(1) as f32;
+    std::array::from_fn(|axis| (size[axis] / cell_size).ceil().max(1.0) as u32)
+}
+
+/// Expand an interior-camera volume just enough to keep the camera away from
+/// every clipping plane. Exterior object cameras intentionally leave the
+/// supplied bounds unchanged.
+pub fn camera_safe_bounds(bounds: Aabb, camera: [f32; 3], margin: f32) -> Aabb {
+    let inside =
+        (0..3).all(|axis| camera[axis] >= bounds.min[axis] && camera[axis] <= bounds.max[axis]);
+    if !inside {
+        return bounds;
+    }
+    let padding = bounds.size().into_iter().fold(0.0_f32, f32::max) * margin.max(0.0);
+    Aabb::new(
+        std::array::from_fn(|axis| bounds.min[axis].min(camera[axis] - padding)),
+        std::array::from_fn(|axis| bounds.max[axis].max(camera[axis] + padding)),
+    )
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -69,6 +95,7 @@ pub struct MandelMeshSummary {
     pub mesh_vertices: usize,
     pub mesh_triangles: usize,
     pub discarded_nonlocal_triangles: usize,
+    pub discarded_out_of_bounds_triangles: usize,
     pub triangle_cell_tests: u64,
     pub triangle_cell_intersections: u64,
     pub occupied_cells: usize,
@@ -201,21 +228,42 @@ fn discard_nonlocal_marching_cubes_triangles(
     original_count - mesh.triangles.len()
 }
 
+fn discard_out_of_bounds_triangles(mesh: &mut PlyMesh, bounds: Aabb) -> usize {
+    let original_count = mesh.triangles.len();
+    mesh.triangles.retain(|triangle| {
+        let vertices = triangle.map(|index| mesh.vertices[index as usize].position);
+        (0..3).all(|axis| {
+            let minimum = vertices
+                .iter()
+                .map(|vertex| vertex[axis])
+                .fold(f32::INFINITY, f32::min);
+            let maximum = vertices
+                .iter()
+                .map(|vertex| vertex[axis])
+                .fold(f32::NEG_INFINITY, f32::max);
+            maximum >= bounds.min[axis] && minimum <= bounds.max[axis]
+        })
+    });
+    original_count - mesh.triangles.len()
+}
+
 fn mesh_bounds(mesh: &PlyMesh) -> Result<Aabb> {
     ensure!(
-        !mesh.vertices.is_empty(),
+        !mesh.triangles.is_empty(),
         "cannot derive bounds from an empty mesh"
     );
     let min = std::array::from_fn(|axis| {
-        mesh.vertices
+        mesh.triangles
             .iter()
-            .map(|vertex| vertex.position[axis])
+            .flat_map(|triangle| triangle.iter())
+            .map(|index| mesh.vertices[*index as usize].position[axis])
             .fold(f32::INFINITY, f32::min)
     });
     let max = std::array::from_fn(|axis| {
-        mesh.vertices
+        mesh.triangles
             .iter()
-            .map(|vertex| vertex.position[axis])
+            .flat_map(|triangle| triangle.iter())
+            .map(|index| mesh.vertices[*index as usize].position[axis])
             .fold(f32::NEG_INFINITY, f32::max)
     });
     ensure!(
@@ -225,7 +273,7 @@ fn mesh_bounds(mesh: &PlyMesh) -> Result<Aabb> {
     Ok(Aabb::new(min, max))
 }
 
-fn derive_auto_bounds(mesh: Aabb, original: Aabb, margin: f32) -> Option<Aabb> {
+fn derive_centered_bounds(mesh: Aabb, margin: f32) -> Option<Aabb> {
     let size = mesh.size();
     let side = size.into_iter().fold(0.0_f32, f32::max) * (1.0 + margin);
     if !side.is_finite() || side <= 0.0 {
@@ -237,6 +285,11 @@ fn derive_auto_bounds(mesh: Aabb, original: Aabb, margin: f32) -> Option<Aabb> {
         center.map(|value| value - half),
         center.map(|value| value + half),
     );
+    Some(candidate)
+}
+
+fn derive_auto_bounds(mesh: Aabb, original: Aabb, margin: f32) -> Option<Aabb> {
+    let candidate = derive_centered_bounds(mesh, margin)?;
     (0..3)
         .all(|axis| {
             candidate.min[axis] > original.min[axis] && candidate.max[axis] < original.max[axis]
@@ -494,11 +547,16 @@ pub fn voxelize_mandelbulber_mesh(
         discovery.auto_bounds = auto_bounds;
         return Ok(discovery);
     }
-    let Some(candidate_bounds) = derive_auto_bounds(
-        discovery_mesh_bounds,
-        options.bounds,
-        options.auto_bounds_margin,
-    ) else {
+    let candidate_bounds = if options.voxel_cells_only {
+        derive_centered_bounds(discovery_mesh_bounds, options.auto_bounds_margin)
+    } else {
+        derive_auto_bounds(
+            discovery_mesh_bounds,
+            options.bounds,
+            options.auto_bounds_margin,
+        )
+    };
+    let Some(candidate_bounds) = candidate_bounds else {
         auto_bounds.reason = "candidate_not_strictly_inside_original_bounds".to_owned();
         discovery.auto_bounds = auto_bounds;
         return Ok(discovery);
@@ -515,6 +573,13 @@ pub fn voxelize_mandelbulber_mesh(
     let mut candidate_options = options.clone();
     candidate_options.auto_bounds = false;
     candidate_options.bounds = candidate_bounds;
+    if options.voxel_cells_only {
+        candidate_options.voxel_resolution_3d =
+            Some(options.voxel_min_axis_resolution.map_or_else(
+                || aspect_resolutions(candidate_bounds, options.voxel_resolution),
+                |minimum| cubic_voxel_resolutions(candidate_bounds, minimum),
+            ));
+    }
     candidate_options.raw_ply_output = candidate_raw.as_deref();
     let candidate_started = Instant::now();
     let candidate_result = voxelize_mandelbulber_mesh_once(&candidate_options);
@@ -533,7 +598,7 @@ pub fn voxelize_mandelbulber_mesh(
     };
     let candidate_boundary_cells = boundary_cell_count(&candidate.grid);
     auto_bounds.candidate_boundary_cells = Some(candidate_boundary_cells);
-    if candidate_boundary_cells != 0 {
+    if !options.voxel_cells_only && candidate_boundary_cells != 0 {
         if let Some(path) = candidate_raw.as_deref() {
             let _ = fs::remove_file(path);
         }
@@ -546,7 +611,9 @@ pub fn voxelize_mandelbulber_mesh(
         candidate.summary.occupied_cells,
     );
     auto_bounds.candidate_secondary_patch_ratio = Some(candidate_secondary_patch_ratio);
-    if candidate_secondary_patch_ratio > AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO {
+    if !options.voxel_cells_only
+        && candidate_secondary_patch_ratio > AUTO_BOUNDS_MAX_SECONDARY_PATCH_RATIO
+    {
         if let Some(path) = candidate_raw.as_deref() {
             let _ = fs::remove_file(path);
         }
@@ -565,7 +632,11 @@ pub fn voxelize_mandelbulber_mesh(
         let _ = fs::remove_file(staged);
     }
     auto_bounds.accepted = true;
-    auto_bounds.reason = "accepted_bounds_and_surface_complexity".to_owned();
+    auto_bounds.reason = if candidate_boundary_cells != 0 {
+        "accepted_cropped_voxel_cell_bounds".to_owned()
+    } else {
+        "accepted_bounds_and_surface_complexity".to_owned()
+    };
     candidate.auto_bounds = auto_bounds;
     Ok(candidate)
 }
@@ -663,6 +734,8 @@ fn voxelize_mandelbulber_mesh_once(
         options.bounds,
         options.mesh_resolution,
     );
+    let discarded_out_of_bounds_triangles =
+        discard_out_of_bounds_triangles(&mut mesh, options.bounds);
     ensure!(
         !mesh.vertices.is_empty() && !mesh.triangles.is_empty(),
         "Mandelbulber mesh is empty inside the requested bounds"
@@ -671,7 +744,7 @@ fn voxelize_mandelbulber_mesh_once(
 
     let voxelize_started = Instant::now();
     let mut stats = VoxelizeStats::default();
-    let (grid, patches, triangle_surface) = if options.surface_triangles {
+    let (mut grid, mut patches, triangle_surface) = if options.surface_triangles {
         let size = options.bounds.size();
         let triangles = mesh.triangles.iter().map(|triangle| {
             triangle.map(|index| {
@@ -735,6 +808,9 @@ fn voxelize_mandelbulber_mesh_once(
         let (grid, patches) = mesh_to_grid(&mesh, options, &mut stats)?;
         (grid, patches, None)
     };
+    if triangle_surface.is_none() {
+        dilate_voxel_grid(&mut grid, &mut patches, options.voxel_dilation);
+    }
     ensure!(
         grid.occupied_voxels() > 0,
         "Mandelbulber mesh did not intersect the requested voxel bounds"
@@ -748,6 +824,7 @@ fn voxelize_mandelbulber_mesh_once(
         mesh_vertices: mesh.vertices.len(),
         mesh_triangles: mesh.triangles.len(),
         discarded_nonlocal_triangles,
+        discarded_out_of_bounds_triangles,
         triangle_cell_tests: stats.tests,
         triangle_cell_intersections: stats.intersections,
         occupied_cells: grid.voxels.len(),
@@ -791,7 +868,9 @@ fn mesh_to_grid(
     options: &MandelMeshOptions<'_>,
     stats: &mut VoxelizeStats,
 ) -> Result<(VoxelGrid, Vec<[u32; 3]>)> {
-    let resolution = [options.voxel_resolution; 3];
+    let resolution = options
+        .voxel_resolution_3d
+        .unwrap_or([options.voxel_resolution; 3]);
     let size = options.bounds.size();
     let scale: [f32; 3] = std::array::from_fn(|axis| resolution[axis] as f32 / size[axis]);
     let mut cells = BTreeMap::<u64, ([u32; 3], CellPatches)>::new();
@@ -909,6 +988,73 @@ fn mesh_to_grid(
         voxels,
     };
     Ok((grid, patches))
+}
+
+fn dilate_voxel_grid(grid: &mut VoxelGrid, patches: &mut Vec<[u32; 3]>, radius: u32) {
+    if radius == 0 || grid.voxels.is_empty() {
+        return;
+    }
+    let originals: Vec<_> = grid
+        .voxels
+        .iter()
+        .copied()
+        .zip(patches.iter().copied())
+        .collect();
+    let linear = |coordinate: [u32; 3]| {
+        u64::from(coordinate[0])
+            + u64::from(coordinate[1]) * u64::from(grid.resolution[0])
+            + u64::from(coordinate[2])
+                * u64::from(grid.resolution[0])
+                * u64::from(grid.resolution[1])
+    };
+    let mut expanded = BTreeMap::<u64, (SparseVoxel, [u32; 3])>::new();
+    for (voxel, patch) in &originals {
+        expanded.insert(linear(voxel.coordinate), (*voxel, *patch));
+    }
+    let radius = radius as i32;
+    for (voxel, _) in originals {
+        for dz in -radius..=radius {
+            for dy in -radius..=radius {
+                for dx in -radius..=radius {
+                    if dx * dx + dy * dy + dz * dz > radius * radius {
+                        continue;
+                    }
+                    let coordinate = [
+                        voxel.coordinate[0] as i64 + i64::from(dx),
+                        voxel.coordinate[1] as i64 + i64::from(dy),
+                        voxel.coordinate[2] as i64 + i64::from(dz),
+                    ];
+                    if coordinate
+                        .iter()
+                        .zip(grid.resolution)
+                        .any(|(value, limit)| *value < 0 || *value >= i64::from(limit))
+                    {
+                        continue;
+                    }
+                    let coordinate = [
+                        coordinate[0] as u32,
+                        coordinate[1] as u32,
+                        coordinate[2] as u32,
+                    ];
+                    expanded.entry(linear(coordinate)).or_insert((
+                        SparseVoxel {
+                            coordinate,
+                            cell: voxel.cell,
+                        },
+                        [0; 3],
+                    ));
+                }
+            }
+        }
+    }
+    grid.voxels.clear();
+    patches.clear();
+    grid.voxels.reserve(expanded.len());
+    patches.reserve(expanded.len());
+    for (_, (voxel, patch)) in expanded {
+        grid.voxels.push(voxel);
+        patches.push(patch);
+    }
 }
 
 fn read_binary_ply(path: &Path) -> Result<PlyMesh> {
@@ -1291,6 +1437,32 @@ mod tests {
         assert_eq!(mesh.triangles, vec![[0, 1, 2]]);
     }
 
+    #[test]
+    fn out_of_bounds_faces_do_not_expand_discovery_mesh_bounds() {
+        let vertex = |position| MeshVertex {
+            position,
+            color: [1.0; 3],
+        };
+        let mut mesh = PlyMesh {
+            vertices: vec![
+                vertex([-1.1, -1.0, -1.0]),
+                vertex([-1.1, 1.0, -1.0]),
+                vertex([-1.1, -1.0, 1.0]),
+                vertex([-0.5, -0.25, -0.1]),
+                vertex([0.5, -0.25, 0.2]),
+                vertex([0.0, 0.5, 0.0]),
+            ],
+            triangles: vec![[0, 1, 2], [3, 4, 5]],
+        };
+        let discarded = discard_out_of_bounds_triangles(&mut mesh, Aabb::new([-1.0; 3], [1.0; 3]));
+        assert_eq!(discarded, 1);
+        assert_eq!(mesh.triangles, vec![[3, 4, 5]]);
+        assert_eq!(
+            mesh_bounds(&mesh).expect("retained mesh bounds"),
+            Aabb::new([-0.5, -0.25, -0.1], [0.5, 0.5, 0.2])
+        );
+    }
+
     fn sample_binary_ply(vertex_properties: &[&str]) -> Vec<u8> {
         let mut bytes = format!(
             "ply\nformat binary_little_endian 1.0\nelement vertex 3\n{}\nelement face 1\nproperty list uchar int vertex_index\nend_header\n",
@@ -1426,6 +1598,59 @@ mod tests {
     fn automatic_bounds_reject_candidates_outside_the_original_domain() {
         let mesh = Aabb::new([-1.0; 3], [1.0; 3]);
         assert!(derive_auto_bounds(mesh, Aabb::new([-1.0; 3], [1.0; 3]), 0.10).is_none());
+    }
+
+    #[test]
+    fn centered_bounds_can_expand_a_thin_voxel_cell_domain() {
+        let mesh = Aabb::new([-4.0, -0.1, -2.0], [4.0, 0.1, 2.0]);
+        assert_eq!(
+            derive_centered_bounds(mesh, 0.10),
+            Some(Aabb::new([-4.4; 3], [4.4; 3]))
+        );
+    }
+
+    #[test]
+    fn minimum_axis_resolution_preserves_approximately_cubic_cells() {
+        let bounds = Aabb::new([0.0, 0.0, 0.0], [12.0, 0.5, 4.0]);
+        assert_eq!(cubic_voxel_resolutions(bounds, 64), [1536, 64, 512]);
+    }
+
+    #[test]
+    fn camera_safe_bounds_pad_an_interior_camera_without_moving_other_faces() {
+        let bounds = Aabb::new([0.0; 3], [10.0, 8.0, 6.0]);
+        assert_eq!(
+            camera_safe_bounds(bounds, [9.8, 0.1, 3.0], 0.1),
+            Aabb::new([0.0, -0.9, 0.0], [10.8, 8.0, 6.0])
+        );
+    }
+
+    #[test]
+    fn camera_safe_bounds_do_not_absorb_an_exterior_object_camera() {
+        let bounds = Aabb::new([-1.0; 3], [1.0; 3]);
+        assert_eq!(camera_safe_bounds(bounds, [0.0, 0.0, -5.0], 0.1), bounds);
+    }
+
+    #[test]
+    fn voxel_dilation_expands_a_surface_cell_deterministically() {
+        let cell = VoxelCell::from_material(SurfaceMaterial::default());
+        let mut grid = VoxelGrid {
+            contract_version: 1,
+            resolution: [3; 3],
+            bounds: Aabb::new([0.0; 3], [3.0; 3]),
+            coordinate_system: CoordinateSystem::YUpRightHanded,
+            source_label: "test".to_owned(),
+            source_sha256: "0".repeat(64),
+            voxels: vec![SparseVoxel {
+                coordinate: [1; 3],
+                cell,
+            }],
+        };
+        let mut patches = vec![[1, 2, 3]];
+        dilate_voxel_grid(&mut grid, &mut patches, 1);
+        assert_eq!(grid.voxels.len(), 7);
+        assert_eq!(patches.len(), 7);
+        assert_eq!(grid.voxels[3].coordinate, [1; 3]);
+        assert_eq!(patches[3], [1, 2, 3]);
     }
 
     #[test]

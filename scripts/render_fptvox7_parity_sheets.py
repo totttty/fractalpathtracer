@@ -26,7 +26,7 @@ DEFAULT_NAADF = Path(
     "build/MetalVoxel.app/Contents/MacOS/MetalVoxel"
 )
 DEFAULT_MANDEL_ROOT = Path("/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2")
-RECORD_SIZES = {1: 24, 2: 28, 3: 28, 5: 32, 6: 36, 7: 32, 8: 32}
+RECORD_SIZES = {1: 24, 2: 28, 3: 28, 5: 32, 6: 36, 7: 32, 8: 32, 10: 32}
 
 
 def parse_args() -> argparse.Namespace:
@@ -53,6 +53,15 @@ def parse_args() -> argparse.Namespace:
             "fitted direction covers this fraction of the image"
         ),
     )
+    parser.add_argument(
+        "--native-capture-orientation",
+        choices=("native", "mirror-x"),
+        default="native",
+        help=(
+            "orientation applied to native NAADF captures before image-space metrics; "
+            "native is the verified default and mirror-x is diagnostic only"
+        ),
+    )
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
     if not 0.0 <= args.minimum_exact_coverage <= 1.0:
@@ -72,13 +81,23 @@ def csv(values: list[float]) -> str:
     return ",".join(f"{value:.9g}" for value in values)
 
 
+def naadf_fov_degrees(fpt_fov_degrees: float) -> float:
+    """Convert FPT's half-width image-plane FOV to NAADF's full NDC span."""
+    tangent = math.tan(math.radians(fpt_fov_degrees) * 0.5) * 0.5
+    return math.degrees(2.0 * math.atan(tangent))
+
+
 def metric(value: float | None, digits: int = 2) -> str:
     return "n/a" if value is None else f"{value:.{digits}f}"
 
 
+def is_fptvox_magic(data: bytes) -> bool:
+    return data[:6] == b"FPTVOX" and (data[7] == 0 or data[:8] == b"FPTVOX10")
+
+
 def volume_arrays(path: Path) -> dict:
     data = path.read_bytes()
-    if len(data) < 64 or data[:6] != b"FPTVOX" or data[7] != 0:
+    if len(data) < 64 or not is_fptvox_magic(data):
         raise RuntimeError(f"invalid FPTVOX volume: {path}")
     header_size, version = struct.unpack_from("<II", data, 8)
     if version not in RECORD_SIZES:
@@ -134,7 +153,7 @@ def volume_arrays(path: Path) -> dict:
 def volume_header(path: Path) -> dict:
     with path.open("rb") as handle:
         data = handle.read(64)
-    if len(data) != 64 or data[:6] != b"FPTVOX" or data[7] != 0:
+    if len(data) != 64 or not is_fptvox_magic(data):
         raise RuntimeError(f"invalid FPTVOX volume: {path}")
     return {
         "resolution": struct.unpack_from("<III", data, 16),
@@ -335,10 +354,25 @@ def render_visibility(
     base = output / "visibility"
     manifest = Path(f"{base}.json")
     binary = Path(f"{base}.svdagVisibility.bin")
-    if manifest.is_file() and binary.is_file() and not args.force:
-        return base
-    output.mkdir(parents=True, exist_ok=True)
     camera = row["world_camera"] + [row["yaw"], row["pitch"]]
+    camera_contract = {
+        "version": 1,
+        "volume": volume.resolve().as_posix(),
+        "surface_mode": surface_mode,
+        "image_size": args.image_size,
+        "world_camera": row["world_camera"],
+        "yaw": row["yaw"],
+        "pitch": row["pitch"],
+        "roll": row.get("roll", 0.0),
+        "fpt_fov_degrees": row["fov"],
+        "naadf_fov_degrees": naadf_fov_degrees(float(row["fov"])),
+        "naadf_pixel_offset": [-0.5, -0.5],
+    }
+    contract_path = output / "camera-contract.json"
+    if manifest.is_file() and binary.is_file() and contract_path.is_file() and not args.force:
+        if json.loads(contract_path.read_text()) == camera_contract:
+            return base
+    output.mkdir(parents=True, exist_ok=True)
     header = volume_header(volume)
     bounds_min = header["bounds_min"]
     bounds_max = header["bounds_max"]
@@ -356,8 +390,9 @@ def render_visibility(
         "--fptvox", volume.as_posix(),
         "--size", f"{args.image_size}x{args.image_size}",
         "--camera", csv(camera),
-        "--camera-fov", str(row["fov"]),
+        "--camera-fov", str(naadf_fov_degrees(float(row["fov"]))),
         "--camera-roll", str(row.get("roll", 0.0)),
+        "--camera-pixel-offset", "-0.5,-0.5",
         "--gpu-renderer", "naadf",
         "--gpu-naadf-mode", "aadf",
         "--gpu-naadf-build", "cpu",
@@ -374,6 +409,7 @@ def render_visibility(
     run(command, ROOT, output / "stdout.log", output / "stderr.log")
     if not manifest.is_file() or not binary.is_file():
         raise RuntimeError(f"NAADF visibility dump was not created: {base}")
+    contract_path.write_text(json.dumps(camera_contract, indent=2) + "\n")
     return base
 
 
@@ -384,6 +420,7 @@ def visibility_images(
     fov_degrees: float,
     roll: float,
     flip_y: bool,
+    flip_x: bool,
 ) -> dict[str, np.ndarray]:
     manifest = json.loads(Path(f"{base}.json").read_text())
     width, height = int(manifest["width"]), int(manifest["height"])
@@ -398,6 +435,13 @@ def visibility_images(
         material = np.flipud(material)
         normal = np.flipud(normal)
         hit = np.flipud(hit)
+    if flip_x:
+        # Keep any diagnostic orientation transform explicit and apply it to
+        # every visibility lane before calculating image-space metrics.
+        depth = np.fliplr(depth)
+        material = np.fliplr(material)
+        normal = np.fliplr(normal)
+        hit = np.fliplr(hit)
     normal_length = np.linalg.norm(normal, axis=2, keepdims=True)
     normal = np.divide(normal, normal_length, out=np.zeros_like(normal), where=normal_length > 0)
     world_up = np.asarray([0.0, 1.0, 0.0], dtype=np.float32)
@@ -408,11 +452,11 @@ def visibility_images(
         unrolled_right = right.copy()
         right = unrolled_right * math.cos(roll) + up * math.sin(roll)
         up = up * math.cos(roll) - unrolled_right * math.sin(roll)
-    px = (np.arange(width, dtype=np.float32) + 0.5) / width
-    py = (np.arange(height, dtype=np.float32) + 0.5) / height
+    px = np.arange(width, dtype=np.float32) / width
+    py = np.arange(height, dtype=np.float32) / height
     ndc_x = px * 2.0 - 1.0
     ndc_y = 1.0 - py * 2.0
-    tan_y = math.tan(math.radians(fov_degrees) * 0.5)
+    tan_y = math.tan(math.radians(naadf_fov_degrees(fov_degrees)) * 0.5)
     rays = (
         forward[None, None, :]
         + right[None, None, :] * (ndc_x[None, :, None] * tan_y * width / height)
@@ -541,13 +585,29 @@ def depth_metrics(reference: dict, candidate: dict) -> dict:
     reference_depth = reference_depth[valid]
     candidate_depth = candidate_depth[valid]
     scale = float(np.median(reference_depth / np.maximum(candidate_depth, 1.0e-20)))
-    delta = np.abs(reference_depth - candidate_depth * scale)
+    scaled_candidate = candidate_depth * scale
+    delta = np.abs(reference_depth - scaled_candidate)
+    per_pixel_relative = delta / np.maximum(np.abs(reference_depth), 1.0e-20)
     normalizer = max(float(np.median(np.abs(reference_depth))), 1.0e-20)
+    positive = (reference_depth > 0.0) & (scaled_candidate > 0.0)
+    log_correlation = None
+    if positive.sum() > 1:
+        log_correlation = float(
+            np.corrcoef(
+                np.log(reference_depth[positive]), np.log(scaled_candidate[positive])
+            )[0, 1]
+        )
     return {
         "common_pixels": int(reference_depth.size),
         "candidate_to_reference_scale": scale,
         "relative_mae_pct": float(delta.mean() / normalizer * 100.0),
         "relative_p95_pct": float(np.quantile(delta, 0.95) / normalizer * 100.0),
+        "per_pixel_relative_mean_pct": float(per_pixel_relative.mean() * 100.0),
+        "per_pixel_relative_median_pct": float(np.median(per_pixel_relative) * 100.0),
+        "per_pixel_relative_p95_pct": float(np.quantile(per_pixel_relative, 0.95) * 100.0),
+        "within_5pct_pct": float((per_pixel_relative <= 0.05).mean() * 100.0),
+        "within_10pct_pct": float((per_pixel_relative <= 0.10).mean() * 100.0),
+        "log_depth_correlation": log_correlation,
     }
 
 
@@ -645,10 +705,13 @@ def main() -> None:
             row = camera_candidates[0]
         forward = camera_basis(row)[0].astype(np.float32)
         flip_y = bool(row.get("legacy_coordinate_system", False))
+        flip_x = args.native_capture_orientation == "mirror-x"
 
         ply_visibility = render_visibility(args, row, ply_path, "exact", scene_output / "ply-exact")
         roll = float(row.get("roll", 0.0))
-        ply = visibility_images(ply_visibility, ply_volume, forward, row["fov"], roll, flip_y)
+        ply = visibility_images(
+            ply_visibility, ply_volume, forward, row["fov"], roll, flip_y, flip_x
+        )
         probe_count = 0
         fit_best_coverage = float(ply["hit"].mean())
         if camera_candidates and fit_best_coverage < args.minimum_exact_coverage:
@@ -670,6 +733,7 @@ def main() -> None:
                     candidate["fov"],
                     float(candidate.get("roll", 0.0)),
                     flip_y,
+                    flip_x,
                 )
                 coverage = float(candidate_ply["hit"].mean())
                 if coverage > best[0]:
@@ -694,7 +758,7 @@ def main() -> None:
                 args, row, ply_path, "exact", scene_output / "ply-authored"
             )
             ply = visibility_images(
-                ply_visibility, ply_volume, forward, row["fov"], roll, flip_y
+                ply_visibility, ply_volume, forward, row["fov"], roll, flip_y, flip_x
             )
         else:
             row["comparison_surface_status"] = "resolved"
@@ -704,8 +768,12 @@ def main() -> None:
 
         v7_visibility = render_visibility(args, row, v7_path, "exact", scene_output / "v7-exact")
         voxel_visibility = render_visibility(args, row, v7_path, "voxel", scene_output / "v7-voxel")
-        v7 = visibility_images(v7_visibility, v7_volume, forward, row["fov"], roll, flip_y)
-        voxel = visibility_images(voxel_visibility, v7_volume, forward, row["fov"], roll, flip_y)
+        v7 = visibility_images(
+            v7_visibility, v7_volume, forward, row["fov"], roll, flip_y, flip_x
+        )
+        voxel = visibility_images(
+            voxel_visibility, v7_volume, forward, row["fov"], roll, flip_y, flip_x
+        )
         fpt_structural = render_fpt_geometry(args, row, scene_output / "fpt-geometry")
         fpt = load_float_image(fpt_structural["image"])
 
@@ -793,9 +861,13 @@ def main() -> None:
                     "pitch": row["pitch"],
                     "roll": row.get("roll", 0.0),
                     "fov": row["fov"],
+                    "naadf_fov": naadf_fov_degrees(float(row["fov"])),
+                    "naadf_pixel_offset": [-0.5, -0.5],
                     "probe_count": row.get("comparison_probe_count", 0),
                     "visible_coverage": row.get("comparison_visible_coverage"),
                     "fit_best_coverage": row.get("comparison_fit_best_coverage"),
+                    "native_capture_orientation": args.native_capture_orientation,
+                    "native_capture_flip_x": flip_x,
                 },
                 "exact_surface_status": row.get("comparison_surface_status", "resolved"),
                 "geometry": geometry_metrics,

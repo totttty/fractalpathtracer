@@ -119,6 +119,53 @@ makes incorrect bounds visible to automation.
 
 ## FPTVOX contracts
 
+### Authored appearance extensions
+
+Mandelbulber exact-surface exports append independent, versioned trailers after
+the geometry payload. Geometry versions 1 through 11 remain unchanged. A
+consumer may stop after geometry or validate the following sequence:
+
+1. `FPTAPP1\0`: fixed 256-byte background, authored lights, image adjustments,
+   and compatibility material controls.
+2. `FPTCAM1\0`: fixed 96-byte camera pose, roll, adjusted field of view,
+   image-Y convention, and perspective/fisheye/equirectangular projection.
+3. `FPTENV1\0`: fixed 512-byte environment header followed by a portable
+   32x16 RGB16F HDRI lookup texture. The header stores basic, volumetric, and
+   iteration-fog controls plus cloud density, placement, motion, color, and
+   noise parameters.
+4. `FPTMAT1\0`: a fixed 32-byte header and 68-byte records for every authored
+   `matN`, including base color, roughness, specular response, metallic,
+   reflectance, transmission, interior opacity, IOR, emission, and
+   transmission tint.
+5. `FPTCOL2\0`: indexed-triangle vertex colors used for barycentric shading.
+
+Every numeric field is little-endian and finite. Each extension has its own
+magic, version, record sizes, and strict count validation. Old geometry-only
+artifacts remain valid and deterministic.
+
+The environment trailer embeds decoded image data rather than an absolute HDRI
+path, so the artifact remains portable. It preserves the authored volume
+controls, but a consumer may implement iteration fog or procedural clouds with
+an explicitly documented approximation when the voxel payload lacks the
+original distance-estimator orbit state.
+
+### Indexed surface-colour extension
+
+FPTVOX8 and FPTVOX11 exports use `FPTCOL2\0`, which stores three packed RGB8
+values per indexed source triangle. The renderer interpolates them with the
+actual hit barycentrics rather than selecting a flat triangle or averaged cell
+color. The 32-byte header declares version `2`, a 12-byte record, and an exact
+triangle count. Each color word is `0x00BBGGRR`; high bytes are reserved.
+
+Readers retain compatibility with the earlier `FPTCOL1\0` four-byte flat-color
+record by expanding it to three equal vertices. Malformed counts, reserved
+bits, and unknown versions are rejected rather than silently shifting later
+extensions.
+
+The stream is deliberately separate from the canonical geometry payload. It
+does not change traversal, occupancy, normals, or the existing per-cell
+material table, and older consumers can continue to stop after geometry.
+
 `.fptvox` is the preferred direct volume seam. It preserves every occupied
 cell's exact packed colour/occupancy, PBR properties, and emission without
 greedy meshing or glTF material conversion. All integers and IEEE-754 float
@@ -537,6 +584,15 @@ connected hit pixels, splatted hit pixels, and splat triangle count separately.
 The three held-out high-frequency pilots improved mask IoU from
 `0.672/0.922/0.481` to `0.918/0.938/0.941` while keeping false coverage below
 `0.66%`.
+
+`--surface-view-triangle-dilation 0..1` conservatively expands only connected
+triangles touching a rejected depth/normal discontinuity. Expansion stays in
+the triangle plane around its centroid, so it preserves the represented local
+plane while moving authored sample rays away from fragile boundary edges. The
+default is zero. On the iridescence `384`/`300x300` BVH pilot, `0.75` improved
+coverage from `95.079%` to `99.630%` with no lost baseline hits and a `6.6%`
+increase in clipped triangles. The export report includes `triangle_dilation`
+and `surface.dilated_triangles`.
 
 Low-normal-agreement neighbors remain rejected as connected triangles. Their
 vertices are tagged and only their existing bounded fallback splats are

@@ -8,9 +8,11 @@ use fpt_metal::tools;
 use fpt_metal::{
     Aabb, CoordinateSystem, FPTVOX_INDEXED_TRIANGLE_MAX_REFERENCES_PER_CELL, FptvoxTriangle,
     FptvoxTriangleCell, FptvoxTriangleSurface, FractalScene, SparseVoxel, SurfaceMaterial,
-    VoxelCell, VoxelGrid, VoxelizationParameters, VoxelizationRequest, export_fptvox,
-    export_fptvox_indexed_triangle_surface, export_fptvox_with_bounded_patches,
-    export_fptvox_with_normals, export_fptvox_with_planes, export_glb, voxelize,
+    VoxelCell, VoxelGrid, VoxelizationParameters, VoxelizationRequest, append_fptvox_appearance,
+    append_fptvox_camera, append_fptvox_environment, append_fptvox_materials,
+    append_fptvox_triangle_vertex_colors, export_fptvox, export_fptvox_indexed_triangle_surface,
+    export_fptvox_with_bounded_patches, export_fptvox_with_normals, export_fptvox_with_planes,
+    export_glb, voxelize,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -43,6 +45,19 @@ const SDF_BACKEND_SELECTION_VERSION: u32 = 8;
 const SDF_BACKEND_MARGIN: f64 = 0.15;
 const SDF_GENERATED_SURFACE_REQUIRED_SPEEDUP: f64 = 1.10;
 const SDF_BACKEND_PROBE_WIDTH: u32 = 1920;
+
+fn append_authored_fptvox_appearance(
+    output: &Path,
+    scene: Option<&MandelbulberScene>,
+) -> Result<u64> {
+    scene.map_or(Ok(0), |scene| {
+        let mut bytes = append_fptvox_appearance(output, &scene.fptvox_appearance())?;
+        bytes += append_fptvox_camera(output, &scene.fptvox_camera())?;
+        bytes += append_fptvox_environment(output, &scene.fptvox_environment()?)?;
+        bytes += append_fptvox_materials(output, &scene.fptvox_materials())?;
+        Ok(bytes)
+    })
+}
 const SDF_BACKEND_PROBE_SAMPLES: u32 = 64;
 const SDF_BACKEND_PROBE_RUNS: usize = 3;
 const SDF_BACKEND_ADAPTIVE_RUNS: usize = 4;
@@ -259,7 +274,7 @@ fn usage() {
   fpt-metal diagnostic-batch <jobs.json> [--report <report.json>] [--workers N] [--offset N] [--limit N]\n\
   fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--diagnostic-clip-voxel-bounds [--diagnostic-bounds-min x,y,z --diagnostic-bounds-max x,y,z]] [--structural-dump <file.bin>] [--camera-position x,y,z] [--camera-yaw-pitch yaw,pitch] [--camera-roll radians] [--camera-fov degrees] [--fpt-root <dir>] [--width N] [--height N]\n\
   fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
-  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-in <mesh.ply>] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-mesh-auto-bounds] [--mandel-mesh-auto-bounds-margin 0.01..1.0] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches|--surface-triangles|--surface-view-triangles|--surface-view-indexed-triangles|--surface-view-indexed-triangles-auto] [--surface-view-splats] [--surface-view-fit-bounds|--surface-view-auto-fit-bounds] [--surface-view-splat-scale 0.25..1.5] [--surface-view-splat-cell-cap 0.1..0.49] [--surface-view-capture-cache <capture.bin>] [--surface-view-auxiliary-views 0|4|6|12] [--surface-triangle-resolution N] [--surface-triangle-anisotropic] [--surface-triangle-threshold-scale 0.25..4] [--surface-triangle-auto-bounds] [--surface-triangle-auto-bounds-margin 0.001..1] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
+  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-in <mesh.ply>] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-mesh-voxel-cells] [--mandel-mesh-voxel-min-axis-resolution N] [--mandel-mesh-voxel-dilation 0..3] [--mandel-mesh-camera-safe-bounds] [--mandel-mesh-camera-margin 0.01..1.0] [--mandel-mesh-auto-bounds] [--mandel-mesh-auto-bounds-margin 0.01..1.0] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches|--surface-triangles|--surface-view-triangles|--surface-view-indexed-triangles|--surface-view-indexed-triangles-auto|--surface-view-triangle-bvh|--surface-view-indexed-triangle-bvh] [--surface-view-triangle-bvh-leaf-size 2..64] [--surface-view-splats] [--surface-view-fit-bounds|--surface-view-auto-fit-bounds] [--surface-view-splat-scale 0.25..1.5] [--surface-view-splat-cell-cap 0.1..0.49] [--surface-view-triangle-dilation 0..1] [--surface-view-capture-cache <capture.bin>] [--surface-view-auxiliary-views 0|4|6|12] [--surface-triangle-resolution N] [--surface-triangle-anisotropic] [--surface-triangle-threshold-scale 0.25..4] [--surface-triangle-auto-bounds] [--surface-triangle-auto-bounds-margin 0.001..1] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -430,6 +445,7 @@ struct ViewTriangleSurfaceSummary {
     connected_hit_pixels: usize,
     splat_hit_pixels: usize,
     emitted_triangles: usize,
+    dilated_triangles: usize,
     emitted_splat_triangles: usize,
     emitted_low_normal_triangles: usize,
     expanded_low_normal_splats: usize,
@@ -1258,6 +1274,7 @@ fn structural_surface_triangles(
     emit_low_normal_triangles: bool,
     splat_pixel_scale: f32,
     splat_cell_cap: f32,
+    triangle_dilation: f32,
     diagnostic_gpu_ms: f64,
 ) -> Result<(
     Vec<[fpt_metal::fptvox7::MeshSurfaceVertex; 3]>,
@@ -1280,6 +1297,8 @@ fn structural_surface_triangles(
     let mut triangles = Vec::new();
     let mut connected_vertices = vec![false; vertices.len()];
     let mut low_normal_vertices = vec![false; vertices.len()];
+    let mut rejected_vertices = vec![false; vertices.len()];
+    let mut connected_triangle_indices = Vec::<(usize, [usize; 3])>::new();
     let mut emitted_low_normal_triangles = 0usize;
     let mut rejected_discontinuities = 0usize;
     let tangent = (camera_fov_degrees.to_radians() * 0.5).tan();
@@ -1333,12 +1352,16 @@ fn structural_surface_triangles(
                 if maximum_edge_squared > (discontinuity_scale * pixel_footprint).powi(2)
                     || maximum_edge_squared > mesh_edge_limit_squared
                 {
+                    for index in candidate.map(|index| indices[index]) {
+                        rejected_vertices[index] = true;
+                    }
                     rejected_discontinuities += 1;
                     continue;
                 }
                 if normal_agreement < 0.25 {
                     for index in candidate.map(|index| indices[index]) {
                         low_normal_vertices[index] = true;
+                        rejected_vertices[index] = true;
                     }
                     if emit_low_normal_triangles {
                         triangles.push(samples.map(|sample| {
@@ -1357,6 +1380,7 @@ fn structural_surface_triangles(
                 for index in candidate.map(|index| indices[index]) {
                     connected_vertices[index] = true;
                 }
+                let triangle_index = triangles.len();
                 triangles.push(samples.map(|sample| {
                     fpt_metal::fptvox7::MeshSurfaceVertex {
                         position: sample
@@ -1365,7 +1389,36 @@ fn structural_surface_triangles(
                         color: sample.color,
                     }
                 }));
+                connected_triangle_indices
+                    .push((triangle_index, candidate.map(|index| indices[index])));
             }
+        }
+    }
+    let mut dilated_triangles = 0usize;
+    if triangle_dilation > 0.0 {
+        for (triangle_index, sample_indices) in connected_triangle_indices {
+            if !sample_indices
+                .into_iter()
+                .any(|index| rejected_vertices[index])
+            {
+                continue;
+            }
+            let triangle = &mut triangles[triangle_index];
+            let centroid = std::array::from_fn::<_, 3, _>(|axis| {
+                triangle
+                    .iter()
+                    .map(|vertex| vertex.position[axis])
+                    .sum::<f32>()
+                    / 3.0
+            });
+            for vertex in triangle {
+                vertex.position = std::array::from_fn(|axis| {
+                    (centroid[axis]
+                        + (vertex.position[axis] - centroid[axis]) * (1.0 + triangle_dilation))
+                        .clamp(0.0, 1.0)
+                });
+            }
+            dilated_triangles += 1;
         }
     }
     let connected_hit_pixels = connected_vertices.iter().filter(|value| **value).count();
@@ -1450,6 +1503,7 @@ fn structural_surface_triangles(
         connected_hit_pixels,
         splat_hit_pixels,
         emitted_triangles: triangles.len(),
+        dilated_triangles,
         emitted_splat_triangles,
         emitted_low_normal_triangles,
         expanded_low_normal_splats,
@@ -1528,6 +1582,12 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut mandel_mesh_opencl = false;
     let mut mandel_mesh_ply_input = None::<PathBuf>;
     let mut mandel_mesh_ply_output = None::<PathBuf>;
+    let mut mandel_mesh_voxel_cells = false;
+    let mut mandel_mesh_voxel_min_axis_resolution = None::<u32>;
+    let mut mandel_mesh_voxel_dilation = 0u32;
+    let mut mandel_mesh_camera_safe_bounds = false;
+    let mut mandel_mesh_camera_margin = 0.10_f32;
+    let mut mandel_mesh_camera_margin_set = false;
     let mut mandel_mesh_auto_bounds = false;
     let mut mandel_mesh_auto_bounds_margin = 0.10_f32;
     let mut mandel_mesh_auto_bounds_margin_set = false;
@@ -1543,6 +1603,10 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut surface_view_triangles = false;
     let mut surface_view_indexed_triangles = false;
     let mut surface_view_indexed_triangles_auto = false;
+    let mut surface_view_triangle_bvh = false;
+    let mut surface_view_indexed_triangle_bvh = false;
+    let mut surface_view_triangle_bvh_leaf_size = 16usize;
+    let mut surface_view_triangle_bvh_leaf_size_set = false;
     let mut surface_view_splats = false;
     let mut surface_view_fit_bounds = false;
     let mut surface_view_auto_fit_bounds = false;
@@ -1550,8 +1614,10 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut surface_view_capture_cache = None::<PathBuf>;
     let mut surface_view_splat_scale = 0.85_f32;
     let mut surface_view_splat_cell_cap = 0.45_f32;
+    let mut surface_view_triangle_dilation = 0.0_f32;
     let mut surface_view_splat_scale_set = false;
     let mut surface_view_splat_cell_cap_set = false;
+    let mut surface_view_triangle_dilation_set = false;
     let mut surface_triangle_resolution = None::<u32>;
     let mut surface_triangle_anisotropic = false;
     let mut surface_triangle_threshold_scale = 1.0_f32;
@@ -1627,6 +1693,34 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             "--mandel-mesh-ply-out" => {
                 mandel_mesh_ply_output = Some(next(&mut index, "--mandel-mesh-ply-out")?.into())
             }
+            "--mandel-mesh-voxel-cells" => mandel_mesh_voxel_cells = true,
+            "--mandel-mesh-voxel-min-axis-resolution" => {
+                let value = next(&mut index, "--mandel-mesh-voxel-min-axis-resolution")?.parse()?;
+                ensure!(
+                    (2..=1024).contains(&value),
+                    "Mandelbulber voxel minimum-axis resolution must be 2..1024"
+                );
+                mandel_mesh_voxel_min_axis_resolution = Some(value);
+            }
+            "--mandel-mesh-voxel-dilation" => {
+                mandel_mesh_voxel_dilation =
+                    next(&mut index, "--mandel-mesh-voxel-dilation")?.parse()?;
+                ensure!(
+                    mandel_mesh_voxel_dilation <= 3,
+                    "Mandelbulber voxel dilation must be 0..3"
+                );
+            }
+            "--mandel-mesh-camera-safe-bounds" => mandel_mesh_camera_safe_bounds = true,
+            "--mandel-mesh-camera-margin" => {
+                mandel_mesh_camera_margin =
+                    next(&mut index, "--mandel-mesh-camera-margin")?.parse()?;
+                mandel_mesh_camera_margin_set = true;
+                ensure!(
+                    mandel_mesh_camera_margin.is_finite()
+                        && (0.01..=1.0).contains(&mandel_mesh_camera_margin),
+                    "Mandel mesh camera margin must be 0.01..1.0"
+                );
+            }
             "--mandel-mesh-auto-bounds" => mandel_mesh_auto_bounds = true,
             "--mandel-mesh-auto-bounds-margin" => {
                 mandel_mesh_auto_bounds_margin =
@@ -1681,6 +1775,25 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 surface_view_triangles = true;
                 surface_view_indexed_triangles_auto = true;
             }
+            "--surface-view-triangle-bvh" => {
+                surface_triangles = true;
+                surface_view_triangles = true;
+                surface_view_triangle_bvh = true;
+            }
+            "--surface-view-indexed-triangle-bvh" => {
+                surface_triangles = true;
+                surface_view_triangles = true;
+                surface_view_indexed_triangle_bvh = true;
+            }
+            "--surface-view-triangle-bvh-leaf-size" => {
+                surface_view_triangle_bvh_leaf_size =
+                    next(&mut index, "--surface-view-triangle-bvh-leaf-size")?.parse()?;
+                surface_view_triangle_bvh_leaf_size_set = true;
+                ensure!(
+                    (2..=64).contains(&surface_view_triangle_bvh_leaf_size),
+                    "surface-view triangle BVH leaf size must be 2..64"
+                );
+            }
             "--surface-view-splats" => surface_view_splats = true,
             "--surface-view-fit-bounds" => surface_view_fit_bounds = true,
             "--surface-view-auto-fit-bounds" => surface_view_auto_fit_bounds = true,
@@ -1706,6 +1819,16 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                     surface_view_splat_cell_cap.is_finite()
                         && (0.1..=0.49).contains(&surface_view_splat_cell_cap),
                     "surface view splat cell cap must be 0.1..0.49"
+                );
+            }
+            "--surface-view-triangle-dilation" => {
+                surface_view_triangle_dilation =
+                    next(&mut index, "--surface-view-triangle-dilation")?.parse()?;
+                surface_view_triangle_dilation_set = true;
+                ensure!(
+                    surface_view_triangle_dilation.is_finite()
+                        && (0.0..=1.0).contains(&surface_view_triangle_dilation),
+                    "surface view triangle dilation must be 0..1"
                 );
             }
             "--surface-view-auxiliary-views" => {
@@ -1795,6 +1918,11 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 && !mandel_mesh_opencl
                 && mandel_mesh_ply_input.is_none()
                 && mandel_mesh_ply_output.is_none()
+                && !mandel_mesh_voxel_cells
+                && mandel_mesh_voxel_min_axis_resolution.is_none()
+                && mandel_mesh_voxel_dilation == 0
+                && !mandel_mesh_camera_safe_bounds
+                && !mandel_mesh_camera_margin_set
                 && !mandel_mesh_auto_bounds
                 && !mandel_mesh_auto_bounds_margin_set
                 && mandel_reference_output.is_none()
@@ -1804,6 +1932,14 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     ensure!(
         mandel_mesh_auto_bounds || !mandel_mesh_auto_bounds_margin_set,
         "--mandel-mesh-auto-bounds-margin requires --mandel-mesh-auto-bounds"
+    );
+    ensure!(
+        mandel_mesh_voxel_cells || mandel_mesh_voxel_dilation == 0,
+        "--mandel-mesh-voxel-dilation requires --mandel-mesh-voxel-cells"
+    );
+    ensure!(
+        mandel_mesh_camera_safe_bounds || !mandel_mesh_camera_margin_set,
+        "--mandel-mesh-camera-margin requires --mandel-mesh-camera-safe-bounds"
     );
     ensure!(
         mandel_reference_output.is_some() || mandel_reference_size.is_none(),
@@ -1861,6 +1997,10 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         "surface view splat controls require --surface-view-splats"
     );
     ensure!(
+        surface_view_triangles || !surface_view_triangle_dilation_set,
+        "--surface-view-triangle-dilation requires --surface-view-triangles"
+    );
+    ensure!(
         surface_view_auxiliary_views == 0 || surface_view_triangles,
         "--surface-view-auxiliary-views requires --surface-view-triangles"
     );
@@ -1873,11 +2013,24 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         "--surface-view-capture-cache currently supports the authored view only"
     );
     ensure!(
-        !(surface_view_indexed_triangles && surface_view_indexed_triangles_auto),
-        "choose only one of --surface-view-indexed-triangles and --surface-view-indexed-triangles-auto"
+        surface_view_indexed_triangles as usize
+            + surface_view_indexed_triangles_auto as usize
+            + surface_view_triangle_bvh as usize
+            + surface_view_indexed_triangle_bvh as usize
+            <= 1,
+        "choose only one indexed or BVH surface-view triangle layout"
     );
     ensure!(
-        (!surface_view_indexed_triangles && !surface_view_indexed_triangles_auto)
+        surface_view_triangle_bvh
+            || surface_view_indexed_triangle_bvh
+            || !surface_view_triangle_bvh_leaf_size_set,
+        "--surface-view-triangle-bvh-leaf-size requires a BVH surface-view layout"
+    );
+    ensure!(
+        (!surface_view_indexed_triangles
+            && !surface_view_indexed_triangles_auto
+            && !surface_view_triangle_bvh
+            && !surface_view_indexed_triangle_bvh)
             || surface_view_auxiliary_views == 0,
         "indexed view triangles currently support the authored view only"
     );
@@ -1956,10 +2109,28 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             loaded.config.voxel_bounds_max,
         )
     };
-    let export_bounds = Aabb::new(
+    let requested_export_bounds = Aabb::new(
         bounds_min.unwrap_or(default_bounds.min),
         bounds_max.unwrap_or(default_bounds.max),
     );
+    let world_scale = if is_mandel {
+        loaded.config.set_values[mandelbulber::PARAM_WORLD_SCALE].max(1.0)
+    } else {
+        1.0
+    };
+    let authored_camera = loaded
+        .config
+        .camera_position
+        .map(|component| component / world_scale);
+    let export_bounds = if mandel_mesh_source && mandel_mesh_camera_safe_bounds {
+        mandel_mesh::camera_safe_bounds(
+            requested_export_bounds,
+            authored_camera,
+            mandel_mesh_camera_margin,
+        )
+    } else {
+        requested_export_bounds
+    };
     ensure!(
         export_bounds
             .min
@@ -1968,11 +2139,6 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             .all(|(min, max)| min.is_finite() && max.is_finite() && *min < max),
         "invalid voxel bounds"
     );
-    let world_scale = if is_mandel {
-        loaded.config.set_values[mandelbulber::PARAM_WORLD_SCALE].max(1.0)
-    } else {
-        1.0
-    };
     if mandel_mesh_source {
         ensure!(
             is_mandel,
@@ -1987,6 +2153,10 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 && !surface_band_set
                 && !fill_interior,
             "Mandelbulber mesh export cannot combine its selected surface payload with other surface or fill modes"
+        );
+        ensure!(
+            !mandel_mesh_voxel_cells || !surface_triangles,
+            "--mandel-mesh-voxel-cells cannot be combined with a triangle surface payload"
         );
         ensure!(
             output
@@ -2019,6 +2189,18 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         } else {
             None
         };
+        let voxel_resolution_3d = if let Some(minimum) = mandel_mesh_voxel_min_axis_resolution {
+            let resolution_3d = mandel_mesh::cubic_voxel_resolutions(export_bounds, minimum);
+            ensure!(
+                resolution_3d.into_iter().all(|value| value <= 8192),
+                "minimum-axis resolution produces a logical axis above the 8192-cell safety limit: {:?}",
+                resolution_3d
+            );
+            Some(resolution_3d)
+        } else {
+            (surface_triangle_anisotropic || mandel_mesh_voxel_cells)
+                .then(|| fpt_metal::fptvox7::aspect_resolutions(export_bounds, resolution))
+        };
         let mesh_result =
             mandel_mesh::voxelize_mandelbulber_mesh(&mandel_mesh::MandelMeshOptions {
                 binary: mandelbulber_binary.as_deref(),
@@ -2027,8 +2209,9 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 raw_ply_output: mandel_mesh_ply_output.as_deref(),
                 bounds: export_bounds,
                 voxel_resolution: resolution,
-                voxel_resolution_3d: surface_triangle_anisotropic
-                    .then(|| fpt_metal::fptvox7::aspect_resolutions(export_bounds, resolution)),
+                voxel_resolution_3d,
+                voxel_min_axis_resolution: mandel_mesh_voxel_min_axis_resolution,
+                voxel_dilation: mandel_mesh_voxel_dilation,
                 mesh_resolution: mandel_mesh_resolution.unwrap_or(resolution),
                 max_iterations: scene.max_iterations,
                 use_opencl: mandel_mesh_opencl,
@@ -2038,13 +2221,68 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 auto_bounds: mandel_mesh_auto_bounds,
                 auto_bounds_margin: mandel_mesh_auto_bounds_margin,
                 surface_triangles,
+                voxel_cells_only: mandel_mesh_voxel_cells,
             })?;
         ensure!(
             mesh_result.grid.occupied_voxels() > 0,
             "Mandelbulber mesh did not intersect the requested voxel bounds"
         );
+        if mandel_mesh_voxel_cells {
+            let camera_grid = std::array::from_fn::<_, 3, _>(|axis| {
+                (authored_camera[axis] - mesh_result.grid.bounds.min[axis])
+                    / (mesh_result.grid.bounds.max[axis] - mesh_result.grid.bounds.min[axis])
+                    * mesh_result.grid.resolution[axis] as f32
+            });
+            let (format, artifact) =
+                export_voxel_artifact(&mesh_result.grid, VoxelSurfacePayload::None, &output)?;
+            let appearance_bytes = append_authored_fptvox_appearance(&output, Some(&scene))?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "contract_version":1,
+                    "evaluator":"mandelbulber-marching-cubes-ply-voxel-cells",
+                    "format":format,
+                    "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                    "appearance_bytes":appearance_bytes,
+                    "output":output,
+                    "resolution":mesh_result.grid.resolution,
+                    "mesh_resolution":mandel_mesh_resolution.unwrap_or(resolution),
+                    "voxel_min_axis_resolution":mandel_mesh_voxel_min_axis_resolution,
+                    "voxel_dilation":mandel_mesh_voxel_dilation,
+                    "requested_bounds_min":requested_export_bounds.min,
+                    "requested_bounds_max":requested_export_bounds.max,
+                    "bounds_min":mesh_result.grid.bounds.min,
+                    "bounds_max":mesh_result.grid.bounds.max,
+                    "camera_safe_bounds":mandel_mesh_camera_safe_bounds,
+                    "camera_margin":mandel_mesh_camera_margin,
+                    "camera":{
+                        "world_position":authored_camera,
+                        "grid_position":camera_grid,
+                        "fpt_yaw_pitch":loaded.config.camera_yaw_pitch,
+                        "fpt_roll":loaded.config.camera_roll,
+                        "fpt_fov_degrees":loaded.config.camera_fov,
+                    },
+                    "max_iterations":scene.max_iterations,
+                    "opencl":mandel_mesh_opencl,
+                    "mandelbulber_reference":reference,
+                    "mandelbulber_ply_input":mandel_mesh_ply_input,
+                    "mandelbulber_ply":mandel_mesh_ply_output,
+                    "surface_payload":"none",
+                    "mesh":mesh_result.summary,
+                    "auto_bounds":mesh_result.auto_bounds,
+                    "summary":artifact,
+                }))?
+            );
+            return Ok(());
+        }
         if let Some(surface) = mesh_result.triangle_surface.as_ref() {
+            let camera_grid = std::array::from_fn::<_, 3, _>(|axis| {
+                (authored_camera[axis] - surface.bounds.min[axis])
+                    / (surface.bounds.max[axis] - surface.bounds.min[axis])
+                    * surface.resolution[axis] as f32
+            });
             let artifact = fpt_metal::export_fptvox_triangle_surface(surface, &output)?;
+            let appearance_bytes = append_authored_fptvox_appearance(&output, Some(&scene))?;
             println!(
                 "{}",
                 serde_json::to_string_pretty(&json!({
@@ -2054,14 +2292,27 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                     "output":output,
                     "resolution":surface.resolution,
                     "sampling_resolution":surface.sampling_resolution,
+                    "requested_bounds_min":requested_export_bounds.min,
+                    "requested_bounds_max":requested_export_bounds.max,
                     "bounds_min":surface.bounds.min,
                     "bounds_max":surface.bounds.max,
+                    "camera_safe_bounds":mandel_mesh_camera_safe_bounds,
+                    "camera_margin":mandel_mesh_camera_margin,
+                    "camera":{
+                        "world_position":authored_camera,
+                        "grid_position":camera_grid,
+                        "fpt_yaw_pitch":loaded.config.camera_yaw_pitch,
+                        "fpt_roll":loaded.config.camera_roll,
+                        "fpt_fov_degrees":loaded.config.camera_fov,
+                    },
                     "max_iterations":scene.max_iterations,
                     "opencl":mandel_mesh_opencl,
                     "mandelbulber_reference":reference,
                     "mandelbulber_ply_input":mandel_mesh_ply_input,
                     "mandelbulber_ply":mandel_mesh_ply_output,
                     "surface_payload":"cell-clipped-triangles",
+                    "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                    "appearance_bytes":appearance_bytes,
                     "mesh":mesh_result.summary,
                     "auto_bounds":mesh_result.auto_bounds,
                     "summary":artifact,
@@ -2074,6 +2325,12 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             VoxelSurfacePayload::BoundedPatches(&mesh_result.patches),
             &output,
         )?;
+        let appearance_bytes = append_authored_fptvox_appearance(&output, Some(&scene))?;
+        let camera_grid = std::array::from_fn::<_, 3, _>(|axis| {
+            (authored_camera[axis] - mesh_result.grid.bounds.min[axis])
+                / (mesh_result.grid.bounds.max[axis] - mesh_result.grid.bounds.min[axis])
+                * mesh_result.grid.resolution[axis] as f32
+        });
         println!(
             "{}",
             serde_json::to_string_pretty(&json!({
@@ -2083,13 +2340,26 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 "output":output,
                 "resolution":mesh_result.grid.resolution,
                 "mesh_resolution":mandel_mesh_resolution.unwrap_or(resolution),
+                "requested_bounds_min":requested_export_bounds.min,
+                "requested_bounds_max":requested_export_bounds.max,
                 "bounds_min":mesh_result.grid.bounds.min,
                 "bounds_max":mesh_result.grid.bounds.max,
+                "camera_safe_bounds":mandel_mesh_camera_safe_bounds,
+                "camera_margin":mandel_mesh_camera_margin,
+                "camera":{
+                    "world_position":authored_camera,
+                    "grid_position":camera_grid,
+                    "fpt_yaw_pitch":loaded.config.camera_yaw_pitch,
+                    "fpt_roll":loaded.config.camera_roll,
+                    "fpt_fov_degrees":loaded.config.camera_fov,
+                },
                 "max_iterations":scene.max_iterations,
                 "opencl":mandel_mesh_opencl,
                 "mandelbulber_reference":reference,
                 "mandelbulber_ply":mandel_mesh_ply_output,
                 "surface_payload":"unbounded-primary-plus-bounded-secondary",
+                "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                "appearance_bytes":appearance_bytes,
                 "mesh":mesh_result.summary,
                 "auto_bounds":mesh_result.auto_bounds,
                 "summary":artifact,
@@ -2371,6 +2641,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                     surface_view_splats && *bounds_fallback,
                     surface_view_splat_scale,
                     surface_view_splat_cell_cap,
+                    surface_view_triangle_dilation,
                     *diagnostic_gpu_ms,
                 )?;
                 view_triangle_streams.push(view_triangles);
@@ -2384,6 +2655,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 view_summary.connected_hit_pixels += summary.connected_hit_pixels;
                 view_summary.splat_hit_pixels += summary.splat_hit_pixels;
                 view_summary.emitted_triangles += summary.emitted_triangles;
+                view_summary.dilated_triangles += summary.dilated_triangles;
                 view_summary.emitted_splat_triangles += summary.emitted_splat_triangles;
                 view_summary.emitted_low_normal_triangles += summary.emitted_low_normal_triangles;
                 view_summary.expanded_low_normal_splats += summary.expanded_low_normal_splats;
@@ -2399,12 +2671,154 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             );
             let material_template = SurfaceMaterial {
                 base_color: [1.0; 3],
-                roughness: loaded.config.fractal_style[4].clamp(0.0, 1.0),
-                specular: loaded.config.fractal_style[5].clamp(0.0, 1.0),
-                transmission: 0.0,
-                ior: 1.5,
-                emission_strength: loaded.config.fractal_style[6].max(0.0),
+                roughness: material
+                    .map_or(loaded.config.fractal_style[4], |value| {
+                        value.surface_roughness.max(0.0).sqrt() as f32
+                    })
+                    .clamp(0.0, 1.0),
+                specular: material
+                    .map_or(loaded.config.fractal_style[5], |value| {
+                        (value.specular / 10.0) as f32
+                    })
+                    .clamp(0.0, 1.0),
+                transmission: material
+                    .map_or(0.0, |value| value.transparency_of_surface as f32)
+                    .clamp(0.0, 1.0),
+                ior: material
+                    .map_or(1.5, |value| value.index_of_refraction as f32)
+                    .max(1.0),
+                emission_strength: material
+                    .map_or(loaded.config.fractal_style[6], |value| {
+                        value.luminosity as f32
+                    })
+                    .max(0.0),
             };
+            if surface_view_indexed_triangle_bvh {
+                let triangles = view_triangle_streams
+                    .pop()
+                    .expect("single indexed-BVH view-triangle stream");
+                let source_triangle_count = triangles.len();
+                let indexed =
+                    fpt_metal::fptvox7::build_indexed_triangle_surface_from_normalized_mesh_3d(
+                        triangles.iter().copied(),
+                        effective_output_grid,
+                        [view_summary.maximum_capture_resolution; 3],
+                        effective_bounds,
+                        material_template,
+                    )?;
+                let indexed_reference_count = indexed.references.len();
+                let bvh = fpt_metal::fptvox7::build_indexed_triangle_bvh_surface(
+                    &indexed,
+                    surface_view_triangle_bvh_leaf_size,
+                )?;
+                let leaf_nodes = bvh
+                    .nodes
+                    .iter()
+                    .filter(|node| node.triangle_count != 0)
+                    .count();
+                let maximum_cell_nodes = bvh
+                    .cells
+                    .iter()
+                    .map(|cell| cell.node_count)
+                    .max()
+                    .unwrap_or(0);
+                let artifact =
+                    fpt_metal::export_fptvox_indexed_triangle_bvh_surface(&bvh, &output)?;
+                let appearance_bytes =
+                    append_authored_fptvox_appearance(&output, triangle_material.as_ref())?;
+                let triangle_color_bytes =
+                    append_fptvox_triangle_vertex_colors(&output, &bvh.triangle_vertex_colors)?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "contract_version":11,
+                        "evaluator":"fpt-metal-authored-view-depth-indexed-triangle-bvh",
+                        "format":"fptvox",
+                        "output":output,
+                        "resolution":bvh.resolution,
+                        "sampling_resolution":bvh.sampling_resolution,
+                        "bounds_min":bvh.bounds.min,
+                        "bounds_max":bvh.bounds.max,
+                        "surface_payload":"cell-stackless-indexed-triangle-bvh",
+                        "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                        "appearance_bytes":appearance_bytes,
+                        "triangle_color_contract":"FPTCOL2",
+                        "triangle_color_bytes":triangle_color_bytes,
+                        "view_dependent":true,
+                        "source_triangles":source_triangle_count,
+                        "indexed_triangles":bvh.triangles.len(),
+                        "cell_triangle_references":indexed_reference_count,
+                        "reordered_references":bvh.references.len(),
+                        "bvh_nodes":bvh.nodes.len(),
+                        "bvh_leaf_nodes":leaf_nodes,
+                        "maximum_cell_nodes":maximum_cell_nodes,
+                        "leaf_triangle_limit":surface_view_triangle_bvh_leaf_size,
+                        "triangle_dilation":surface_view_triangle_dilation,
+                        "surface":view_summary,
+                        "summary":artifact,
+                    }))?
+                );
+                return Ok(());
+            }
+            if surface_view_triangle_bvh {
+                let triangles = view_triangle_streams
+                    .pop()
+                    .expect("single BVH view-triangle stream");
+                let source_triangle_count = triangles.len();
+                let clipped = fpt_metal::fptvox7::build_triangle_surface_from_normalized_mesh_3d(
+                    triangles.iter().copied(),
+                    source_triangle_count,
+                    effective_output_grid,
+                    [view_summary.maximum_capture_resolution; 3],
+                    effective_bounds,
+                    material_template,
+                )?;
+                let bvh = fpt_metal::fptvox7::build_triangle_bvh_surface(
+                    &clipped,
+                    surface_view_triangle_bvh_leaf_size,
+                )?;
+                let maximum_cell_nodes = bvh
+                    .cells
+                    .iter()
+                    .map(|cell| cell.node_count)
+                    .max()
+                    .unwrap_or(0);
+                let leaf_nodes = bvh
+                    .nodes
+                    .iter()
+                    .filter(|node| node.triangle_count != 0)
+                    .count();
+                let artifact = fpt_metal::export_fptvox_triangle_bvh_surface(&bvh, &output)?;
+                let appearance_bytes =
+                    append_authored_fptvox_appearance(&output, triangle_material.as_ref())?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "contract_version":10,
+                        "evaluator":"fpt-metal-authored-view-depth-triangle-bvh",
+                        "format":"fptvox",
+                        "output":output,
+                        "resolution":bvh.resolution,
+                        "sampling_resolution":bvh.sampling_resolution,
+                        "bounds_min":bvh.bounds.min,
+                        "bounds_max":bvh.bounds.max,
+                        "surface_payload":"cell-stackless-triangle-bvh",
+                        "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                        "appearance_bytes":appearance_bytes,
+                        "view_dependent":true,
+                        "source_triangles":source_triangle_count,
+                        "clipped_triangles":bvh.triangles.len(),
+                        "bvh_nodes":bvh.nodes.len(),
+                        "bvh_leaf_nodes":leaf_nodes,
+                        "maximum_cell_nodes":maximum_cell_nodes,
+                        "leaf_triangle_limit":surface_view_triangle_bvh_leaf_size,
+                        "triangle_dilation":surface_view_triangle_dilation,
+                        "surface":view_summary,
+                        "summary":artifact,
+                    }))?
+                );
+                return Ok(());
+            }
             if surface_view_indexed_triangles || surface_view_indexed_triangles_auto {
                 let triangles = view_triangle_streams
                     .pop()
@@ -2478,6 +2892,12 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 });
                 if selected {
                     let artifact = export_fptvox_indexed_triangle_surface(&indexed, &output)?;
+                    let appearance_bytes =
+                        append_authored_fptvox_appearance(&output, triangle_material.as_ref())?;
+                    let triangle_color_bytes = append_fptvox_triangle_vertex_colors(
+                        &output,
+                        &indexed.triangle_vertex_colors,
+                    )?;
                     println!(
                         "{}",
                         serde_json::to_string_pretty(&json!({
@@ -2490,6 +2910,10 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                             "bounds_min":indexed.bounds.min,
                             "bounds_max":indexed.bounds.max,
                             "surface_payload":"cell-indexed-source-triangles",
+                            "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                            "appearance_bytes":appearance_bytes,
+                            "triangle_color_contract":"FPTCOL2",
+                            "triangle_color_bytes":triangle_color_bytes,
                             "view_dependent":true,
                             "source_triangles":source_triangle_count,
                             "cell_triangle_references":reference_count,
@@ -2499,12 +2923,15 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                             "v7_clipped_triangles":clipped_triangle_count,
                             "intersection_reduction_pct":intersection_reduction_pct,
                             "indexed_selector":selector,
+                            "triangle_dilation":surface_view_triangle_dilation,
                             "surface":view_summary,
                             "summary":artifact,
                         }))?
                     );
                 } else {
                     let artifact = fpt_metal::export_fptvox_triangle_surface(&clipped, &output)?;
+                    let appearance_bytes =
+                        append_authored_fptvox_appearance(&output, triangle_material.as_ref())?;
                     println!(
                         "{}",
                         serde_json::to_string_pretty(&json!({
@@ -2537,10 +2964,13 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                             },
                             "automatic_bounds_margin":surface_triangle_auto_bounds_margin,
                             "surface_payload":"cell-clipped-triangles",
+                            "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                            "appearance_bytes":appearance_bytes,
                             "view_dependent":true,
                             "isolated_sample_splats":surface_view_splats,
                             "splat_pixel_scale":surface_view_splat_scale,
                             "splat_cell_cap":surface_view_splat_cell_cap,
+                            "triangle_dilation":surface_view_triangle_dilation,
                             "auxiliary_views":surface_view_auxiliary_views,
                             "capture_cache":{
                                 "path":surface_view_capture_cache.as_ref(),
@@ -2584,6 +3014,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 (surface, Some(summary))
             };
             let artifact = fpt_metal::export_fptvox_triangle_surface(&surface, &output)?;
+            let appearance_bytes =
+                append_authored_fptvox_appearance(&output, triangle_material.as_ref())?;
             println!(
                 "{}",
                 serde_json::to_string_pretty(&json!({
@@ -2616,10 +3048,13 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                     },
                     "automatic_bounds_margin":surface_triangle_auto_bounds_margin,
                     "surface_payload":"cell-clipped-triangles",
+                    "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                    "appearance_bytes":appearance_bytes,
                     "view_dependent":true,
                     "isolated_sample_splats":surface_view_splats,
                     "splat_pixel_scale":surface_view_splat_scale,
                     "splat_cell_cap":surface_view_splat_cell_cap,
+                    "triangle_dilation":surface_view_triangle_dilation,
                     "auxiliary_views":surface_view_auxiliary_views,
                     "capture_cache":{
                         "path":surface_view_capture_cache,
@@ -2716,6 +3151,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             }
         }
         let artifact = fpt_metal::export_fptvox_triangle_surface(&triangle_build.surface, &output)?;
+        let appearance_bytes =
+            append_authored_fptvox_appearance(&output, triangle_material.as_ref())?;
         println!(
             "{}",
             serde_json::to_string_pretty(&json!({
@@ -2729,6 +3166,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 "bounds_min":triangle_build.surface.bounds.min,
                 "bounds_max":triangle_build.surface.bounds.max,
                 "surface_payload":"cell-clipped-triangles",
+                "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+                "appearance_bytes":appearance_bytes,
                 "compile_ms":compile_ms,
                 "compile_cache_hit":cache_hit,
                 "surface":triangle_build.summary,
@@ -3014,12 +3453,20 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
         _ => VoxelSurfacePayload::None,
     };
     let (format, summary) = export_voxel_artifact(&grid, surface_payload, &output)?;
+    let appearance_scene = if is_mandel && format == "fptvox" {
+        Some(MandelbulberScene::load(&scene_path)?)
+    } else {
+        None
+    };
+    let appearance_bytes = append_authored_fptvox_appearance(&output, appearance_scene.as_ref())?;
     println!(
         "{}",
         serde_json::to_string_pretty(&json!({
             "contract_version":1,
             "evaluator":"metal-voxel-build-kernel",
             "format":format,
+            "appearance_contract":if appearance_bytes != 0 { "FPTAPP1" } else { "none" },
+            "appearance_bytes":appearance_bytes,
             "output":output,
             "resolution":grid.resolution,
             "bounds_min":grid.bounds.min,
@@ -4954,6 +5401,7 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
                 "yaw_pitch": loaded.config.camera_yaw_pitch,
                 "roll": loaded.config.camera_roll,
                 "fov_degrees": loaded.config.camera_fov,
+                "image_y_sign": loaded.config.camera_image_y_sign,
             },
             "records": {
                 "position_distance": "float4: world_x, world_y, world_z, ray_distance",
@@ -6873,6 +7321,7 @@ mod tests {
             0.85,
             0.45,
             0.0,
+            0.0,
         )
         .expect("triangulate connected depth grid");
         assert_eq!(summary.in_bounds_hits, 4);
@@ -6881,6 +7330,72 @@ mod tests {
         assert_eq!(summary.splat_hit_pixels, 0);
         assert_eq!(summary.emitted_triangles, 2);
         assert_eq!(triangles.len(), 2);
+    }
+
+    #[test]
+    fn structural_depth_grid_dilates_only_a_triangle_touching_a_rejected_neighbor() {
+        let mut bytes = vec![0_u8; 4 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+        let samples = [
+            ([0.25_f32, 0.25, 1.0], [0.0_f32, 0.0, 1.0]),
+            ([0.75, 0.25, 1.0], [0.0, 0.0, 1.0]),
+            ([0.25, 0.75, 1.0], [1.0, 0.0, 0.0]),
+            ([0.75, 0.75, 1.0], [0.0, 0.0, 1.0]),
+        ];
+        for (index, (position, normal)) in samples.into_iter().enumerate() {
+            let record = &mut bytes[index * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES
+                ..(index + 1) * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES];
+            for (axis, value) in position.into_iter().enumerate() {
+                record[axis * 4..axis * 4 + 4].copy_from_slice(&value.to_le_bytes());
+            }
+            record[12..16].copy_from_slice(&1.0_f32.to_le_bytes());
+            for (axis, value) in normal.into_iter().enumerate() {
+                let offset = 16 + axis * 4;
+                record[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+            }
+            record[28..32].copy_from_slice(&1.0_f32.to_le_bytes());
+            for offset in [48usize, 52, 56] {
+                record[offset..offset + 4].copy_from_slice(&1.0_f32.to_le_bytes());
+            }
+        }
+        let build = |dilation| {
+            structural_surface_triangles(
+                &bytes,
+                2,
+                2,
+                90.0,
+                Aabb::new([0.0; 3], [2.0; 3]),
+                1.0,
+                2.0,
+                false,
+                false,
+                0.85,
+                0.45,
+                dilation,
+                0.0,
+            )
+            .expect("triangulate a discontinuity boundary")
+        };
+        let (baseline, baseline_summary) = build(0.0);
+        let (dilated, dilated_summary) = build(0.75);
+
+        assert_eq!(baseline.len(), 1);
+        assert_eq!(dilated.len(), 1);
+        assert_eq!(baseline_summary.dilated_triangles, 0);
+        assert_eq!(dilated_summary.dilated_triangles, 1);
+        assert_ne!(baseline[0][0].position, dilated[0][0].position);
+        for axis in 0..3 {
+            let baseline_centroid = baseline[0]
+                .iter()
+                .map(|vertex| vertex.position[axis])
+                .sum::<f32>()
+                / 3.0;
+            let dilated_centroid = dilated[0]
+                .iter()
+                .map(|vertex| vertex.position[axis])
+                .sum::<f32>()
+                / 3.0;
+            assert!((baseline_centroid - dilated_centroid).abs() < 1.0e-6);
+        }
     }
 
     #[test]
@@ -6909,6 +7424,7 @@ mod tests {
             false,
             0.85,
             0.45,
+            0.0,
             0.0,
         )
         .expect("splat isolated structural hit");
@@ -6944,6 +7460,7 @@ mod tests {
             false,
             0.85,
             0.45,
+            0.0,
             0.0,
         )
         .expect("expand a dense-view structural splat");
@@ -6995,6 +7512,7 @@ mod tests {
             0.85,
             0.45,
             0.0,
+            0.0,
         )
         .expect("splat low-normal structural samples");
 
@@ -7018,6 +7536,7 @@ mod tests {
             true,
             0.85,
             0.45,
+            0.0,
             0.0,
         )
         .expect("retain bounded low-normal triangles additively");

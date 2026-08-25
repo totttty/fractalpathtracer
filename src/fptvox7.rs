@@ -2,8 +2,9 @@
 
 use crate::ffi::{FptRenderConfig, fpt_metal_sample_materials, fpt_metal_sample_topology_grid};
 use crate::fptvox::{
-    FptvoxIndexedTriangle, FptvoxIndexedTriangleCell, FptvoxIndexedTriangleSurface, FptvoxTriangle,
-    FptvoxTriangleCell, FptvoxTriangleSurface,
+    FptvoxBvhCell, FptvoxBvhNode, FptvoxBvhTriangle, FptvoxIndexedTriangle,
+    FptvoxIndexedTriangleBvhSurface, FptvoxIndexedTriangleCell, FptvoxIndexedTriangleSurface,
+    FptvoxTriangle, FptvoxTriangleBvhSurface, FptvoxTriangleCell, FptvoxTriangleSurface,
 };
 use crate::mandelbulber::MandelbulberMaterial;
 use crate::voxel::{Aabb, CoordinateSystem, SurfaceMaterial, VoxelCell};
@@ -304,6 +305,24 @@ fn mandelbulber_mesh_color(index: f32, material: &MandelbulberMaterial) -> [f32;
 fn pack_vertex(vertex: [f32; 3]) -> u32 {
     let quantize = |value: f32| (value.clamp(0.0, 1.0) * 1023.0).round() as u32;
     quantize(vertex[0]) | (quantize(vertex[1]) << 10) | (quantize(vertex[2]) << 20)
+}
+
+fn pack_triangle_color(triangle: [MeshSurfaceVertex; 3]) -> u32 {
+    (0..3).fold(0u32, |packed, channel| {
+        let value = triangle
+            .iter()
+            .map(|vertex| vertex.color[channel])
+            .sum::<f32>()
+            / 3.0;
+        packed | (u32::from((value.clamp(0.0, 1.0) * 255.0).round() as u8) << (channel * 8))
+    })
+}
+
+fn pack_vertex_color(color: [f32; 3]) -> u32 {
+    (0..3).fold(0u32, |packed, channel| {
+        packed
+            | (u32::from((color[channel].clamp(0.0, 1.0) * 255.0).round() as u8) << (channel * 8))
+    })
 }
 
 fn append_clipped_triangle(
@@ -664,6 +683,8 @@ where
     );
     let mut indexed_cells = BTreeMap::new();
     let mut indexed_triangles = Vec::new();
+    let mut triangle_colors = Vec::new();
+    let mut triangle_vertex_colors = Vec::new();
     for triangle in triangles {
         let surface_triangle = triangle.map(|vertex| SurfaceVertex {
             position: vertex.position,
@@ -687,6 +708,8 @@ where
             output_resolution,
         ) {
             indexed_triangles.push(indexed_triangle);
+            triangle_colors.push(pack_triangle_color(triangle));
+            triangle_vertex_colors.push(triangle.map(|vertex| pack_vertex_color(vertex.color)));
         }
     }
     ensure!(
@@ -719,7 +742,303 @@ where
         coordinate_system: CoordinateSystem::YUpRightHanded,
         cells,
         triangles: indexed_triangles,
+        triangle_colors,
+        triangle_vertex_colors,
         references,
+    })
+}
+
+#[derive(Clone, Copy)]
+struct BvhBuildTriangle {
+    triangle: FptvoxTriangle,
+    original_order: u32,
+    min: [f32; 3],
+    max: [f32; 3],
+    centroid: [f32; 3],
+}
+
+fn decode_local_triangle_vertex(packed: u32) -> [f32; 3] {
+    [
+        (packed & 0x3ff) as f32 / 1023.0,
+        ((packed >> 10) & 0x3ff) as f32 / 1023.0,
+        ((packed >> 20) & 0x3ff) as f32 / 1023.0,
+    ]
+}
+
+fn quantize_bvh_bounds(minimum: [f32; 3], maximum: [f32; 3]) -> [u8; 6] {
+    let mut packed = [0_u8; 6];
+    for axis in 0..3 {
+        let minimum = (minimum[axis] * 255.0).floor() as i32 - 1;
+        let maximum = (maximum[axis] * 255.0).ceil() as i32 + 1;
+        packed[axis] = minimum.clamp(0, 255) as u8;
+        packed[axis + 3] = maximum.clamp(0, 255) as u8;
+    }
+    packed
+}
+
+fn append_stackless_bvh(
+    triangles: &mut [BvhBuildTriangle],
+    leaf_size: usize,
+    nodes: &mut Vec<FptvoxBvhNode>,
+    reordered: &mut Vec<FptvoxBvhTriangle>,
+) -> Result<()> {
+    let node_index = nodes.len();
+    nodes.push(FptvoxBvhNode {
+        bounds: [0; 6],
+        triangle_count: 0,
+        first_triangle: 0,
+        escape: 0,
+    });
+    let mut minimum = [f32::INFINITY; 3];
+    let mut maximum = [f32::NEG_INFINITY; 3];
+    for triangle in triangles.iter() {
+        for axis in 0..3 {
+            minimum[axis] = minimum[axis].min(triangle.min[axis]);
+            maximum[axis] = maximum[axis].max(triangle.max[axis]);
+        }
+    }
+    let bounds = quantize_bvh_bounds(minimum, maximum);
+    if triangles.len() <= leaf_size {
+        let first_triangle =
+            u32::try_from(reordered.len()).context("V10 triangle offset exceeds u32")?;
+        let triangle_count =
+            u16::try_from(triangles.len()).context("V10 leaf triangle count exceeds u16")?;
+        reordered.extend(triangles.iter().map(|triangle| FptvoxBvhTriangle {
+            triangle: triangle.triangle,
+            original_order: triangle.original_order,
+        }));
+        nodes[node_index] = FptvoxBvhNode {
+            bounds,
+            triangle_count,
+            first_triangle,
+            escape: u32::try_from(nodes.len()).context("V10 node count exceeds u32")?,
+        };
+        return Ok(());
+    }
+
+    let extent = std::array::from_fn::<_, 3, _>(|axis| maximum[axis] - minimum[axis]);
+    let axis = (0..3)
+        .max_by(|left, right| extent[*left].total_cmp(&extent[*right]))
+        .expect("three BVH axes");
+    triangles.sort_unstable_by(|left, right| {
+        left.centroid[axis]
+            .total_cmp(&right.centroid[axis])
+            .then_with(|| left.original_order.cmp(&right.original_order))
+    });
+    let middle = triangles.len() / 2;
+    let (left, right) = triangles.split_at_mut(middle);
+    append_stackless_bvh(left, leaf_size, nodes, reordered)?;
+    append_stackless_bvh(right, leaf_size, nodes, reordered)?;
+    nodes[node_index] = FptvoxBvhNode {
+        bounds,
+        triangle_count: 0,
+        first_triangle: 0,
+        escape: u32::try_from(nodes.len()).context("V10 node count exceeds u32")?,
+    };
+    Ok(())
+}
+
+/// Build a stackless per-cell BVH over the exact quantized V7 triangle stream.
+/// Triangle intersections remain bit-identical; `original_order` restores V7's
+/// deterministic winner when two triangles produce the same depth.
+pub fn build_triangle_bvh_surface(
+    surface: &FptvoxTriangleSurface,
+    leaf_size: usize,
+) -> Result<FptvoxTriangleBvhSurface> {
+    ensure!((2..=64).contains(&leaf_size), "V10 leaf size must be 2..64");
+    let mut cells = Vec::with_capacity(surface.cells.len());
+    let mut triangles = Vec::with_capacity(surface.triangles.len());
+    let mut nodes = Vec::new();
+    for cell in &surface.cells {
+        let start = cell.first_triangle as usize;
+        let end = start + cell.triangle_count as usize;
+        let mut build_triangles = surface.triangles[start..end]
+            .iter()
+            .enumerate()
+            .map(|(order, triangle)| {
+                let vertices = triangle.vertices.map(decode_local_triangle_vertex);
+                let min = std::array::from_fn(|axis| {
+                    vertices
+                        .iter()
+                        .map(|vertex| vertex[axis])
+                        .fold(f32::INFINITY, f32::min)
+                });
+                let max = std::array::from_fn(|axis| {
+                    vertices
+                        .iter()
+                        .map(|vertex| vertex[axis])
+                        .fold(f32::NEG_INFINITY, f32::max)
+                });
+                BvhBuildTriangle {
+                    triangle: *triangle,
+                    original_order: order as u32,
+                    min,
+                    max,
+                    centroid: std::array::from_fn(|axis| (min[axis] + max[axis]) * 0.5),
+                }
+            })
+            .collect::<Vec<_>>();
+        let first_node = u32::try_from(nodes.len()).context("V10 node offset exceeds u32")?;
+        append_stackless_bvh(&mut build_triangles, leaf_size, &mut nodes, &mut triangles)?;
+        let node_count = u32::try_from(nodes.len() - first_node as usize)
+            .context("V10 cell node count exceeds u32")?;
+        cells.push(FptvoxBvhCell {
+            coordinate: cell.coordinate,
+            cell: cell.cell,
+            first_node,
+            node_count,
+        });
+    }
+    Ok(FptvoxTriangleBvhSurface {
+        resolution: surface.resolution,
+        sampling_resolution: surface.sampling_resolution,
+        bounds: surface.bounds,
+        coordinate_system: surface.coordinate_system,
+        cells,
+        triangles,
+        nodes,
+    })
+}
+
+#[derive(Clone, Copy)]
+struct IndexedBvhBuildReference {
+    triangle: u32,
+    min: [f32; 3],
+    max: [f32; 3],
+    centroid: [f32; 3],
+}
+
+fn append_stackless_indexed_bvh(
+    references: &mut [IndexedBvhBuildReference],
+    leaf_size: usize,
+    nodes: &mut Vec<FptvoxBvhNode>,
+    reordered: &mut Vec<u32>,
+) -> Result<()> {
+    let node_index = nodes.len();
+    nodes.push(FptvoxBvhNode {
+        bounds: [0; 6],
+        triangle_count: 0,
+        first_triangle: 0,
+        escape: 0,
+    });
+    let mut minimum = [f32::INFINITY; 3];
+    let mut maximum = [f32::NEG_INFINITY; 3];
+    for reference in references.iter() {
+        for axis in 0..3 {
+            minimum[axis] = minimum[axis].min(reference.min[axis]);
+            maximum[axis] = maximum[axis].max(reference.max[axis]);
+        }
+    }
+    let bounds = quantize_bvh_bounds(minimum, maximum);
+    if references.len() <= leaf_size {
+        let first_reference =
+            u32::try_from(reordered.len()).context("V11 reference offset exceeds u32")?;
+        let reference_count =
+            u16::try_from(references.len()).context("V11 leaf reference count exceeds u16")?;
+        reordered.extend(references.iter().map(|reference| reference.triangle));
+        nodes[node_index] = FptvoxBvhNode {
+            bounds,
+            triangle_count: reference_count,
+            first_triangle: first_reference,
+            escape: u32::try_from(nodes.len()).context("V11 node count exceeds u32")?,
+        };
+        return Ok(());
+    }
+
+    let extent = std::array::from_fn::<_, 3, _>(|axis| maximum[axis] - minimum[axis]);
+    let axis = (0..3)
+        .max_by(|left, right| extent[*left].total_cmp(&extent[*right]))
+        .expect("three BVH axes");
+    references.sort_unstable_by(|left, right| {
+        left.centroid[axis]
+            .total_cmp(&right.centroid[axis])
+            .then_with(|| left.triangle.cmp(&right.triangle))
+    });
+    let middle = references.len() / 2;
+    let (left, right) = references.split_at_mut(middle);
+    append_stackless_indexed_bvh(left, leaf_size, nodes, reordered)?;
+    append_stackless_indexed_bvh(right, leaf_size, nodes, reordered)?;
+    nodes[node_index] = FptvoxBvhNode {
+        bounds,
+        triangle_count: 0,
+        first_triangle: 0,
+        escape: u32::try_from(nodes.len()).context("V11 node count exceeds u32")?,
+    };
+    Ok(())
+}
+
+/// Build per-cell stackless BVHs while retaining one global V8 triangle stream.
+pub fn build_indexed_triangle_bvh_surface(
+    surface: &FptvoxIndexedTriangleSurface,
+    leaf_size: usize,
+) -> Result<FptvoxIndexedTriangleBvhSurface> {
+    ensure!((2..=64).contains(&leaf_size), "V11 leaf size must be 2..64");
+    let mut cells = Vec::with_capacity(surface.cells.len());
+    let mut references = Vec::with_capacity(surface.references.len());
+    let mut nodes = Vec::new();
+    for cell in &surface.cells {
+        let start = cell.first_reference as usize;
+        let end = start + cell.reference_count as usize;
+        let cell_origin = cell.coordinate.map(|value| value as f32);
+        let mut build_references = surface.references[start..end]
+            .iter()
+            .map(|triangle_index| {
+                let triangle = &surface.triangles[*triangle_index as usize];
+                let vertices = triangle.vertices.map(|vertex| {
+                    std::array::from_fn::<_, 3, _>(|axis| {
+                        f32::from(vertex[axis]) / 65535.0 * surface.resolution[axis] as f32
+                            - cell_origin[axis]
+                    })
+                });
+                let min = std::array::from_fn(|axis| {
+                    vertices
+                        .iter()
+                        .map(|vertex| vertex[axis])
+                        .fold(f32::INFINITY, f32::min)
+                        .clamp(0.0, 1.0)
+                });
+                let max = std::array::from_fn(|axis| {
+                    vertices
+                        .iter()
+                        .map(|vertex| vertex[axis])
+                        .fold(f32::NEG_INFINITY, f32::max)
+                        .clamp(0.0, 1.0)
+                });
+                IndexedBvhBuildReference {
+                    triangle: *triangle_index,
+                    min,
+                    max,
+                    centroid: std::array::from_fn(|axis| (min[axis] + max[axis]) * 0.5),
+                }
+            })
+            .collect::<Vec<_>>();
+        let first_node = u32::try_from(nodes.len()).context("V11 node offset exceeds u32")?;
+        append_stackless_indexed_bvh(
+            &mut build_references,
+            leaf_size,
+            &mut nodes,
+            &mut references,
+        )?;
+        let node_count = u32::try_from(nodes.len() - first_node as usize)
+            .context("V11 cell node count exceeds u32")?;
+        cells.push(FptvoxBvhCell {
+            coordinate: cell.coordinate,
+            cell: cell.cell,
+            first_node,
+            node_count,
+        });
+    }
+    Ok(FptvoxIndexedTriangleBvhSurface {
+        resolution: surface.resolution,
+        sampling_resolution: surface.sampling_resolution,
+        bounds: surface.bounds,
+        coordinate_system: surface.coordinate_system,
+        cells,
+        triangles: surface.triangles.clone(),
+        triangle_colors: surface.triangle_colors.clone(),
+        triangle_vertex_colors: surface.triangle_vertex_colors.clone(),
+        references,
+        nodes,
     })
 }
 
