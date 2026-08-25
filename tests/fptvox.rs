@@ -21,16 +21,18 @@ use fpt_metal::{
     FPTVOX_TRIANGLE_BVH_VERSION, FPTVOX_TRIANGLE_CELL_RECORD_SIZE,
     FPTVOX_TRIANGLE_COLOR_HEADER_SIZE, FPTVOX_TRIANGLE_COLOR_MAGIC,
     FPTVOX_TRIANGLE_COLOR_RECORD_SIZE, FPTVOX_TRIANGLE_COLOR_VERSION, FPTVOX_TRIANGLE_HEADER_SIZE,
-    FPTVOX_TRIANGLE_MAGIC, FPTVOX_TRIANGLE_RECORD_SIZE, FPTVOX_TRIANGLE_VERSION,
-    FPTVOX_TRIANGLE_VERTEX_COLOR_HEADER_SIZE, FPTVOX_TRIANGLE_VERTEX_COLOR_MAGIC,
-    FPTVOX_TRIANGLE_VERTEX_COLOR_RECORD_SIZE, FPTVOX_TRIANGLE_VERTEX_COLOR_VERSION, FPTVOX_VERSION,
-    FptvoxAppearance, FptvoxAuthoredMaterial, FptvoxBvhCell, FptvoxBvhNode, FptvoxBvhTriangle,
-    FptvoxCamera, FptvoxEnvironment, FptvoxIndexedTriangle, FptvoxIndexedTriangleBvhSurface,
-    FptvoxIndexedTriangleCell, FptvoxIndexedTriangleSurface, FptvoxTriangle,
-    FptvoxTriangleBvhSurface, FptvoxTriangleCell, FptvoxTriangleSurface, FractalErrorCode,
-    SparseVoxel, SurfaceMaterial, VoxelCell, VoxelGrid, append_fptvox_appearance,
-    append_fptvox_camera, append_fptvox_environment, append_fptvox_materials,
-    append_fptvox_triangle_colors, append_fptvox_triangle_vertex_colors, export_fptvox,
+    FPTVOX_TRIANGLE_MAGIC, FPTVOX_TRIANGLE_MATERIAL_HEADER_SIZE, FPTVOX_TRIANGLE_MATERIAL_MAGIC,
+    FPTVOX_TRIANGLE_MATERIAL_RECORD_SIZE, FPTVOX_TRIANGLE_MATERIAL_VERSION,
+    FPTVOX_TRIANGLE_RECORD_SIZE, FPTVOX_TRIANGLE_VERSION, FPTVOX_TRIANGLE_VERTEX_COLOR_HEADER_SIZE,
+    FPTVOX_TRIANGLE_VERTEX_COLOR_MAGIC, FPTVOX_TRIANGLE_VERTEX_COLOR_RECORD_SIZE,
+    FPTVOX_TRIANGLE_VERTEX_COLOR_VERSION, FPTVOX_VERSION, FptvoxAppearance, FptvoxAuthoredMaterial,
+    FptvoxBvhCell, FptvoxBvhNode, FptvoxBvhTriangle, FptvoxCamera, FptvoxEnvironment,
+    FptvoxIndexedTriangle, FptvoxIndexedTriangleBvhSurface, FptvoxIndexedTriangleCell,
+    FptvoxIndexedTriangleSurface, FptvoxTriangle, FptvoxTriangleBvhSurface, FptvoxTriangleCell,
+    FptvoxTriangleSurface, FractalErrorCode, SparseVoxel, SurfaceMaterial, VoxelCell, VoxelGrid,
+    append_fptvox_appearance, append_fptvox_camera, append_fptvox_environment,
+    append_fptvox_materials, append_fptvox_triangle_colors, append_fptvox_triangle_material_ids,
+    append_fptvox_triangle_vertex_colors, export_fptvox,
     export_fptvox_indexed_triangle_bvh_surface, export_fptvox_indexed_triangle_surface,
     export_fptvox_triangle_bvh_surface, export_fptvox_triangle_surface,
     export_fptvox_with_bounded_patches, export_fptvox_with_normals, export_fptvox_with_plane_pairs,
@@ -71,7 +73,7 @@ fn camera_environment_and_material_trailers_are_byte_exact() {
     append_fptvox_camera(&output, &camera).unwrap();
     let mut environment = FptvoxEnvironment::default();
     environment.flags = 0x1f;
-    environment.hdri_map_type = 3;
+    environment.hdri_map_type = 2;
     environment.values[9] = 12.5;
     environment.hdri_lut[7] = 0x3c00;
     append_fptvox_environment(&output, &environment).unwrap();
@@ -209,6 +211,46 @@ fn triangle_vertex_color_trailer_preserves_all_three_vertices() {
     for (vertex, color) in colors[0].iter().enumerate() {
         assert_eq!(u32_at(&bytes, offset + 32 + vertex * 4), *color);
     }
+    fs::remove_file(output).unwrap();
+}
+
+#[test]
+fn triangle_material_trailer_is_fixed_size_and_byte_exact() {
+    let grid = fixture_grid(
+        vec![SparseVoxel {
+            coordinate: [0; 3],
+            cell: VoxelCell::from_material(SurfaceMaterial::default()),
+        }],
+        [1; 3],
+    );
+    let output = temporary_artifact("triangle-materials");
+    let geometry = export_fptvox(&grid, &output).unwrap();
+    let material_ids = [3u32, 7u32];
+    let expected_bytes = u64::from(FPTVOX_TRIANGLE_MATERIAL_HEADER_SIZE)
+        + material_ids.len() as u64 * u64::from(FPTVOX_TRIANGLE_MATERIAL_RECORD_SIZE);
+    assert_eq!(
+        append_fptvox_triangle_material_ids(&output, &material_ids).unwrap(),
+        expected_bytes
+    );
+    let bytes = fs::read(&output).unwrap();
+    let offset = geometry.bytes as usize;
+    assert_eq!(bytes[offset..offset + 8], FPTVOX_TRIANGLE_MATERIAL_MAGIC);
+    assert_eq!(
+        u32_at(&bytes, offset + 8),
+        FPTVOX_TRIANGLE_MATERIAL_HEADER_SIZE
+    );
+    assert_eq!(
+        u32_at(&bytes, offset + 12),
+        FPTVOX_TRIANGLE_MATERIAL_VERSION
+    );
+    assert_eq!(
+        u32_at(&bytes, offset + 16),
+        FPTVOX_TRIANGLE_MATERIAL_RECORD_SIZE
+    );
+    assert_eq!(u32_at(&bytes, offset + 20), 0);
+    assert_eq!(u64_at(&bytes, offset + 24), material_ids.len() as u64);
+    assert_eq!(u32_at(&bytes, offset + 32), 3);
+    assert_eq!(u32_at(&bytes, offset + 36), 7);
     fs::remove_file(output).unwrap();
 }
 
@@ -451,6 +493,7 @@ fn indexed_triangle_surface_is_byte_exact_and_versioned() {
         }],
         triangle_colors: vec![0x0033_2211],
         triangle_vertex_colors: vec![[0x0000_00ff, 0x0000_ff00, 0x00ff_0000]],
+        triangle_material_ids: vec![1],
         references: vec![0],
     };
     let output = temporary_artifact("indexed-triangle-exact");
@@ -499,6 +542,7 @@ fn indexed_triangle_surface_rejects_unsafe_cell_fanout() {
         }],
         triangle_colors: vec![0x0033_2211],
         triangle_vertex_colors: vec![[0x0000_00ff, 0x0000_ff00, 0x00ff_0000]],
+        triangle_material_ids: vec![1],
         references: vec![0; reference_count as usize],
     };
     let output = temporary_artifact("indexed-triangle-unsafe-fanout");
@@ -594,6 +638,7 @@ fn indexed_triangle_bvh_surface_is_byte_exact_and_versioned() {
         }],
         triangle_colors: vec![0x0033_2211],
         triangle_vertex_colors: vec![[0x0000_00ff, 0x0000_ff00, 0x00ff_0000]],
+        triangle_material_ids: vec![1],
         references: vec![0, 0],
         nodes: vec![FptvoxBvhNode {
             bounds: [0, 0, 0, 255, 255, 255],

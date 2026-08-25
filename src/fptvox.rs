@@ -105,11 +105,11 @@ pub const FPTVOX_APPEARANCE_SIZE: u32 = 256;
 pub const FPTVOX_CAMERA_MAGIC: [u8; 8] = *b"FPTCAM1\0";
 pub const FPTVOX_CAMERA_VERSION: u32 = 1;
 pub const FPTVOX_CAMERA_SIZE: u32 = 96;
-pub const FPTVOX_ENVIRONMENT_MAGIC: [u8; 8] = *b"FPTENV1\0";
-pub const FPTVOX_ENVIRONMENT_VERSION: u32 = 1;
+pub const FPTVOX_ENVIRONMENT_MAGIC: [u8; 8] = *b"FPTENV2\0";
+pub const FPTVOX_ENVIRONMENT_VERSION: u32 = 2;
 pub const FPTVOX_ENVIRONMENT_HEADER_SIZE: u32 = 512;
-pub const FPTVOX_ENVIRONMENT_LUT_WIDTH: usize = 32;
-pub const FPTVOX_ENVIRONMENT_LUT_HEIGHT: usize = 16;
+pub const FPTVOX_ENVIRONMENT_LUT_WIDTH: usize = 128;
+pub const FPTVOX_ENVIRONMENT_LUT_HEIGHT: usize = 64;
 pub const FPTVOX_ENVIRONMENT_LUT_VALUES: usize =
     FPTVOX_ENVIRONMENT_LUT_WIDTH * FPTVOX_ENVIRONMENT_LUT_HEIGHT * 3;
 pub const FPTVOX_ENVIRONMENT_SIZE: u32 =
@@ -133,6 +133,11 @@ pub const FPTVOX_TRIANGLE_VERTEX_COLOR_MAGIC: [u8; 8] = *b"FPTCOL2\0";
 pub const FPTVOX_TRIANGLE_VERTEX_COLOR_VERSION: u32 = 2;
 pub const FPTVOX_TRIANGLE_VERTEX_COLOR_HEADER_SIZE: u32 = 32;
 pub const FPTVOX_TRIANGLE_VERTEX_COLOR_RECORD_SIZE: u32 = 12;
+/// One authored Mandelbulber material ID per indexed source triangle.
+pub const FPTVOX_TRIANGLE_MATERIAL_MAGIC: [u8; 8] = *b"FPTMID1\0";
+pub const FPTVOX_TRIANGLE_MATERIAL_VERSION: u32 = 1;
+pub const FPTVOX_TRIANGLE_MATERIAL_HEADER_SIZE: u32 = 32;
+pub const FPTVOX_TRIANGLE_MATERIAL_RECORD_SIZE: u32 = 4;
 
 pub const FPTVOX_APPEARANCE_THREE_COLOR_BACKGROUND: u32 = 1 << 0;
 pub const FPTVOX_APPEARANCE_MAIN_LIGHT_ENABLED: u32 = 1 << 1;
@@ -353,7 +358,8 @@ pub fn append_fptvox_environment(
     path: impl AsRef<Path>,
     environment: &FptvoxEnvironment,
 ) -> Result<u64, FractalError> {
-    if environment.values.iter().any(|value| !value.is_finite())
+    if environment.hdri_map_type > 2
+        || environment.values.iter().any(|value| !value.is_finite())
         || environment.hdri_lut.len() != FPTVOX_ENVIRONMENT_LUT_VALUES
     {
         return Err(FractalError::new(
@@ -600,6 +606,65 @@ pub fn append_fptvox_triangle_vertex_colors(
     Ok(bytes)
 }
 
+pub fn append_fptvox_triangle_material_ids(
+    path: impl AsRef<Path>,
+    material_ids: &[u32],
+) -> Result<u64, FractalError> {
+    if material_ids.is_empty() || material_ids.contains(&0u32) {
+        return Err(FractalError::new(
+            FractalErrorCode::Artifact,
+            "FPTVOX triangle material IDs must be non-empty and nonzero",
+        ));
+    }
+    let count = u64::try_from(material_ids.len()).map_err(|_| {
+        FractalError::new(
+            FractalErrorCode::Artifact,
+            "triangle material ID count overflow",
+        )
+    })?;
+    let bytes = u64::from(FPTVOX_TRIANGLE_MATERIAL_HEADER_SIZE)
+        .checked_add(count * u64::from(FPTVOX_TRIANGLE_MATERIAL_RECORD_SIZE))
+        .ok_or_else(|| {
+            FractalError::new(
+                FractalErrorCode::Artifact,
+                "triangle material ID size overflow",
+            )
+        })?;
+    let path = path.as_ref();
+    let file = OpenOptions::new()
+        .append(true)
+        .open(path)
+        .map_err(|error| {
+            FractalError::new(
+                FractalErrorCode::Io,
+                format!(
+                    "open {} for triangle-material append: {error}",
+                    path.display()
+                ),
+            )
+        })?;
+    let mut writer = BufWriter::new(file);
+    let write_result = (|| -> std::io::Result<()> {
+        writer.write_all(&FPTVOX_TRIANGLE_MATERIAL_MAGIC)?;
+        writer.write_all(&FPTVOX_TRIANGLE_MATERIAL_HEADER_SIZE.to_le_bytes())?;
+        writer.write_all(&FPTVOX_TRIANGLE_MATERIAL_VERSION.to_le_bytes())?;
+        writer.write_all(&FPTVOX_TRIANGLE_MATERIAL_RECORD_SIZE.to_le_bytes())?;
+        writer.write_all(&0_u32.to_le_bytes())?;
+        writer.write_all(&count.to_le_bytes())?;
+        for material_id in material_ids {
+            writer.write_all(&material_id.to_le_bytes())?;
+        }
+        writer.flush()
+    })();
+    write_result.map_err(|error| {
+        FractalError::new(
+            FractalErrorCode::Io,
+            format!("write {}: {error}", path.display()),
+        )
+    })?;
+    Ok(bytes)
+}
+
 /// One cell-local triangle. Each vertex word stores three 10-bit UNORM
 /// coordinates in X/Y/Z order; the two high bits are reserved and zero.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -655,6 +720,8 @@ pub struct FptvoxIndexedTriangleSurface {
     pub triangle_colors: Vec<u32>,
     /// Packed RGB8 colors for each source triangle vertex.
     pub triangle_vertex_colors: Vec<[u32; 3]>,
+    /// Authored Mandelbulber material IDs parallel to `triangles`.
+    pub triangle_material_ids: Vec<u32>,
     pub references: Vec<u32>,
 }
 
@@ -708,6 +775,7 @@ pub struct FptvoxIndexedTriangleBvhSurface {
     pub triangles: Vec<FptvoxIndexedTriangle>,
     pub triangle_colors: Vec<u32>,
     pub triangle_vertex_colors: Vec<[u32; 3]>,
+    pub triangle_material_ids: Vec<u32>,
     pub references: Vec<u32>,
     pub nodes: Vec<FptvoxBvhNode>,
 }

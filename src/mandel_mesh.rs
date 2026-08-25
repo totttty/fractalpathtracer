@@ -754,6 +754,7 @@ fn voxelize_mandelbulber_mesh_once(
                         (vertex.position[axis] - options.bounds.min[axis]) / size[axis]
                     }),
                     color: vertex.color,
+                    material_id: 1,
                 }
             })
         });

@@ -8115,7 +8115,8 @@ kernel void sdf_structural_diagnostic_kernel(
     const uint index = cameraOutputIndex(pixel, cfg);
     out[index].positionDistance = float4(hit ? position : float3(0.0f), ray_distance);
     out[index].normalHit = float4(normal, hit ? 1.0f : 0.0f);
-    out[index].materialCoordinate = float4(color_coordinate, palette_position, 0.0f, 0.0f);
+    out[index].materialCoordinate = float4(
+        color_coordinate, palette_position, max(cfg.fractal_style[11], 1.0f), 0.0f);
     out[index].materialColor = float4(material_color, hit ? 1.0f : 0.0f);
 }
 

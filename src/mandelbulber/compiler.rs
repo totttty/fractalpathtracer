@@ -954,6 +954,8 @@ static Material mandelbulberGeneratedMaterial(float3 p,
     }}
     material.roughness = cfg.fractal_style[4];
     material.specular = cfg.fractal_style[5];
+    material.translucency = {translucency};
+    material.ior = {ior};
     material.emission = cfg.fractal_style[6];
     return material;
 }}
@@ -966,6 +968,8 @@ static Material mandelbulberGeneratedMaterial(float3 p,
         surface_gradient = metal_bool(scene.material.surface_gradient_enabled),
         speed = metal_float(scene.material.coloring_speed as f32),
         offset = metal_float(scene.material.palette_offset as f32),
+        translucency = metal_float(scene.material.transparency_of_surface.clamp(0.0, 1.0) as f32,),
+        ior = metal_float(scene.material.index_of_refraction.max(1.0) as f32),
     )
 }
 

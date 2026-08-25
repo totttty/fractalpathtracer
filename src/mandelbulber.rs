@@ -277,6 +277,7 @@ pub struct MandelbulberScene {
     pub ifs_enabled: [bool; IFS_VECTOR_COUNT],
     pub ifs_directions: [[f64; 3]; IFS_VECTOR_COUNT],
     pub material: MandelbulberMaterial,
+    pub formula_material_id: u32,
     pub materials: BTreeMap<u32, MandelbulberMaterial>,
     pub main_parameters: BTreeMap<String, String>,
     pub source_directory: Option<PathBuf>,
@@ -411,6 +412,26 @@ fn parse_number(value: &str) -> Result<f64> {
         .replace(',', ".")
         .parse::<f64>()
         .with_context(|| format!("invalid decimal number '{value}'"))
+}
+
+fn parse_background_map_type(value: &str) -> Result<u32> {
+    match value
+        .trim()
+        .to_ascii_lowercase()
+        .replace(['-', ' '], "_")
+        .as_str()
+    {
+        "equirectangular" => Ok(0),
+        "double_hemisphere" => Ok(1),
+        "flat" => Ok(2),
+        _ => {
+            let value = parse_number(value)?;
+            if value.fract() != 0.0 || !(0.0..=2.0).contains(&value) {
+                bail!("invalid background map type '{value}'");
+            }
+            Ok(value as u32)
+        }
+    }
 }
 
 fn parse_bool(value: &str) -> Result<bool> {
@@ -1294,7 +1315,10 @@ impl MandelbulberScene {
             }
         }
 
-        let material = parse_material(&document, 1)?;
+        let fallback_material = parse_material(&document, 1)?;
+        let formula_material_id = document
+            .integer("main_parameters", "formula_material_id", 1)?
+            .max(1) as u32;
         let mut material_ids = document
             .sections
             .get("main_parameters")
@@ -1307,12 +1331,17 @@ impl MandelbulberScene {
             })
             .collect::<Vec<_>>();
         material_ids.push(1);
+        material_ids.push(formula_material_id);
         material_ids.sort_unstable();
         material_ids.dedup();
         let materials = material_ids
             .into_iter()
             .map(|id| Ok((id, parse_material(&document, id)?)))
             .collect::<Result<BTreeMap<_, _>>>()?;
+        let material = materials
+            .get(&formula_material_id)
+            .cloned()
+            .unwrap_or(fallback_material);
         let main_parameters = document
             .sections
             .get("main_parameters")
@@ -1648,6 +1677,7 @@ impl MandelbulberScene {
             ifs_enabled,
             ifs_directions,
             material,
+            formula_material_id,
             materials,
             main_parameters,
             source_directory: None,
@@ -2052,10 +2082,19 @@ impl MandelbulberScene {
         config.fractal_style[1] = if analytic_formula { 5.0 } else { 0.0 };
         config.fractal_style[2] = if analytic_formula { 0.72 } else { 0.0 };
         config.fractal_style[3] = 1.0;
-        config.fractal_style[4] = 0.72;
-        config.fractal_style[5] = 0.08;
-        config.fractal_style[6] = if analytic_formula { 0.04 } else { 0.0 };
+        config.fractal_style[4] = self
+            .material
+            .surface_roughness
+            .max(0.0)
+            .sqrt()
+            .clamp(0.0, 1.0) as f32;
+        config.fractal_style[5] = (self.material.specular / 10.0)
+            .max(self.material.metallic)
+            .max(self.material.reflectance)
+            .clamp(0.0, 1.0) as f32;
+        config.fractal_style[6] = self.material.luminosity.max(0.0) as f32;
         config.fractal_style[8..11].copy_from_slice(&self.material.surface_color);
+        config.fractal_style[11] = self.formula_material_id as f32;
 
         // Mandel compatibility renders intentionally use a deterministic,
         // unshadowed Lambert surface so geometry comparisons are independent
@@ -2179,7 +2218,12 @@ impl MandelbulberScene {
             .iter()
             .map(|(&id, material)| crate::fptvox::FptvoxAuthoredMaterial {
                 id,
-                flags: u32::from(material.specular_plastic_enabled),
+                flags: u32::from(material.specular_plastic_enabled)
+                    | if id == self.formula_material_id {
+                        1 << 31
+                    } else {
+                        0
+                    },
                 base_color: material.surface_color,
                 roughness: material.surface_roughness.max(0.0).sqrt().clamp(0.0, 1.0) as f32,
                 specular: (material.specular / 10.0).clamp(0.0, 1.0) as f32,
@@ -2251,7 +2295,10 @@ impl MandelbulberScene {
         if boolean("clouds_cast_shadows", true)? {
             environment.flags |= 1 << 12;
         }
-        environment.values[0..3].copy_from_slice(&vector("background_rotation", [0.0; 3])?);
+        environment.values[0..3].copy_from_slice(
+            &map_mandel_vector(vector("background_rotation", [0.0; 3])?.map(f64::from))
+                .map(|value| value as f32),
+        );
         environment.values[3] = number("background_brightness", 1.0)?;
         environment.values[4] = number("background_gamma", 1.0)?;
         environment.values[5] = number("background_h_scale", 1.0)?;
@@ -2318,14 +2365,14 @@ impl MandelbulberScene {
         if boolean("textured_background", false)? {
             let source = value("file_background")
                 .filter(|path| !path.is_empty())
-                .context("textured_background requires file_background")?;
+                .unwrap_or("$SHARED_DIR/textures/background.jpg");
             let path = resolve_mandelbulber_asset(self.source_directory.as_deref(), source);
             environment.hdri_lut = load_environment_lut(&path)?;
             environment.flags |= FPTVOX_ENVIRONMENT_HDRI;
             environment.hdri_map_type = value("textured_background_map_type")
-                .map(parse_number)
+                .map(parse_background_map_type)
                 .transpose()?
-                .unwrap_or(0.0) as u32;
+                .unwrap_or(0);
         }
         Ok(environment)
     }
@@ -3570,6 +3617,16 @@ fn matrix_vector(matrix: [[f64; 3]; 3], vector: [f64; 3]) -> [f64; 3] {
 mod tests {
     use super::*;
 
+    #[test]
+    fn background_map_type_accepts_authored_names_and_numeric_enums() {
+        assert_eq!(parse_background_map_type("equirectangular").unwrap(), 0);
+        assert_eq!(parse_background_map_type("double hemisphere").unwrap(), 1);
+        assert_eq!(parse_background_map_type("double-hemisphere").unwrap(), 1);
+        assert_eq!(parse_background_map_type("flat").unwrap(), 2);
+        assert_eq!(parse_background_map_type("2").unwrap(), 2);
+        assert!(parse_background_map_type("3").is_err());
+    }
+
     const IFS_SCENE: &str = r#"
 # Mandelbulber settings file
 # version 2.33
@@ -3865,7 +3922,7 @@ target 0 0 0;
         assert!(sample.derivative.is_finite());
         let mut config = FptRenderConfig::default();
         scene.apply_to_config(&mut config);
-        assert!(config.fractal_style[6] > 0.0);
+        assert_eq!(config.fractal_style[6], scene.material.luminosity as f32);
         assert_eq!(config.fractal_style_mode, 1);
     }
 
@@ -4136,13 +4193,15 @@ target 0 0 0;
     fn authored_contract_preserves_material_camera_and_volume_controls() {
         let source = IFS_SCENE.replace(
             "detail_level 2;",
-            "detail_level 2;\nperspective_type equirectangular;\nmat1_transparency_of_surface 0,75;\nmat1_transparency_index_of_refraction 1,45;\nmat2_is_defined true;\nmat2_metallic true;\nmat2_luminosity 3;\nbasic_fog_enabled true;\nbasic_fog_visibility 12;\nvolumetric_fog_enabled true;\nvolumetric_fog_density 0,02;\nclouds_enable true;\nclouds_color 1000 2000 3000;",
+            "detail_level 2;\nperspective_type equirectangular;\nformula_material_id 2;\nmat1_transparency_of_surface 0,75;\nmat1_transparency_index_of_refraction 1,45;\nmat2_is_defined true;\nmat2_metallic true;\nmat2_luminosity 3;\nbasic_fog_enabled true;\nbasic_fog_visibility 12;\nvolumetric_fog_enabled true;\nvolumetric_fog_density 0,02;\nclouds_enable true;\nclouds_color 1000 2000 3000;",
         );
         let scene = MandelbulberScene::parse(&source).expect("authored contract scene");
         assert_eq!(scene.materials.len(), 2);
         assert_eq!(scene.materials[&1].transparency_of_surface, 0.75);
         assert_eq!(scene.materials[&2].metallic, 1.0);
         assert_eq!(scene.materials[&2].luminosity, 3.0);
+        assert_eq!(scene.formula_material_id, 2);
+        assert_eq!(scene.material, scene.materials[&2]);
         assert_eq!(scene.fptvox_camera().projection, 2);
         let environment = scene.fptvox_environment().expect("environment contract");
         assert_eq!(environment.flags & 0x1e, 0x16);
@@ -4152,6 +4211,7 @@ target 0 0 0;
         assert_eq!(materials[0].transmission, 0.75);
         assert_eq!(materials[1].metallic, 1.0);
         assert_eq!(materials[1].emission, 3.0);
+        assert_eq!(materials[1].flags & 0x8000_0000, 0x8000_0000);
     }
 
     #[test]

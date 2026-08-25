@@ -129,8 +129,8 @@ consumer may stop after geometry or validate the following sequence:
    and compatibility material controls.
 2. `FPTCAM1\0`: fixed 96-byte camera pose, roll, adjusted field of view,
    image-Y convention, and perspective/fisheye/equirectangular projection.
-3. `FPTENV1\0`: fixed 512-byte environment header followed by a portable
-   32x16 RGB16F HDRI lookup texture. The header stores basic, volumetric, and
+3. `FPTENV2\0`: fixed 512-byte environment header followed by a portable
+   128x64 RGB16F HDRI lookup texture. The header stores basic, volumetric, and
    iteration-fog controls plus cloud density, placement, motion, color, and
    noise parameters.
 4. `FPTMAT1\0`: a fixed 32-byte header and 68-byte records for every authored
@@ -138,6 +138,9 @@ consumer may stop after geometry or validate the following sequence:
    reflectance, transmission, interior opacity, IOR, emission, and
    transmission tint.
 5. `FPTCOL2\0`: indexed-triangle vertex colors used for barycentric shading.
+6. `FPTMID1\0`: one authored, nonzero `matN` identifier per indexed source
+   triangle. The 32-byte header declares version `1`, a 4-byte record, and an
+   exact triangle count.
 
 Every numeric field is little-endian and finite. Each extension has its own
 magic, version, record sizes, and strict count validation. Old geometry-only
@@ -148,6 +151,10 @@ path, so the artifact remains portable. It preserves the authored volume
 controls, but a consumer may implement iteration fog or procedural clouds with
 an explicitly documented approximation when the voxel payload lacks the
 original distance-estimator orbit state.
+
+`FPTENV2` replaces the original 32x16 `FPTENV1` lookup because the smaller
+payload visibly erased authored sky detail. Geometry and all other trailer
+contracts are unchanged; native readers retain support for both versions.
 
 ### Indexed surface-colour extension
 
@@ -165,6 +172,22 @@ extensions.
 The stream is deliberately separate from the canonical geometry payload. It
 does not change traversal, occupancy, normals, or the existing per-cell
 material table, and older consumers can continue to stop after geometry.
+
+### Indexed triangle-material extension
+
+FPTVOX8 and FPTVOX11 exports append `FPTMID1\0` after the triangle-color
+stream. The material record follows the same source-triangle ordering as
+`FPTCOL2`; consumers therefore select the hit triangle's authored material
+without changing geometry or barycentric color interpolation. Export rejects
+zero identifiers and triangles whose three structural samples disagree about
+their material.
+
+The selected formula material is also marked in its `FPTMAT1` flags. This
+avoids assuming that `mat1` is the formula material when the source scene uses
+`formula_material_id`. The remaining material-appearance limitation is image
+texture evaluation: authored scalar properties and generated palette colors
+are preserved, but Mandelbulber color, normal, and displacement texture graphs
+are not embedded in the current portable trailer.
 
 `.fptvox` is the preferred direct volume seam. It preserves every occupied
 cell's exact packed colour/occupancy, PBR properties, and emission without

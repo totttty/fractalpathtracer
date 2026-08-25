@@ -10,9 +10,9 @@ use fpt_metal::{
     FptvoxTriangleCell, FptvoxTriangleSurface, FractalScene, SparseVoxel, SurfaceMaterial,
     VoxelCell, VoxelGrid, VoxelizationParameters, VoxelizationRequest, append_fptvox_appearance,
     append_fptvox_camera, append_fptvox_environment, append_fptvox_materials,
-    append_fptvox_triangle_vertex_colors, export_fptvox, export_fptvox_indexed_triangle_surface,
-    export_fptvox_with_bounded_patches, export_fptvox_with_normals, export_fptvox_with_planes,
-    export_glb, voxelize,
+    append_fptvox_triangle_material_ids, append_fptvox_triangle_vertex_colors, export_fptvox,
+    export_fptvox_indexed_triangle_surface, export_fptvox_with_bounded_patches,
+    export_fptvox_with_normals, export_fptvox_with_planes, export_glb, voxelize,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -1076,6 +1076,7 @@ struct StructuralMeshVertex {
     normalized_position: [f32; 3],
     normal: [f32; 3],
     color: [f32; 3],
+    material_id: u32,
     depth: f32,
     hit: bool,
 }
@@ -1104,6 +1105,7 @@ fn structural_mesh_vertex(
         normalized_position,
         normal: [read(16), read(20), read(24)],
         color: [read(48), read(52), read(56)].map(|value| value.clamp(0.0, 1.0)),
+        material_id: read(40).round().max(1.0) as u32,
         depth: read(12),
         hit: read(28) > 0.5 && finite && in_bounds,
     }
@@ -1327,6 +1329,16 @@ fn structural_surface_triangles(
                     continue;
                 }
                 let samples = candidate.map(|index| vertices[indices[index]]);
+                if samples
+                    .iter()
+                    .any(|sample| sample.material_id != samples[0].material_id)
+                {
+                    for index in candidate.map(|index| indices[index]) {
+                        rejected_vertices[index] = true;
+                    }
+                    rejected_discontinuities += 1;
+                    continue;
+                }
                 let pixel_footprint = samples
                     .iter()
                     .map(|sample| sample.depth)
@@ -1370,6 +1382,7 @@ fn structural_surface_triangles(
                                     .normalized_position
                                     .map(|value| value.clamp(0.0, 1.0)),
                                 color: sample.color,
+                                material_id: sample.material_id,
                             }
                         }));
                         emitted_low_normal_triangles += 1;
@@ -1387,6 +1400,7 @@ fn structural_surface_triangles(
                             .normalized_position
                             .map(|value| value.clamp(0.0, 1.0)),
                         color: sample.color,
+                        material_id: sample.material_id,
                     }
                 }));
                 connected_triangle_indices
@@ -1484,6 +1498,7 @@ fn structural_surface_triangles(
                             .clamp(0.0, 1.0)
                     }),
                     color: sample.color,
+                    material_id: sample.material_id,
                 }
             });
             triangles.push([corners[0], corners[1], corners[2]]);
@@ -2728,6 +2743,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                     append_authored_fptvox_appearance(&output, triangle_material.as_ref())?;
                 let triangle_color_bytes =
                     append_fptvox_triangle_vertex_colors(&output, &bvh.triangle_vertex_colors)?;
+                let triangle_material_bytes =
+                    append_fptvox_triangle_material_ids(&output, &bvh.triangle_material_ids)?;
                 println!(
                     "{}",
                     serde_json::to_string_pretty(&json!({
@@ -2744,6 +2761,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                         "appearance_bytes":appearance_bytes,
                         "triangle_color_contract":"FPTCOL2",
                         "triangle_color_bytes":triangle_color_bytes,
+                        "triangle_material_contract":"FPTMID1",
+                        "triangle_material_bytes":triangle_material_bytes,
                         "view_dependent":true,
                         "source_triangles":source_triangle_count,
                         "indexed_triangles":bvh.triangles.len(),
@@ -2898,6 +2917,10 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                         &output,
                         &indexed.triangle_vertex_colors,
                     )?;
+                    let triangle_material_bytes = append_fptvox_triangle_material_ids(
+                        &output,
+                        &indexed.triangle_material_ids,
+                    )?;
                     println!(
                         "{}",
                         serde_json::to_string_pretty(&json!({
@@ -2914,6 +2937,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                             "appearance_bytes":appearance_bytes,
                             "triangle_color_contract":"FPTCOL2",
                             "triangle_color_bytes":triangle_color_bytes,
+                            "triangle_material_contract":"FPTMID1",
+                            "triangle_material_bytes":triangle_material_bytes,
                             "view_dependent":true,
                             "source_triangles":source_triangle_count,
                             "cell_triangle_references":reference_count,

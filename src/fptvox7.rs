@@ -53,6 +53,7 @@ struct SurfaceVertex {
 pub struct MeshSurfaceVertex {
     pub position: [f32; 3],
     pub color: [f32; 3],
+    pub material_id: u32,
 }
 
 #[derive(Clone, Copy)]
@@ -685,6 +686,7 @@ where
     let mut indexed_triangles = Vec::new();
     let mut triangle_colors = Vec::new();
     let mut triangle_vertex_colors = Vec::new();
+    let mut triangle_material_ids = Vec::new();
     for triangle in triangles {
         let surface_triangle = triangle.map(|vertex| SurfaceVertex {
             position: vertex.position,
@@ -710,6 +712,7 @@ where
             indexed_triangles.push(indexed_triangle);
             triangle_colors.push(pack_triangle_color(triangle));
             triangle_vertex_colors.push(triangle.map(|vertex| pack_vertex_color(vertex.color)));
+            triangle_material_ids.push(triangle[0].material_id.max(1u32));
         }
     }
     ensure!(
@@ -744,6 +747,7 @@ where
         triangles: indexed_triangles,
         triangle_colors,
         triangle_vertex_colors,
+        triangle_material_ids,
         references,
     })
 }
@@ -1037,6 +1041,7 @@ pub fn build_indexed_triangle_bvh_surface(
         triangles: surface.triangles.clone(),
         triangle_colors: surface.triangle_colors.clone(),
         triangle_vertex_colors: surface.triangle_vertex_colors.clone(),
+        triangle_material_ids: surface.triangle_material_ids.clone(),
         references,
         nodes,
     })
@@ -1586,14 +1591,17 @@ mod tests {
             MeshSurfaceVertex {
                 position: [0.2, 0.2, 0.5],
                 color: red,
+                material_id: 1,
             },
             MeshSurfaceVertex {
                 position: [0.8, 0.2, 0.5],
                 color: red,
+                material_id: 1,
             },
             MeshSurfaceVertex {
                 position: [0.2, 0.8, 0.5],
                 color: red,
+                material_id: 1,
             },
         ];
         let surface = build_triangle_surface_from_normalized_mesh(
@@ -1626,14 +1634,17 @@ mod tests {
             MeshSurfaceVertex {
                 position: [0.05, 0.05, 0.5],
                 color: [0.5; 3],
+                material_id: 1,
             },
             MeshSurfaceVertex {
                 position: [0.95, 0.05, 0.5],
                 color: [0.5; 3],
+                material_id: 1,
             },
             MeshSurfaceVertex {
                 position: [0.05, 0.95, 0.5],
                 color: [0.5; 3],
+                material_id: 1,
             },
         ];
         let clipped = build_triangle_surface_from_normalized_mesh(

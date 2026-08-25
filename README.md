@@ -177,11 +177,13 @@ The lossless little-endian `.fptvox` path preserves every occupied cell's
 packed material tuple for direct native volume construction. The intended
 direct pipeline is FPT -> `.fptvox` -> the native Metal NAADF path tracer.
 Mandelbulber exports also embed independently versioned appearance, camera,
-environment, and authored-material trailers. Geometry-only consumers can
+128x64 environment, and authored-material trailers. Geometry-only consumers can
 ignore them; the native NAADF viewer consumes them only with
 `--gpu-naadf-appearance mandel-compat`. Indexed FPTVOX8/FPTVOX11 exact-surface
 exports append `FPTCOL2`, with three packed RGB8 values per triangle for
-barycentric first-hit color. Readers remain compatible with flat `FPTCOL1`.
+barycentric first-hit color, followed by `FPTMID1`, with the authoritative
+nonzero `matN` identifier for each triangle. Readers remain compatible with
+flat `FPTCOL1` and geometry-only artifacts.
 Experimental `--surface-normals` (`FPTVOX2`) and `--surface-planes`
 (`FPTVOX3`) exports add structural surface data for continuous-FPT parity
 work while leaving the version-1 default unchanged. The library also exposes
