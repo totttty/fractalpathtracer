@@ -223,6 +223,36 @@ prototype reduced scene-2 mean error to `10.02` degrees and scene-4 to `1.95`
 degrees, but was rejected because it regressed four required scenes by
 approximately `3-16%`. FPTNRM1 deliberately remains scalar per triangle.
 
+### Retained ranked-50 authored-view gate
+
+The post-FPTNRM1 regression gate regenerated and rendered all 50 ranked scenes
+through compact FPTVOX11 and native NAADF. Captures preserved each authored
+aspect ratio with a maximum 300-pixel capture axis; the exact surface grid used
+a maximum 384-cell output axis. Path renders used 32 samples and four bounces.
+
+| Measurement | Result |
+| --- | ---: |
+| Successful scenes | `50 / 50` |
+| Median visibility-mask IoU | `0.99141` |
+| Median continuous-normal mean error | `23.18 degrees` |
+| Median NAADF GPU time | `203.24 ms` |
+
+Ranks 13 (`transf_difs_piriform`) and 17
+(`xenodreambuieV2 pow -7 julia`) remain the two significant authored-view
+coverage outliers, at `0.5749` and `0.6457` IoU. An explicit
+`1.0 / 0.75` splat-footprint experiment raised them to `0.8345` and `0.9988`,
+but the attempted automatic policy was rejected. It increased required-scene
+GPU time by as much as `10.6%`, cost rank 17 `13.8%`, and grew artifacts by
+`15-35%`. The footprint controls remain diagnostic options rather than a
+format default.
+
+An FPTVOX7 four-auxiliary-view experiment added 339 primary-camera hits and
+1,488 alternate-camera hits without removing existing hits, but increased
+export time from `26.75 s` to `132.88 s`, artifact size by `11.8%`, and primary
+GPU time by `7.8%`. Compact indexed FPTVOX11 therefore remains authored-view
+specific. Camera-independent reconstruction requires a deduplicated multi-view
+indexed contract, not the current additive FPTVOX7 payload.
+
 `.fptvox` is the preferred direct volume seam. It preserves every occupied
 cell's exact packed colour/occupancy, PBR properties, and emission without
 greedy meshing or glTF material conversion. All integers and IEEE-754 float

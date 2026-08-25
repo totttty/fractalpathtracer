@@ -188,6 +188,17 @@ their sampled normal. Connected triangles emit the normalized average of their
 source vertex normals only when it differs from the final quantized geometric
 normal by more than five degrees; a zero record keeps the geometric fast path.
 Readers remain compatible with flat `FPTCOL1` and geometry-only artifacts.
+
+The latest retained FPTVOX11/NAADF authored-view gate completed all 50 ranked
+scenes at a maximum 300-pixel capture axis, 384-cell output axis, 32 samples,
+and four bounces. Median visibility-mask IoU was `0.99141`, median continuous-
+normal mean error was `23.18` degrees, and median NAADF GPU time was
+`203.24 ms`. Ranks 13 and 17 remain the two material coverage outliers. A
+larger automatic splat footprint repaired those views, but was rejected after
+regressing already-correct scenes by up to `10.6%`, growing artifacts by
+`15-35%`, and costing rank 17 `13.8%`. The larger footprint remains available
+only through explicit diagnostic flags.
+
 Experimental `--surface-normals` (`FPTVOX2`) and `--surface-planes`
 (`FPTVOX3`) exports add structural surface data for continuous-FPT parity
 work while leaving the version-1 default unchanged. The library also exposes
