@@ -274,7 +274,7 @@ fn usage() {
   fpt-metal diagnostic-batch <jobs.json> [--report <report.json>] [--workers N] [--offset N] [--limit N]\n\
   fpt-metal diagnostic <scene.json> --out <dir> --mode <mode> [--max-distance N] [--diagnostic-clip-voxel-bounds [--diagnostic-bounds-min x,y,z --diagnostic-bounds-max x,y,z]] [--structural-dump <file.bin>] [--camera-position x,y,z] [--camera-yaw-pitch yaw,pitch] [--camera-roll radians] [--camera-fov degrees] [--fpt-root <dir>] [--width N] [--height N]\n\
   fpt-metal preview <scene.json> [--renderer sdf|voxel] [--sdf-backend auto] [--sdf-function-stitching normal|inline] [--no-sdf-stitched-surface] [--voxel-resolution N] [--voxel-normal face|smooth|exact] [--voxel-material stored|exact] [--voxel-offset legacy|precision] [--voxel-storage dense|sparse-bricks|template-bricks] [--voxel-leaf-refinement none|secant-bisection|restricted-trace|fixed-de] [--fpt-root <dir>] [--pathtrace] [--sdf-profile] [--width N] [--height N] [--samples N]\n\
-  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-in <mesh.ply>] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-mesh-voxel-cells] [--mandel-mesh-voxel-min-axis-resolution N] [--mandel-mesh-voxel-dilation 0..3] [--mandel-mesh-camera-safe-bounds] [--mandel-mesh-camera-margin 0.01..1.0] [--mandel-mesh-auto-bounds] [--mandel-mesh-auto-bounds-margin 0.01..1.0] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches|--surface-triangles|--surface-view-triangles|--surface-view-indexed-triangles|--surface-view-indexed-triangles-auto|--surface-view-triangle-bvh|--surface-view-indexed-triangle-bvh] [--surface-view-triangle-bvh-leaf-size 2..64] [--surface-view-splats] [--surface-view-fit-bounds|--surface-view-auto-fit-bounds] [--surface-view-splat-scale 0.25..1.5] [--surface-view-splat-cell-cap 0.1..0.49] [--surface-view-triangle-dilation 0..1] [--surface-view-capture-cache <capture.bin>] [--surface-view-auxiliary-views 0|4|6|12] [--surface-triangle-resolution N] [--surface-triangle-anisotropic] [--surface-triangle-threshold-scale 0.25..4] [--surface-triangle-auto-bounds] [--surface-triangle-auto-bounds-margin 0.001..1] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
+  fpt-metal voxel-export <scene|builtin:menger-sponge> --out <scene.glb|scene.fptvox> --voxel-resolution N [--mandelbulber-root <dir>] [--fpt-root <dir>] [--bounds-min x,y,z] [--bounds-max x,y,z] [--surface-source metal|mandelbulber-mesh] [--mandelbulber-bin <path>] [--mandel-mesh-resolution N] [--mandel-mesh-opencl] [--mandel-mesh-ply-in <mesh.ply>] [--mandel-mesh-ply-out <mesh.ply>] [--mandel-mesh-voxel-cells] [--mandel-mesh-voxel-min-axis-resolution N] [--mandel-mesh-voxel-dilation 0..3] [--mandel-mesh-camera-safe-bounds] [--mandel-mesh-camera-margin 0.01..1.0] [--mandel-mesh-auto-bounds] [--mandel-mesh-auto-bounds-margin 0.01..1.0] [--mandel-reference-out <reference.png>] [--mandel-reference-size WxH] [--surface-band N] [--surface-normals|--surface-planes|--surface-patches|--surface-complex-patches|--surface-triangles|--surface-view-triangles|--surface-view-indexed-triangles|--surface-view-indexed-triangles-auto|--surface-view-triangle-bvh|--surface-view-indexed-triangle-bvh] [--surface-view-triangle-bvh-leaf-size 2..64] [--surface-view-splats] [--surface-view-fit-bounds|--surface-view-auto-fit-bounds] [--surface-view-splat-scale 0.25..1.5] [--surface-view-splat-cell-cap 0.1..4] [--surface-view-triangle-dilation 0..1] [--surface-view-capture-cache <capture.bin>] [--surface-view-auxiliary-views 0|4|6|12] [--surface-triangle-resolution N] [--surface-triangle-anisotropic] [--surface-triangle-threshold-scale 0.25..4] [--surface-triangle-auto-bounds] [--surface-triangle-auto-bounds-margin 0.001..1] [--surface-promotion-min-probes 4..28] [--surface-dense-promotions] [--surface-local-parallax] [--surface-local-parallax-views 4|6|12] [--surface-local-parallax-resolution 192|256|384] [--surface-local-parallax-rings 1|2] [--fill-interior]\n\
   fpt-metal compare <baseline.png> <candidate.png> --report <report.json> [--strict]\n\
   fpt-metal contact-sheet <out.png> <images...>\n\
   fpt-metal report-index <report-dir>\n\
@@ -1538,8 +1538,10 @@ fn structural_surface_triangles_rect(
             triangles.push([corners[0], corners[2], corners[3]]);
             splat_hit_pixels += 1;
             emitted_splat_triangles += 2;
-            expanded_low_normal_splats += usize::from(low_normal);
-            expanded_dense_view_splats += usize::from(dense_view);
+            expanded_low_normal_splats +=
+                usize::from(low_normal && (splat_pixel_scale < 1.0 || splat_cell_cap < 0.49));
+            expanded_dense_view_splats +=
+                usize::from(dense_view && (splat_pixel_scale < 1.5 || splat_cell_cap < 0.49));
         }
     }
     let summary = ViewTriangleSurfaceSummary {
@@ -1696,8 +1698,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut surface_view_auto_fit_bounds = false;
     let mut surface_view_auxiliary_views = 0u32;
     let mut surface_view_capture_cache = None::<PathBuf>;
-    let mut surface_view_splat_scale = 0.85_f32;
-    let mut surface_view_splat_cell_cap = 0.45_f32;
+    let mut surface_view_splat_scale = 1.5_f32;
+    let mut surface_view_splat_cell_cap = 2.0_f32;
     let mut surface_view_triangle_dilation = 0.0_f32;
     let mut surface_view_splat_scale_set = false;
     let mut surface_view_splat_cell_cap_set = false;
@@ -1901,8 +1903,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 surface_view_splat_cell_cap_set = true;
                 ensure!(
                     surface_view_splat_cell_cap.is_finite()
-                        && (0.1..=0.49).contains(&surface_view_splat_cell_cap),
-                    "surface view splat cell cap must be 0.1..0.49"
+                        && (0.1..=4.0).contains(&surface_view_splat_cell_cap),
+                    "surface view splat cell cap must be 0.1..4"
                 );
             }
             "--surface-view-triangle-dilation" => {

@@ -603,12 +603,14 @@ clipped camera-matched export is diagnosable.
 
 `--surface-view-splats` emits two tangent triangles for a valid hit sample that
 does not belong to any accepted connected triangle. The tangent half-width is
-derived from the sample depth and authored camera FOV (`0.85x` one pixel's
-world footprint) and capped at `0.45x` the output-cell step. Export reports
-connected hit pixels, splatted hit pixels, and splat triangle count separately.
-The three held-out high-frequency pilots improved mask IoU from
-`0.672/0.922/0.481` to `0.918/0.938/0.941` while keeping false coverage below
-`0.66%`.
+derived from sample depth and authored camera FOV. It defaults to `1.5x` one
+capture pixel's world footprint and is capped at `2.0x` the output-cell step;
+callers may tune the cap from `0.1` to `4.0`. The conservative default keeps
+the camera-matched surface covered when output and capture pixel grids differ.
+Export reports connected hit pixels, splatted hit pixels, and splat triangle
+count separately. On the corrected authored-camera first-five gate, continuous
+mask IoU improved from `0.863/0.893/0.239/0.194/0.950` to
+`0.984/0.968/0.982/0.968/0.974`.
 
 `--surface-view-triangle-dilation 0..1` conservatively expands only connected
 triangles touching a rejected depth/normal discontinuity. Expansion stays in

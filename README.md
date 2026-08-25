@@ -328,13 +328,21 @@ large false planes produced by dense V6 patches on rank 34.
 
 `--surface-view-splats` fills continuous hit samples that cannot participate
 in a connected depth-grid triangle with a tangent micro-quad. Each half-width
-is `0.85x` the projected pixel footprint and remains capped below half an
-output voxel, so the mode cannot create the large foreground facets produced
-by the rejected ray-hit-plane hybrid. At `300x300`, authored-view mask IoU for
-ranks 24/26/34 changed from `0.672/0.922/0.481` with connected triangles alone
-to `0.918/0.938/0.941`; miss rates fell to `7.91%/5.64%/5.73%`, with only
-`0.24-0.66%` extra pixels. The option remains explicit because the result is a
+defaults to `1.5x` the projected capture-pixel footprint with a `2.0x`
+output-cell safety cap. The wider cell cap is important when a fitted output
+grid makes one capture pixel span more than half a cell, or when the NAADF
+output resolution differs from the capture resolution. It remains bounded so
+the mode cannot create the large foreground facets produced by the rejected
+ray-hit-plane hybrid. The option remains explicit because the result is a
 camera-matched surface rather than a closed asset.
+
+On the corrected authored-camera first-five gate, the conservative defaults
+raised continuous-mask IoU from `0.863/0.893/0.239/0.194/0.950` to
+`0.984/0.968/0.982/0.968/0.974`. The two splat-dominated scenes fell from
+`35,219/13,165` missing pixels to `474/341`; false coverage remained bounded
+to `359/195` pixels. A same-grid `384x384` control reached `0.989` IoU, which
+confirms that the indexed NAADF triangle path is sound and that the repaired
+loss was resolution-dependent splat coverage.
 
 `--surface-view-triangle-dilation 0..1` is an additional conservative
 authored-view repair. It expands only accepted triangles that share a sampled
@@ -346,26 +354,15 @@ wider scene gate. Export JSON records the requested value and the number of
 triangles actually dilated.
 
 The triangulator continues to reject adjacent triangles whose sampled normals
-disagree. It tags the affected vertices and expands only their existing
-fallback splats from the default `0.85x` footprint / `0.45x` cell cap to at
-least `1.0x` / `0.49x`. This fills small screen-space gaps without accepting a
-foreshortened triangle or increasing the connected-triangle workload. Across
-all 49 renderable ranked scenes it raised median authored-view IoU from
-`0.8890` to `0.9002`; 47 scenes improved and two were unchanged. Median FPTVOX
-payload growth was `0.26%`. Reports expose affected samples as
+disagree. It tags the affected vertices and, when callers explicitly request
+smaller splats than the defaults, expands only their fallback splats to at
+least `1.0x` / `0.49x`. Reports expose samples actually changed by this rule as
 `expanded_low_normal_splats`.
 
-Captures whose finite-hit occupancy is at least `99.9%` use a separate dense
-view rule for isolated splats: their footprint/cell cap is raised to at least
-`1.5x / 0.49x`. This addresses subpixel holes in full-viewport fractals without
-thickening isolated object silhouettes. In the ranked-50 gate the selector
-activated on 22 scenes, improved every selected scene, and left the other 28
-scenes byte-for-byte and metric-for-metric unchanged. Overall median IoU rose
-from `0.9007` to `0.9221`; the selected cohort's median improvement was
-`0.0322`, with median payload growth of `5.20%`. Short alternating exact-surface
-timing canaries on ranks 8/27/40 measured paired GPU medians of
-`-5.9%/-5.8%/-12.1%`, consistent with denser first-hit coverage terminating
-rays earlier. Reports expose affected samples as `expanded_dense_view_splats`.
+Captures whose finite-hit occupancy is at least `99.9%` retain a dense-view
+minimum of `1.5x / 0.49x` for callers that explicitly request smaller splats.
+Reports expose samples actually changed by this compatibility rule as
+`expanded_dense_view_splats`.
 
 The corresponding NAADF comparison camera now preserves explicit pole poses
 instead of applying the interactive mouse-look pitch clamp. A fresh 50-scene
