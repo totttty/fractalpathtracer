@@ -198,16 +198,30 @@ are not embedded in the current portable trailer.
 FPTVOX8 and FPTVOX11 exports append `FPTNRM1\0` after `FPTMID1\0`. A zero
 record requests the triangle's geometric normal. A present record restores the
 continuous source normal for camera-facing fallback splats, so surface coverage
-geometry does not incorrectly control diffuse or specular shading.
+geometry does not incorrectly control diffuse or specular shading. Connected
+triangles normalize and sign-align their three source vertex normals, average
+them, and emit an override only when that average differs by more than five
+degrees from the geometric normal of the final quantized triangle. The gate is
+evaluated in world-space bounds so anisotropic grids do not bias the decision.
 
 The native NAADF consumer validates the lossless 10-bit-per-axis stream, then
 repacks it into the unused upper 16 bits of its hot triangle word as a 5/5/5
 normal plus a presence bit. This replaces a side-buffer lookup with data from
 an already-required triangle load. The current runtime quantization measured
 `2.61` degrees p95 on the splat-dominated scene-3 gate and `2.71` degrees p95
-on the fully disconnected scene-4 gate. Connected reconstructed triangles do
-not currently carry interpolated source normals; they continue to use their
-geometric normal.
+on the fully disconnected scene-4 gate.
+
+Across the first five authored scenes, selective connected overrides changed
+zero hit pixels and reduced mean continuous-normal error from
+`2.33/34.01/29.82/46.22/22.79` degrees to
+`1.42/13.19/13.19/1.95/15.15`. They selected
+`5.5/88.1/34.9/99.6/44.5%` of triangles. Three alternating full 64-frame Metal
+batches measured `+2.76/+1.75/+2.70/+2.34/-12.07%` GPU time relative to
+geometric normals. This is an opt-in appearance-correctness cost; artifacts
+without `FPTNRM1` are unaffected. A three-normal barycentric `FPTNRM2`
+prototype reduced scene-2 mean error to `10.02` degrees and scene-4 to `1.95`
+degrees, but was rejected because it regressed four required scenes by
+approximately `3-16%`. FPTNRM1 deliberately remains scalar per triangle.
 
 `.fptvox` is the preferred direct volume seam. It preserves every occupied
 cell's exact packed colour/occupancy, PBR properties, and emission without
@@ -623,7 +637,9 @@ clipped camera-matched export is diagnosable.
 
 `--surface-view-splats` emits two camera-facing triangles for an isolated valid
 hit sample or a sample adjoining a rejected connected edge. `FPTNRM1` retains
-the sampled source normal for shading. The half-width is derived from sample
+the sampled source normal for shading. Connected triangles selectively retain
+a source-average normal when it differs materially from their final geometric
+normal. The half-width is derived from sample
 depth and authored camera FOV. It defaults to `0.85x` one capture pixel's world
 footprint and a `0.45x` output-cell cap. Disconnected, connected-dominant,
 rejected-boundary, and grazing captures use at least a `0.75x` cap; splat-

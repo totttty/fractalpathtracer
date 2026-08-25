@@ -1418,7 +1418,7 @@ fn structural_surface_triangles_rect(
                                     .map(|value| value.clamp(0.0, 1.0)),
                                 color: sample.color,
                                 material_id: sample.material_id,
-                                shading_normal: None,
+                                shading_normal: Some(sample.normal),
                             }
                         }));
                         emitted_low_normal_triangles += 1;
@@ -1437,7 +1437,7 @@ fn structural_surface_triangles_rect(
                             .map(|value| value.clamp(0.0, 1.0)),
                         color: sample.color,
                         material_id: sample.material_id,
-                        shading_normal: None,
+                        shading_normal: Some(sample.normal),
                     }
                 }));
                 connected_triangle_indices

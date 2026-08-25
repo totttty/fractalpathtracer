@@ -183,8 +183,11 @@ ignore them; the native NAADF viewer consumes them only with
 exports append `FPTCOL2`, with three packed RGB8 values per triangle for
 barycentric first-hit color, followed by `FPTMID1`, with the authoritative
 nonzero `matN` identifier for each triangle, and `FPTNRM1`, with an optional
-10-bit-per-axis shading normal for each triangle. Readers remain compatible
-with flat `FPTCOL1` and geometry-only artifacts.
+10-bit-per-axis shading normal for each triangle. Camera-facing splats retain
+their sampled normal. Connected triangles emit the normalized average of their
+source vertex normals only when it differs from the final quantized geometric
+normal by more than five degrees; a zero record keeps the geometric fast path.
+Readers remain compatible with flat `FPTCOL1` and geometry-only artifacts.
 Experimental `--surface-normals` (`FPTVOX2`) and `--surface-planes`
 (`FPTVOX3`) exports add structural surface data for continuous-FPT parity
 work while leaving the version-1 default unchanged. The library also exposes
@@ -331,7 +334,9 @@ large false planes produced by dense V6 patches on rank 34.
 in a connected depth-grid triangle, plus accepted samples adjoining a rejected
 depth/normal edge, with a camera-facing micro-quad. `FPTNRM1` preserves the
 sampled source normal so the billboard geometry does not become the shading
-normal. Each half-width defaults to `0.85x` the projected capture-pixel
+normal. Connected triangles use the same contract selectively when their
+source-average and quantized geometric normals differ by more than five
+degrees. Each half-width defaults to `0.85x` the projected capture-pixel
 footprint with a `0.45x` output-cell safety cap. Disconnected, connected-
 dominant, rejected-boundary, and grazing captures raise the cap to `0.75x`;
 splat-dominant views keep the compact cap to control cell references. The
@@ -347,6 +352,17 @@ subpixel rays. The final first-five authored-camera gate at a `320` maximum
 axis reaches mask IoU `0.99027 / 0.99394 / 0.99998 / 1.00000 / 0.99346`.
 The splat-dominated scene 3 uses a `12.54 MiB` artifact and measured about
 `0.83 ms` for the one-bounce NAADF path in the long alternating timing gate.
+
+On the first-five authored-camera normal gate, selective connected-triangle
+overrides changed zero hit pixels and reduced mean angular error from
+`2.33/34.01/29.82/46.22/22.79` degrees to
+`1.42/13.19/13.19/1.95/15.15`. Overrides were emitted for
+`5.5/88.1/34.9/99.6/44.5%` of triangles. Three alternating 64-frame Metal
+batches measured `+2.76/+1.75/+2.70/+2.34/-12.07%` GPU time versus geometric
+normals. The cost is isolated to artifacts containing `FPTNRM1`; ordinary
+NAADF and existing geometry-only FPTVOX artifacts retain their established
+kernel path. A per-vertex barycentric `FPTNRM2` prototype improved interpolation
+further but was rejected after regressing four required scenes by `3-16%`.
 
 `--surface-view-splat-cell-cap` accepts explicit values through `4.0` for
 diagnosis or output grids that cannot be matched. A `2.0` cap recovered

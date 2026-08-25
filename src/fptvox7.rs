@@ -77,6 +77,58 @@ fn pack_shading_normal(normal: Option<[f32; 3]>) -> u32 {
         | (quantize(normalized[2]) << 20)
 }
 
+fn selective_triangle_shading_normal(
+    triangle: [MeshSurfaceVertex; 3],
+    quantized_triangle: [SurfaceVertex; 3],
+    bounds: Aabb,
+) -> u32 {
+    let normalize = |value: [f32; 3]| {
+        let length = value
+            .into_iter()
+            .map(|component| component * component)
+            .sum::<f32>()
+            .sqrt();
+        (length.is_finite() && length > 1.0e-8).then(|| value.map(|component| component / length))
+    };
+    let dot = |a: [f32; 3], b: [f32; 3]| a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    let source = triangle
+        .iter()
+        .filter_map(|vertex| vertex.shading_normal.and_then(normalize))
+        .collect::<Vec<_>>();
+    let Some(seed) = source.first().copied() else {
+        return 0u32;
+    };
+    let source_sum = source.into_iter().fold([0.0f32; 3], |sum, mut normal| {
+        if dot(seed, normal) < 0.0 {
+            normal = normal.map(|component| -component);
+        }
+        std::array::from_fn(|axis| sum[axis] + normal[axis])
+    });
+    let Some(source_normal) = normalize(source_sum) else {
+        return 0u32;
+    };
+    let extent: [f32; 3] = std::array::from_fn(|axis| bounds.max[axis] - bounds.min[axis]);
+    let edge_a: [f32; 3] = std::array::from_fn(|axis| {
+        (quantized_triangle[1].position[axis] - quantized_triangle[0].position[axis]) * extent[axis]
+    });
+    let edge_b: [f32; 3] = std::array::from_fn(|axis| {
+        (quantized_triangle[2].position[axis] - quantized_triangle[0].position[axis]) * extent[axis]
+    });
+    let Some(geometric_normal) = normalize([
+        edge_a[1] * edge_b[2] - edge_a[2] * edge_b[1],
+        edge_a[2] * edge_b[0] - edge_a[0] * edge_b[2],
+        edge_a[0] * edge_b[1] - edge_a[1] * edge_b[0],
+    ]) else {
+        return pack_shading_normal(Some(source_normal));
+    };
+    const GEOMETRIC_NORMAL_COSINE_GATE: f32 = 0.996_194_7; // Five degrees.
+    if dot(source_normal, geometric_normal).abs() >= GEOMETRIC_NORMAL_COSINE_GATE {
+        0u32
+    } else {
+        pack_shading_normal(Some(source_normal))
+    }
+}
+
 #[derive(Clone, Copy)]
 struct ColorCluster {
     weight: f32,
@@ -735,7 +787,11 @@ where
             triangle_colors.push(pack_triangle_color(triangle));
             triangle_vertex_colors.push(triangle.map(|vertex| pack_vertex_color(vertex.color)));
             triangle_material_ids.push(triangle[0].material_id.max(1u32));
-            triangle_shading_normals.push(pack_shading_normal(triangle[0].shading_normal));
+            triangle_shading_normals.push(selective_triangle_shading_normal(
+                triangle,
+                quantized_surface_triangle,
+                bounds,
+            ));
         }
     }
     ensure!(
@@ -1654,6 +1710,33 @@ mod tests {
         assert_eq!(packed & 255, 191);
         assert_eq!((packed >> 8) & 255, 64);
         assert_eq!((packed >> 16) & 255, 32);
+    }
+
+    #[test]
+    fn indexed_mesh_only_overrides_materially_different_shading_normals() {
+        let vertex = |position, shading_normal| MeshSurfaceVertex {
+            position,
+            color: [0.5; 3],
+            material_id: 1,
+            shading_normal: Some(shading_normal),
+        };
+        let build = |normal| {
+            build_indexed_triangle_surface_from_normalized_mesh_3d(
+                [[
+                    vertex([0.1, 0.1, 0.5], normal),
+                    vertex([0.9, 0.1, 0.5], normal),
+                    vertex([0.1, 0.9, 0.5], normal),
+                ]],
+                [4; 3],
+                [8; 3],
+                Aabb::new([-1.0; 3], [1.0; 3]),
+                SurfaceMaterial::default(),
+            )
+            .expect("build indexed surface")
+        };
+
+        assert_eq!(build([0.0, 0.0, 1.0]).triangle_shading_normals, [0]);
+        assert_ne!(build([1.0, 0.0, 0.0]).triangle_shading_normals, [0]);
     }
 
     #[test]
