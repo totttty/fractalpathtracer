@@ -138,6 +138,11 @@ pub const FPTVOX_TRIANGLE_MATERIAL_MAGIC: [u8; 8] = *b"FPTMID1\0";
 pub const FPTVOX_TRIANGLE_MATERIAL_VERSION: u32 = 1;
 pub const FPTVOX_TRIANGLE_MATERIAL_HEADER_SIZE: u32 = 32;
 pub const FPTVOX_TRIANGLE_MATERIAL_RECORD_SIZE: u32 = 4;
+/// Optional packed 10-bit UNORM shading-normal override per indexed triangle.
+pub const FPTVOX_TRIANGLE_NORMAL_MAGIC: [u8; 8] = *b"FPTNRM1\0";
+pub const FPTVOX_TRIANGLE_NORMAL_VERSION: u32 = 1;
+pub const FPTVOX_TRIANGLE_NORMAL_HEADER_SIZE: u32 = 32;
+pub const FPTVOX_TRIANGLE_NORMAL_RECORD_SIZE: u32 = 4;
 
 pub const FPTVOX_APPEARANCE_THREE_COLOR_BACKGROUND: u32 = 1 << 0;
 pub const FPTVOX_APPEARANCE_MAIN_LIGHT_ENABLED: u32 = 1 << 1;
@@ -665,6 +670,63 @@ pub fn append_fptvox_triangle_material_ids(
     Ok(bytes)
 }
 
+pub fn append_fptvox_triangle_normals(
+    path: impl AsRef<Path>,
+    packed_normals: &[u32],
+) -> Result<u64, FractalError> {
+    if packed_normals.is_empty()
+        || packed_normals.iter().any(|normal| {
+            normal >> 31 != 0u32 || (normal & (1u32 << 30) == 0u32 && *normal != 0u32)
+        })
+    {
+        return Err(FractalError::new(
+            FractalErrorCode::Artifact,
+            "FPTVOX triangle normals require canonical optional 31-bit records",
+        ));
+    }
+    let count = u64::try_from(packed_normals.len()).map_err(|_| {
+        FractalError::new(FractalErrorCode::Artifact, "triangle normal count overflow")
+    })?;
+    let bytes = u64::from(FPTVOX_TRIANGLE_NORMAL_HEADER_SIZE)
+        .checked_add(count * u64::from(FPTVOX_TRIANGLE_NORMAL_RECORD_SIZE))
+        .ok_or_else(|| {
+            FractalError::new(FractalErrorCode::Artifact, "triangle normal size overflow")
+        })?;
+    let path = path.as_ref();
+    let file = OpenOptions::new()
+        .append(true)
+        .open(path)
+        .map_err(|error| {
+            FractalError::new(
+                FractalErrorCode::Io,
+                format!(
+                    "open {} for triangle-normal append: {error}",
+                    path.display()
+                ),
+            )
+        })?;
+    let mut writer = BufWriter::new(file);
+    let write_result = (|| -> std::io::Result<()> {
+        writer.write_all(&FPTVOX_TRIANGLE_NORMAL_MAGIC)?;
+        writer.write_all(&FPTVOX_TRIANGLE_NORMAL_HEADER_SIZE.to_le_bytes())?;
+        writer.write_all(&FPTVOX_TRIANGLE_NORMAL_VERSION.to_le_bytes())?;
+        writer.write_all(&FPTVOX_TRIANGLE_NORMAL_RECORD_SIZE.to_le_bytes())?;
+        writer.write_all(&0_u32.to_le_bytes())?;
+        writer.write_all(&count.to_le_bytes())?;
+        for normal in packed_normals {
+            writer.write_all(&normal.to_le_bytes())?;
+        }
+        writer.flush()
+    })();
+    write_result.map_err(|error| {
+        FractalError::new(
+            FractalErrorCode::Io,
+            format!("write {}: {error}", path.display()),
+        )
+    })?;
+    Ok(bytes)
+}
+
 /// One cell-local triangle. Each vertex word stores three 10-bit UNORM
 /// coordinates in X/Y/Z order; the two high bits are reserved and zero.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -722,6 +784,8 @@ pub struct FptvoxIndexedTriangleSurface {
     pub triangle_vertex_colors: Vec<[u32; 3]>,
     /// Authored Mandelbulber material IDs parallel to `triangles`.
     pub triangle_material_ids: Vec<u32>,
+    /// Zero selects geometric normal; nonzero stores a packed override.
+    pub triangle_shading_normals: Vec<u32>,
     pub references: Vec<u32>,
 }
 
@@ -776,6 +840,7 @@ pub struct FptvoxIndexedTriangleBvhSurface {
     pub triangle_colors: Vec<u32>,
     pub triangle_vertex_colors: Vec<[u32; 3]>,
     pub triangle_material_ids: Vec<u32>,
+    pub triangle_shading_normals: Vec<u32>,
     pub references: Vec<u32>,
     pub nodes: Vec<FptvoxBvhNode>,
 }

@@ -10,9 +10,10 @@ use fpt_metal::{
     FptvoxTriangleCell, FptvoxTriangleSurface, FractalScene, SparseVoxel, SurfaceMaterial,
     VoxelCell, VoxelGrid, VoxelizationParameters, VoxelizationRequest, append_fptvox_appearance,
     append_fptvox_camera, append_fptvox_environment, append_fptvox_materials,
-    append_fptvox_triangle_material_ids, append_fptvox_triangle_vertex_colors, export_fptvox,
-    export_fptvox_indexed_triangle_surface, export_fptvox_with_bounded_patches,
-    export_fptvox_with_normals, export_fptvox_with_planes, export_glb, voxelize,
+    append_fptvox_triangle_material_ids, append_fptvox_triangle_normals,
+    append_fptvox_triangle_vertex_colors, export_fptvox, export_fptvox_indexed_triangle_surface,
+    export_fptvox_with_bounded_patches, export_fptvox_with_normals, export_fptvox_with_planes,
+    export_glb, voxelize,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -1301,6 +1302,7 @@ fn structural_surface_triangles_rect(
     capture_size: [u32; 2],
     locality_resolution: u32,
     camera_fov_degrees: f32,
+    splat_camera_position: [f32; 3],
     export_bounds: Aabb,
     world_scale: f32,
     discontinuity_scale: f32,
@@ -1416,6 +1418,7 @@ fn structural_surface_triangles_rect(
                                     .map(|value| value.clamp(0.0, 1.0)),
                                 color: sample.color,
                                 material_id: sample.material_id,
+                                shading_normal: None,
                             }
                         }));
                         emitted_low_normal_triangles += 1;
@@ -1434,6 +1437,7 @@ fn structural_surface_triangles_rect(
                             .map(|value| value.clamp(0.0, 1.0)),
                         color: sample.color,
                         material_id: sample.material_id,
+                        shading_normal: None,
                     }
                 }));
                 connected_triangle_indices
@@ -1473,23 +1477,33 @@ fn structural_surface_triangles_rect(
     let mut emitted_splat_triangles = 0usize;
     let mut expanded_low_normal_splats = 0usize;
     let mut expanded_dense_view_splats = 0usize;
+    let disconnected_view = connected_hit_pixels == 0;
+    let connected_dominant_view = connected_hit_pixels.saturating_mul(2) >= in_bounds_hits;
     if emit_isolated_splats {
         for (index, sample) in vertices.iter().enumerate() {
-            if !sample.hit || connected_vertices[index] {
+            if !sample.hit || (connected_vertices[index] && !rejected_vertices[index]) {
                 continue;
             }
             let Some(normal) = normalize3(sample.normal) else {
                 continue;
             };
-            let helper = if normal[1].abs() > 0.9 {
+            let facing = normalize3(std::array::from_fn(|axis| {
+                sample.world_position[axis] - splat_camera_position[axis]
+            }))
+            .unwrap_or(normal);
+            let expanded_camera_facing = disconnected_view
+                || connected_dominant_view
+                || (connected_vertices[index] && rejected_vertices[index])
+                || dot3(normal, facing).abs() < 0.25;
+            let helper = if facing[1].abs() > 0.9 {
                 [1.0, 0.0, 0.0]
             } else {
                 [0.0, 1.0, 0.0]
             };
-            let Some(tangent_axis) = normalize3(cross3(helper, normal)) else {
+            let Some(tangent_axis) = normalize3(cross3(helper, facing)) else {
                 continue;
             };
-            let Some(bitangent_axis) = normalize3(cross3(normal, tangent_axis)) else {
+            let Some(bitangent_axis) = normalize3(cross3(facing, tangent_axis)) else {
                 continue;
             };
             let pixel_footprint = sample.depth * 2.0 * tangent / capture_size[1] as f32;
@@ -1501,7 +1515,9 @@ fn structural_surface_triangles_rect(
             } else {
                 splat_pixel_scale
             };
-            let effective_cell_cap = if dense_view || low_normal {
+            let effective_cell_cap = if expanded_camera_facing {
+                splat_cell_cap.max(0.75)
+            } else if dense_view || low_normal {
                 splat_cell_cap.max(0.49)
             } else {
                 splat_cell_cap
@@ -1532,6 +1548,7 @@ fn structural_surface_triangles_rect(
                     }),
                     color: sample.color,
                     material_id: sample.material_id,
+                    shading_normal: Some(normal),
                 }
             });
             triangles.push([corners[0], corners[1], corners[2]]);
@@ -1588,6 +1605,7 @@ fn structural_surface_triangles(
         [sampling_resolution; 2],
         locality_resolution,
         camera_fov_degrees,
+        [0.0; 3],
         export_bounds,
         world_scale,
         discontinuity_scale,
@@ -1698,8 +1716,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
     let mut surface_view_auto_fit_bounds = false;
     let mut surface_view_auxiliary_views = 0u32;
     let mut surface_view_capture_cache = None::<PathBuf>;
-    let mut surface_view_splat_scale = 1.5_f32;
-    let mut surface_view_splat_cell_cap = 2.0_f32;
+    let mut surface_view_splat_scale = 0.85_f32;
+    let mut surface_view_splat_cell_cap = 0.45_f32;
     let mut surface_view_triangle_dilation = 0.0_f32;
     let mut surface_view_splat_scale_set = false;
     let mut surface_view_splat_cell_cap_set = false;
@@ -2639,6 +2657,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                 primary_gpu_ms,
                 primary_capture_resolution,
                 primary_bounds_fallback,
+                capture_config.camera_position,
             )];
             if surface_view_auxiliary_views > 0 {
                 let rings = if surface_view_auxiliary_views == 12 {
@@ -2668,12 +2687,18 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                         structural_capture_size,
                         false,
                     )?;
-                    captures.push((bytes, gpu_ms, structural_capture_size, false));
+                    captures.push((
+                        bytes,
+                        gpu_ms,
+                        structural_capture_size,
+                        false,
+                        view_config.camera_position,
+                    ));
                 }
             }
             let visible_bounds = captures
                 .iter()
-                .map(|(bytes, _, _, _)| structural_visible_bounds(bytes, world_scale))
+                .map(|(bytes, _, _, _, _)| structural_visible_bounds(bytes, world_scale))
                 .collect::<Result<Vec<_>>>()?
                 .into_iter()
                 .reduce(union_bounds)
@@ -2719,7 +2744,9 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
             let discontinuity_scale = surface_triangle_threshold_scale * 2.0;
             let mut view_triangle_streams = Vec::with_capacity(captures.len());
             let mut view_summary = ViewTriangleSurfaceSummary::default();
-            for (bytes, diagnostic_gpu_ms, capture_size, bounds_fallback) in &captures {
+            for (bytes, diagnostic_gpu_ms, capture_size, bounds_fallback, camera_position) in
+                &captures
+            {
                 let (view_triangles, summary) = structural_surface_triangles_rect(
                     bytes,
                     *capture_size,
@@ -2728,6 +2755,7 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                         .max()
                         .expect("nonempty output grid"),
                     capture_config.camera_fov,
+                    *camera_position,
                     effective_bounds,
                     world_scale,
                     discontinuity_scale,
@@ -2824,6 +2852,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                     append_fptvox_triangle_vertex_colors(&output, &bvh.triangle_vertex_colors)?;
                 let triangle_material_bytes =
                     append_fptvox_triangle_material_ids(&output, &bvh.triangle_material_ids)?;
+                let triangle_normal_bytes =
+                    append_fptvox_triangle_normals(&output, &bvh.triangle_shading_normals)?;
                 println!(
                     "{}",
                     serde_json::to_string_pretty(&json!({
@@ -2842,6 +2872,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                         "triangle_color_bytes":triangle_color_bytes,
                         "triangle_material_contract":"FPTMID1",
                         "triangle_material_bytes":triangle_material_bytes,
+                        "triangle_normal_contract":"FPTNRM1",
+                        "triangle_normal_bytes":triangle_normal_bytes,
                         "view_dependent":true,
                         "source_triangles":source_triangle_count,
                         "indexed_triangles":bvh.triangles.len(),
@@ -3000,6 +3032,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                         &output,
                         &indexed.triangle_material_ids,
                     )?;
+                    let triangle_normal_bytes =
+                        append_fptvox_triangle_normals(&output, &indexed.triangle_shading_normals)?;
                     println!(
                         "{}",
                         serde_json::to_string_pretty(&json!({
@@ -3018,6 +3052,8 @@ fn voxel_export_command(args: &[String]) -> Result<()> {
                             "triangle_color_bytes":triangle_color_bytes,
                             "triangle_material_contract":"FPTMID1",
                             "triangle_material_bytes":triangle_material_bytes,
+                            "triangle_normal_contract":"FPTNRM1",
+                            "triangle_normal_bytes":triangle_normal_bytes,
                             "view_dependent":true,
                             "source_triangles":source_triangle_count,
                             "cell_triangle_references":reference_count,
@@ -7573,8 +7609,8 @@ mod tests {
         assert_eq!(summary.expanded_dense_view_splats, 1);
         assert_eq!(summary.emitted_splat_triangles, 2);
         assert_eq!(triangles.len(), 2);
-        assert!((triangles[0][0].position[0] - 0.43875).abs() < 1.0e-5);
-        assert!((triangles[0][0].position[1] - 0.43875).abs() < 1.0e-5);
+        assert_eq!(triangles[0][0].shading_normal, Some([0.0, 0.0, 1.0]));
+        assert_ne!(triangles[0][0].position, triangles[0][1].position);
     }
 
     #[test]
@@ -7625,8 +7661,8 @@ mod tests {
         assert_eq!(summary.expanded_low_normal_splats, 4);
         assert_eq!(summary.emitted_splat_triangles, 8);
         assert_eq!(triangles.len(), 8);
-        assert!((triangles[0][0].position[0] - 0.13).abs() < 1.0e-5);
-        assert!((triangles[0][0].position[1] - 0.13).abs() < 1.0e-5);
+        assert_eq!(triangles[0][0].shading_normal, Some([0.0, 0.0, 1.0]));
+        assert_ne!(triangles[0][0].position, triangles[0][1].position);
 
         let (additive_triangles, additive_summary) = structural_surface_triangles(
             &bytes,

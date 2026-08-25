@@ -54,6 +54,27 @@ pub struct MeshSurfaceVertex {
     pub position: [f32; 3],
     pub color: [f32; 3],
     pub material_id: u32,
+    pub shading_normal: Option<[f32; 3]>,
+}
+
+fn pack_shading_normal(normal: Option<[f32; 3]>) -> u32 {
+    let Some(normal) = normal else {
+        return 0u32;
+    };
+    let length = normal
+        .into_iter()
+        .map(|value| value * value)
+        .sum::<f32>()
+        .sqrt();
+    if !length.is_finite() || length <= 1.0e-8 {
+        return 0u32;
+    }
+    let normalized = normal.map(|value| value / length);
+    let quantize = |value: f32| (((value.clamp(-1.0, 1.0) * 0.5 + 0.5) * 1023.0).round()) as u32;
+    (1u32 << 30)
+        | quantize(normalized[0])
+        | (quantize(normalized[1]) << 10)
+        | (quantize(normalized[2]) << 20)
 }
 
 #[derive(Clone, Copy)]
@@ -687,6 +708,7 @@ where
     let mut triangle_colors = Vec::new();
     let mut triangle_vertex_colors = Vec::new();
     let mut triangle_material_ids = Vec::new();
+    let mut triangle_shading_normals = Vec::new();
     for triangle in triangles {
         let surface_triangle = triangle.map(|vertex| SurfaceVertex {
             position: vertex.position,
@@ -713,6 +735,7 @@ where
             triangle_colors.push(pack_triangle_color(triangle));
             triangle_vertex_colors.push(triangle.map(|vertex| pack_vertex_color(vertex.color)));
             triangle_material_ids.push(triangle[0].material_id.max(1u32));
+            triangle_shading_normals.push(pack_shading_normal(triangle[0].shading_normal));
         }
     }
     ensure!(
@@ -748,6 +771,7 @@ where
         triangle_colors,
         triangle_vertex_colors,
         triangle_material_ids,
+        triangle_shading_normals,
         references,
     })
 }
@@ -1042,6 +1066,7 @@ pub fn build_indexed_triangle_bvh_surface(
         triangle_colors: surface.triangle_colors.clone(),
         triangle_vertex_colors: surface.triangle_vertex_colors.clone(),
         triangle_material_ids: surface.triangle_material_ids.clone(),
+        triangle_shading_normals: surface.triangle_shading_normals.clone(),
         references,
         nodes,
     })
@@ -1592,16 +1617,19 @@ mod tests {
                 position: [0.2, 0.2, 0.5],
                 color: red,
                 material_id: 1,
+                shading_normal: None,
             },
             MeshSurfaceVertex {
                 position: [0.8, 0.2, 0.5],
                 color: red,
                 material_id: 1,
+                shading_normal: None,
             },
             MeshSurfaceVertex {
                 position: [0.2, 0.8, 0.5],
                 color: red,
                 material_id: 1,
+                shading_normal: None,
             },
         ];
         let surface = build_triangle_surface_from_normalized_mesh(
@@ -1635,16 +1663,19 @@ mod tests {
                 position: [0.05, 0.05, 0.5],
                 color: [0.5; 3],
                 material_id: 1,
+                shading_normal: None,
             },
             MeshSurfaceVertex {
                 position: [0.95, 0.05, 0.5],
                 color: [0.5; 3],
                 material_id: 1,
+                shading_normal: None,
             },
             MeshSurfaceVertex {
                 position: [0.05, 0.95, 0.5],
                 color: [0.5; 3],
                 material_id: 1,
+                shading_normal: None,
             },
         ];
         let clipped = build_triangle_surface_from_normalized_mesh(

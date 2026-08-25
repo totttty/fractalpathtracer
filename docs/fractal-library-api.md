@@ -141,6 +141,10 @@ consumer may stop after geometry or validate the following sequence:
 6. `FPTMID1\0`: one authored, nonzero `matN` identifier per indexed source
    triangle. The 32-byte header declares version `1`, a 4-byte record, and an
    exact triangle count.
+7. `FPTNRM1\0`: one optional packed shading normal per indexed source
+   triangle. The 32-byte header declares version `1`, a 4-byte record, and an
+   exact triangle count. Bit 30 marks a present record, bits 0-29 store three
+   unsigned-normalized 10-bit XYZ components, and bit 31 is reserved.
 
 Every numeric field is little-endian and finite. Each extension has its own
 magic, version, record sizes, and strict count validation. Old geometry-only
@@ -188,6 +192,22 @@ avoids assuming that `mat1` is the formula material when the source scene uses
 texture evaluation: authored scalar properties and generated palette colors
 are preserved, but Mandelbulber color, normal, and displacement texture graphs
 are not embedded in the current portable trailer.
+
+### Indexed triangle-normal extension
+
+FPTVOX8 and FPTVOX11 exports append `FPTNRM1\0` after `FPTMID1\0`. A zero
+record requests the triangle's geometric normal. A present record restores the
+continuous source normal for camera-facing fallback splats, so surface coverage
+geometry does not incorrectly control diffuse or specular shading.
+
+The native NAADF consumer validates the lossless 10-bit-per-axis stream, then
+repacks it into the unused upper 16 bits of its hot triangle word as a 5/5/5
+normal plus a presence bit. This replaces a side-buffer lookup with data from
+an already-required triangle load. The current runtime quantization measured
+`2.61` degrees p95 on the splat-dominated scene-3 gate and `2.71` degrees p95
+on the fully disconnected scene-4 gate. Connected reconstructed triangles do
+not currently carry interpolated source normals; they continue to use their
+geometric normal.
 
 `.fptvox` is the preferred direct volume seam. It preserves every occupied
 cell's exact packed colour/occupancy, PBR properties, and emission without
@@ -601,16 +621,24 @@ to preserve isotropic voxel size. Without the flag, out-of-bounds hits are
 discarded and the report still exposes visible versus requested bounds so a
 clipped camera-matched export is diagnosable.
 
-`--surface-view-splats` emits two tangent triangles for a valid hit sample that
-does not belong to any accepted connected triangle. The tangent half-width is
-derived from sample depth and authored camera FOV. It defaults to `1.5x` one
-capture pixel's world footprint and is capped at `2.0x` the output-cell step;
-callers may tune the cap from `0.1` to `4.0`. The conservative default keeps
-the camera-matched surface covered when output and capture pixel grids differ.
-Export reports connected hit pixels, splatted hit pixels, and splat triangle
-count separately. On the corrected authored-camera first-five gate, continuous
-mask IoU improved from `0.863/0.893/0.239/0.194/0.950` to
-`0.984/0.968/0.982/0.968/0.974`.
+`--surface-view-splats` emits two camera-facing triangles for an isolated valid
+hit sample or a sample adjoining a rejected connected edge. `FPTNRM1` retains
+the sampled source normal for shading. The half-width is derived from sample
+depth and authored camera FOV. It defaults to `0.85x` one capture pixel's world
+footprint and a `0.45x` output-cell cap. Disconnected, connected-dominant,
+rejected-boundary, and grazing captures use at least a `0.75x` cap; splat-
+dominant views retain the compact cap. Callers may tune the explicit cap from
+`0.1` to `4.0`. Export reports connected hit pixels, splatted hit pixels, and
+splat triangle count separately.
+
+Camera-matched artifacts should use `--surface-triangle-resolution` equal to
+the intended render's maximum axis. The authored aspect derives the second
+axis. The final first-five gate reaches mask IoU
+`0.99027 / 0.99394 / 0.99998 / 1.00000 / 0.99346`. The splat-dominated scene
+3 uses a `12.54 MiB` artifact and measured about `0.83 ms` for one-bounce
+NAADF. Expanding a mismatched grid with an explicit `2.0` cell cap previously
+used `29.25 MB` and `1.217 ms`, so broad splats remain an explicit diagnostic
+fallback rather than the production default.
 
 `--surface-view-triangle-dilation 0..1` conservatively expands only connected
 triangles touching a rejected depth/normal discontinuity. Expansion stays in

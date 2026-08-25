@@ -182,8 +182,9 @@ ignore them; the native NAADF viewer consumes them only with
 `--gpu-naadf-appearance mandel-compat`. Indexed FPTVOX8/FPTVOX11 exact-surface
 exports append `FPTCOL2`, with three packed RGB8 values per triangle for
 barycentric first-hit color, followed by `FPTMID1`, with the authoritative
-nonzero `matN` identifier for each triangle. Readers remain compatible with
-flat `FPTCOL1` and geometry-only artifacts.
+nonzero `matN` identifier for each triangle, and `FPTNRM1`, with an optional
+10-bit-per-axis shading normal for each triangle. Readers remain compatible
+with flat `FPTCOL1` and geometry-only artifacts.
 Experimental `--surface-normals` (`FPTVOX2`) and `--surface-planes`
 (`FPTVOX3`) exports add structural surface data for continuous-FPT parity
 work while leaving the version-1 default unchanged. The library also exposes
@@ -327,22 +328,30 @@ reproduced the temporary PLY prototype on ranks 26 and 34, while avoiding the
 large false planes produced by dense V6 patches on rank 34.
 
 `--surface-view-splats` fills continuous hit samples that cannot participate
-in a connected depth-grid triangle with a tangent micro-quad. Each half-width
-defaults to `1.5x` the projected capture-pixel footprint with a `2.0x`
-output-cell safety cap. The wider cell cap is important when a fitted output
-grid makes one capture pixel span more than half a cell, or when the NAADF
-output resolution differs from the capture resolution. It remains bounded so
-the mode cannot create the large foreground facets produced by the rejected
-ray-hit-plane hybrid. The option remains explicit because the result is a
-camera-matched surface rather than a closed asset.
+in a connected depth-grid triangle, plus accepted samples adjoining a rejected
+depth/normal edge, with a camera-facing micro-quad. `FPTNRM1` preserves the
+sampled source normal so the billboard geometry does not become the shading
+normal. Each half-width defaults to `0.85x` the projected capture-pixel
+footprint with a `0.45x` output-cell safety cap. Disconnected, connected-
+dominant, rejected-boundary, and grazing captures raise the cap to `0.75x`;
+splat-dominant views keep the compact cap to control cell references. The
+option remains explicit because the result is a camera-matched surface rather
+than a closed asset.
 
-On the corrected authored-camera first-five gate, the conservative defaults
-raised continuous-mask IoU from `0.863/0.893/0.239/0.194/0.950` to
-`0.984/0.968/0.982/0.968/0.974`. The two splat-dominated scenes fell from
-`35,219/13,165` missing pixels to `474/341`; false coverage remained bounded
-to `359/195` pixels. A same-grid `384x384` control reached `0.989` IoU, which
-confirms that the indexed NAADF triangle path is sound and that the repaired
-loss was resolution-dependent splat coverage.
+For a production capture, set `--surface-triangle-resolution` to the maximum
+axis of the intended NAADF render. The exporter now preserves the authored
+aspect, so `320` produces `320x240`, `320x180`, or `320x320` as appropriate.
+This matters for discontinuous fractals: view splats reconstruct the sampled
+pixel grid, but no finite point sample can exactly answer a different set of
+subpixel rays. The final first-five authored-camera gate at a `320` maximum
+axis reaches mask IoU `0.99027 / 0.99394 / 0.99998 / 1.00000 / 0.99346`.
+The splat-dominated scene 3 uses a `12.54 MiB` artifact and measured about
+`0.83 ms` for the one-bounce NAADF path in the long alternating timing gate.
+
+`--surface-view-splat-cell-cap` accepts explicit values through `4.0` for
+diagnosis or output grids that cannot be matched. A `2.0` cap recovered
+`0.982` IoU for the mismatched scene-3 grid, but grew the artifact to
+`29.25 MB` and GPU time to `1.217 ms`; it is therefore not the default.
 
 `--surface-view-triangle-dilation 0..1` is an additional conservative
 authored-view repair. It expands only accepted triangles that share a sampled

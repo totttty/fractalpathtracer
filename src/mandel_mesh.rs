@@ -755,6 +755,7 @@ fn voxelize_mandelbulber_mesh_once(
                     }),
                     color: vertex.color,
                     material_id: 1,
+                    shading_normal: None,
                 }
             })
         });
