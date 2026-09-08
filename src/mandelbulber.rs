@@ -1105,8 +1105,9 @@ impl MandelbulberScene {
 
         let max_iterations = document.integer("main_parameters", "N", DEFAULT_MAX_ITERATIONS)?;
         ensure!((1..=4096).contains(&max_iterations), "N must be 1..4096");
-        let width = document.integer("main_parameters", "image_width", 1920)?;
-        let height = document.integer("main_parameters", "image_height", 1080)?;
+        // Settings files omit values equal to upstream initparameters defaults.
+        let width = document.integer("main_parameters", "image_width", 800)?;
+        let height = document.integer("main_parameters", "image_height", 600)?;
         ensure!(
             (1..=16384).contains(&width) && (1..=16384).contains(&height),
             "image dimensions must be 1..16384"
@@ -3691,6 +3692,15 @@ IFS_rotation -2 8 6;
 IFS_rotation_enabled true;
 IFS_scale 1,4;
 "#;
+
+    #[test]
+    fn omitted_image_dimensions_use_mandelbulber_defaults() {
+        let source = IFS_SCENE
+            .replace("image_height 1080;", "")
+            .replace("image_width 1920;", "");
+        let scene = MandelbulberScene::parse(&source).unwrap();
+        assert_eq!((scene.width, scene.height), (800, 600));
+    }
 
     #[test]
     fn parses_decimal_commas_and_ifs_parameters() {
