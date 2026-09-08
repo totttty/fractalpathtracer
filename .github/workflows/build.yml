@@ -1,0 +1,35 @@
+name: Build and contracts
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.1 --profile minimal --component rustfmt
+      - name: Check formatting
+        run: cargo +1.97.1 fmt --all -- --check
+      - name: Compile application and tests
+        run: cargo +1.97.1 test --release --locked --no-run
+      - name: Check API documentation
+        run: cargo +1.97.1 doc --no-deps --locked
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install release test dependencies
+        run: python -m pip install -r scripts/requirements-release.txt
+      - name: Test release manifest and image gates
+        run: python -m unittest discover -s scripts -p test_release_canaries.py
+      - name: Inspect source package
+        run: cargo +1.97.1 package --locked --list
+
+  # Hosted macOS runners do not establish Metal device/render correctness.
+  # Run the documented rendering gates on a physical Mac before release.

@@ -4,3 +4,6 @@ renders/
 .DS_Store
 __pycache__/
 *.py[cod]
+tmp/
+experiments/
+graphify-out/

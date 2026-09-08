@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "root": "Mandelbulber deploy/share/mandelbulber2/examples (supplied explicitly)",
+  "scenes": [
+    {"id": "01", "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddConditional4D.fract", "sha256": "fde8d0d0b9c328abcfcbb328a029420f769d764d9a00618712864cae205cb92e"},
+    {"id": "02", "path": "Sebastian Jennen collection - license Creative Commons  (CC-BY 4.0)/hybrid 03 - christmas ornaments.fract", "sha256": "27d4cf989838051969d0d0df8ce84664ebecc8ec165f645c78efac8febc71888"},
+    {"id": "03", "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Mix Pinski 4D - DE linear cube.fract", "sha256": "66e4f4628004100f0a89316b367a988293cd4f8b36d8488bcb4e88cb8782eb8f"},
+    {"id": "04", "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/DIFS Cylinder complex primitive.fract", "sha256": "8e60def0f10c74a0e863033fd38925771f98794af6bdb02c7ed696f04486e21c"},
+    {"id": "05", "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-IterationWeight4D.fract", "sha256": "eb77680b3a7eea4c9548d0cb36e5a5fa0733f1dbaf6660e8b76889e1867cdc93"},
+    {"id": "13", "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_difs_piriform.fract", "sha256": "307aa167218bb7c63fce7ee98fbb6839247fd5cebfc1634a079c0d52f10da1ff"},
+    {"id": "17", "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/xenodreambuieV2  pow -7 julia.fract", "sha256": "82d6eb83b73ef38aa8f25e59da066b3c67632464a87fe7781348864fccd115e8"}
+  ]
+}
