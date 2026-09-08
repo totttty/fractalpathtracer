@@ -2124,6 +2124,32 @@ impl MandelbulberScene {
         normalize(direction).expect("rotated light direction is non-zero")
     }
 
+    pub fn apply_authored_path_appearance(&self, config: &mut FptRenderConfig) {
+        config.mandel_appearance_mode = 2;
+        config.world[1] = self.background_brightness as f32;
+        config.world[5] = self.background_gamma as f32;
+        config.world[6] = if self.background_three_colors {
+            2.0
+        } else {
+            3.0
+        };
+        config.background_gradient[..3].copy_from_slice(&self.background_colors[0]);
+        config.post = [
+            -(self.image_gamma.max(1.0e-6) as f32),
+            self.image_brightness as f32,
+            0.0,
+            self.image_saturation as f32,
+            self.image_contrast as f32,
+            0.0,
+            0.0,
+        ];
+        config.mandel_appearance[0] = u32::from(self.ambient_occlusion_enabled) as f32;
+        config.mandel_appearance[1] = self.ambient_occlusion.max(0.0) as f32;
+        config.mandel_appearance[2] = self.ambient_occlusion_mode as f32;
+        config.mandel_appearance[3] = self.ambient_occlusion_quality as f32;
+        config.mandel_appearance[4] = self.ambient_occlusion_fast_tune.max(0.0) as f32;
+    }
+
     /// Appearance data that accompanies exported FPTVOX geometry. Positions
     /// use the same normalized Y-up coordinates as the direct volume export.
     pub fn fptvox_appearance(&self) -> crate::fptvox::FptvoxAppearance {
@@ -2179,6 +2205,11 @@ impl MandelbulberScene {
             material_specular_width: self.material.specular_width as f32,
             material_roughness: self.material.surface_roughness as f32,
             material_reflectance: self.material.reflectance as f32,
+            // The accepted authored-path integrator uses this fixed world
+            // strength for secondary misses while retaining the authored
+            // gradient for primary camera misses.
+            secondary_environment_strength: 0.45,
+            primary_surface_triangle_count: 0,
         }
     }
 
@@ -2268,6 +2299,13 @@ impl MandelbulberScene {
         };
 
         let mut environment = FptvoxEnvironment::default();
+        if self.ambient_occlusion_enabled {
+            environment.flags |= FPTVOX_ENVIRONMENT_AMBIENT_OCCLUSION;
+            environment.values[90] = self.ambient_occlusion.max(0.0) as f32;
+            environment.values[91] = self.ambient_occlusion_mode as f32;
+            environment.values[92] = self.ambient_occlusion_quality as f32;
+            environment.values[93] = self.ambient_occlusion_fast_tune.max(0.0) as f32;
+        }
         if boolean("basic_fog_enabled", false)? {
             environment.flags |= FPTVOX_ENVIRONMENT_BASIC_FOG;
         }
@@ -3753,6 +3791,25 @@ IFS_scale 1,4;
     }
 
     #[test]
+    fn config_can_restore_authored_path_appearance() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nbackground_3_colors_enable false;\nbackground_color_1 2800 6200 aa00;\nbackground_brightness 0,8;\nbackground_gamma 1,25;\nbrightness 0,9;\ncontrast 1,1;\ngamma 0,7;\nsaturation 0,75;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("appearance scene");
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+        scene.apply_authored_path_appearance(&mut config);
+
+        assert_eq!(config.mandel_appearance_mode, 2);
+        assert_eq!(config.world[6], 3.0);
+        assert!((config.world[1] - 0.8).abs() < 1.0e-6);
+        assert!((config.world[5] - 1.25).abs() < 1.0e-6);
+        assert_eq!(config.background_gradient[..3], scene.background_colors[0]);
+        assert_eq!(config.post, [-0.7, 0.9, 0.0, 0.75, 1.1, 0.0, 0.0]);
+    }
+
+    #[test]
     fn config_maps_legacy_mandelbulber_directional_light() {
         let source = IFS_SCENE
             .replace("# version 2.33", "# version 2.13")
@@ -4193,7 +4250,7 @@ target 0 0 0;
     fn authored_contract_preserves_material_camera_and_volume_controls() {
         let source = IFS_SCENE.replace(
             "detail_level 2;",
-            "detail_level 2;\nperspective_type equirectangular;\nformula_material_id 2;\nmat1_transparency_of_surface 0,75;\nmat1_transparency_index_of_refraction 1,45;\nmat2_is_defined true;\nmat2_metallic true;\nmat2_luminosity 3;\nbasic_fog_enabled true;\nbasic_fog_visibility 12;\nvolumetric_fog_enabled true;\nvolumetric_fog_density 0,02;\nclouds_enable true;\nclouds_color 1000 2000 3000;",
+            "detail_level 2;\nperspective_type equirectangular;\nformula_material_id 2;\nmat1_transparency_of_surface 0,75;\nmat1_transparency_index_of_refraction 1,45;\nmat2_is_defined true;\nmat2_metallic true;\nmat2_luminosity 3;\nambient_occlusion_enabled true;\nambient_occlusion 2,5;\nambient_occlusion_mode 1;\nambient_occlusion_quality 6;\nambient_occlusion_fast_tune 0,75;\nbasic_fog_enabled true;\nbasic_fog_visibility 12;\nvolumetric_fog_enabled true;\nvolumetric_fog_density 0,02;\nclouds_enable true;\nclouds_color 1000 2000 3000;",
         );
         let scene = MandelbulberScene::parse(&source).expect("authored contract scene");
         assert_eq!(scene.materials.len(), 2);
@@ -4202,10 +4259,18 @@ target 0 0 0;
         assert_eq!(scene.materials[&2].luminosity, 3.0);
         assert_eq!(scene.formula_material_id, 2);
         assert_eq!(scene.material, scene.materials[&2]);
+        let mut config = FptRenderConfig::default();
+        scene.apply_authored_path_appearance(&mut config);
+        assert_eq!(&config.mandel_appearance[..5], &[1.0, 2.5, 1.0, 6.0, 0.75]);
         assert_eq!(scene.fptvox_camera().projection, 2);
         let environment = scene.fptvox_environment().expect("environment contract");
         assert_eq!(environment.flags & 0x1e, 0x16);
+        assert_ne!(
+            environment.flags & crate::fptvox::FPTVOX_ENVIRONMENT_AMBIENT_OCCLUSION,
+            0
+        );
         assert_eq!(environment.values[9], 12.0);
+        assert_eq!(&environment.values[90..94], &[2.5, 1.0, 6.0, 0.75]);
         assert!((environment.values[64] - 4096.0 / 65535.0).abs() < 1.0e-6);
         let materials = scene.fptvox_materials();
         assert_eq!(materials[0].transmission, 0.75);

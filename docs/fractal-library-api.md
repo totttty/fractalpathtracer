@@ -156,6 +156,12 @@ controls, but a consumer may implement iteration fog or procedural clouds with
 an explicitly documented approximation when the voxel payload lacks the
 original distance-estimator orbit state.
 
+Bit 13 of `FPTENV2.flags` records that authored ambient occlusion is enabled.
+Values 90 through 93 carry its non-negative strength, mode, quality, and fast
+tune setting. The FPT and NAADF authored path modes currently use the strength
+as a scene-controlled ambient-fill approximation; geometry-only consumers may
+ignore it.
+
 `FPTENV2` replaces the original 32x16 `FPTENV1` lookup because the smaller
 payload visibly erased authored sky detail. Geometry and all other trailer
 contracts are unchanged; native readers retain support for both versions.
@@ -658,6 +664,24 @@ it as a closed or globally complete fractal surface. It is retained as an
 explicit structural diagnostic and camera-matched asset path while multi-view
 surface fusion remains experimental.
 
+`--surface-view-path-bounces 1..3` is an additional FPTVOX11 experiment for
+secondary-ray retention. It requires
+`--surface-view-indexed-triangle-bvh`, follows the deterministic sample-zero
+path from the authored camera, and appends the surfaces reached at the
+requested bounce depths. The FPTVOX11 primary-triangle prefix remains limited
+to the authored-camera capture, so primary visibility cannot select the added
+surfaces; shadow and secondary rays can use the complete BVH. The export report
+records the requested count as `path_bounce_captures`.
+
+The option defaults to zero. In the supported ranked-scene gate, two captured
+bounces improved NAADF's MAE against the accepted continuous FPT reference in
+45 of 48 scenes and reduced the median from `0.08854` to `0.06515`. It also
+increased triangle count and export time, and 40 scenes moved farther from the
+Mandelbulber-authored image because the continuous FPT renderer itself still
+differs from Mandelbulber's lighting and material interpretation. Use this mode
+to diagnose or preserve FPT secondary structure, not as a Mandelbulber parity
+switch.
+
 With `--surface-triangle-auto-bounds`, the exporter unions the requested bounds
 with the finite visible-hit bounds plus the configured margin. It does not
 shrink a caller-supplied volume, and it derives an aspect-matched output grid
@@ -676,6 +700,43 @@ rejected-boundary, and grazing captures use at least a `0.75x` cap; splat-
 dominant views retain the compact cap. Callers may tune the explicit cap from
 `0.1` to `4.0`. Export reports connected hit pixels, splatted hit pixels, and
 splat triangle count separately.
+
+`--surface-view-ray-consistent-splats` is an opt-in replacement for primary
+and auxiliary camera splats. It reconstructs the exact authored projection at
+the four half-pixel boundaries and intersects those rays with the sampled
+camera-facing depth plane. The resulting quad is bounded by the source pixel
+frustum rather than by a world-space square and therefore cannot overwrite a
+connected surface at an adjacent pixel center. It requires
+`--surface-view-splats`. Path-bounce captures continue to use the existing
+bounded splats unless `--surface-view-path-ray-consistent-splats` is also
+enabled. The latter extends the internal structural diagnostic record with the
+actual incoming path direction and aligns each fallback patch to that ray. It
+does not change the public FPTVOX record layout. Export JSON reports
+`path_ray_consistent_splats` and
+`surface.incoming_ray_splat_triangles` separately.
+
+The full ranked gate improved 46 of 49 renderable scenes against continuous
+FPT, moving median `300x300`, 32-SPP, four-bounce MAE from `0.33881` to
+`0.10771`. Primary normal error on structural ranks 09/21/39/49 fell to
+`3.24/16.64/7.07/11.95` degrees while bounce-one hit IoU rose to
+`0.891/0.706/0.832/0.716`. Export JSON reports
+`ray_consistent_splats` and `surface.ray_consistent_splat_triangles`.
+
+The matching native performance gate reports `9.6-16.3%` fewer cell-triangle
+references, `2.9-5.5%` smaller artifacts, and monolithic NAADF path changes of
+`-3.4/-9.2/-0.2/-9.7%` on ranks 09/21/39/49. Presentation is unchanged at
+roughly `0.02-0.03 ms`; the longer rank-39 timing canary is neutral at
+`-0.37%`. The optimization therefore reduces represented overlap without
+trading the structural correction for traversal cost.
+
+The incoming-ray secondary option raises bounce-one hit IoU on structural
+ranks 09/21/39/49 to `0.925/0.789/0.936/0.751`. The full 49-scene gate improves
+45 continuous-FPT comparisons, regresses three slightly, and lowers median
+beauty MAE from `0.10771` to `0.09272`. It remains separately selectable
+because the authored Mandelbulber median is neutral once lighting and material
+differences are included. Alternating native timing is mixed (`+5.84%` on rank
+09, about `-4.5%` on ranks 21/49, noisy on rank 39), so this is an explicit
+quality experiment rather than the default export path.
 
 Camera-matched artifacts should use `--surface-triangle-resolution` equal to
 the intended render's maximum axis. The authored aspect derives the second

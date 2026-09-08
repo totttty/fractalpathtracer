@@ -119,6 +119,10 @@ pub const FPTVOX_ENVIRONMENT_BASIC_FOG: u32 = 1 << 1;
 pub const FPTVOX_ENVIRONMENT_VOLUMETRIC_FOG: u32 = 1 << 2;
 pub const FPTVOX_ENVIRONMENT_ITERATION_FOG: u32 = 1 << 3;
 pub const FPTVOX_ENVIRONMENT_CLOUDS: u32 = 1 << 4;
+/// The source scene enables Mandelbulber ambient occlusion. Consumers without
+/// distance-estimator orbit state may use `values[90]` as an ambient-fill
+/// strength for an explicitly documented approximation.
+pub const FPTVOX_ENVIRONMENT_AMBIENT_OCCLUSION: u32 = 1 << 13;
 pub const FPTVOX_MATERIAL_MAGIC: [u8; 8] = *b"FPTMAT1\0";
 pub const FPTVOX_MATERIAL_VERSION: u32 = 1;
 pub const FPTVOX_MATERIAL_HEADER_SIZE: u32 = 32;
@@ -177,6 +181,11 @@ pub struct FptvoxAppearance {
     pub material_specular_width: f32,
     pub material_roughness: f32,
     pub material_reflectance: f32,
+    /// Strength applied to the one-color environment on secondary path misses.
+    pub secondary_environment_strength: f32,
+    /// Accepted V11 triangle prefix belonging to the primary capture. Zero
+    /// means that every triangle is valid for camera rays.
+    pub primary_surface_triangle_count: u32,
 }
 
 impl FptvoxAppearance {
@@ -203,6 +212,8 @@ impl FptvoxAppearance {
         values[32] = self.material_specular_width;
         values[33] = self.material_roughness;
         values[34] = self.material_reflectance;
+        values[35] = self.secondary_environment_strength;
+        values[36] = self.primary_surface_triangle_count as f32;
         values
     }
 }

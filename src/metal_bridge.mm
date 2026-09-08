@@ -6134,7 +6134,7 @@ extern "C" int fpt_metal_render(const char *metallib_path,
 
         std::vector<uint8_t> rgba(pixel_count * 4);
         std::memcpy(rgba.data(), out_buffer.contents, rgba.size());
-        if (unique_colour_sample(rgba) < 2) {
+        if (unique_colour_sample(rgba) < 2 && config->mandel_appearance_mode != 2u) {
             set_error(error, error_len, "render output is blank or single-colour");
             return 1;
         }
@@ -6233,8 +6233,9 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
         id<MTLCommandQueue> queue = [device newCommandQueue];
         const size_t pixel_count = static_cast<size_t>(config->width) * config->height;
         id<MTLBuffer> out_buffer = [device newBufferWithLength:pixel_count * 4 options:MTLResourceStorageModeShared];
+        constexpr size_t structural_record_bytes = 80u;
         id<MTLBuffer> structural_buffer = write_structural
-            ? [device newBufferWithLength:pixel_count * 64u options:MTLResourceStorageModeShared]
+            ? [device newBufferWithLength:pixel_count * structural_record_bytes options:MTLResourceStorageModeShared]
             : nil;
         id<MTLBuffer> cfg_buffer = [device newBufferWithBytes:config length:sizeof(FptRenderConfig) options:MTLResourceStorageModeShared];
         id<MTLBuffer> diag_buffer = [device newBufferWithBytes:diagnostic length:sizeof(FptDiagnosticConfig) options:MTLResourceStorageModeShared];
@@ -6349,7 +6350,7 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
                 return 1;
             }
             structural_file.write(static_cast<const char *>(structural_buffer.contents),
-                                  static_cast<std::streamsize>(pixel_count * 64u));
+                                  static_cast<std::streamsize>(pixel_count * structural_record_bytes));
             if (!structural_file) {
                 set_error(error, error_len, "failed to write structural diagnostic output %s",
                           structural_output_path);

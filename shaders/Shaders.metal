@@ -261,6 +261,14 @@ enum {
     FPT_DIAGNOSTIC_SDF_NORMAL_EVALS = 13,
     FPT_DIAGNOSTIC_SDF_BOUNCES = 14,
     FPT_DIAGNOSTIC_SDF_BOUNCE_CONTRIBUTION = 15,
+    FPT_DIAGNOSTIC_PATH_BOUNCE_MATERIAL = 16,
+    FPT_DIAGNOSTIC_PATH_BOUNCE_NORMAL = 17,
+    FPT_DIAGNOSTIC_PATH_BOUNCE_ROUGHNESS = 18,
+    FPT_DIAGNOSTIC_PATH_BOUNCE_SPECULAR = 19,
+    FPT_DIAGNOSTIC_PATH_BOUNCE_HIT_MASK = 20,
+    FPT_DIAGNOSTIC_PATH_BOUNCE_POSITION = 21,
+    FPT_DIAGNOSTIC_PATH_BOUNCE_THROUGHPUT = 22,
+    FPT_DIAGNOSTIC_PATH_BOUNCE_DEPTH = 23,
 };
 
 struct FptDiagnosticConfig {
@@ -6611,6 +6619,7 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
     float side = 1.0f;
     float3 pixellight = float3(0.0f);
     float3 pixelcolor = float3(1.0f);
+    const bool authored_path = cfg.mandel_appearance_mode == 2u;
     float sky_mask = 0.0f;
     float3 gradient_col = backgroundGradient(dr, cfg);
     int bounces = min(int(cfg.render[0]), 8);
@@ -6625,17 +6634,32 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
         if (i == 0 && travel_sq > max_dist_sq) sky_mask = 1.0f;
         local_ni = int(cfg.render[1] / (cfg.render[5] * 2.0f + 1.0f));
         if (travel_sq > far_dist_sq) {
-            pixellight += environment(dr, cfg);
+            pixellight += authored_path
+                ? pixelcolor * environment(dr, cfg)
+                : environment(dr, cfg);
             break;
         }
         Material material = userSdf(rp, cfg).material;
         float3 n = normalAt(rp, cfg);
-        if (cfg.mandel_appearance_mode != 0u) {
+        if (cfg.mandel_appearance_mode == 1u) {
             return mandelbulberCompatibilitySurface(rp, n, dr, material, cfg);
         }
-        if (material.emission > 0.001f) pixellight += material.rgb * material.emission;
+        if (material.emission > 0.001f) {
+            pixellight += authored_path
+                ? pixelcolor * material.rgb * material.emission
+                : material.rgb * material.emission;
+        }
 
-        if (cfg.sun[0] == 1.0f) pixellight += sunContributionWithSurface(rp, xy, frame, material, n, cfg);
+        if (authored_path && cfg.mandel_appearance[0] != 0.0f) {
+            const float ambient_strength = clamp(
+                cfg.mandel_appearance[1] * 0.08f, 0.0f, 1.0f);
+            pixellight += pixelcolor * material.rgb * ambient_strength;
+        }
+
+        if (cfg.sun[0] == 1.0f) {
+            const float3 direct = sunContributionWithSurface(rp, xy, frame, material, n, cfg);
+            pixellight += authored_path ? pixelcolor * material.rgb * direct : direct;
+        }
         float r1 = hash13(float3(xy, frame * 1.37f + float(i)));
         float r2 = hash13(float3(xy, frame * 7.91f + float(i)));
         if (r1 > material.translucency) {
@@ -6675,7 +6699,7 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
             pixelcolor /= survival;
         }
     }
-    float3 col = pixellight * pixelcolor;
+    float3 col = authored_path ? pixellight : pixellight * pixelcolor;
     if (cfg.world[6] != 0.0f) col = mix(col, gradient_col, sky_mask);
     return min(col, float3(8.0f));
 }
@@ -7943,7 +7967,109 @@ static float3 sdfBounceContributionDiagnostic(float2 xy, constant FptRenderConfi
     return diagnosticEncodeHdr(total / float(samples), cfg);
 }
 
+static bool isPathBounceSurfaceDiagnostic(uint mode) {
+    return mode >= FPT_DIAGNOSTIC_PATH_BOUNCE_MATERIAL &&
+           mode <= FPT_DIAGNOSTIC_PATH_BOUNCE_DEPTH;
+}
+
+static float3 sdfBounceSurfaceDiagnostic(float2 xy,
+                                         constant FptRenderConfig &cfg,
+                                         constant FptDiagnosticConfig &diag) {
+    const uint target_bounce = diag._pad0;
+    float3 ray_origin = cameraPos(cfg);
+    float3 position = ray_origin;
+    if (cfg.sdf_id == SDF_MANDELBULBER &&
+        !mandelbulberProjectionVisible(xy, cfg)) {
+        return float3(0.0f);
+    }
+    float3 direction = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberCameraRay(xy, cfg)
+        : rotateCamera(
+              normalize(float3(
+                  xy, 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f))),
+              cameraYawPitch(cfg), cfg.camera_roll);
+    int local_steps = int(cfg.render[1]);
+    const uint bounce_limit = min(uint(max(cfg.render[0], 1.0f)), 8u);
+    const float far_distance = cfg.render[4] * 0.99f;
+    const float far_distance_sq = far_distance * far_distance;
+    float medium_side = 1.0f;
+    float3 throughput = float3(1.0f);
+    const float3 bounds_min = voxelBoundsMin(cfg);
+    const float3 bounds_extent = max(voxelBoundsMax(cfg) - bounds_min,
+                                     float3(1.0e-6f));
+    const float bounds_diagonal = max(length(bounds_extent), 1.0e-6f);
+
+    for (uint bounce = 0u; bounce < bounce_limit; ++bounce) {
+        const float3 segment_origin = position;
+        position = march(direction, position, local_steps, cfg.render[3], 0.0002f, cfg);
+        local_steps = int(cfg.render[1] / (cfg.render[5] * 2.0f + 1.0f));
+        const bool hit = dot(position - ray_origin, position - ray_origin) <=
+            far_distance_sq;
+        if (!hit)
+            return float3(0.0f);
+
+        const Material material = userSdf(position, cfg).material;
+        float3 normal = normalAt(position, cfg);
+        if (bounce == target_bounce) {
+            if (diag.mode == FPT_DIAGNOSTIC_PATH_BOUNCE_MATERIAL)
+                return clamp(material.rgb, 0.0f, 1.0f);
+            if (diag.mode == FPT_DIAGNOSTIC_PATH_BOUNCE_NORMAL)
+                return diagnosticEncodeNormal(dot(normal, direction) > 0.0f ? -normal : normal);
+            if (diag.mode == FPT_DIAGNOSTIC_PATH_BOUNCE_ROUGHNESS)
+                return float3(clamp(material.roughness, 0.0f, 1.0f));
+            if (diag.mode == FPT_DIAGNOSTIC_PATH_BOUNCE_SPECULAR)
+                return float3(clamp(material.specular, 0.0f, 1.0f));
+            if (diag.mode == FPT_DIAGNOSTIC_PATH_BOUNCE_POSITION)
+                return clamp((position - bounds_min) / bounds_extent, 0.0f, 1.0f);
+            if (diag.mode == FPT_DIAGNOSTIC_PATH_BOUNCE_THROUGHPUT)
+                return clamp(throughput, 0.0f, 1.0f);
+            if (diag.mode == FPT_DIAGNOSTIC_PATH_BOUNCE_DEPTH) {
+                const float depth = length(position - segment_origin) / bounds_diagonal;
+                return float3(1.0f - clamp(depth, 0.0f, 1.0f));
+            }
+            return float3(1.0f);
+        }
+
+        const float scatter = hash13(float3(xy, float(bounce)));
+        const float fresnel_random = hash13(float3(xy, float(bounce)));
+        if (scatter > material.translucency) {
+            const float3 reflected = reflect(direction, normal);
+            const float3 diffuse = randomVector(normal, xy, float(bounce));
+            const float f0 = pow((material.ior - 1.0f) / (material.ior + 1.0f), 2.0f);
+            const float cosine = clamp(dot(normal, -direction), 0.0f, 1.0f);
+            const float fresnel = f0 + (1.0f - f0) * pow5(1.0f - cosine);
+            direction = normalize(mix(reflected, diffuse, material.roughness));
+            if (fresnel_random < fresnel * material.specular)
+                direction = reflected;
+            else
+                throughput *= material.rgb;
+        } else {
+            const float eta = medium_side == 1.0f ? 1.0f / material.ior : material.ior;
+            if (medium_side != 1.0f)
+                normal = -normal;
+            const float f0 = pow((material.ior - 1.0f) / (material.ior + 1.0f), 2.0f);
+            const float cosine = clamp(dot(normal, -direction), 0.0f, 1.0f);
+            const float fresnel = f0 + (1.0f - f0) * pow5(1.0f - cosine);
+            const float3 refracted = refract(direction, normal, eta);
+            if (dot(refracted, refracted) < 1.0e-6f ||
+                !all(isfinite(refracted)) || fresnel_random < fresnel) {
+                direction = normalize(reflect(direction, normal));
+            } else {
+                direction = normalize(refracted);
+                throughput *= mix(float3(1.0f), material.rgb, 0.35f) *
+                    (1.0f - fresnel * 0.5f);
+                medium_side *= -1.0f;
+            }
+        }
+        position += normal * 0.001f * sign(dot(direction, normal));
+    }
+    return float3(0.0f);
+}
+
 static float3 sdfDiagnostic(float2 xy, constant FptRenderConfig &cfg, constant FptDiagnosticConfig &diag) {
+    if (isPathBounceSurfaceDiagnostic(diag.mode)) {
+        return sdfBounceSurfaceDiagnostic(xy, cfg, diag);
+    }
     if (diag.mode == FPT_DIAGNOSTIC_SDF_BOUNCE_CONTRIBUTION) {
         return sdfBounceContributionDiagnostic(xy, cfg, diag);
     }
@@ -8056,6 +8182,7 @@ struct FptStructuralDiagnosticSample {
     float4 normalHit;
     float4 materialCoordinate;
     float4 materialColor;
+    float4 incomingDirectionSegmentDistance;
 };
 
 kernel void sdf_structural_diagnostic_kernel(
@@ -8069,33 +8196,83 @@ kernel void sdf_structural_diagnostic_kernel(
     float3 ray_origin = cameraPos(cfg);
     float3 position = ray_origin;
     float3 direction;
+    float3 incoming_direction = float3(0.0f);
+    float incoming_segment_distance = -1.0f;
     bool hit = false;
-    if (cfg.sdf_id == SDF_MANDELBULBER) {
-        if (mandelbulberProjectionVisible(xy, cfg)) {
-            direction = mandelbulberCameraRay(xy, cfg);
-            const int steps = min(int(max(cfg.render[1], 32.0f)), 10000);
-            const MandelbulberMarchResult result =
-                marchMandelbulberDiagnostic(direction, position, steps, cfg, diag);
-            position = result.position;
-            hit = result.found;
-        } else {
-            direction = float3(0.0f);
-        }
+    if (cfg.sdf_id == SDF_MANDELBULBER && !mandelbulberProjectionVisible(xy, cfg)) {
+        direction = float3(0.0f);
     } else {
         const float focal_length = 1.0f / tan(cfg.camera_fov / 2.0f * pi / 180.0f);
-        direction = rotateCamera(normalize(float3(xy, focal_length)),
-                                 cameraYawPitch(cfg), cfg.camera_roll);
-        const int steps = min(int(max(cfg.render[1], 32.0f)), 420);
-        const float threshold = max(cfg.render[3], 0.0005f);
-        for (int i = 0; i < steps; ++i) {
-            const float distance = mapSdf(position, cfg);
-            if (!isfinite(distance)) break;
-            if (distance < threshold && length(position - ray_origin) > 0.001f) {
-                hit = true;
-                break;
+        direction = cfg.sdf_id == SDF_MANDELBULBER
+            ? mandelbulberCameraRay(xy, cfg)
+            : rotateCamera(normalize(float3(xy, focal_length)),
+                           cameraYawPitch(cfg), cfg.camera_roll);
+        float medium_side = 1.0f;
+        const uint target_bounce = min(diag._pad0, 7u);
+        for (uint bounce = 0u; bounce <= target_bounce; ++bounce) {
+            const float3 segment_origin = position;
+            const float3 segment_direction = direction;
+            hit = false;
+            if (cfg.sdf_id == SDF_MANDELBULBER) {
+                const int steps = min(int(max(cfg.render[1], 32.0f)), 10000);
+                const MandelbulberMarchResult result =
+                    marchMandelbulberDiagnostic(direction, position, steps, cfg, diag);
+                position = result.position;
+                hit = result.found;
+            } else {
+                const int steps = min(int(max(cfg.render[1], 32.0f)), 420);
+                const float threshold = max(cfg.render[3], 0.0005f);
+                for (int i = 0; i < steps; ++i) {
+                    const float distance = mapSdf(position, cfg);
+                    if (!isfinite(distance)) break;
+                    if (distance < threshold &&
+                        length(position - segment_origin) > 0.001f) {
+                        hit = true;
+                        break;
+                    }
+                    position += direction * sdfMarchStep(distance, threshold, cfg);
+                    if (length(position - segment_origin) > cfg.render[4]) break;
+                }
             }
-            position += direction * sdfMarchStep(distance, threshold, cfg);
-            if (length(position - ray_origin) > cfg.render[4]) break;
+            if (hit) {
+                incoming_direction = segment_direction;
+                incoming_segment_distance = length(position - segment_origin);
+            }
+            if (!hit || bounce == target_bounce) break;
+
+            const Material bounce_material = userSdf(position, cfg).material;
+            float3 bounce_normal = normalAt(position, cfg);
+            const float scatter = hash13(float3(xy, float(bounce)));
+            const float fresnel_random = hash13(float3(xy, float(bounce)));
+            if (scatter > bounce_material.translucency) {
+                const float3 reflected = reflect(direction, bounce_normal);
+                const float3 diffuse = randomVector(bounce_normal, xy, float(bounce));
+                const float f0 = pow((bounce_material.ior - 1.0f) /
+                                     (bounce_material.ior + 1.0f), 2.0f);
+                const float cosine = clamp(dot(bounce_normal, -direction), 0.0f, 1.0f);
+                const float fresnel = f0 + (1.0f - f0) * pow5(1.0f - cosine);
+                direction = normalize(mix(reflected, diffuse, bounce_material.roughness));
+                if (fresnel_random < fresnel * bounce_material.specular)
+                    direction = reflected;
+            } else {
+                const float eta = medium_side == 1.0f
+                    ? 1.0f / bounce_material.ior
+                    : bounce_material.ior;
+                if (medium_side != 1.0f) bounce_normal = -bounce_normal;
+                const float f0 = pow((bounce_material.ior - 1.0f) /
+                                     (bounce_material.ior + 1.0f), 2.0f);
+                const float cosine = clamp(dot(bounce_normal, -direction), 0.0f, 1.0f);
+                const float fresnel = f0 + (1.0f - f0) * pow5(1.0f - cosine);
+                const float3 refracted = refract(direction, bounce_normal, eta);
+                if (dot(refracted, refracted) < 1.0e-6f ||
+                    !all(isfinite(refracted)) || fresnel_random < fresnel) {
+                    direction = normalize(reflect(direction, bounce_normal));
+                } else {
+                    direction = normalize(refracted);
+                    medium_side *= -1.0f;
+                }
+            }
+            position += bounce_normal * 0.001f * sign(dot(direction, bounce_normal));
         }
     }
     const float ray_distance = hit ? length(position - ray_origin) : -1.0f;
@@ -8118,6 +8295,8 @@ kernel void sdf_structural_diagnostic_kernel(
     out[index].materialCoordinate = float4(
         color_coordinate, palette_position, max(cfg.fractal_style[11], 1.0f), 0.0f);
     out[index].materialColor = float4(material_color, hit ? 1.0f : 0.0f);
+    out[index].incomingDirectionSegmentDistance = float4(
+        hit ? incoming_direction : float3(0.0f), hit ? incoming_segment_distance : -1.0f);
 }
 
 static float3 voxelDiagnostic(float2 xy,

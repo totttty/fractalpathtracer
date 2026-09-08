@@ -743,6 +743,52 @@ pub fn build_indexed_triangle_surface_from_normalized_mesh_3d<I>(
 where
     I: IntoIterator<Item = [MeshSurfaceVertex; 3]>,
 {
+    build_indexed_triangle_surface_from_normalized_mesh_3d_impl(
+        triangles,
+        output_resolution,
+        sampling_resolution,
+        bounds,
+        material_template,
+        None,
+    )
+    .map(|(surface, _)| surface)
+}
+
+/// Build V8 data while retaining the accepted-triangle prefix belonging to
+/// the primary camera capture. Auxiliary views may then be restricted to
+/// secondary rays without relying on pre-quantization input counts.
+pub fn build_partitioned_indexed_triangle_surface_from_normalized_mesh_3d<I>(
+    triangles: I,
+    primary_input_count: usize,
+    output_resolution: [u32; 3],
+    sampling_resolution: [u32; 3],
+    bounds: Aabb,
+    material_template: SurfaceMaterial,
+) -> Result<(FptvoxIndexedTriangleSurface, u32)>
+where
+    I: IntoIterator<Item = [MeshSurfaceVertex; 3]>,
+{
+    build_indexed_triangle_surface_from_normalized_mesh_3d_impl(
+        triangles,
+        output_resolution,
+        sampling_resolution,
+        bounds,
+        material_template,
+        Some(primary_input_count),
+    )
+}
+
+fn build_indexed_triangle_surface_from_normalized_mesh_3d_impl<I>(
+    triangles: I,
+    output_resolution: [u32; 3],
+    sampling_resolution: [u32; 3],
+    bounds: Aabb,
+    material_template: SurfaceMaterial,
+    primary_input_count: Option<usize>,
+) -> Result<(FptvoxIndexedTriangleSurface, u32)>
+where
+    I: IntoIterator<Item = [MeshSurfaceVertex; 3]>,
+{
     ensure!(
         output_resolution
             .iter()
@@ -761,7 +807,8 @@ where
     let mut triangle_vertex_colors = Vec::new();
     let mut triangle_material_ids = Vec::new();
     let mut triangle_shading_normals = Vec::new();
-    for triangle in triangles {
+    let mut accepted_primary_triangles = 0u32;
+    for (input_index, triangle) in triangles.into_iter().enumerate() {
         let surface_triangle = triangle.map(|vertex| SurfaceVertex {
             position: vertex.position,
             color_index: 0.0,
@@ -783,6 +830,11 @@ where
             triangle_index,
             output_resolution,
         ) {
+            if primary_input_count.is_some_and(|count| input_index < count) {
+                accepted_primary_triangles = accepted_primary_triangles
+                    .checked_add(1)
+                    .context("V8 primary triangle count exceeds u32")?;
+            }
             indexed_triangles.push(indexed_triangle);
             triangle_colors.push(pack_triangle_color(triangle));
             triangle_vertex_colors.push(triangle.map(|vertex| pack_vertex_color(vertex.color)));
@@ -817,19 +869,28 @@ where
             reference_count,
         });
     }
-    Ok(FptvoxIndexedTriangleSurface {
-        resolution: output_resolution,
-        sampling_resolution,
-        bounds,
-        coordinate_system: CoordinateSystem::YUpRightHanded,
-        cells,
-        triangles: indexed_triangles,
-        triangle_colors,
-        triangle_vertex_colors,
-        triangle_material_ids,
-        triangle_shading_normals,
-        references,
-    })
+    if primary_input_count.is_some() {
+        ensure!(
+            accepted_primary_triangles > 0,
+            "normalized primary view produced no FPTVOX8 triangles"
+        );
+    }
+    Ok((
+        FptvoxIndexedTriangleSurface {
+            resolution: output_resolution,
+            sampling_resolution,
+            bounds,
+            coordinate_system: CoordinateSystem::YUpRightHanded,
+            cells,
+            triangles: indexed_triangles,
+            triangle_colors,
+            triangle_vertex_colors,
+            triangle_material_ids,
+            triangle_shading_normals,
+            references,
+        },
+        accepted_primary_triangles,
+    ))
 }
 
 #[derive(Clone, Copy)]
@@ -1737,6 +1798,38 @@ mod tests {
 
         assert_eq!(build([0.0, 0.0, 1.0]).triangle_shading_normals, [0]);
         assert_ne!(build([1.0, 0.0, 0.0]).triangle_shading_normals, [0]);
+    }
+
+    #[test]
+    fn partitioned_indexed_mesh_reports_the_accepted_primary_prefix() {
+        let vertex = |position| MeshSurfaceVertex {
+            position,
+            color: [0.5; 3],
+            material_id: 1,
+            shading_normal: None,
+        };
+        let primary = [
+            vertex([0.1, 0.1, 0.25]),
+            vertex([0.9, 0.1, 0.25]),
+            vertex([0.1, 0.9, 0.25]),
+        ];
+        let auxiliary = [
+            vertex([0.1, 0.1, 0.75]),
+            vertex([0.9, 0.1, 0.75]),
+            vertex([0.1, 0.9, 0.75]),
+        ];
+        let (surface, primary_count) =
+            build_partitioned_indexed_triangle_surface_from_normalized_mesh_3d(
+                [primary, auxiliary],
+                1,
+                [4; 3],
+                [8; 3],
+                Aabb::new([-1.0; 3], [1.0; 3]),
+                SurfaceMaterial::default(),
+            )
+            .expect("build partitioned indexed surface");
+        assert_eq!(primary_count, 1);
+        assert_eq!(surface.triangles.len(), 2);
     }
 
     #[test]

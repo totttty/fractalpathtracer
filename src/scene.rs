@@ -125,6 +125,14 @@ pub enum DiagnosticMode {
     SdfNormalEvals = DIAGNOSTIC_SDF_NORMAL_EVALS as isize,
     SdfBounces = DIAGNOSTIC_SDF_BOUNCES as isize,
     SdfBounceContribution = DIAGNOSTIC_SDF_BOUNCE_CONTRIBUTION as isize,
+    PathBounceMaterial = DIAGNOSTIC_PATH_BOUNCE_MATERIAL as isize,
+    PathBounceNormal = DIAGNOSTIC_PATH_BOUNCE_NORMAL as isize,
+    PathBounceRoughness = DIAGNOSTIC_PATH_BOUNCE_ROUGHNESS as isize,
+    PathBounceSpecular = DIAGNOSTIC_PATH_BOUNCE_SPECULAR as isize,
+    PathBounceHitMask = DIAGNOSTIC_PATH_BOUNCE_HIT_MASK as isize,
+    PathBouncePosition = DIAGNOSTIC_PATH_BOUNCE_POSITION as isize,
+    PathBounceThroughput = DIAGNOSTIC_PATH_BOUNCE_THROUGHPUT as isize,
+    PathBounceDepth = DIAGNOSTIC_PATH_BOUNCE_DEPTH as isize,
 }
 
 #[derive(Clone, Debug)]
@@ -187,6 +195,7 @@ pub struct RenderArgs {
     pub mandel_screen_lod_rate: Option<f32>,
     pub mandel_optimization_auto: bool,
     pub mandel_selection_cache: Option<PathBuf>,
+    pub mandel_authored_path: bool,
     pub sdf_bounce_index: u32,
     pub diagnostic_mode: DiagnosticMode,
     pub diagnostic_max_distance: Option<f32>,
@@ -264,6 +273,7 @@ impl RenderArgs {
             mandel_screen_lod_rate: None,
             mandel_optimization_auto: false,
             mandel_selection_cache: None,
+            mandel_authored_path: false,
             sdf_bounce_index: 0,
             diagnostic_mode: DiagnosticMode::Depth,
             diagnostic_max_distance: None,
@@ -487,6 +497,15 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                         value => bail!("unknown Mandel optimization mode: {value}"),
                     };
             }
+            "--mandel-appearance" => {
+                out.mandel_authored_path = match next_value(args, &mut i, "--mandel-appearance")? {
+                    "geometry" => false,
+                    "authored-path" => true,
+                    value => bail!(
+                        "invalid Mandel appearance mode '{value}'; use geometry or authored-path"
+                    ),
+                }
+            }
             "--mandel-selection-cache" => {
                 out.mandel_selection_cache = Some(PathBuf::from(next_value(
                     args,
@@ -613,6 +632,14 @@ pub fn parse_render_args(args: &[String]) -> Result<RenderArgs> {
                     "sdf-normal-evals" => DiagnosticMode::SdfNormalEvals,
                     "sdf-bounces" => DiagnosticMode::SdfBounces,
                     "sdf-bounce-contribution" => DiagnosticMode::SdfBounceContribution,
+                    "path-bounce-material" => DiagnosticMode::PathBounceMaterial,
+                    "path-bounce-normal" => DiagnosticMode::PathBounceNormal,
+                    "path-bounce-roughness" => DiagnosticMode::PathBounceRoughness,
+                    "path-bounce-specular" => DiagnosticMode::PathBounceSpecular,
+                    "path-bounce-hit-mask" => DiagnosticMode::PathBounceHitMask,
+                    "path-bounce-position" => DiagnosticMode::PathBouncePosition,
+                    "path-bounce-throughput" => DiagnosticMode::PathBounceThroughput,
+                    "path-bounce-depth" => DiagnosticMode::PathBounceDepth,
                     value => bail!("invalid diagnostic mode: {value}"),
                 }
             }
@@ -2130,6 +2157,9 @@ fn load_mandelbulber_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
         None
     };
     scene.apply_to_config(&mut config);
+    if args.mandel_authored_path {
+        scene.apply_authored_path_appearance(&mut config);
+    }
     config.preview = u32::from(args.preview);
     config.sdf_profile = u32::from(args.sdf_profile);
     config.width = scene.width;
@@ -2276,6 +2306,27 @@ mod tests {
             parsed.mandel_selection_cache,
             Some(PathBuf::from("selection.json"))
         );
+    }
+
+    #[test]
+    fn mandel_appearance_modes_parse_and_default_to_geometry() {
+        let defaults = parse_render_args(&["scene.fract".to_owned()]).unwrap();
+        assert!(!defaults.mandel_authored_path);
+
+        let authored = parse_render_args(&[
+            "scene.fract".to_owned(),
+            "--mandel-appearance".to_owned(),
+            "authored-path".to_owned(),
+        ])
+        .unwrap();
+        assert!(authored.mandel_authored_path);
+
+        let invalid = [
+            "scene.fract".to_owned(),
+            "--mandel-appearance".to_owned(),
+            "beauty".to_owned(),
+        ];
+        assert!(parse_render_args(&invalid).is_err());
     }
 
     #[test]

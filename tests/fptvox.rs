@@ -288,6 +288,8 @@ fn appearance_trailer_is_fixed_size_and_byte_exact() {
         material_specular_width: 0.1,
         material_roughness: 0.02,
         material_reflectance: 0.25,
+        secondary_environment_strength: 0.45,
+        primary_surface_triangle_count: 1234,
     };
     assert_eq!(append_fptvox_appearance(&output, &appearance).unwrap(), 256);
     let bytes = fs::read(&output).unwrap();
@@ -299,6 +301,8 @@ fn appearance_trailer_is_fixed_size_and_byte_exact() {
     assert_eq!(u32_at(&bytes, offset + 16), appearance.flags);
     assert_eq!(f32_at(&bytes, offset + 24), 0.1);
     assert_eq!(f32_at(&bytes, offset + 24 + 34 * 4), 0.25);
+    assert_eq!(f32_at(&bytes, offset + 24 + 35 * 4), 0.45);
+    assert_eq!(f32_at(&bytes, offset + 24 + 36 * 4), 1234.0);
     assert!(bytes[offset + 24 + 41 * 4..].iter().all(|byte| *byte == 0));
     fs::remove_file(output).unwrap();
 }

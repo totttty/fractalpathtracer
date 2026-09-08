@@ -199,6 +199,12 @@ regressing already-correct scenes by up to `10.6%`, growing artifacts by
 `15-35%`, and costing rank 17 `13.8%`. The larger footprint remains available
 only through explicit diagnostic flags.
 
+Continuous Mandel renders default to the retained neutral geometry diagnostic.
+Use `--mandel-appearance authored-path` to opt into the generated Mandel palette,
+parsed material properties, authored background and image adjustments, and the
+ordinary FPT path integrator. This mode is intended for controlled appearance
+comparisons and does not alter default render or voxel-export behavior.
+
 Experimental `--surface-normals` (`FPTVOX2`) and `--surface-planes`
 (`FPTVOX3`) exports add structural surface data for continuous-FPT parity
 work while leaving the version-1 default unchanged. The library also exposes
@@ -341,6 +347,21 @@ all-view replacement for lattice V7. On the current `300x300` pilots it exactly
 reproduced the temporary PLY prototype on ranks 26 and 34, while avoiding the
 large false planes produced by dense V6 patches on rank 34.
 
+FPTVOX11 can optionally retain deterministic secondary-path surfaces:
+
+```sh
+fpt-metal voxel-export scene.fract --out scene.fptvox \
+  --voxel-resolution 192 --surface-view-indexed-triangle-bvh \
+  --surface-view-splats --surface-triangle-resolution 300 \
+  --surface-triangle-auto-bounds --surface-view-path-bounces 2 \
+  --mandelbulber-root "$MANDELBULBER_ROOT"
+```
+
+The added triangles are excluded from primary visibility and are available only
+to shadow and secondary rays. This remains opt-in: the ranked-scene gate
+improved continuous-FPT parity in 45 of 48 supported scenes, but increased
+artifact cost and generally did not improve direct Mandelbulber image parity.
+
 `--surface-view-splats` fills continuous hit samples that cannot participate
 in a connected depth-grid triangle, plus accepted samples adjoining a rejected
 depth/normal edge, with a camera-facing micro-quad. `FPTNRM1` preserves the
@@ -353,6 +374,69 @@ dominant, rejected-boundary, and grazing captures raise the cap to `0.75x`;
 splat-dominant views keep the compact cap to control cell references. The
 option remains explicit because the result is a camera-matched surface rather
 than a closed asset.
+
+`--surface-view-ray-consistent-splats` replaces those oversized free-facing
+quads for primary and auxiliary camera captures with patches clipped to the
+four source-pixel boundary rays. The exporter replays the authored projection,
+camera rotation, image-Y convention, and Mandel diagnostic pixel origin, then
+intersects the corner rays with the sample's camera-facing depth plane. This
+keeps each fallback inside its source pixel frustum, so it cannot cover a
+connected triangle at a neighboring pixel center. Secondary-bounce captures
+retain the established splats by default.
+`--surface-view-path-ray-consistent-splats` records the selected path segment's
+incoming direction and orients fallback patches perpendicular to that ray
+while preserving the validated total-path footprint. It requires both the
+primary ray-consistent mode and path-bounce captures. Keeping it separate
+preserves the prior artifact contract for callers that prefer the established
+secondary representation.
+
+On the 49 renderable ranked scenes at `300x300`, 32 SPP, four path bounces,
+and two 300-pixel secondary-surface captures, the mode improved 46 scenes
+against continuous FPT and reduced median MAE from `0.33881` to `0.10771`.
+The three small continuous-FPT regressions all moved closer to their authored
+Mandelbulber references. On structural ranks 09/21/39/49, primary normal mean
+error fell from `29.10/38.29/29.05/40.16` degrees to
+`3.24/16.64/7.07/11.95`; first-bounce hit IoU rose from
+`0.632/0.437/0.574/0.493` to `0.891/0.706/0.832/0.716`.
+
+The alternating performance gate also passes. Ray-consistent patches reduce
+cell-triangle references by `9.6-16.3%` and FPTVOX size by `2.9-5.5%` on the
+same hard ranks. Four-pair Metal counter medians move monolithic path time by
+`-3.4/-9.2/-0.2/-9.7%`; presentation stays at approximately
+`0.02-0.03 ms`. The longer rank-39 canary is neutral/slightly faster at
+`-0.37%`. Native build medians are mixed within a `-3.1%` to `+4.5%` band.
+
+The secondary incoming-ray experiment improves bounce-one hit IoU on hard
+ranks 09/21/39/49 from `0.891/0.706/0.832/0.716` to
+`0.925/0.789/0.936/0.751`. Across all 49 renderable ranked scenes it improves
+45 continuous-FPT beauty comparisons, regresses three slightly, and lowers
+median MAE from `0.10771` to `0.09272`. It remains a separate opt-in because
+authored Mandelbulber image error is essentially neutral and includes lighting
+and material differences outside the structural capture contract. Alternating
+NAADF timing is mixed: rank 09 regresses `+5.84%`, ranks 21/49 improve about
+`4.5%`, and rank 39 is noisy. The option is therefore a quality experiment,
+not a default performance optimization.
+
+Additional camera sectors can be generated as independent V11 artifacts with
+explicit capture controls:
+
+```sh
+fpt-metal voxel-export scene.fract --out side-sector.fptvox \
+  --voxel-resolution 192 --surface-view-indexed-triangle-bvh \
+  --surface-view-splats --surface-triangle-resolution 300 \
+  --surface-view-camera-position 4.7,0,-0.7 \
+  --surface-view-camera-yaw-pitch=-1.570796,0 \
+  --surface-view-camera-fov 60 --surface-view-clip-bounds
+```
+
+Camera positions use export coordinates; yaw, pitch, and roll use radians;
+FOV uses the FPT/Mandelbulber degree convention. `--surface-view-clip-bounds`
+limits the structural diagnostic to the requested export AABB, which is needed
+when an unbounded fractal has nearer structure outside that domain. These
+controls do not merge views. They are intended for producing separate camera-
+sector assets until a validated runtime view-set selector exists. With none of
+the controls supplied, V11 output remains byte-identical to the established
+authored-camera path.
 
 For a production capture, set `--surface-triangle-resolution` to the maximum
 axis of the intended NAADF render. The exporter now preserves the authored
