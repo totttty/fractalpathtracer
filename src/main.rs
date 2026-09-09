@@ -7821,6 +7821,127 @@ mod tests {
     use super::*;
 
     #[test]
+    fn mandel_secondary_origin_escapes_surface_without_skipping_nearby_hits() {
+        let _guard = metal_test_guard();
+        let original = std::str::from_utf8(METAL_SOURCE_BYTES).unwrap();
+        let field_entry = "static float mapSdf(float3 p, constant FptRenderConfig &cfg) {";
+        assert_eq!(original.matches(field_entry).count(), 1);
+        let start = original.find("static float3 renderPath(").unwrap();
+        let end = start
+            + original[start..]
+                .find("static float3 regionalProgramSunContributionWithSurface(")
+                .unwrap();
+        // Set an accepted first hit and deterministic outgoing ray. Keep the
+        // actual secondary offset and both production Mandel march calls.
+        let mut path = original[start..end].to_owned();
+        for (from, to) in [
+            (
+                "int local_ni = int(cfg.render[1]);",
+                "rp = float3(0.0f, cfg.program_material[1] * cfg.vset_values[117] * 0.9995f, 0.0f); cam_pos = rp; dr = float3(0.0f, -cfg.program_material[1], 0.0f); int local_ni = int(cfg.render[1]);",
+            ),
+            (
+                "float travel_sq = dot(rp - cam_pos, rp - cam_pos);",
+                "if (i == 1) return float3(missed ? 0.0f : 1.0f); float travel_sq = dot(rp - cam_pos, rp - cam_pos);",
+            ),
+            (
+                "Material material = userSdf(rp, cfg).material;",
+                "Material material = defaultMaterial();",
+            ),
+            (
+                "float3 n = normalAt(rp, cfg);",
+                "float3 n = float3(0.0f, cfg.program_material[1], 0.0f);",
+            ),
+            (
+                "rp += n *",
+                "dr = normalize(float3(cos(cfg.program_material[2]), cfg.program_material[1] * sin(cfg.program_material[2]), 0.0f)); rp += n *",
+            ),
+        ] {
+            assert_eq!(path.matches(from).count(), 1, "{from}");
+            path = path.replacen(from, to, 1);
+        }
+        let source = format!("{}{}{}", &original[..start], path, &original[end..]).replacen(
+            field_entry,
+            &format!("{field_entry}\nfloat h = p.y * cfg.program_material[1]; float t = cfg.vset_values[117]; return cfg.program_material[0] > 0.0f ? min(abs(h), abs(h - 4.0f*t)) : abs(h);"), 1);
+        let source = mandelbulber::compiler::retain_metal_kernels(
+            &source,
+            &["accumulate_all_kernel", "present_kernel"],
+        )
+        .unwrap();
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = ProbeDirectory(std::env::temp_dir().join(format!(
+            "fpt-metal/secondary-origin-{}-{nonce}",
+            std::process::id()
+        )));
+        let (library, _) = compile_mandel_metallib(
+            source.as_bytes(),
+            &directory.0,
+            "analytic-secondary",
+            MandelMetalOptimization::Default,
+        )
+        .unwrap();
+        let mut cfg = FptRenderConfig::default();
+        cfg.width = 16;
+        cfg.height = 16;
+        cfg.samples = 1;
+        cfg.sdf_id = SDF_MANDELBULBER;
+        cfg.sdf_accumulation_mode = SDF_ACCUMULATION_BATCH;
+        cfg.mandel_appearance_mode = 2;
+        cfg.sun[0] = 0.0;
+        cfg.camera_dof = 0.0;
+        cfg.focus_distance = 1.0;
+        cfg.render[0] = 2.0;
+        cfg.render[1] = 10000.0;
+        cfg.vset_values[108] = 0.0;
+        cfg.vset_values[113] = 1.0;
+        cfg.vset_values[115] = 0.0;
+        cfg.vset_values[118] = 0.0;
+        cfg.vset_values[119] = 1000.0;
+        cfg.vset_values[129] = 1.0;
+        cfg.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
+        for threshold in [0.00001_f32, 0.01, 10.0] {
+            cfg.vset_values[117] = threshold;
+            cfg.vset_values[110] = threshold * 3.0;
+            cfg.render[4] = threshold * 1000.0;
+            for sign in [-1.0_f32, 1.0] {
+                cfg.program_material[1] = sign;
+                for pitch in [1.0_f32, 30.0, 90.0] {
+                    cfg.program_material[2] = pitch.to_radians();
+                    for blocker in [false, true] {
+                        cfg.program_material[0] = if blocker { 1.0 } else { 0.0 };
+                        let expected = cfg.program_material[0];
+                        let mut pixels = vec![f32::NAN; 16 * 16 * 4];
+                        let result = execute_metal_render_internal(
+                            &cfg,
+                            &library,
+                            &default_stitch_metallib_path().unwrap(),
+                            None,
+                            &directory.0.join("probe.png"),
+                            &[],
+                            Some(&mut pixels),
+                        );
+                        if let Err(error) = result {
+                            assert!(
+                                error.to_string().contains("blank or single-colour"),
+                                "{error:#}"
+                            );
+                        }
+                        assert!(
+                            pixels
+                                .chunks_exact(4)
+                                .all(|p| p[..3].iter().all(|v| (v - expected).abs() < 1.0e-5)),
+                            "threshold={threshold}, sign={sign}, pitch={pitch}, blocker={blocker}: expected secondary hit={expected}, got {:?}",
+                            &pixels[..4]
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn mandel_shadow_origin_preserves_clear_and_blocked_rays_across_scales() {
         let _guard = metal_test_guard();
         // Replace only the field and known first-hit input. The production sun

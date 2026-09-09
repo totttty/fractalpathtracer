@@ -280,6 +280,87 @@ native output isolation, not a performance guarantee.
 The extracted source package also builds successfully (72 files, 2.3 MiB
 uncompressed); ignored diagnostic modules and captures are excluded.
 
+## Secondary-origin diagnosis
+
+Starting from `64251c2`, a fixed-camera 32-SPP bounce-cap sweep separated
+first-hit response from later contributions on scenes 01, 03 and 13. Scene
+13's reference MAE was 0.076412 at one bounce, 0.115872 at two, 0.129567 at
+four and 0.132476 at the full default. Scene 01's bright rings appeared after
+the first bounce. This isolates a secondary contribution issue; lowering the
+bounce count itself is not the fix, and the one-bounce capture still includes
+the configured ambient/emission response.
+
+An 8-SPP, maximum-axis-160 probe retained the production generated fields and
+camera aspect. A separate instrumented shader counted secondary march calls
+that immediately accepted their starting point as a hit. Counts below are
+averaged over all sampled paths, including background, not just active rays:
+
+| Rank | Fixed 0.001 normal offset | One threshold | Two thresholds |
+| --- | ---: | ---: | ---: |
+| 01 | 0.264160 | 0.000059 | 0.000228 |
+| 03 | 1.693374 | 0.000889 | 0.000601 |
+| 13 | 0.275537 | 0.005439 | 0.005303 |
+
+The single-threshold probe removes scene 01's bright rings and sharply reduces
+immediate re-hits. Doubling it has no consistent advantage, so the smaller
+displacement is preferred. Residual immediate hits are not claimed solved.
+No scene-name condition, exposure correction, normal formula or light/material
+mapping is changed. Native FPT retains its original offset. This is not a full
+dielectric boundary or general secondary-ray transport implementation.
+
+The regression fixes the accepted primary input and outgoing direction while
+retaining the production primary march, secondary offset and secondary march.
+An unsigned plane, with/without another plane four thresholds away, is tested
+at three scales, three outgoing angles and both signs. Before the correction,
+the small-scale nearby-plane case is skipped. The test therefore checks both
+surface escape and preservation of a nearby next hit, rather than only making
+an image darker.
+
+Ignored diagnostic scripts, variant sources, captures and counts are under
+`reports/mandel-light-response`. Its bounce sweep and offset probe are distinct
+experiments with different sample counts; neither is a GPU benchmark.
+
+The full scene 02 result is a material/lighting outlier, not a successful
+appearance match: removing secondary re-hits darkens it and raises reference
+MAE from 0.299691 to 0.407476. Its authored orange/gold material response is
+still absent. Scene 13 improves from 0.132476 to 0.116378 but remains too bright.
+Do not describe either as full parity or restore erroneous repeated surface
+shading to compensate for the remaining material response. The small scene 05
+MAE increase (0.060409 to 0.060477) is also recorded rather than hidden.
+
+For the next scene 02 investigation, distinguish the serialized legacy file
+from Mandelbulber's effective loaded configuration. The version-2.14 input
+explicitly specifies `mat1_use_colors_from_palette false` and a grey
+`mat1_surface_color` (`8800 8800 8800`), despite the orange/gold CPU reference.
+Capture the effective native material/light state before treating this as a
+missing palette or multiplying FPT colours. The cause of that discrepancy is
+not established by this offset experiment.
+
+All fourteen fresh FPT canary captures completed at 32 SPP and 300 maximum-axis
+pixels with authored aspect. All seven neutral geometry captures are byte-exact
+against `64251c2`; authored changes are intentional and are not byte-exact gates.
+
+| Rank | Shadow checkpoint MAE | Secondary-origin MAE |
+| --- | ---: | ---: |
+| 01 | 0.103347 | 0.096741 |
+| 02 | 0.299691 | 0.407476 |
+| 03 | 0.184670 | 0.143237 |
+| 04 | 0.026587 | 0.026001 |
+| 05 | 0.060409 | 0.060477 |
+| 13 | 0.132476 | 0.116378 |
+| 17 | 0.046700 | 0.041011 |
+
+The fresh three-column comparison is
+`reports/mandel-secondary-origin-fix/contact-sheet.png`; commands, binary/image
+hashes and full metrics are in that directory's `summary.json`. Five MAEs
+improve and two worsen. This is retained as a scale-dependent origin bug fix,
+not certified full appearance parity or a measured speedup.
+
+Validation passes: 213 Rust tests, seven Python harness tests, formatting,
+diff checks, documentation build and extracted source-package build. Both
+native controls remain byte-exact. The temporary probe module is excluded
+from production source and packaging; only the analytic regression is retained.
+
 ## Experimental chunk tiling
 
 The optional tiled dispatcher now supports sample chunks as well as the older
@@ -389,10 +470,12 @@ tiled-renderer default or shader change was retained.
 3. Audit authored shadow stepping/occlusion, lighting and palette behavior
    independently. The authored direct-shadow origin now uses the surface
    threshold, but later stepping still uses FPT's dynamic threshold and a
-   position-only march result. Secondary bounce offsets remain fixed. Do not
-   conflate these with primary geometry. Prioritize the scene 13 brightness
-   outlier and scene 01's remaining bright bands before claiming appearance
-   parity.
+   position-only march result. Authored secondary bounce offsets now use the
+   surface threshold too; native FPT offsets remain fixed. Do not conflate
+   these with primary geometry. Scene 01's bright rings are removed by the
+   secondary-origin correction. Prioritize scene 02's missing authored
+   material response and scene 13's remaining brightness mismatch before
+   claiming appearance parity.
    Authored diffuse shading is now independent of the native FPT roughness
    weight, with a real GPU regression and seven-scene comparison above.
    Expand the gate to the ranked 50 and track the larger corpus separately.

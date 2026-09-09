@@ -6718,7 +6718,11 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
                 pixelcolor *= mix(float3(1.0f), material.rgb, 0.35f) * (1.0f - fresnel * 0.5f);
             }
         }
-        rp += n * 0.001f * sign(dot(dr, n));
+        // Escape the accepted hit band without a fixed world-space jump that
+        // can either re-hit this surface or skip nearby small-scale geometry.
+        float bounce_offset = cfg.sdf_id == SDF_MANDELBULBER && authored_path
+            ? mandelbulberMarchThreshold(rp, cfg) : 0.001f;
+        rp += n * bounce_offset * sign(dot(dr, n));
         if (cfg.sdf_russian_roulette != 0u && i + 1 < bounces && float(i + 1) >= cfg.sdf_rr_start) {
             float survival = clamp(max(pixelcolor.x, max(pixelcolor.y, pixelcolor.z)), clamp(cfg.sdf_rr_min_prob, 0.01f, 1.0f), 1.0f);
             float rr = hash13(float3(xy, frame * 19.19f + float(i) * 3.17f));

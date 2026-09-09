@@ -135,6 +135,55 @@
       "Native controls prove output equivalence, not unchanged performance; no speedup is claimed."
     ]
   },
+  "authored_secondary_origin_correction": {
+    "baseline_commit": "64251c2",
+    "candidate_binary_sha256": "de5cebcc798717beec50507fab0d7b32a278a6d65d28287f8e64adbea94056cd",
+    "scope": "Authored Mandel secondary normal offset uses one surface threshold; native FPT unchanged",
+    "analytic_cases": 36,
+    "analytic_result": "passed; old fixed offset skipped nearby small-scale secondary geometry",
+    "diagnostic_spp": 8,
+    "diagnostic_maximum_axis": 160,
+    "mean_immediate_secondary_rehits_baseline_threshold_double": {
+      "01": [0.26416015412580846, 0.000058593749223897854, 0.00022786458178112904],
+      "03": [1.6933740116306581, 0.000888671869179234, 0.0006005859316792339],
+      "13": [0.275537106753909, 0.005439453062426765, 0.005302734321448952]
+    },
+    "maximum_axis": 300,
+    "aspect": "authored",
+    "samples": 32,
+    "samples_per_chunk": 1,
+    "tile_rows": 32,
+    "completed_fpt_captures": 14,
+    "geometry_changed_pixels": 0,
+    "native_control_changed_pixels": 0,
+    "reference_captures_reused_and_hash_verified": true,
+    "mae_before_after": {
+      "01": [0.10334748971193415, 0.09674089566690873],
+      "02": [0.29969078650526615, 0.4074758092586147],
+      "03": [0.18467031227305736, 0.14323722585330428],
+      "04": [0.026587441297506655, 0.026001239409343985],
+      "05": [0.06040873396272089, 0.06047664972161704],
+      "13": [0.13247613652868556, 0.11637801016702977],
+      "17": [0.046700319535221496, 0.041011270878721855]
+    },
+    "raw_report": "reports/mandel-secondary-origin-fix/summary.json",
+    "contact_sheet": "reports/mandel-secondary-origin-fix/contact-sheet.png",
+    "native_controls": "reports/mandel-secondary-origin-fix/native/summary.json",
+    "bounce_sweep": "reports/mandel-light-response/summary.json",
+    "offset_diagnostics": "reports/mandel-light-response/offsets/summary.json",
+    "rust_tests_passed": 213,
+    "python_tests_passed": 7,
+    "formatting": "passed",
+    "documentation_build": "passed",
+    "extracted_package_build": "passed",
+    "limitations": [
+      "Five appearance MAEs improve; 02 and 05 worsen. Not full appearance parity.",
+      "Scene 02 remains grey/dark against the orange/gold native reference; effective legacy state needs investigation.",
+      "Scene 13 is less bright but still mismatches the native reference.",
+      "Residual immediate hits and full dielectric transport are not certified by the plane regression.",
+      "No speedup or unchanged-performance claim; diagnostic timing is not a benchmark."
+    ]
+  },
   "limits": [
     "Tiling is opt-in; unchanged defaults can still hit the watchdog on heavy scenes.",
     "Wall seconds are not GPU benchmark time; no speedup is claimed.",
