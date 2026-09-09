@@ -1,0 +1,603 @@
+{
+  "version": 1,
+  "renderer_checkpoint": "2e4917f",
+  "audit_harness_commit": "86063a2",
+  "scene_manifest": "tests/fixtures/mandel-release-ranked50.json",
+  "visual_parity_certified": false,
+  "settings": {
+    "max_axis": 300,
+    "samples": 32,
+    "aspect": "authored",
+    "chunk_samples": 1,
+    "timeout": 900,
+    "orientation": "native; no postprocessing flips/crops",
+    "reference_backend": "CPU",
+    "bounces": "FPT scene/config default; metadata records effective configuration"
+  },
+  "environment": {
+    "FPT_MANDEL_TILED_DISPATCH": "1",
+    "FPT_MANDEL_TILE_ROWS": "32"
+  },
+  "executables": {
+    "/Volumes/Ventura/Projects/FPT-metal-release/target/release/fpt-metal": "1ce3d5fd5d3d2c5ad55559a05ef032eaaecdc204eb1a859c3d668ec0f1c5a21e",
+    "/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2": "ecf9de8f749c6c7956573d8c7e7b7ea151562f0db48856d51095f8892071bda8"
+  },
+  "harness_hashes": {
+    "run_mandel_support_suite.py": "1925c38cf731201bb7e913a0db77659f16f62edc317ee96d035a87245a32c98f",
+    "run_release_canaries.py": "21387d8ec538178aefef7fcb7f0b454f6b488820330a0d922b0e3d7d3cb089a5"
+  },
+  "first_pass": {
+    "geometry": 50,
+    "authored": 49,
+    "mandel": 47,
+    "compilation_passed": 50,
+    "completed_scenes": 50
+  },
+  "authored_after_one_retry": 50,
+  "native_timeout_scene_ids": [
+    "09",
+    "17",
+    "49"
+  ],
+  "authored_retry": {
+    "scene_id": "31",
+    "first_result": "Metal accumulation chunk failed at sample 10 row 96: GPU recovery InnocentVictim",
+    "same_settings_retry": "ok",
+    "recurrence_ruled_out": false
+  },
+  "visual_counts": {
+    "geometry": {
+      "coarse_match": 40,
+      "reference_unavailable": 3,
+      "detail_uncertain": 4,
+      "major_mismatch": 3
+    },
+    "appearance": {
+      "different": 17,
+      "close": 5,
+      "major_gap": 25,
+      "not_comparable": 3
+    }
+  },
+  "white_geometry_controls": {
+    "scene_ids": [
+      "25",
+      "38",
+      "48"
+    ],
+    "results": {
+      "25": "ok",
+      "38": "ok",
+      "48": "ok"
+    },
+    "finding": "All three retain structural/composition mismatches after disabling volumes, AO, specular/reflection, DOF and palette colour in native controls.",
+    "lighting_matched_to_fpt": false
+  },
+  "artifacts": {
+    "directory": "reports/mandel-release-ranked50",
+    "hashes": {
+      "summary.json": "7c0a55b80bbf4727722981fa6d69331ab493c5347e3ac782cb1b0cc2a97bf7b5",
+      "followup.json": "86b2d61e48022d9ddcbed60c49cbbcc5e6f92e22501d8655ef5ab7748884e605",
+      "followup_checks.py": "9a36c8b54d0d67f3ba585094876c1a3dacab8433c582d8e0a89266177ff122ac",
+      "visual-review.json": "ad2f8ae83a4d2f3943b4fcb047cfbc8af134aab0c59c5c5b91dc272788d235f8"
+    },
+    "reviewed_pages": "reports/mandel-release-ranked50/reviewed-pages/page-{01..05}.png",
+    "geometry_controls": "reports/mandel-release-ranked50/geometry-controls.png",
+    "raw_artifacts_packaged": false
+  },
+  "limitations": [
+    "Manual inspection of native CPU authored / FPT neutral geometry / FPT authored sheets.",
+    "coarse_match refers only to large-scale structure/framing at 300 maximum axis, not exact geometry parity.",
+    "Appearance labels are qualitative, not thresholds derived from global MAE.",
+    "Unavailable references remain unassessed.",
+    "Additional native white controls for 25, 38 and 48 disable fog, AO, specular, reflection, DOF and palette colour without changing camera/formulas; direct lighting is not matched to FPT.",
+    "Only ranked 50 audited; this is not current validation of the full 746-scene corpus or arbitrary Mandel scenes.",
+    "Native references retain authored Monte Carlo/DOF sample settings; 32 SPP applies only to FPT.",
+    "No CVOX/NAADF export gate was run in this audit.",
+    "Capture wall time is not a performance benchmark.",
+    "Only AO external maps were fingerprinted.",
+    "Fog/cloud implementation remains out of scope; appearance gaps are still recorded."
+  ],
+  "reviews": [
+    {
+      "id": "01",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.09674509803921569,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Pit, terrace and plane framing align. FPT lacks the native reference's bright white foreground and has different pit shading."
+    },
+    {
+      "id": "02",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.13708048110763044,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Major lobes and framing align; coloured AO restores the warm palette. Highlights, valley contrast and small-scale surface response still differ."
+    },
+    {
+      "id": "03",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.14323712418300655,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Cube silhouette, cutouts and ribbed face align. FPT is yellow/cream rather than the reference's cool pale blue."
+    },
+    {
+      "id": "04",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.02599674655047204,
+      "geometry": "coarse_match",
+      "appearance": "close",
+      "notes": "Cylinder crop, top bands and strong red/blue material bands align; residual shading and fine pattern differences remain."
+    },
+    {
+      "id": "05",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.06046896151053014,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Room walls and openings align. FPT is noticeably darker, especially the foreground floor and recessed regions."
+    },
+    {
+      "id": "06",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.10494293875574921,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Diagonal channels and terraces align. Native depth-of-field blur is absent and FPT has darker, warmer shading."
+    },
+    {
+      "id": "07",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.22607768367044387,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "The perforated cube is present in the neutral view. Native luminous clouds and their illumination are absent; FPT authored is nearly black."
+    },
+    {
+      "id": "08",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.5102553531603304,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "The neutral view retains the curved stalks and petals seen in the native reference. The authored FPT render is effectively black despite an OK execution status."
+    },
+    {
+      "id": "09",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "timeout",
+      "appearance_mae": null,
+      "geometry": "reference_unavailable",
+      "appearance": "not_comparable",
+      "notes": "FPT neutral geometry is visible but authored output is nearly black. Native CPU reference timed out at 900 seconds; current-checkpoint reference fidelity cannot be assessed."
+    },
+    {
+      "id": "10",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.15696996368917937,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Curved plates, thin strands and framing align. The authored FPT view is substantially darker than the native gold/blue reference."
+    },
+    {
+      "id": "11",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.2821377099975793,
+      "geometry": "detail_uncertain",
+      "appearance": "major_gap",
+      "notes": "The overall close-up composition is similar, but the brightly shaded reference lobes are hard to reconcile with the neutral facets at this resolution. FPT authored is much darker; isolated depth/normal comparison is needed before claiming geometry parity."
+    },
+    {
+      "id": "12",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.0693642846768337,
+      "geometry": "coarse_match",
+      "appearance": "close",
+      "notes": "Symmetric silhouette, lobes and internal layering align. FPT is smoother and less contrasty; fine highlights differ."
+    },
+    {
+      "id": "13",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.11637240377632534,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "All four loop shapes align. FPT material bands and background are substantially brighter."
+    },
+    {
+      "id": "14",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.2128317211328976,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Repeated towers, holes and ground framing align in neutral mode. FPT authored is almost black instead of the bright red reflective reference."
+    },
+    {
+      "id": "15",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.09111721132897603,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Silhouette and main openings align. FPT loses contrast in inner green recesses and has softer details."
+    },
+    {
+      "id": "16",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.041581568627450986,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Outer frame and openings align; FPT adds bright green interior illumination where the native reference is dark."
+    },
+    {
+      "id": "17",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "timeout",
+      "appearance_mae": null,
+      "geometry": "reference_unavailable",
+      "appearance": "not_comparable",
+      "notes": "Both FPT modes completed with visible structure. The fresh native CPU reference timed out at 900 seconds, so it is not assessed against an older substituted image."
+    },
+    {
+      "id": "18",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.15363045751633989,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Large spherical surface, supports and framing align. FPT authored lacks the strong blue illumination and is substantially darker."
+    },
+    {
+      "id": "19",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.025707058823529413,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Rounded labyrinth silhouette and grooves align. FPT red material has much weaker highlights and flatter lighting."
+    },
+    {
+      "id": "20",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.2711717501815541,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Tunnel framing and major wall cutouts align. FPT authored has reduced contrast and visibly noisy/dark lower walls; fine cavity agreement needs a neutral reference."
+    },
+    {
+      "id": "21",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.6207561073081436,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Main ridges, arches and viewpoint are recognizable in the neutral view. FPT authored is almost black instead of the bright pink native global-illumination render."
+    },
+    {
+      "id": "22",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.13449660130718954,
+      "geometry": "detail_uncertain",
+      "appearance": "major_gap",
+      "notes": "Framing is similar, but native reflective highlights obscure direct geometry comparison. FPT retains only a few bright regions and loses much of the native foreground lighting/pattern."
+    },
+    {
+      "id": "23",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.2258643815056887,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Framing and major bulb-like corner structures align. FPT authored is nearly black; native patterned walls and blue/white illumination are largely missing."
+    },
+    {
+      "id": "24",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.2091287145969499,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Spherical columns and ceiling layout align in neutral mode. FPT authored loses the bright yellow/white highlights and atmospheric depth, leaving a much darker view."
+    },
+    {
+      "id": "25",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.4464430694747034,
+      "geometry": "major_mismatch",
+      "appearance": "major_gap",
+      "notes": "Fog-free, white-material native control retains curved ring/arm structures; FPT instead shows a dense cross/grid of spheres. Structural/composition mismatch persists without fog, AO or reflections."
+    },
+    {
+      "id": "26",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.055380217864923746,
+      "geometry": "coarse_match",
+      "appearance": "close",
+      "notes": "Tilted cylinder, ribbed ends and central pattern align. FPT is brighter, especially along the pale end bands."
+    },
+    {
+      "id": "27",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.2058055991285403,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Central arch, room layout and floor framing are recognizable. FPT authored loses most bright gold/pink lighting and reflections."
+    },
+    {
+      "id": "28",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.059610704429920114,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Ring silhouette, hole and main bead-like structures align. FPT lacks the reference's strong highlights and contrast."
+    },
+    {
+      "id": "29",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.1993474881076691,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Large block/corridor framing is recognizable. FPT authored lacks the orange volume/light response and is nearly black."
+    },
+    {
+      "id": "30",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.21828529411764708,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Neutral mode retains the chamber's sphere columns and floor/ceiling framing. FPT authored loses nearly all patterned surfaces, leaving a dim field and a few white pixels."
+    },
+    {
+      "id": "31",
+      "geometry_status": "ok",
+      "authored_status": "execution_failed",
+      "native_status": "ok",
+      "appearance_mae": null,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Neutral geometry and successful retry retain the native towers and ledge. FPT highlights are weaker. Original authored attempt hit Metal GPU-recovery InnocentVictim; identical-settings retry passed, but recurrence is not ruled out."
+    },
+    {
+      "id": "32",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.2499328099418597,
+      "geometry": "detail_uncertain",
+      "appearance": "major_gap",
+      "notes": "Native volumetric/reflection/DOF effects obscure a fair geometry comparison. Neutral FPT shows major spheres and sparse thin structures, while authored FPT is almost black."
+    },
+    {
+      "id": "33",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.17743298474945535,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Looped pipes, symmetry and foreground framing align. FPT authored is much darker and lacks native metallic highlights."
+    },
+    {
+      "id": "34",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.1415933478576616,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Sphere columns and repeated cubic details align in the neutral view. FPT authored is much darker and omits most gold/white specular response."
+    },
+    {
+      "id": "35",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.07983129992737835,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Main perforated blocks and detached frame pieces align. FPT is brighter with different shading and local surface contrast."
+    },
+    {
+      "id": "36",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.11267854756717502,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Symmetric curved plates and central fine structures align. FPT introduces strong pink/cyan surface colours where the reference is predominantly pale gold/white."
+    },
+    {
+      "id": "37",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.33980264342774147,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Large bowl-like forms and curved stems have matching placement. FPT authored is very dark purple; the native pink fog and distant illumination are absent, so far-field detail is not certified."
+    },
+    {
+      "id": "38",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.5551764270152506,
+      "geometry": "major_mismatch",
+      "appearance": "major_gap",
+      "notes": "Fog-free native control retains separated twisting columns and open gaps. FPT instead shows dense geometry and a narrow horizon gap. Structural/composition mismatch persists without volume/light effects."
+    },
+    {
+      "id": "39",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.21230499152747517,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Central column, repeated platforms and curved supports align. FPT is much darker, with weak native pale highlights and pink floor response."
+    },
+    {
+      "id": "40",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.43633406814402287,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Large panels, sphere clusters and tunnel framing are recognizable. Native bright blue/pink orbit-trap/light effects are absent; FPT is dark and essentially greyscale."
+    },
+    {
+      "id": "41",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.02799061728395062,
+      "geometry": "coarse_match",
+      "appearance": "close",
+      "notes": "Receding perforated blocks, framing and red/green/yellow palette align closely. Local brightness and small detail differences remain."
+    },
+    {
+      "id": "42",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.3563125136971291,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Large rounded forms and crater/ring placements align. FPT loses the native bright blue/white material response and is mostly dark grey/red."
+    },
+    {
+      "id": "43",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.13754850641491162,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Central opening and surrounding faceted structure align. FPT is darker and its inner colour/illumination differs."
+    },
+    {
+      "id": "44",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.1575580343742435,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Triangular framework, arches and framing align. FPT yellow material is substantially brighter and loses native midtone contrast."
+    },
+    {
+      "id": "45",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.014998620188816267,
+      "geometry": "coarse_match",
+      "appearance": "close",
+      "notes": "Lobed silhouette, grooves and orange/red appearance align closely. Groove contrast and highlight shape still differ."
+    },
+    {
+      "id": "46",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.3390427092599038,
+      "geometry": "detail_uncertain",
+      "appearance": "major_gap",
+      "notes": "Some box placement is recognizable, but large lit/fog regions are replaced by black or a flat cyan patch. A fog-free geometry reference is needed; the authored iteration-fog scene is not visually supported."
+    },
+    {
+      "id": "47",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.65616426046962,
+      "geometry": "coarse_match",
+      "appearance": "major_gap",
+      "notes": "Repeated rings and curved structures align in neutral mode. Native pale gold/pink and blue illumination is largely absent in the dark FPT authored image."
+    },
+    {
+      "id": "48",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.41018534979423865,
+      "geometry": "major_mismatch",
+      "appearance": "major_gap",
+      "notes": "White native control retains a large plane, thin supports and foreground structures; FPT is almost empty. Source camera-to-target distance is about 3e-8 at coordinates near 20. Precision/deep-zoom handling is a hypothesis, not an established cause."
+    },
+    {
+      "id": "49",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "timeout",
+      "appearance_mae": null,
+      "geometry": "reference_unavailable",
+      "appearance": "not_comparable",
+      "notes": "Both FPT modes render a populated cavern. Fresh native reference timed out; the historically mismatched duplicate-filename reference was deliberately not substituted."
+    },
+    {
+      "id": "50",
+      "geometry_status": "ok",
+      "authored_status": "ok",
+      "native_status": "ok",
+      "appearance_mae": 0.257442962962963,
+      "geometry": "coarse_match",
+      "appearance": "different",
+      "notes": "Tall prism placement and smaller floor blocks align. FPT lacks native depth-of-field blur and blue/grey material response, and has noisy bright floor illumination."
+    }
+  ]
+}

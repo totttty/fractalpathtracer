@@ -260,6 +260,20 @@
       "Reported capture times are not a fresh alternating performance benchmark; no speedup is claimed."
     ]
   },
+  "ranked50_support_audit": {
+    "renderer_checkpoint": "2e4917f",
+    "report": "docs/mandel-ranked50-review.json",
+    "completed_scene_attempts": 50,
+    "geometry_captures": 50,
+    "authored_captures_first_pass": 49,
+    "authored_captures_after_one_retry": 50,
+    "native_references": 47,
+    "native_timeout_scene_ids": ["09", "17", "49"],
+    "white_control_confirmed_structure_outliers": ["25", "38", "48"],
+    "visual_parity_certified": false,
+    "renderer_changed": false,
+    "python_tests_passed": 15
+  },
   "limits": [
     "Tiling is opt-in; unchanged defaults can still hit the watchdog on heavy scenes.",
     "Wall seconds are not GPU benchmark time; no speedup is claimed.",

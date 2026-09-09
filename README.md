@@ -141,9 +141,17 @@ speedup at least `1.10x`, and records one explicit rejection.
 Formula geometry is broadly covered, but Mandelbulber's complete appearance
 system is not: volumetric fog and clouds, visible light geometry, advanced
 reflection/transparency gradients, textures, and some material graphs can
-still make an otherwise correct fractal look different. Three of 746 valid
-corpus scenes currently reach visible diffuse-normal geometry but fail the
-full path-traced appearance gate. Generated formula artifacts retain
+still make an otherwise correct fractal look different. The historical
+746-scene execution sweep is not a current visual-parity certificate: a
+successful render can still have major lighting or material differences.
+The [ranked-50 support audit](docs/release-preparation.md#completed-checkpoint-audit)
+separates compilation, neutral-geometry rendering, authored rendering and
+manual reference review. At checkpoint `2e4917f`, all 50 scenes produced both
+FPT modes (one authored render needed a retry), while 47 native references
+completed. White-material controls confirm structural outliers in scenes
+25, 38 and 48, and many authored appearance differences remain. Neither this
+audit nor the historical sweep certifies all Mandelbulber scenes or complete
+appearance parity. Generated formula artifacts retain
 Mandelbulber2's GPLv3-or-later boundary and stay in ignored runtime caches; the
 Apache-2.0 repository does not vendor the upstream generated formula corpus.
 

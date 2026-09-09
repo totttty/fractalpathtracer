@@ -84,7 +84,7 @@ and byte-exact FPT RGB captures, intended for the later library extraction.
 The broader support gate uses `tests/fixtures/mandel-release-ranked50.json`.
 This is the historical ranked-50 ordering with full source-relative paths and
 SHA-256 hashes, not filename-only matching. Rank 49 has two different upstream
-files with the same basename. This manifest selects the collection IFS scene
+files with the same basename. This manifest selects the collection scene
 corresponding to the historical FPT capture; the old sheet appears to have used
 the unrelated root-level file for its Mandel reference. Both new renderers
 receive exactly the same pinned source.
@@ -120,6 +120,68 @@ implement, so appearance MAE is not an isolated geometry metric. Compilation
 success is established by a successful production render; timeouts and
 unsupported scene contracts are reported separately. Geometry/appearance
 fidelity remains explicitly unreviewed until the images are inspected.
+
+### Completed checkpoint audit
+
+Renderer checkpoint `2e4917f`, harness `86063a2`. All 50 scene attempts and
+manual reviews of the available images are complete. Detailed per-scene findings, input hashes
+and raw-artifact hashes are in
+[`mandel-ranked50-review.json`](mandel-ranked50-review.json).
+
+| Check | Result |
+| --- | --- |
+| FPT compilation and neutral geometry capture | 50/50 |
+| FPT authored capture, first pass | 49/50 |
+| FPT authored capture, after one identical-settings retry | 50/50 |
+| Fresh native CPU reference | 47/50 |
+| Coarse structure/framing visually consistent | 40/50 |
+| Confirmed structural/composition outliers | 25, 38, 48 |
+| Geometry detail still uncertain | 11, 22, 32, 46 |
+| Reference unavailable after 900-second timeout | 09, 17, 49 |
+| Authored appearance: close / different / major gap / unassessed | 5 / 17 / 25 / 3 |
+
+These are execution and qualitative review counts, **not exact parity gates**.
+"Coarse" means large-scale structure at 300 maximum axis; it does not certify
+fine details or unseen geometry. Only FPT uses 32 SPP here. Native references
+retain their source Monte Carlo/DOF settings, which can be much more expensive.
+
+Scene 31 initially failed at sample 10, row 96 with a Metal GPU-recovery
+`InnocentVictim` error. Its identical-settings retry completed and produced a
+reviewable image. The original failure remains recorded; one successful retry
+does not establish that recovery failures cannot recur.
+
+Additional native white-material controls for 25, 38 and 48 disabled volumes,
+AO, specular/reflections, DOF and palette colour without changing camera or
+formulas. Their structural/composition mismatch persists. The controls retain
+native direct-light directions, so they are not pixel-equivalent lighting
+references. Scene 48 is also an extreme-scale diagnostic candidate: its
+camera-to-target separation is about `3e-8` at coordinates near `20`. This is
+evidence to investigate precision, not a proven diagnosis.
+
+The five final local sheets are
+`reports/mandel-release-ranked50/reviewed-pages/page-01.png` through
+`page-05.png`; scene 31 is labelled `ok_after_retry`. Original first-pass sheets,
+logs, commands, failed outcomes, `followup.json`, `visual-review.json`,
+`support-reviewed.csv` and the
+white-control sheet `geometry-controls.png` remain alongside them. Generated
+images are not shipped in the source package. The follow-up driver and its
+hash are retained with those local artifacts.
+
+Next work, in order:
+
+1. Isolate geometry/camera/evaluator differences in 25 and 38, and precision
+   limits in 48, using matched neutral depth/normal probes before changing
+   appearance. Do not assume every disagreement is a camera flip.
+2. Keep the scene-31 recovery case as a repeatability canary for tiled dispatch.
+3. Diagnose non-volume appearance failures separately: dark authored scenes
+   such as 14/21/30, and palette/material differences such as 36. Fog and clouds
+   remain deferred; do not hide their absence by changing reference settings.
+4. Add neutral native controls for 11/22/32/46 and finish native references for
+   09/17/49 with an explicit larger budget or clearly labelled reduced-quality
+   follow-up. Do not substitute old filename-only references.
+5. Expand the current-checkpoint execution audit to the larger corpus, then
+   continue the typed production library/CVOX work below. This audit did not
+   test CVOX or NAADF export and does not certify all Mandel scenes.
 
 ## First discovered correctness issue
 
