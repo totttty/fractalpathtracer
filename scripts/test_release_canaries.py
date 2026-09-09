@@ -4,11 +4,43 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from run_release_canaries import difference, execute, mandel_reference_command, scene_dimensions, validate_manifest
+from run_release_canaries import difference, execute, lightmap_asset, mandel_reference_command, scene_dimensions, validate_manifest, verify_lightmap
 from PIL import Image
 
 
 class CanaryTests(unittest.TestCase):
+    def test_reference_can_pin_external_lightmap(self):
+        with tempfile.TemporaryDirectory() as temp:
+            lightmap = Path(temp)/'ambient texture.png'
+            Image.new('RGB', (2, 2), 'white').save(lightmap)
+            command = mandel_reference_command(Path('/bin/mandel'), Path('/scene.fract'),
+                (300, 225), Path('/out.png'), lightmap=lightmap)
+            self.assertEqual(command[command.index('-O')+1],
+                'opencl_enabled=0#file_lightmap='+str(lightmap.resolve()))
+
+    def test_reference_lightmap_hash_detects_mutation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp)/'lightmap.png'
+            path.write_bytes(b'first')
+            asset = lightmap_asset(path)
+            self.assertEqual(asset['sha256'], hashlib.sha256(b'first').hexdigest())
+            verify_lightmap(asset)
+            path.write_bytes(b'second')
+            with self.assertRaises(ValueError):
+                verify_lightmap(asset)
+        verify_lightmap(None)
+
+    def test_reference_lightmap_rejects_missing_or_override_delimiters(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            with self.assertRaises(ValueError):
+                lightmap_asset(root/'missing.png')
+            for name in ('bad#override.png', 'bad=value.png', 'bad\nline.png', 'bad\rline.png'):
+                path = root/name
+                path.write_bytes(b'data')
+                with self.assertRaises(ValueError):
+                    lightmap_asset(path)
+
     def test_reference_forces_cpu_not_saved_app_backend(self):
         command = mandel_reference_command(Path('/bin/mandel'), Path('/scene.fract'),
                                            (300,225), Path('/out.png'))

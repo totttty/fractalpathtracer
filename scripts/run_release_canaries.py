@@ -62,9 +62,26 @@ def execute(command, folder, timeout, env=None):
     return elapsed
 
 
-def mandel_reference_command(binary, scene, size, output):
+def lightmap_asset(path):
+    path = Path(path).resolve()
+    if any(char in str(path) for char in ('#', '=', '\n', '\r')):
+        raise ValueError('lightmap path contains a Mandel override delimiter')
+    if not path.is_file():
+        raise ValueError('missing Mandel reference lightmap: '+str(path))
+    return dict(path=str(path), sha256=sha256(path))
+
+
+def verify_lightmap(asset):
+    if asset is not None and lightmap_asset(asset['path']) != asset:
+        raise ValueError('Mandel reference lightmap changed during capture')
+
+
+def mandel_reference_command(binary, scene, size, output, lightmap=None):
     # -C disables console colours; it does not select the CPU renderer.
-    return [str(binary.resolve()), '-n', '-C', '-O', 'opencl_enabled=0', '-f', 'png',
+    override = 'opencl_enabled=0'
+    if lightmap is not None:
+        override += '#file_lightmap='+lightmap_asset(lightmap)['path']
+    return [str(binary.resolve()), '-n', '-C', '-O', override, '-f', 'png',
             '-r', f'{size[0]}x{size[1]}', '-o', str(output), str(scene)]
 
 
@@ -122,6 +139,8 @@ def main():
     parser.add_argument('--scene-root', type=Path, required=True)
     parser.add_argument('--mandelbulber-root', type=Path, required=True)
     parser.add_argument('--mandelbulber-bin', type=Path, required=True)
+    parser.add_argument('--mandel-lightmap', type=Path,
+                        help='pin an AO lightmap for Mandel references only; does not change FPT')
     parser.add_argument('--fpt', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--max-axis', type=int, default=300)
@@ -137,6 +156,10 @@ def main():
     for path in (args.fpt, args.mandelbulber_bin):
         if not path.is_file():
             parser.error('missing executable: '+str(path))
+    try:
+        lightmap = lightmap_asset(args.mandel_lightmap) if args.mandel_lightmap else None
+    except ValueError as error:
+        parser.error(str(error))
     output = args.output.resolve()
     if output.exists() and any(output.iterdir()):
         parser.error('output must be empty; captures are never silently reused')
@@ -147,12 +170,20 @@ def main():
                     orientation='native output; no post-render flip',
                     reference='fresh Mandelbulber CPU authored render',
                     bounces='FPT scene/config default; see raw render metadata')
+    if lightmap:
+        # Paths may relocate; baseline compatibility depends on texture bytes.
+        settings['mandel_lightmap_sha256'] = lightmap['sha256']
     if baseline and (baseline['settings'] != settings or baseline['manifest'] != manifest):
         parser.error('baseline scene hashes/settings differ')
     summary = dict(settings=settings, manifest=manifest, captures_fresh=True,
                    visual_parity_certified=False, rows=[],
                    command_timeout_seconds=args.timeout,
-                   mandel_reference_override='opencl_enabled=0',
+                   mandel_reference_override='opencl_enabled=0'+(
+                       '#file_lightmap='+lightmap['path'] if lightmap else ''),
+                   mandel_reference_lightmap=lightmap,
+                   reference_asset_limitations=(
+                       'AO lightmap pinned; other external textures are not tracked' if lightmap else
+                       'External reference textures, including the default AO lightmap, are not pinned'),
                    fpt_environment={k:v for k,v in os.environ.items() if k.startswith('FPT_')},
                    executables={str(p.resolve()): sha256(p) for p in (args.fpt,args.mandelbulber_bin)})
     for scene in manifest['scenes']:
@@ -167,11 +198,15 @@ def main():
             for mode in ('mandel', 'geometry', 'authored'):
                 folder = output / scene['id'] / mode
                 if mode == 'mandel':
-                    command = mandel_reference_command(args.mandelbulber_bin, path, size, folder/'scene.png')
+                    verify_lightmap(lightmap)
+                    command = mandel_reference_command(args.mandelbulber_bin, path, size, folder/'scene.png',
+                        lightmap=Path(lightmap['path']) if lightmap else None)
                 else:
                     command = [str(args.fpt.resolve()), 'render', *common, '--out', str(folder),
                                '--mandel-appearance', 'geometry' if mode=='geometry' else 'authored-path']
                 elapsed = execute(command, folder, args.timeout)
+                if mode == 'mandel':
+                    verify_lightmap(lightmap)
                 if mode == 'mandel' and 'OpenCl - rendering' in (folder/'stdout.log').read_text():
                     raise ValueError('Mandel reference used OpenCL despite CPU override')
                 row['captures'][mode] = dict(image_result(folder, size), wall_seconds=elapsed)

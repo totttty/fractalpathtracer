@@ -54,6 +54,13 @@ python3 scripts/run_release_canaries.py \
   --output reports/release-canaries
 ```
 
+Pass `--mandel-lightmap "$MANDEL_LIGHTMAP"` to pin the AO texture used by native
+references. The runner records its SHA-256, includes it in baseline settings,
+and verifies it before and after each native capture. This option affects
+Mandel references only, not FPT. Without it, the report explicitly marks
+external reference textures as unpinned. Other textures remain untracked even
+when this AO lightmap is pinned.
+
 The runner requires an empty output directory and captures new original
 Mandelbulber CPU renders, FPT neutral geometry views and FPT authored-path views.
 The maximum image axis is 300, aspect ratio is authored, and FPT uses 32 SPP.
@@ -361,6 +368,76 @@ diff checks, documentation build and extracted source-package build. Both
 native controls remain byte-exact. The temporary probe module is excluded
 from production source and packaging; only the analytic regression is retained.
 
+## Scene 02 coloured ambient diagnosis
+
+The earlier description of scene 02 as a missing orange/gold *material* was
+incorrect. Native Mandelbulber 2.35-dev was asked to resave a copy of the
+version-2.14 source. The result still disables palette colours and retains grey
+`mat1_surface_color 8800 8800 8800`. Its migration adds a legacy specular width
+of 1, but does not turn the surface orange. Original scene files were not edited.
+
+Four fresh CPU captures at 300x169 isolate the source of the warm appearance:
+
+| Native variant | Mean RGB channel spread, 8-bit | Observation |
+| --- | ---: | --- |
+| Original legacy scene | 87.6780 | Orange/gold |
+| Native-resaved scene | 87.6698 | Same warm appearance |
+| AO disabled | 0.3765 | Dark, near-neutral grey |
+| Constant-white AO lightmap | 0.0968 | Near-neutral; deliberately unnormalised and clipped |
+
+Channel spread means `max(R,G,B)-min(R,G,B)` averaged over the image, not MAE.
+The original and migrated captures are visually consistent, not byte-exact;
+their small pixel variation is retained in raw reports. The white-map control
+changes the lightmap alone: its clipping makes it unsuitable for brightness
+comparison, but removal of chroma confirms the source of the warm illumination.
+The unchanged FPT checkpoint has zero channel spread for this grey scene.
+
+Upstream `src/render_worker.cpp::PrepareAOVectors` samples directions and RGB
+colours from `file_lightmap`. `src/shader_ambient_occlusion.cpp` traces their
+visibility, and `src/shader_object.cpp` multiplies the resulting colour by AO
+strength and AO tint before surface shading. Scene 02 selects multiple-ray AO
+with strength 5.5. Its default lightmap is a coloured environment texture, not
+a neutral occlusion multiplier. Installed and source-tree `lightmap.jpg` bytes
+match, with SHA-256
+`44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7`.
+
+FPT currently replaces this with a neutral, clamped `strength * 0.08` term. It
+does not read the AO lightmap or perform that directional visibility integral.
+Consequently, recolouring the material or restoring false secondary hits would
+hide the missing lighting implementation rather than fix it. No shader or
+material-parser behaviour is changed in this diagnostic checkpoint.
+
+Raw native commands, original/migrated captures, the numeric white texture
+fixture, source hashes and the comparison sheet are in
+`reports/mandel-legacy-appearance`. The reference harness now supports explicit
+lightmap pinning; ten Python tests pass, including delimiter rejection and
+mutation detection. A real pinned scene-02 run at 64x36 / 1 FPT SPP completed
+all three capture modes and recorded the texture hash. That small run validates
+harness wiring, not appearance quality. Prior unpinned captures have not been
+retroactively relabelled as fully reproducible.
+
+### Next implementation
+
+1. Add an explicit authored AO asset contract: resolved lightmap path and hash,
+   rotation, AO mode, quality, strength and tint. Keep assets external unless
+   redistribution is approved; do not silently substitute a neutral map.
+2. Reproduce the native direction/texel mapping and a deterministic CPU test
+   oracle. Do not reduce the texture to its average RGB: visibility is
+   direction-dependent and supplies much of this scene's colour variation.
+3. Implement the multiple-ray ambient response only for authored Mandel scenes
+   that request it, preserving native FPT and neutral geometry paths. Follow
+   the native threshold, ray range and visibility weights, with explicit
+   diagnostics for exhausted/unsupported paths.
+4. Keep faithful authored AO distinct from ordinary physical environment
+   lighting. Decide how the current extra environment term is handled so the
+   same illumination is not silently added twice. Do not bundle unrelated
+   palette, specular or exposure changes into this port.
+5. Test constant and directional coloured maps with open/occluded analytic
+   geometry, texture changes/cache invalidation, rotation and missing assets.
+6. Run the seven-scene 32-SPP comparison with pinned reference assets, plus
+   exact neutral-geometry and native-control gates. Benchmark the additional
+   cost separately; a coloured-lighting match alone is not a performance win.
+
 ## Experimental chunk tiling
 
 The optional tiled dispatcher now supports sample chunks as well as the older
@@ -473,8 +550,8 @@ tiled-renderer default or shader change was retained.
    position-only march result. Authored secondary bounce offsets now use the
    surface threshold too; native FPT offsets remain fixed. Do not conflate
    these with primary geometry. Scene 01's bright rings are removed by the
-   secondary-origin correction. Prioritize scene 02's missing authored
-   material response and scene 13's remaining brightness mismatch before
+   secondary-origin correction. Prioritize scene 02's now-confirmed missing
+   coloured multiple-ray AO and scene 13's remaining brightness mismatch before
    claiming appearance parity.
    Authored diffuse shading is now independent of the native FPT roughness
    weight, with a real GPU regression and seven-scene comparison above.

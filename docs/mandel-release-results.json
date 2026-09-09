@@ -184,6 +184,44 @@
       "No speedup or unchanged-performance claim; diagnostic timing is not a benchmark."
     ]
   },
+  "legacy_scene02_ambient_diagnosis": {
+    "renderer_checkpoint": "7826662",
+    "renderer_changed": false,
+    "native_backend": "CPU",
+    "native_dimensions": [300, 169],
+    "native_capture_count": 4,
+    "migrated_material": {
+      "use_colors_from_palette": false,
+      "surface_color_rgb16_hex": ["8800", "8800", "8800"],
+      "specular_width": 1
+    },
+    "lightmap_sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7",
+    "mean_rgb_channel_spread_8bit": {
+      "native_original": 87.6780473372781,
+      "native_migrated": 87.66978303747534,
+      "native_ao_disabled": 0.3765483234714004,
+      "native_white_lightmap": 0.09684418145956608,
+      "fpt_checkpoint": 0.0
+    },
+    "original_migrated_mae": 0.0005292957419654252,
+    "finding": "Warm reference colour comes from multiple-ray AO lightmap illumination, not an orange surface material",
+    "python_tests_passed": 10,
+    "pinned_harness_smoke": {
+      "dimensions": [64, 36],
+      "fpt_samples": 1,
+      "completed_capture_modes": ["mandel", "geometry", "authored"],
+      "lightmap_hash_verified": true,
+      "report": "reports/mandel-legacy-appearance/pinned-harness-smoke/summary.json"
+    },
+    "raw_report": "reports/mandel-legacy-appearance/summary.json",
+    "contact_sheet": "reports/mandel-legacy-appearance/contact-sheet.png",
+    "limitations": [
+      "Multiple-ray coloured AO remains unimplemented in FPT; this checkpoint diagnoses it and pins reference assets.",
+      "White-map control clips and is not a brightness comparison.",
+      "Native original/resaved captures are visually consistent, not byte-exact.",
+      "The harness pins only the optional AO lightmap, not all external textures."
+    ]
+  },
   "limits": [
     "Tiling is opt-in; unchanged defaults can still hit the watchdog on heavy scenes.",
     "Wall seconds are not GPU benchmark time; no speedup is claimed.",
