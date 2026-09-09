@@ -5822,11 +5822,17 @@ fn render(args: &RenderArgs) -> Result<()> {
         .as_ref()
         .map(|artifacts| artifacts.optimization.metadata_label());
     let mandel_dispatch_label = if use_cached_mandel {
-        Some(if std::env::var_os("FPT_MANDEL_TILED_DISPATCH").is_some() {
-            format!("tiled-{}-row", mandel_tile_rows())
-        } else {
-            "single-command-buffer".to_owned()
-        })
+        Some(
+            match (
+                effective_accumulation(&loaded.config),
+                std::env::var_os("FPT_MANDEL_TILED_DISPATCH").is_some(),
+            ) {
+                ("chunked", true) => format!("chunked-tiled-{}-row", mandel_tile_rows()),
+                ("batch", true) => format!("tiled-{}-row", mandel_tile_rows()),
+                ("chunked", false) => "sample-chunks".to_owned(),
+                _ => "single-command-buffer".to_owned(),
+            },
+        )
     } else {
         None
     };
@@ -6306,14 +6312,24 @@ fn compile_mandel_metallib(
 }
 
 fn mandel_render_kernel_names(config: &FptRenderConfig) -> Vec<&'static str> {
+    mandel_render_kernel_names_with_tiling(
+        config,
+        std::env::var_os("FPT_MANDEL_TILED_DISPATCH").is_some(),
+    )
+}
+
+fn mandel_render_kernel_names_with_tiling(
+    config: &FptRenderConfig,
+    tiled: bool,
+) -> Vec<&'static str> {
     if config.preview != 0 {
         return vec!["preview_linear_kernel", "present_kernel"];
     }
-    let tiled_batch = std::env::var_os("FPT_MANDEL_TILED_DISPATCH").is_some()
-        && effective_accumulation(config) == "batch";
     let mut kernels = vec![
-        if tiled_batch {
+        if tiled && effective_accumulation(config) == "batch" {
             "accumulate_all_tile_kernel"
+        } else if tiled && effective_accumulation(config) == "chunked" {
+            "accumulate_chunk_tile_kernel"
         } else {
             match effective_accumulation(config) {
                 "per-sample" => "accumulate_kernel",
@@ -8476,7 +8492,7 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            mandel_render_kernel_names(&config),
+            mandel_render_kernel_names_with_tiling(&config, false),
             ["accumulate_all_kernel", "present_kernel"]
         );
 
@@ -8484,13 +8500,27 @@ mod tests {
         config.focus_distance = 0.0;
         config.sdf_profile = 1;
         assert_eq!(
-            mandel_render_kernel_names(&config),
+            mandel_render_kernel_names_with_tiling(&config, false),
             [
                 "accumulate_chunk_kernel",
                 "present_kernel",
                 "estimate_focus_distance_kernel",
                 "sdf_profile_kernel",
             ]
+        );
+        assert_eq!(
+            mandel_render_kernel_names_with_tiling(&config, true)[0],
+            "accumulate_chunk_tile_kernel"
+        );
+        config.sdf_accumulation_mode = SDF_ACCUMULATION_PER_SAMPLE;
+        assert_eq!(
+            mandel_render_kernel_names_with_tiling(&config, true)[0],
+            "accumulate_kernel"
+        );
+        config.preview = 1;
+        assert_eq!(
+            mandel_render_kernel_names_with_tiling(&config, true),
+            ["preview_linear_kernel", "present_kernel"]
         );
     }
 

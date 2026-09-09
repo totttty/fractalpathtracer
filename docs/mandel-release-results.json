@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "baseline_commit": "9cbff95",
+  "baseline_binary_sha256": "780910f090c286f9157301f7cf6a5c31174b8e89a5f90f1374c1c9f7dd64a6cf",
+  "candidate_binary_sha256": "e7762efd45c9c25f41dd8e099bc23923af3852ecdbb41c1b875f790101868edf",
+  "mandelbulber_source_commit": "230456cee40968cbaa7f301bba91daa4865a29db",
+  "scene_manifest": "tests/fixtures/mandel-release-canaries.json",
+  "scene_ids": ["01", "02", "03", "04", "05", "13", "17"],
+  "irregular_size_gate": {
+    "dimensions": [97, 83],
+    "samples": 5,
+    "samples_per_chunk": 2,
+    "tile_rows": [1, 7, 32],
+    "modes": ["geometry", "authored-path"],
+    "candidate_off_comparisons": 14,
+    "candidate_tiled_comparisons": 42,
+    "changed_rgb_pixels": 0,
+    "raw_report": "reports/mandel-chunk-tiles-odd-gate/summary.json"
+  },
+  "full_size_gate": {
+    "maximum_axis": 300,
+    "aspect": "authored",
+    "samples": 32,
+    "samples_per_chunk": 1,
+    "tile_rows": 32,
+    "bounce_cap_override": 0,
+    "completed_fpt_captures": 14,
+    "available_untiled_checkpoint_comparisons": 13,
+    "changed_rgb_pixels": 0,
+    "rank17_authored_untiled_reference_available": false,
+    "rank17_authored_wall_seconds": 213.14,
+    "raw_report": "reports/release-canaries-chunk-tiled/summary.json"
+  },
+  "native_controls": {
+    "scenes": ["Exact_Box", "03-Cornell_box"],
+    "dimensions": [96, 96],
+    "samples": 1,
+    "tiling_flag_enabled": true,
+    "changed_rgb_pixels": 0,
+    "raw_report_directory": "reports/chunk-tiled-native-controls"
+  },
+  "corrected_references": {
+    "mandel_backend": "CPU",
+    "override": "opencl_enabled=0",
+    "completed_reference_captures": 7,
+    "fpt_captures_reused_from_full_size_gate": true,
+    "rank17_reference_wall_seconds": 789.93,
+    "rank17_nonblack_pixels": 29376,
+    "raw_report": "reports/release-canaries-chunk-tiled-cpu-ref/summary.json"
+  },
+  "checks": {
+    "rust_tests_passed": 209,
+    "python_tests_passed": 7,
+    "formatting": "passed",
+    "documentation_build": "passed",
+    "extracted_package_build": "passed",
+    "remote_ci_run": false
+  },
+  "limits": [
+    "Tiling is opt-in; unchanged defaults can still hit the watchdog on heavy scenes.",
+    "Wall seconds are not GPU benchmark time; no speedup is claimed.",
+    "Byte-exact gates compare FPT with FPT, not FPT with Mandelbulber.",
+    "The original full-size run inherited OpenCL for Mandel references; rank 17 was visually rejected.",
+    "Fresh reference commands now explicitly force CPU rendering.",
+    "Authored lighting/material parity and the production CVOX library remain unfinished."
+  ]
+}

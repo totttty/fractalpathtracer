@@ -299,6 +299,13 @@ struct FptAccumulationTile {
     uint2 dispatch_origin;
 };
 
+struct FptAccumulationChunkTile {
+    uint2 dispatch_origin;
+    uint2 dispatch_extent;
+    uint start_sample;
+    uint sample_count;
+};
+
 struct FptSdfProfileCounts {
     atomic_uint primary_steps;
     atomic_uint secondary_steps;
@@ -8687,6 +8694,26 @@ kernel void accumulate_chunk_kernel(device float4 *accum [[buffer(0)]],
         float3 sample_color = (cfg.sdf_id == SDF_GLASS_BALL && cfg.glass_mode == 1u)
             ? renderGlassAnalytic(uv, sample, cfg)
             : renderPath(uv, sample, cfg);
+        color = mix(color, sample_color, 1.0f / float(sample + 1u));
+    }
+    accum[index] = float4(color, 1.0f);
+}
+
+kernel void accumulate_chunk_tile_kernel(
+    device float4 *accum [[buffer(0)]],
+    constant FptRenderConfig &cfg [[buffer(1)]],
+    constant FptAccumulationChunkTile &tile [[buffer(2)]],
+    uint2 local_gid [[thread_position_in_grid]]) {
+    // Threadgroup padding must not spill into the next tile's accumulation.
+    if (any(local_gid >= tile.dispatch_extent) || tile.sample_count == 0u) return;
+    uint2 gid = local_gid + tile.dispatch_origin;
+    if (gid.x >= cfg.width || gid.y >= cfg.height) return;
+    float2 uv = sdfScreenUv(gid, cfg);
+    uint index = gid.y * cfg.width + gid.x;
+    float3 color = tile.start_sample == 0u ? float3(0.0f) : accum[index].xyz;
+    uint end_sample = min(tile.start_sample + tile.sample_count, min(max(cfg.samples, 1u), 512u));
+    for (uint sample = tile.start_sample; sample < end_sample; ++sample) {
+        float3 sample_color = renderPath(uv, sample, cfg);
         color = mix(color, sample_color, 1.0f / float(sample + 1u));
     }
     accum[index] = float4(color, 1.0f);

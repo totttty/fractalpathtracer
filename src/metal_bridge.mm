@@ -1599,6 +1599,25 @@ struct FptAccumulationTileCpp {
     uint32_t dispatch_origin[2];
 };
 
+struct FptAccumulationChunkTileCpp {
+    uint32_t dispatch_origin[2];
+    uint32_t dispatch_extent[2];
+    uint32_t start_sample;
+    uint32_t sample_count;
+};
+static_assert(sizeof(FptAccumulationChunkTileCpp) == 24);
+
+static uint32_t mandel_accumulation_tile_rows() {
+    if (const char *configured_rows = std::getenv("FPT_MANDEL_TILE_ROWS")) {
+        char *end = nullptr;
+        const unsigned long parsed = std::strtoul(configured_rows, &end, 10);
+        if (end != configured_rows && *end == '\0') {
+            return std::clamp<uint32_t>(static_cast<uint32_t>(parsed), 1u, 32u);
+        }
+    }
+    return 32u;
+}
+
 struct RegionalProgramHeaderCpp {
     uint32_t instruction_offset;
     uint32_t instruction_count;
@@ -4824,6 +4843,10 @@ extern "C" int fpt_metal_render(const char *metallib_path,
                                             config->renderer_backend == FPT_RENDERER_SDF &&
                                             config->sdf_id == FPT_SDF_MANDELBULBER &&
                                             std::getenv("FPT_MANDEL_TILED_DISPATCH") != nullptr;
+        const bool use_tiled_chunks = use_chunked_accumulation &&
+                                      config->renderer_backend == FPT_RENDERER_SDF &&
+                                      config->sdf_id == FPT_SDF_MANDELBULBER &&
+                                      std::getenv("FPT_MANDEL_TILED_DISPATCH") != nullptr;
         NSString *main_function_name = nil;
         if (use_voxels) {
             main_function_name = config->preview ? @"voxel_preview_linear_kernel" :
@@ -4843,7 +4866,8 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             main_function_name = config->preview ? @"preview_linear_kernel" :
                 (use_tiled_accumulation ? @"accumulate_all_tile_kernel" :
                  (use_batch_accumulation ? @"accumulate_all_kernel" :
-                 (use_chunked_accumulation ? @"accumulate_chunk_kernel" : @"accumulate_kernel")));
+                 (use_tiled_chunks ? @"accumulate_chunk_tile_kernel" :
+                 (use_chunked_accumulation ? @"accumulate_chunk_kernel" : @"accumulate_kernel"))));
         }
         const bool dual_generated_library =
             config->sdf_topology_specialization != 0u &&
@@ -5771,15 +5795,7 @@ extern "C" int fpt_metal_render(const char *metallib_path,
         MTLSize groups = groups_for_extent(dispatch_width, dispatch_height, threads_per_group);
         id<MTLComputeCommandEncoder> encoder = nil;
         if (use_tiled_accumulation) {
-            uint32_t rows_per_dispatch = 32u;
-            if (const char *configured_rows = std::getenv("FPT_MANDEL_TILE_ROWS")) {
-                char *end = nullptr;
-                const unsigned long parsed = std::strtoul(configured_rows, &end, 10);
-                if (end != configured_rows && *end == '\0') {
-                    rows_per_dispatch = std::clamp<uint32_t>(
-                        static_cast<uint32_t>(parsed), 1u, 32u);
-                }
-            }
+            const uint32_t rows_per_dispatch = mandel_accumulation_tile_rows();
             for (uint32_t row = 0u; row < config->height;
                  row += rows_per_dispatch) {
                 FptAccumulationTileCpp tile = {{0u, row}};
@@ -5811,6 +5827,33 @@ extern "C" int fpt_metal_render(const char *metallib_path,
             const uint32_t chunk_samples = std::clamp<uint32_t>(config->sdf_chunk_samples, 1u, 64u);
             for (uint32_t start = 0u; start < requested_samples; start += chunk_samples) {
                 FptAccumulationChunkCpp chunk = {start, std::min(chunk_samples, requested_samples - start)};
+                if (use_tiled_chunks) {
+                    const uint32_t rows = mandel_accumulation_tile_rows();
+                    for (uint32_t row = 0u; row < config->height; row += rows) {
+                        FptAccumulationChunkTileCpp tile = {
+                            {0u, row}, {config->width, std::min(rows, config->height - row)},
+                            chunk.start_sample, chunk.sample_count};
+                        id<MTLCommandBuffer> tile_buffer = [queue commandBuffer];
+                        encoder = [tile_buffer computeCommandEncoder];
+                        [encoder setComputePipelineState:main_pipeline];
+                        [encoder setBuffer:accum_buffer offset:0 atIndex:0];
+                        [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+                        [encoder setBytes:&tile length:sizeof(tile) atIndex:2];
+                        [encoder dispatchThreadgroups:groups_for_extent(
+                            tile.dispatch_extent[0], tile.dispatch_extent[1], threads_per_group)
+                                 threadsPerThreadgroup:threads_per_group];
+                        [encoder endEncoding];
+                        [tile_buffer commit];
+                        [tile_buffer waitUntilCompleted];
+                        if (tile_buffer.status == MTLCommandBufferStatusError) {
+                            set_error(error, error_len,
+                                "Metal accumulation chunk failed at sample %u row %u: %s",
+                                start, row, tile_buffer.error.localizedDescription.UTF8String);
+                            return 1;
+                        }
+                    }
+                    continue;
+                }
                 id<MTLCommandBuffer> chunk_buffer = [queue commandBuffer];
                 encoder = [chunk_buffer computeCommandEncoder];
                 [encoder setComputePipelineState:main_pipeline];

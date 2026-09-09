@@ -50,16 +50,22 @@ def validate_manifest(manifest, scene_root):
             raise ValueError('source hash mismatch: ' + str(path))
 
 
-def execute(command, folder, timeout):
+def execute(command, folder, timeout, env=None):
     folder.mkdir(parents=True, exist_ok=True)
     (folder / 'command.json').write_text(json.dumps(command, indent=2))
     start = time.monotonic()
     with (folder / 'stdout.log').open('w') as stdout, (folder / 'stderr.log').open('w') as stderr:
-        result = subprocess.run(command, stdout=stdout, stderr=stderr, timeout=timeout)
+        result = subprocess.run(command, stdout=stdout, stderr=stderr, timeout=timeout, env=env)
     elapsed = time.monotonic() - start
     if result.returncode:
         raise RuntimeError(f'command exited {result.returncode}: {folder}/stderr.log')
     return elapsed
+
+
+def mandel_reference_command(binary, scene, size, output):
+    # -C disables console colours; it does not select the CPU renderer.
+    return [str(binary.resolve()), '-n', '-C', '-O', 'opencl_enabled=0', '-f', 'png',
+            '-r', f'{size[0]}x{size[1]}', '-o', str(output), str(scene)]
 
 
 def image_result(folder, expected):
@@ -121,7 +127,7 @@ def main():
     parser.add_argument('--max-axis', type=int, default=300)
     parser.add_argument('--samples', type=int, default=32)
     parser.add_argument('--chunk-samples', type=int, default=1)
-    parser.add_argument('--timeout', type=int, default=600)
+    parser.add_argument('--timeout', type=int, default=1800)
     parser.add_argument('--baseline', type=Path, help='prior summary for byte-exact FPT regression checks')
     args = parser.parse_args()
     if not 16 <= args.max_axis <= 2048 or not 1 <= args.samples <= 512 or args.timeout <= 0 or not 1 <= args.chunk_samples <= 64:
@@ -145,6 +151,8 @@ def main():
         parser.error('baseline scene hashes/settings differ')
     summary = dict(settings=settings, manifest=manifest, captures_fresh=True,
                    visual_parity_certified=False, rows=[],
+                   command_timeout_seconds=args.timeout,
+                   mandel_reference_override='opencl_enabled=0',
                    fpt_environment={k:v for k,v in os.environ.items() if k.startswith('FPT_')},
                    executables={str(p.resolve()): sha256(p) for p in (args.fpt,args.mandelbulber_bin)})
     for scene in manifest['scenes']:
@@ -159,12 +167,13 @@ def main():
             for mode in ('mandel', 'geometry', 'authored'):
                 folder = output / scene['id'] / mode
                 if mode == 'mandel':
-                    command = [str(args.mandelbulber_bin.resolve()), '-n', '-C', '-f', 'png',
-                               '-r', f'{size[0]}x{size[1]}', '-o', str(folder/'scene.png'), str(path)]
+                    command = mandel_reference_command(args.mandelbulber_bin, path, size, folder/'scene.png')
                 else:
                     command = [str(args.fpt.resolve()), 'render', *common, '--out', str(folder),
                                '--mandel-appearance', 'geometry' if mode=='geometry' else 'authored-path']
                 elapsed = execute(command, folder, args.timeout)
+                if mode == 'mandel' and 'OpenCl - rendering' in (folder/'stdout.log').read_text():
+                    raise ValueError('Mandel reference used OpenCL despite CPU override')
                 row['captures'][mode] = dict(image_result(folder, size), wall_seconds=elapsed)
                 print(f'{scene["id"]} {mode}: {elapsed:.2f}s', flush=True)
             row['appearance_difference'] = difference(row['captures']['mandel']['path'], row['captures']['authored']['path'])

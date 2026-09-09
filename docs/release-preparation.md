@@ -142,7 +142,82 @@ the OS-owned GPU archiver cache. After system disk headroom returned, the full
 Rust gate was rerun successfully: all 209 tests passed. The hit/miss correction
 can therefore be retained independently of the remaining watchdog issue.
 
-## Remaining work
+## Experimental chunk tiling
+
+The optional tiled dispatcher now supports sample chunks as well as the older
+all-samples batch mode. Each command evaluates a bounded row range and a bounded
+sample range, preserving the original global pixel coordinates, sample indices,
+camera, formula iterations, bounces and per-pixel accumulation order. The tile
+extent check rejects padded threadgroup lanes, including the final partial tile.
+Untiled rendering remains the default; no preview, voxel or regional path is
+routed through the new kernel.
+
+```sh
+FPT_MANDEL_TILED_DISPATCH=1 FPT_MANDEL_TILE_ROWS=32 \
+  target/release/fpt-metal render scene.fract \
+  --mandelbulber-root "$MANDEL_SOURCE" \
+  --mandel-appearance authored-path \
+  --width 300 --height 300 --samples 32 \
+  --sdf-accumulation chunked --sdf-chunk-samples 1 --out reports/tiled-scene
+```
+
+The render metadata identifies this as `chunked-tiled-32-row`. The new
+`scripts/run_mandel_tile_gate.py` compares a saved untiled binary, the candidate
+with tiling off, and the candidate with 1-, 7- and 32-row tiles. Its defaults are
+deliberately irregular: 97x83, 5 SPP, and two samples per chunk. Both geometry and
+authored modes are checked on all seven canaries; failures and changed pixels
+fail the gate rather than being omitted.
+
+```sh
+python3 scripts/run_mandel_tile_gate.py \
+  --baseline-fpt /path/to/saved/fpt-metal --fpt target/release/fpt-metal \
+  --scene-root "$MANDEL_EXAMPLES" --mandelbulber-root "$MANDEL_SOURCE" \
+  --output reports/mandel-tile-gate
+```
+
+The initial irregular-size gate passed all 56 candidate comparisons with zero
+changed pixels. Very small tiles incur significant dispatch/under-utilization
+cost; this is a reliability option, not a claimed performance optimization or a
+new global default.
+
+The full-size run in `reports/release-canaries-chunk-tiled` completed all seven
+FPT geometry/authored pairs at a maximum axis of 300, 32 SPP, one sample per
+chunk and the original bounce settings. Rank 17's authored render completed in
+213.14 seconds wall time instead of a watchdog error. All 13 available full-size
+FPT captures from the untiled corrected checkpoint were byte-exact. There is no
+full-size untiled authored image for rank 17 to compare against; its byte-exact
+gate is the irregular-size test, not an invented full-size baseline.
+
+### Reference backend correction
+
+Visual inspection rejected the newly captured Mandelbulber rank-17 reference:
+only 173 pixels were nonblack. Its log revealed that the reference runner had
+inherited OpenCL from saved Mandelbulber application settings. The existing
+`-C` argument controls console colours, not CPU rendering, so prior claims that
+this command guaranteed a CPU reference were incorrect. FPT-versus-FPT parity
+measurements are unaffected.
+
+The runner now passes `-O opencl_enabled=0` and rejects an OpenCL render log.
+A regression test checks the explicit CPU override. Fresh CPU references are
+stored in `reports/release-canaries-chunk-tiled-cpu-ref`; its summary explicitly
+records reuse of the unchanged FPT captures from the preceding tiled run.
+All seven CPU references completed. Rank 17 took 789.93 seconds and has 29,376
+nonblack pixels; the complete sheet was visually checked. Its earlier CPU
+attempt was interrupted to replace an insufficient 600-second timeout, and
+that attempt's logs remain available separately.
+The reference runner now allows 1,800 seconds per command, configurable through
+`--timeout`, because genuine CPU rendering of rank 17 takes many minutes.
+This is a per-command ceiling, not an estimate for the complete suite.
+The faulty reference and its logs remain preserved in the original directory.
+Execution success still does not establish authored appearance parity.
+
+All 209 Rust tests and seven Python harness tests pass. Formatting, documentation
+and extracted-package compilation pass; the package includes the new tile gate
+but excludes generated reports and caches.
+Compact settings, binary fingerprints and gate counts are retained in
+[`mandel-release-results.json`](mandel-release-results.json).
+
+## Earlier failed probes
 
 The initial fresh checkpoint sheet ran six of seven complete scene triplets
 with one-sample command chunks. Rank 17 still failed in authored mode with
@@ -166,16 +241,19 @@ A sampled host stack was waiting in `MTLCommandBuffer waitUntilCompleted`.
 This is an inconclusive probe, not proof of a deadlock or an accepted fix; no
 tiled-renderer default or shader change was retained.
 
-1. Restore system disk headroom and rerun the three blocked tests plus the full
-   gate. Retain the isolated hit/miss correction only with verified checks.
-2. Bound rank-17 GPU command duration without reducing resolution, sample count,
-   bounce count or formula iterations. Test spatial tiles within sample chunks,
-   preserving pixel/sample identities and accumulation order; verify byte-exact
-   output on completed controls before retrying the failing full canary. The
-   existing batch tile mode evaluates all samples per tile and is not this gate.
+## Remaining work
+
+1. Keep the verified hit/miss checkpoint (`9cbff95`); all 209 Rust tests passed
+   after disk headroom was restored. Nothing has been pushed.
+2. Keep chunk tiling optional despite its successful full-size watchdog gate.
+   Automatic scheduling, larger scenes and interactive responsiveness require
+   their own tests; the seven-scene offline result is not a universal guarantee.
 3. Audit authored shadow-ray origins/occlusion, lighting and palette behavior
    independently. The shadow path still uses a fixed world-space offset and a
    position-only march result; do not conflate its fix with primary geometry.
+   Also separate authored diffuse shading from the native FPT roughness weight:
+   FPT currently multiplies direct light by roughness, while upstream
+   `shader_light_shading.cl` uses its independent material shading control.
    Expand the gate to the ranked 50 and track the larger corpus separately.
 4. Extract the CLI-owned production Metal compiler/render/export orchestration
    into a typed library API, requiring unchanged checkpoint captures.
@@ -189,3 +267,34 @@ tiled-renderer default or shader change was retained.
 8. Complete clean-clone integration, licensing, API documentation and final
    history consolidation. Generated metallibs, volumes, caches and large research
    captures must remain outside the published source package.
+
+## Library extraction boundary
+
+The production implementation already exists, but its ownership is split:
+
+- `src/scene.rs::load_scene_config` prepares the parsed configuration and generated
+  Metal source inside the library, currently through a CLI-shaped argument type.
+- `src/main.rs::cached_mandel_render_artifacts` and
+  `execute_metal_render_internal` own render compilation/cache/bridge orchestration.
+  Move these behind a typed runtime without changing generated source, arithmetic
+  or dispatch policy. Keep Metal device/configuration details out of the stable API.
+- `src/main.rs::voxel_export_command` and structural capture helpers still own
+  production export preparation. `src/fptvox7.rs` and `src/fptvox.rs` already expose
+  the lower-level representation and artifact writers.
+- The NAADF consumer's `tools/voxel_refinement_probe/src` uses the Rust
+  `voxquant_core` crate for validated true occupancy/refinement. Its
+  `tools/build_voxel_converter.py` currently creates a temporary Cargo package
+  against an explicitly supplied local checkout and fingerprints its sources.
+  Extract that converter into a reusable crate only after pinning the required
+  external VoxQuant changes; a path dependency on a dirty checkout is not a
+  release dependency contract.
+- CVOX packing and sidecar handling remain in consumer tools such as
+  `run_refinement_probe.py`, `mixed_cube_payload.py` and `colour_voxel_scene.py`.
+  The future API must return an asset bundle containing CVOX, local occupancy
+  masks, palette, camera and provenance, not just a path to an incomplete CVOX.
+
+Keep authored-view-derived cubes and camera-independent bounded volumes as
+distinct request/result kinds. Do not hide a CPU Mandel approximation or relabel
+exact triangles as cube occupancy. The existing public `voxelize` API still
+implements CPU Menger fixtures only; this audit does not change that limitation.
+No consumer or VoxQuant source was modified during this release-runtime fix.
