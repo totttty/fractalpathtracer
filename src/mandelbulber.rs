@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+pub mod ambient;
 pub mod catalog;
 pub mod compiler;
 pub mod coverage;

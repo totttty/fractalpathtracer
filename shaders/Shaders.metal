@@ -6602,6 +6602,45 @@ kernel void estimate_bound_grid_focus_distance_kernel(
                          distance > cfg.render[4] * 0.99f) ? 5.0f : distance;
 }
 
+#if defined(FPT_MANDEL_GENERATED_AMBIENT)
+static float mandelAmbientVisibility(float3 point, float3 direction,
+                                    float threshold, float end,
+                                    constant FptRenderConfig &cfg,
+                                    thread bool &valid) {
+    valid = isfinite(threshold) && threshold > 0.0f && isfinite(end) && end > 0.0f;
+    if (!valid) return 0.0f;
+    float radius = threshold;
+    for (uint step = 0u; step < mandelAmbientMaxSteps; ++step) {
+        if (radius >= end) return 1.0f;
+        float distance = mapSdf(point + direction * radius, cfg);
+        if (!isfinite(distance)) { valid = false; return 0.0f; }
+        if (distance < threshold) return clamp(radius / end, 0.0f, 1.0f);
+        float next = radius + 2.0f * distance;
+        if (!isfinite(next) || next <= radius) { valid = false; return 0.0f; }
+        radius = next;
+    }
+    valid = radius >= end;
+    return valid ? 1.0f : 0.0f;
+}
+
+static float3 mandelAuthoredAmbient(float3 point, constant FptRenderConfig &cfg,
+                                   thread bool &valid) {
+    float threshold = mandelbulberMarchThreshold(point, cfg);
+    float end = length(cameraPos(cfg) - point) * mandelAmbientRange;
+    float3 result = float3(0.0f);
+    valid = true;
+    for (uint index = 0u; index < mandelAmbientCount; ++index) {
+        if (all(mandelAmbientColors[index] == float3(0.0f))) continue;
+        bool rayValid;
+        float visibility = mandelAmbientVisibility(point, mandelAmbientDirections[index],
+                                                   threshold, end, cfg, rayValid);
+        if (!rayValid) { valid = false; return float3(0.0f); }
+        result += visibility * mandelAmbientColors[index];
+    }
+    return result * mandelAmbientTint / float(mandelAmbientCount);
+}
+#endif
+
 static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &cfg) {
     float frame = float(sample_idx);
     float3 cam_pos = cameraPos(cfg);
@@ -6661,6 +6700,11 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
         if (i == 0 && (missed || travel_sq > max_dist_sq)) sky_mask = 1.0f;
         local_ni = int(cfg.render[1] / (cfg.render[5] * 2.0f + 1.0f));
         if (missed || travel_sq > far_dist_sq) {
+#if defined(FPT_MANDEL_GENERATED_AMBIENT)
+            // Authored AO replaces generic environment illumination. Primary
+            // background still comes from the unchanged authored sky below.
+            if (!authored_path || i == 0)
+#endif
             pixellight += authored_path
                 ? pixelcolor * environment(dr, cfg)
                 : environment(dr, cfg);
@@ -6677,11 +6721,20 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
                 : material.rgb * material.emission;
         }
 
+#if defined(FPT_MANDEL_GENERATED_AMBIENT)
+        if (authored_path && i == 0) {
+            bool ambientValid;
+            float3 ambient = mandelAuthoredAmbient(rp, cfg, ambientValid);
+            if (!ambientValid) return float3(8.0f, 0.0f, 8.0f);
+            pixellight += material.rgb * ambient;
+        }
+#else
         if (authored_path && cfg.mandel_appearance[0] != 0.0f) {
             const float ambient_strength = clamp(
                 cfg.mandel_appearance[1] * 0.08f, 0.0f, 1.0f);
             pixellight += pixelcolor * material.rgb * ambient_strength;
         }
+#endif
 
         if (cfg.sun[0] == 1.0f) {
             const float3 direct = sunContributionWithSurface(rp, xy, frame, material, n, cfg);

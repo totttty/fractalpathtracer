@@ -401,7 +401,7 @@ a neutral occlusion multiplier. Installed and source-tree `lightmap.jpg` bytes
 match, with SHA-256
 `44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7`.
 
-FPT currently replaces this with a neutral, clamped `strength * 0.08` term. It
+The `287d36e` diagnostic checkpoint replaced this with a neutral, clamped `strength * 0.08` term. It
 does not read the AO lightmap or perform that directional visibility integral.
 Consequently, recolouring the material or restoring false secondary hits would
 hide the missing lighting implementation rather than fix it. No shader or
@@ -416,27 +416,71 @@ all three capture modes and recorded the texture hash. That small run validates
 harness wiring, not appearance quality. Prior unpinned captures have not been
 retroactively relabelled as fully reproducible.
 
-### Next implementation
+### Coloured visibility-aware AO
 
-1. Add an explicit authored AO asset contract: resolved lightmap path and hash,
-   rotation, AO mode, quality, strength and tint. Keep assets external unless
-   redistribution is approved; do not silently substitute a neutral map.
-2. Reproduce the native direction/texel mapping and a deterministic CPU test
-   oracle. Do not reduce the texture to its average RGB: visibility is
-   direction-dependent and supplies much of this scene's colour variation.
-3. Implement the multiple-ray ambient response only for authored Mandel scenes
-   that request it, preserving native FPT and neutral geometry paths. Follow
-   the native threshold, ray range and visibility weights, with explicit
-   diagnostics for exhausted/unsupported paths.
-4. Keep faithful authored AO distinct from ordinary physical environment
-   lighting. Decide how the current extra environment term is handled so the
-   same illumination is not silently added twice. Do not bundle unrelated
-   palette, specular or exposure changes into this port.
-5. Test constant and directional coloured maps with open/occluded analytic
-   geometry, texture changes/cache invalidation, rotation and missing assets.
-6. Run the seven-scene 32-SPP comparison with pinned reference assets, plus
-   exact neutral-geometry and native-control gates. Benchmark the additional
-   cost separately; a coloured-lighting match alone is not a performance win.
+`src/mandelbulber/ambient.rs` now loads the authored `file_lightmap` (or the
+external source root's default `textures/lightmap.jpg`) only for authored-path
+scenes with multiple-ray AO enabled. Missing assets fail explicitly. The render
+metadata records the resolved path, SHA-256, dimensions, rotation, mode,
+quality, strength, tint, direction count and lighting/guard policy. The texture
+hash and sampled direction/colour table enter the generated shader source, so
+changing an asset invalidates its metallib cache entry. No texture is bundled.
+
+The finite spherical sample lattice follows native azimuth/latitude texel
+mapping, including rotation order and the coordinate conversion to FPT space.
+There is no cosine hemisphere multiplier. Integer pixels use the native
+`2^bit_depth` divisor without an sRGB transfer function; HDR stays floating
+point. JPEG decoder differences are still possible. Quality 4 produces 108
+directions; quality outside 1..39 is rejected rather than silently truncating
+the table. A zero lightmap contributes zero.
+
+Each direction traces visibility from the accepted hit's threshold to the
+native camera-distance/FOV range, with distance-estimate steps and the native
+distance-to-blocker weighting. Invalid, stalled or 4096-step-exhausted rays
+produce a magenta diagnostic rather than being assumed unoccluded. Iteration
+fog and iteration-threshold distance evaluation are explicitly unsupported in
+this path. Custom `--metallib` overrides are rejected because they would bypass
+the asset-specialized implementation. Geometry mode and native FPT do not load
+or execute this AO implementation.
+
+This is **primary-hit authored AO compatibility**, not a new physical sky
+integrator. It replaces the generic ambient term and secondary environment
+illumination for the requesting scenes; the authored background and existing
+direct/indirect sun path remain. AO is not added again at each diffuse bounce.
+Fast-AO scenes retain their previous approximation. Reflection/refraction AO,
+native specular, full authored material graphs and other appearance differences
+remain separate work; no palette or exposure adjustment was used here.
+
+Scene 02 at 300x169 / 32 FPT SPP improved RGB MAE against the same accepted CPU
+reference from **0.407476 to 0.137054** (66.4% lower), with RMSE from 0.462638 to
+0.196194. Warm colour and direction-dependent shading now appear without
+recolouring its grey material. This is not exact appearance parity. Neutral
+geometry is byte-exact. Raw commands, candidate images, metadata and comparison
+sheets are under `reports/mandel-colored-ambient`; reused reference hashes and
+the lightmap hash are recorded rather than claiming fresh native captures.
+
+All seven neutral-geometry captures, all six non-multiple-ray authored captures
+and both native FPT controls passed byte-exact comparison. A subsequent fresh
+300x169 CPU reference explicitly pinned the same lightmap and reproduced the
+scene-02 improvement: MAE **0.407500 to 0.137077**. Its small difference from the
+stored CPU reference (MAE 0.000514) is retained, not described as byte-exact.
+See `reports/mandel-colored-ambient/pinned-reference-02/summary.json` and
+`reports/mandel-colored-ambient/scene02-comparison.png`.
+
+Controlled tests cover integer/HDR maps, constant/black/directional colour,
+rotation, missing assets, source-cache invalidation, unsupported modes, camera
+projection range and scale-dependent clear/blocked/exhausted visibility. A real
+Metal probe exercises the production AO visibility and colour sum on analytic
+fields. The 64x36 pilot is not used for the headline visual metric.
+The full test suite passes: 218 Rust tests and 10 Python harness tests.
+Formatting, documentation build, extracted-package build and diff checks pass.
+
+The scene-02 capture's reported render time was 58.45 seconds versus 45.20
+seconds for the stored checkpoint capture. These are individual capture
+measurements, not a fresh alternating performance benchmark. This change adds
+108 visibility queries per primary hit to recover missing illumination; it is
+not presented as a speed optimisation. Keep performance measurements separate
+from the geometry/appearance gates.
 
 ## Experimental chunk tiling
 
@@ -550,8 +594,9 @@ tiled-renderer default or shader change was retained.
    position-only march result. Authored secondary bounce offsets now use the
    surface threshold too; native FPT offsets remain fixed. Do not conflate
    these with primary geometry. Scene 01's bright rings are removed by the
-   secondary-origin correction. Prioritize scene 02's now-confirmed missing
-   coloured multiple-ray AO and scene 13's remaining brightness mismatch before
+   secondary-origin correction. Coloured multiple-ray AO now substantially
+   improves scene 02; prioritize its remaining shadow/specular differences and
+   scene 13's brightness mismatch before
    claiming appearance parity.
    Authored diffuse shading is now independent of the native FPT roughness
    weight, with a real GPU regression and seven-scene comparison above.

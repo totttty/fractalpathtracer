@@ -5216,6 +5216,7 @@ struct RenderMetadataInput<'a> {
     mandel_formula_dispatch_mode: Option<&'a str>,
     mandel_cache_status: Option<&'a str>,
     mandel_source_bytes: Option<usize>,
+    mandel_ambient: Option<&'a mandelbulber::ambient::AmbientMetadata>,
     mandel_offline_compile_ms: Option<f64>,
 }
 
@@ -5233,6 +5234,7 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         mandel_formula_dispatch_mode,
         mandel_cache_status,
         mandel_source_bytes,
+        mandel_ambient,
         mandel_offline_compile_ms,
     } = input;
     let MetalRenderStats {
@@ -5424,6 +5426,7 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         "mandel_formula_dispatch_mode": mandel_formula_dispatch_mode,
         "mandel_cache_status": mandel_cache_status,
         "mandel_source_bytes": mandel_source_bytes,
+        "mandel_ambient": mandel_ambient,
         "mandel_offline_compile_ms": mandel_offline_compile_ms,
         "mandel_pipeline_build_ms": mandel_offline_compile_ms.map(|compile_ms| (build_ms - compile_ms).max(0.0)),
         "sdf_flat_union_primitive_count": config.sdf_flat_union_count,
@@ -5881,6 +5884,7 @@ fn render(args: &RenderArgs) -> Result<()> {
         mandel_formula_dispatch_mode,
         mandel_cache_status,
         mandel_source_bytes,
+        mandel_ambient: loaded.mandel_ambient.as_ref(),
         mandel_offline_compile_ms,
     })?;
     eprintln!(
@@ -6085,6 +6089,7 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         mandel_formula_dispatch_mode: diagnostic_formula_dispatch_mode,
         mandel_cache_status: None,
         mandel_source_bytes: None,
+        mandel_ambient: None,
         mandel_offline_compile_ms: None,
     })?;
     eprintln!(
@@ -7819,6 +7824,84 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mandel_ambient_gpu_visibility_and_color_match_analytic_probes() {
+        let _guard = metal_test_guard();
+        let original = std::str::from_utf8(METAL_SOURCE_BYTES).unwrap();
+        let constants = "#define FPT_MANDEL_GENERATED_AMBIENT 1\nconstant uint mandelAmbientMaxSteps=4096u;\nconstant uint mandelAmbientCount=2u;\nconstant float mandelAmbientRange=1.0f;\nconstant float3 mandelAmbientTint=float3(1.0f);\nconstant float3 mandelAmbientDirections[2]={float3(0,1,0),float3(0,-1,0)};\nconstant float3 mandelAmbientColors[2]={float3(1,0,0),float3(0,1,0)};\n";
+        let source = original.replace("// FPT_MANDELBULBER_GENERATED_INSERTION_POINT",constants)
+            .replacen("static float mapSdf(float3 p, constant FptRenderConfig &cfg) {", "static float mapSdf(float3 p, constant FptRenderConfig &cfg) {\nif(cfg.program_material[0] == 0.0f) return cfg.vset_values[117]*1000.0f;\nif(cfg.program_material[0] == 2.0f) return cfg.vset_values[117];\nreturn p.y;",1)
+            .replacen("static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &cfg) {", "static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &cfg) {\nbool valid; float3 ao=mandelAuthoredAmbient(float3(0),cfg,valid); return valid ? ao : float3(0,0,1);",1);
+        let source = mandelbulber::compiler::retain_metal_kernels(
+            &source,
+            &["accumulate_all_kernel", "present_kernel"],
+        )
+        .unwrap();
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = ProbeDirectory(
+            std::env::temp_dir().join(format!("fpt-metal/ambient-{}-{nonce}", std::process::id())),
+        );
+        let (library, _) = compile_mandel_metallib(
+            source.as_bytes(),
+            &directory.0,
+            "analytic-ambient",
+            MandelMetalOptimization::Default,
+        )
+        .unwrap();
+        let mut cfg = FptRenderConfig::default();
+        cfg.width = 16;
+        cfg.height = 16;
+        cfg.samples = 1;
+        cfg.sdf_id = SDF_MANDELBULBER;
+        cfg.sdf_accumulation_mode = SDF_ACCUMULATION_BATCH;
+        cfg.mandel_appearance_mode = 2;
+        cfg.camera_dof = 0.0;
+        cfg.focus_distance = 1.0;
+        cfg.vset_values[115] = 0.0;
+        cfg.vset_values[118] = 0.0;
+        cfg.vset_values[119] = 1e12;
+        cfg.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
+        for scale in [0.001, 1.0, 1000.0] {
+            cfg.vset_values[117] = scale;
+            for mode in [0, 1, 2] {
+                cfg.program_material[0] = mode as f32;
+                cfg.camera_position = [0.0, 0.0, scale * if mode == 2 { 1e8 } else { 100.0 }];
+                let expected = match mode {
+                    0 => [0.5, 0.5, 0.0],
+                    1 => [0.5, 0.005, 0.0],
+                    _ => [0.0, 0.0, 1.0],
+                };
+                let mut pixels = vec![f32::NAN; 16 * 16 * 4];
+                let result = execute_metal_render_internal(
+                    &cfg,
+                    &library,
+                    &default_stitch_metallib_path().unwrap(),
+                    None,
+                    &directory.0.join("probe.png"),
+                    &[],
+                    Some(&mut pixels),
+                );
+                if let Err(error) = result {
+                    assert!(
+                        error.to_string().contains("blank or single-colour"),
+                        "{error:#}"
+                    );
+                }
+                assert!(
+                    pixels.chunks_exact(4).all(|p| p[..3]
+                        .iter()
+                        .zip(expected)
+                        .all(|(a, b)| (*a - b).abs() < 1e-5)),
+                    "scale={scale} mode={mode}: {:?}",
+                    &pixels[..4]
+                );
+            }
+        }
+    }
 
     #[test]
     fn mandel_secondary_origin_escapes_surface_without_skipping_nearby_hits() {

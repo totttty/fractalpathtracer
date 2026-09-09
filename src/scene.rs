@@ -296,6 +296,7 @@ pub struct LoadedScene {
     pub config: FptRenderConfig,
     pub output_name: String,
     pub runtime_metal_source: Option<Vec<u8>>,
+    pub mandel_ambient: Option<crate::mandelbulber::ambient::AmbientMetadata>,
 }
 
 fn next_value<'a>(args: &'a [String], index: &mut usize, flag: &str) -> Result<&'a str> {
@@ -2110,6 +2111,7 @@ pub fn load_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
         config,
         output_name,
         runtime_metal_source: None,
+        mandel_ambient: None,
     })
 }
 
@@ -2141,7 +2143,7 @@ fn load_mandelbulber_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
     let mut config = default_config();
     scene.apply_to_config(&mut config);
 
-    let runtime_metal_source = if let Some(source_root) = &args.mandelbulber_root {
+    let mut runtime_metal_source = if let Some(source_root) = &args.mandelbulber_root {
         let source = crate::mandelbulber::compiler::specialize_scene_with_kernel_specialization(
             include_str!("../shaders/Shaders.metal"),
             &mut scene,
@@ -2160,6 +2162,29 @@ fn load_mandelbulber_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
     if args.mandel_authored_path {
         scene.apply_authored_path_appearance(&mut config);
     }
+    let mandel_ambient = if args.mandel_authored_path {
+        crate::mandelbulber::ambient::AmbientLighting::load(
+            &scene,
+            args.mandelbulber_root.as_deref(),
+        )?
+    } else {
+        None
+    };
+    if let Some(ambient) = &mandel_ambient {
+        ensure!(
+            args.metallib.is_none(),
+            "authored multi-ray AO requires its asset-specialized metallib; --metallib cannot override it"
+        );
+        let source = runtime_metal_source
+            .as_deref()
+            .unwrap_or(include_bytes!("../shaders/Shaders.metal"));
+        runtime_metal_source = Some(
+            ambient
+                .specialize(std::str::from_utf8(source)?)?
+                .into_bytes(),
+        );
+        config.sdf_runtime_source_bytecode = 1;
+    }
     config.preview = u32::from(args.preview);
     config.sdf_profile = u32::from(args.sdf_profile);
     config.width = scene.width;
@@ -2174,6 +2199,7 @@ fn load_mandelbulber_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
         config,
         output_name: format!("{name}.png"),
         runtime_metal_source,
+        mandel_ambient: mandel_ambient.map(|ambient| ambient.metadata),
     })
 }
 
