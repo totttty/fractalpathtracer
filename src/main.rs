@@ -7821,6 +7821,96 @@ mod tests {
     use super::*;
 
     #[test]
+    fn mandel_direct_diffuse_does_not_depend_on_roughness() {
+        let _guard = metal_test_guard();
+        let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("scenes/mandelbulber/ifs-20.fract");
+        let args = parse_render_args(&[source.to_string_lossy().into_owned()]).unwrap();
+        let mut cfg = load_scene_config(&args).unwrap().config;
+        cfg.width = 32;
+        cfg.height = 32;
+        cfg.samples = 1;
+        cfg.camera_dof = 0.0;
+        cfg.render[0] = 1.0;
+        cfg.render[1] = 1000.0;
+        cfg.mandel_appearance_mode = 2;
+        cfg.mandel_appearance.fill(0.0);
+        cfg.mandel_appearance[5] = 1.0;
+        cfg.fractal_style_mode = 2;
+        cfg.fractal_style[3] = 1.0;
+        cfg.fractal_style[5..8].fill(0.0);
+        cfg.fractal_style[8..11].fill(0.5);
+        cfg.world.fill(0.0);
+        cfg.world[0] = 3.0;
+        cfg.world_one_color.fill(0.0);
+        cfg.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
+        cfg.sun[0] = 1.0;
+        cfg.sun[3] = 1.0;
+        cfg.sun[4] = 0.0;
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = ProbeDirectory(std::env::temp_dir().join(format!(
+            "fpt-metal/direct-diffuse-{}-{nonce}",
+            std::process::id()
+        )));
+        fs::create_dir_all(&directory.0).unwrap();
+        let mut captures = Vec::new();
+        for (label, roughness, shading) in [
+            ("rough", 1.0, 1.0),
+            ("smooth", 0.1, 1.0),
+            ("flat", 0.1, 0.0),
+            ("half", 0.1, 0.5),
+        ] {
+            cfg.fractal_style[4] = roughness;
+            cfg.mandel_appearance[5] = shading;
+            let mut pixels = vec![f32::NAN; cfg.width as usize * cfg.height as usize * 4];
+            let result = execute_metal_render_internal(
+                &cfg,
+                &default_metallib_path().unwrap(),
+                &default_stitch_metallib_path().unwrap(),
+                None,
+                &directory.0.join(format!("{label}.png")),
+                METAL_SOURCE_BYTES,
+                Some(&mut pixels),
+            );
+            if let Err(error) = result {
+                assert!(
+                    error.to_string().contains("blank or single-colour"),
+                    "{error:#}"
+                );
+            }
+            captures.push(pixels);
+        }
+        let energy = |pixels: &[f32]| {
+            pixels
+                .chunks_exact(4)
+                .map(|p| p[..3].iter().sum::<f32>())
+                .sum::<f32>()
+        };
+        let rough = energy(&captures[0]);
+        let smooth = energy(&captures[1]);
+        assert!(
+            rough.is_finite() && rough > 1.0,
+            "probe must contain directly lit hits: {rough}"
+        );
+        assert!(
+            captures[0] == captures[1],
+            "rough={rough}, smooth={smooth}: roughness must not attenuate Mandel direct diffuse"
+        );
+        assert!(
+            energy(&captures[2]) > smooth,
+            "flat shading must change lit pixels"
+        );
+        for ((lambert, flat), half) in captures[1].iter().zip(&captures[2]).zip(&captures[3]) {
+            assert!(
+                (half - (lambert + flat) * 0.5).abs() < 1.0e-6,
+                "authored shading must interpolate between flat and Lambert diffuse"
+            );
+        }
+    }
+
+    #[test]
     fn exhausted_mandel_march_returns_background_without_shading() {
         let _guard = metal_test_guard();
         let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("scenes/mandelbulber/ifs-20.fract");

@@ -6507,6 +6507,13 @@ static float3 sunContributionWithSurface(float3 rp, float2 xy, float seed, Mater
     light_dir = rotateCamera(light_dir, div);
     rp = march(light_dir, rp, int(cfg.render[1]), cfg.render[3], 0.0002f, cfg);
     if (length(rp0 - rp) > cfg.render[4] * 0.99f) {
+        if (cfg.sdf_id == SDF_MANDELBULBER && cfg.mandel_appearance_mode == 2u) {
+            // Mandel's diffuse shading is independent of microfacet roughness.
+            float shading = cfg.mandel_appearance[5];
+            float diffuse = 1.0f - shading + max(dot(n, light_dir), 0.0f) * shading;
+            return min(cfg.sun[3] * diffuse, 500.0f) * p2 *
+                float3(cfg.sun_color[0], cfg.sun_color[1], cfg.sun_color[2]);
+        }
         return cfg.sun[3] * max(dot(n, light_dir), 0.0f) * p1 * p2 * float3(cfg.sun_color[0], cfg.sun_color[1], cfg.sun_color[2]);
     }
     return float3(0.0f);

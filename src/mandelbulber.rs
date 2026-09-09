@@ -2149,6 +2149,7 @@ impl MandelbulberScene {
         config.mandel_appearance[2] = self.ambient_occlusion_mode as f32;
         config.mandel_appearance[3] = self.ambient_occlusion_quality as f32;
         config.mandel_appearance[4] = self.ambient_occlusion_fast_tune.max(0.0) as f32;
+        config.mandel_appearance[5] = self.material.shading as f32;
     }
 
     /// Appearance data that accompanies exported FPTVOX geometry. Positions
@@ -3817,6 +3818,21 @@ IFS_scale 1,4;
         assert!((config.world[5] - 1.25).abs() < 1.0e-6);
         assert_eq!(config.background_gradient[..3], scene.background_colors[0]);
         assert_eq!(config.post, [-0.7, 0.9, 0.0, 0.75, 1.1, 0.0, 0.0]);
+        assert_eq!(config.mandel_appearance[5], 1.0);
+    }
+
+    #[test]
+    fn authored_diffuse_shading_is_separate_from_surface_roughness() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nmat1_shading 0,35;\nmat1_surface_roughness 0,04;",
+        );
+        let scene = MandelbulberScene::parse(&source).unwrap();
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+        scene.apply_authored_path_appearance(&mut config);
+        assert_eq!(config.mandel_appearance[5], 0.35);
+        assert_eq!(config.fractal_style[4], 0.2);
     }
 
     #[test]

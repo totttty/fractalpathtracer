@@ -142,6 +142,66 @@ the OS-owned GPU archiver cache. After system disk headroom returned, the full
 Rust gate was rerun successfully: all 209 tests passed. The hit/miss correction
 can therefore be retained independently of the remaining watchdog issue.
 
+## Authored diffuse correction
+
+The next isolated probe found that `sunContributionWithSurface` multiplied
+Mandel direct diffuse light by `material.roughness`. The default Mandel
+`surface_roughness = 0.01` maps to FPT roughness 0.1, incorrectly removing 90%
+of that contribution. Upstream `src/shader_light_shading.cpp` uses the independent
+material `shading` parameter: `1 - shading + max(N dot L, 0) * shading`.
+
+The candidate passes the parsed shading value through the previously unused
+`mandel_appearance[5]` slot and applies that expression only to authored Mandel
+direct light. It preserves shadow traversal, ray offsets, roughness-based bounce
+directions, material colors and native FPT lighting. It does not implement the
+remaining multi-material graph, specular or full authored-light model.
+
+A one-bounce, zero-environment, zero-emission GPU readback regression failed
+before the correction: summed linear RGB was 339.53754 at roughness 1 and
+33.953785 at roughness 0.1. Afterward the two captures are exactly equal. The same
+test verifies interpolation between flat and Lambert shading; a parser test
+checks that shading and roughness remain independent.
+
+All seven geometry/authored pairs complete at 300 maximum axis / authored
+aspect / 32 SPP, using one-sample chunks and 32-row tiles. All seven geometry
+captures and both native controls (Exact Box and Cornell, 96x96, 1 SPP) are
+byte-exact against the accepted checkpoint. Descriptive RGB MAE against the
+hash-verified CPU Mandel references is:
+
+| Rank | Before | Corrected |
+| --- | ---: | ---: |
+| 01 | 0.418471 | 0.130798 |
+| 02 | 0.495071 | 0.380897 |
+| 03 | 0.201252 | 0.187038 |
+| 04 | 0.038186 | 0.031224 |
+| 05 | 0.060409 | 0.060409 |
+| 13 | 0.102738 | 0.095634 |
+| 17 | 0.046700 | 0.046700 |
+
+Scene 05 differs at four pixels by at most one 8-bit channel level; scene 17's
+authored capture is byte-exact. The other five show lower reference error.
+Visual inspection still finds dark bands on scene 01, absent authored colour
+on scene 02, under-lighting on scene 03 and different highlights/bands on scene
+13. This is a validated diffuse-weight correction, not full appearance parity.
+No performance improvement is claimed: scene 17 completed in 248.25 seconds
+wall time, but this resumed capture run is not an alternating GPU benchmark.
+
+Commands, hashes, before/after metrics and the inspected contact sheet are in
+`reports/authored-diffuse-fix`. Reference captures are explicitly reused from
+the preceding CPU-reference run; the candidate captures are new (scene 01 was
+hash-verified and resumed after the initial attempt). Compact results are in
+`docs/mandel-release-results.json`.
+
+The initial scene-02 capture and one stitched-archive test were blocked by
+Apple's GPU archiver reporting `No space left on device`. With user approval,
+`uv cache clean` recovered 1.1 GiB of reproducible cache data without deleting
+projects or installed environments. The full rerun passes all 211 Rust tests
+and seven Python tests, plus formatting, diff checks, documentation and
+extracted-package compilation. Nothing has been pushed.
+
+Next diagnostic targets remain the position-only shadow-ray miss test and fixed
+world-space ray offsets. Neither has been changed by this diffuse correction.
+
 ## Experimental chunk tiling
 
 The optional tiled dispatcher now supports sample chunks as well as the older
@@ -251,9 +311,8 @@ tiled-renderer default or shader change was retained.
 3. Audit authored shadow-ray origins/occlusion, lighting and palette behavior
    independently. The shadow path still uses a fixed world-space offset and a
    position-only march result; do not conflate its fix with primary geometry.
-   Also separate authored diffuse shading from the native FPT roughness weight:
-   FPT currently multiplies direct light by roughness, while upstream
-   `shader_light_shading.cl` uses its independent material shading control.
+   Authored diffuse shading is now independent of the native FPT roughness
+   weight, with a real GPU regression and seven-scene comparison above.
    Expand the gate to the ranked 50 and track the larger corpus separately.
 4. Extract the CLI-owned production Metal compiler/render/export orchestration
    into a typed library API, requiring unchanged checkpoint captures.

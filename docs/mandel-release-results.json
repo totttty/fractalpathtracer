@@ -56,6 +56,42 @@
     "extracted_package_build": "passed",
     "remote_ci_run": false
   },
+  "authored_diffuse_correction": {
+    "baseline_commit": "6a875f6",
+    "candidate_binary_sha256": "4f29356a3c6d3638e7a357d89f0e9228521105b1e5195ce6710751a782770cef",
+    "maximum_axis": 300,
+    "aspect": "authored",
+    "samples": 32,
+    "samples_per_chunk": 1,
+    "tile_rows": 32,
+    "completed_fpt_captures": 14,
+    "geometry_changed_pixels": 0,
+    "native_control_changed_pixels": 0,
+    "reference_captures_reused_and_hash_verified": true,
+    "rank17_authored_wall_seconds": 248.25,
+    "mae_before_after": {
+      "01": [0.4184712660372791, 0.130798431372549],
+      "02": [0.495071, 0.380897],
+      "03": [0.201252, 0.187038],
+      "04": [0.038186, 0.031224],
+      "05": [0.06040879206003389, 0.06040875332849189],
+      "13": [0.102738, 0.095634],
+      "17": [0.046700319535221496, 0.046700319535221496]
+    },
+    "rank05_authored_changed_pixels": 4,
+    "rank05_max_channel_delta_8bit": 1,
+    "rank17_authored_changed_pixels": 0,
+    "rust_tests_passed": 211,
+    "python_tests_passed": 7,
+    "raw_report": "reports/authored-diffuse-fix/summary.json",
+    "contact_sheet": "reports/authored-diffuse-fix/contact-sheet.png",
+    "limitations": [
+      "Reference error is descriptive, not full authored appearance parity.",
+      "The native controls validate output, not unchanged performance.",
+      "Wall time is not an alternating GPU benchmark; no speedup is claimed.",
+      "Shadow traversal, palette gaps, multi-material graphs and highlights remain separate work."
+    ]
+  },
   "limits": [
     "Tiling is opt-in; unchanged defaults can still hit the watchdog on heavy scenes.",
     "Wall seconds are not GPU benchmark time; no speedup is claimed.",
