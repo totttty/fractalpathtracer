@@ -202,6 +202,84 @@ extracted-package compilation. Nothing has been pushed.
 Next diagnostic targets remain the position-only shadow-ray miss test and fixed
 world-space ray offsets. Neither has been changed by this diffuse correction.
 
+## Shadow-origin diagnosis
+
+Starting from `fb0d21e`, seven diagnostic variants were compared on scenes 01,
+02 and 03 with the same generated formula, 160x120 camera, 4 SPP and one bounce.
+Emission, ambient contribution, secondary environment, DOF and soft-light jitter
+were disabled to isolate direct visibility. This deliberately reduced probe is
+not an authored beauty reference or a performance benchmark.
+
+| Probe | Result |
+| --- | --- |
+| Existing fixed normal offset | Reproduces dark rings and under-lighting |
+| Use the marcher's `found` flag only | No energy change on any of the three scenes |
+| Freeze threshold only | Negligible on 01/03; lowers scene 02 energy by 4.47% |
+| Surface-threshold normal offset | Removes the dark rings in the direct-only scene 01 probe |
+| Normal offset plus fixed threshold | Similar to normal offset; no clear reason to bundle the second change |
+| Surface-threshold light-direction offset | Removes dark rings and follows upstream's initial shadow displacement |
+| Light-direction offset plus fixed threshold | Similar; deferred to keep the correction isolated |
+
+The selected correction replaces the initial displacement only for authored
+Mandel direct shadows: `point + lightDirection * surfaceThreshold`, after the
+existing light jitter. Upstream `src/shader_aux_shadow.cpp` starts at
+`input.distThresh` along `lightVector`; the OpenCL equivalent does the same.
+Primary marching, later shadow stepping, the position-based miss test, bounce
+origins, materials and native FPT offsets are unchanged. Full upstream shadow
+parity is not claimed: the ordinary upstream shadow loop also uses a fixed
+surface threshold, while this narrow change retains FPT's current loop.
+
+An analytic GPU regression replaces only the distance field and first-hit
+input, preserving the real sun function and Mandel marcher. It tests a plane
+with/without a nearby blocking slab at three scales (thresholds 0.00001, 0.01
+and 10), three light angles (1, 30 and 90 degrees), and positive/negative ray
+directions. The old fixed offset skips the small-scale blocker, incorrectly
+returning nonzero light. All 36 cases pass with the correction: clear rays
+retain the expected cosine response and blocked rays return zero.
+
+Diagnostic source variants, captures and linear-energy measurements are in
+`reports/mandel-shadow-diagnosis`. The temporary experiment module is not part
+of the source package; only the deterministic GPU regression is retained.
+
+The full authored comparison is deliberately separate from that analytic
+correctness gate. Scene 13 loses the false dark bands but becomes too bright
+against the CPU reference: RGB MAE increases from 0.095634 to 0.132476. This
+change is not an all-scene appearance improvement. Bright rings also remain in
+scene 01. Do not compensate by restoring false occlusion or applying a
+scene-name exposure multiplier; isolate the remaining light/material response
+against a direct-only reference. The current captures do not establish which
+part of that response is responsible for scene 13's increased error.
+
+Fresh 32-SPP captures at 300 maximum-axis pixels, authored aspect, one sample
+per chunk and 32-row tiles completed for all seven scenes. CPU references were
+reused only after hash verification. All seven neutral geometry images remain
+byte-exact. The reference-normalized RGB MAE is:
+
+| Rank | Diffuse checkpoint | Shadow-origin correction |
+| --- | ---: | ---: |
+| 01 | 0.130798 | 0.103347 |
+| 02 | 0.380897 | 0.299691 |
+| 03 | 0.187038 | 0.184670 |
+| 04 | 0.031224 | 0.026587 |
+| 05 | 0.060409 | 0.060409 |
+| 13 | 0.095634 | 0.132476 |
+| 17 | 0.046700 | 0.046700 |
+
+Scene 05 changes one pixel by one 8-bit channel level; scene 17 is byte-exact.
+Scene 03's small MAE improvement does not establish appearance parity: its lit
+faces are still too bright/yellow. Scene 02's missing authored material colour
+also remains. Raw commands, capture/binary hashes and the three-column sheet
+are under `reports/mandel-shadow-origin-fix`; the compact tracked results are in
+`docs/mandel-release-results.json`. These are correctness/appearance captures,
+not an alternating performance benchmark.
+
+Validation: 212 Rust tests and seven Python harness tests pass, as do formatting,
+diff checks and the documentation build. Exact Box and Cornell native controls
+remain byte-exact with the optional Mandel tile flags present. This validates
+native output isolation, not a performance guarantee.
+The extracted source package also builds successfully (72 files, 2.3 MiB
+uncompressed); ignored diagnostic modules and captures are excluded.
+
 ## Experimental chunk tiling
 
 The optional tiled dispatcher now supports sample chunks as well as the older
@@ -308,9 +386,13 @@ tiled-renderer default or shader change was retained.
 2. Keep chunk tiling optional despite its successful full-size watchdog gate.
    Automatic scheduling, larger scenes and interactive responsiveness require
    their own tests; the seven-scene offline result is not a universal guarantee.
-3. Audit authored shadow-ray origins/occlusion, lighting and palette behavior
-   independently. The shadow path still uses a fixed world-space offset and a
-   position-only march result; do not conflate its fix with primary geometry.
+3. Audit authored shadow stepping/occlusion, lighting and palette behavior
+   independently. The authored direct-shadow origin now uses the surface
+   threshold, but later stepping still uses FPT's dynamic threshold and a
+   position-only march result. Secondary bounce offsets remain fixed. Do not
+   conflate these with primary geometry. Prioritize the scene 13 brightness
+   outlier and scene 01's remaining bright bands before claiming appearance
+   parity.
    Authored diffuse shading is now independent of the native FPT roughness
    weight, with a real GPU regression and seven-scene comparison above.
    Expand the gate to the ranked 50 and track the larger corpus separately.

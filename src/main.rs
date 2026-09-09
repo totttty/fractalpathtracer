@@ -7821,6 +7821,127 @@ mod tests {
     use super::*;
 
     #[test]
+    fn mandel_shadow_origin_preserves_clear_and_blocked_rays_across_scales() {
+        let _guard = metal_test_guard();
+        // Replace only the field and known first-hit input. The production sun
+        // function and Mandel marcher remain intact, including their offsets.
+        let source = std::str::from_utf8(METAL_SOURCE_BYTES).unwrap();
+        let field_entry = "static float mapSdf(float3 p, constant FptRenderConfig &cfg) {";
+        let path_entry =
+            "static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &cfg) {";
+        assert_eq!(source.matches(field_entry).count(), 1);
+        assert_eq!(source.matches(path_entry).count(), 1);
+        let source = source
+            .replacen(
+                field_entry,
+                &format!(
+                    r#"{field_entry}
+            float height = p.y * cfg.program_material[1];
+            float threshold = cfg.vset_values[117];
+            return cfg.program_material[0] > 0.0f
+                ? min(height, abs(height - 4.0f * threshold) - 0.25f * threshold)
+                : height;
+        "#
+                ),
+                1,
+            )
+            .replacen(
+                path_entry,
+                &format!(
+                    r#"{path_entry}
+            return sunContributionWithSurface(
+                float3(0.0f, cfg.program_material[1] * cfg.vset_values[117] * 0.9995f, 0.0f),
+                xy, float(sample_idx), defaultMaterial(),
+                float3(0.0f, cfg.program_material[1], 0.0f), cfg);
+        "#
+                ),
+                1,
+            );
+        let source = mandelbulber::compiler::retain_metal_kernels(
+            &source,
+            &["accumulate_all_kernel", "present_kernel"],
+        )
+        .unwrap();
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = ProbeDirectory(std::env::temp_dir().join(format!(
+            "fpt-metal/shadow-origin-{}-{nonce}",
+            std::process::id()
+        )));
+        let (library, _) = compile_mandel_metallib(
+            source.as_bytes(),
+            &directory.0,
+            "analytic-shadow",
+            MandelMetalOptimization::Default,
+        )
+        .unwrap();
+        let mut cfg = FptRenderConfig::default();
+        cfg.width = 16;
+        cfg.height = 16;
+        cfg.samples = 1;
+        cfg.sdf_id = SDF_MANDELBULBER;
+        cfg.sdf_accumulation_mode = SDF_ACCUMULATION_BATCH;
+        cfg.mandel_appearance_mode = 2;
+        cfg.mandel_appearance[5] = 1.0;
+        cfg.sun = [1.0, 0.0, 90.0, 1.0, 0.0];
+        cfg.sun_color = [1.0; 3];
+        cfg.camera_dof = 0.0;
+        cfg.focus_distance = 1.0;
+        cfg.render[1] = 10000.0;
+        cfg.vset_values[108] = 0.0;
+        cfg.vset_values[113] = 1.0;
+        cfg.vset_values[115] = 0.0;
+        cfg.vset_values[118] = 0.0;
+        cfg.vset_values[119] = 1000.0;
+        cfg.vset_values[129] = 1.0;
+        cfg.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
+        for threshold in [0.00001_f32, 0.01, 10.0] {
+            cfg.vset_values[117] = threshold;
+            cfg.vset_values[110] = threshold * 3.0;
+            cfg.render[4] = threshold * 1000.0;
+            for sign in [-1.0_f32, 1.0] {
+                cfg.program_material[1] = sign;
+                for pitch in [1.0_f32, 30.0, 90.0] {
+                    cfg.sun[2] = sign * pitch;
+                    for blocker in [false, true] {
+                        cfg.program_material[0] = if blocker { 1.0 } else { 0.0 };
+                        let expected = if blocker {
+                            0.0
+                        } else {
+                            pitch.to_radians().sin()
+                        };
+                        let mut pixels = vec![f32::NAN; 16 * 16 * 4];
+                        let result = execute_metal_render_internal(
+                            &cfg,
+                            &library,
+                            &default_stitch_metallib_path().unwrap(),
+                            None,
+                            &directory.0.join("probe.png"),
+                            &[],
+                            Some(&mut pixels),
+                        );
+                        if let Err(error) = result {
+                            assert!(
+                                error.to_string().contains("blank or single-colour"),
+                                "{error:#}"
+                            );
+                        }
+                        assert!(
+                            pixels
+                                .chunks_exact(4)
+                                .all(|p| p[..3].iter().all(|v| (v - expected).abs() < 1.0e-5)),
+                            "threshold={threshold}, sign={sign}, pitch={pitch}, blocker={blocker}: expected {expected}, got {:?}",
+                            &pixels[..4]
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn mandel_direct_diffuse_does_not_depend_on_roughness() {
         let _guard = metal_test_guard();
         let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("scenes/mandelbulber/ifs-20.fract");

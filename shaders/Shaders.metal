@@ -6505,6 +6505,11 @@ static float3 sunContributionWithSurface(float3 rp, float2 xy, float seed, Mater
     float h2 = hash13(float3(xy, seed * 3.0f + 5.0f));
     float2 div = float2(cos(h1 * 2.0f * pi), sin(h1 * 2.0f * pi)) * sqrt(h2) * cfg.sun[4];
     light_dir = rotateCamera(light_dir, div);
+    if (cfg.sdf_id == SDF_MANDELBULBER && cfg.mandel_appearance_mode == 2u) {
+        // Start one surface threshold toward the light, as Mandel's shadow
+        // path does. A fixed world offset self-shadows or skips small blockers.
+        rp = rp0 + light_dir * mandelbulberMarchThreshold(rp0, cfg);
+    }
     rp = march(light_dir, rp, int(cfg.render[1]), cfg.render[3], 0.0002f, cfg);
     if (length(rp0 - rp) > cfg.render[4] * 0.99f) {
         if (cfg.sdf_id == SDF_MANDELBULBER && cfg.mandel_appearance_mode == 2u) {
