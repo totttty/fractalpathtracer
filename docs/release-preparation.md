@@ -79,6 +79,48 @@ visual parity. The appearance MAE is descriptive, not an acceptance threshold.
 An optional `--baseline previous/summary.json` requires matching scene/settings
 and byte-exact FPT RGB captures, intended for the later library extraction.
 
+## Ranked-50 support audit
+
+The broader support gate uses `tests/fixtures/mandel-release-ranked50.json`.
+This is the historical ranked-50 ordering with full source-relative paths and
+SHA-256 hashes, not filename-only matching. Rank 49 has two different upstream
+files with the same basename. This manifest selects the collection IFS scene
+corresponding to the historical FPT capture; the old sheet appears to have used
+the unrelated root-level file for its Mandel reference. Both new renderers
+receive exactly the same pinned source.
+
+```sh
+FPT_MANDEL_TILED_DISPATCH=1 FPT_MANDEL_TILE_ROWS=32 \
+python3 scripts/run_mandel_support_suite.py \
+  --scene-root "$MANDEL_EXAMPLES" \
+  --mandelbulber-root "$MANDEL_SOURCE" \
+  --mandelbulber-bin "$MANDEL_BINARY" \
+  --fpt target/release/fpt-metal \
+  --output reports/mandel-release-ranked50 \
+  --max-axis 300 --samples 32 --timeout 900
+```
+
+The runner is serial, preserves authored aspect, uses one sample per tiled
+command, and records each mode independently. A reference failure cannot hide
+FPT geometry or authored results. A timeout means the 15-minute command budget
+was exhausted, not proof of unsupported geometry. Failed-image diagnostics
+remain visible but do not count as successful renders.
+
+Use the same command with `--resume` after interruption. Scene, executable,
+lightmap, harness and settings identities must match; saved image/metadata
+hashes are checked. Interrupted attempts are preserved in separate directories.
+The runner stops below 1 GiB disk headroom. Each completed command updates
+`summary.json` and `support.csv`; five ten-scene PNG pages support visual review.
+
+Authored custom AO maps are resolved and pinned independently (including
+scene 25's `lightmap2.jpg`), never replaced with the default map merely to make
+a render run. Other external textures remain outside this asset audit. The
+reference retains authored effects, including volumes/DOF that FPT may not
+implement, so appearance MAE is not an isolated geometry metric. Compilation
+success is established by a successful production render; timeouts and
+unsupported scene contracts are reported separately. Geometry/appearance
+fidelity remains explicitly unreviewed until the images are inspected.
+
 ## First discovered correctness issue
 
 Mandelbulber's modified-parameters files may omit image width/height. The checked

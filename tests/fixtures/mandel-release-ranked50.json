@@ -1,0 +1,261 @@
+{
+  "version": 1,
+  "root": "Mandelbulber examples (supplied explicitly)",
+  "provenance": {
+    "order": "Historical ranked-50 appearance-capture600-path300-b2-full-v1",
+    "source_report_sha256": "de04a4e3e5dbdce664cedd61fd1f18b2a2e8157eb9ac1ab80dc28aa928bb55b4",
+    "rank49": "Use the Krzysztof Marczak collection IFS scene corresponding to the historical FPT capture. A duplicate root-level filename appears to have supplied the unrelated historical Mandel reference; fresh comparisons use this exact path for both renderers."
+  },
+  "scenes": [
+    {
+      "id": "01",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddConditional4D.fract",
+      "sha256": "fde8d0d0b9c328abcfcbb328a029420f769d764d9a00618712864cae205cb92e"
+    },
+    {
+      "id": "02",
+      "path": "Sebastian Jennen collection - license Creative Commons  (CC-BY 4.0)/hybrid 03 - christmas ornaments.fract",
+      "sha256": "27d4cf989838051969d0d0df8ce84664ebecc8ec165f645c78efac8febc71888"
+    },
+    {
+      "id": "03",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Mix Pinski 4D - DE linear cube.fract",
+      "sha256": "66e4f4628004100f0a89316b367a988293cd4f8b36d8488bcb4e88cb8782eb8f"
+    },
+    {
+      "id": "04",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/DIFS Cylinder complex primitive.fract",
+      "sha256": "8e60def0f10c74a0e863033fd38925771f98794af6bdb02c7ed696f04486e21c"
+    },
+    {
+      "id": "05",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-IterationWeight4D.fract",
+      "sha256": "eb77680b3a7eea4c9548d0cb36e5a5fa0733f1dbaf6660e8b76889e1867cdc93"
+    },
+    {
+      "id": "06",
+      "path": "amoxmodkali_001.fract",
+      "sha256": "0cdf80168de4b3aec71fa2694e8ad317a86f240694648b9aed7e8417fb6a094e"
+    },
+    {
+      "id": "07",
+      "path": "clouds 004.fract",
+      "sha256": "3ff12dff5a60186e5e21c14e478f110de47d7e6d0f334b19a785e08e58eb239f"
+    },
+    {
+      "id": "08",
+      "path": "pseudo kleinian 002.fract",
+      "sha256": "af8ef643a642d29424887b19766201988921dc7f8e3bfb8bc7c58ecdd8f24f80"
+    },
+    {
+      "id": "09",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/iridescence.fract",
+      "sha256": "0e98b3bbaf324312ec87b7cf5a4d505ccf0fd430d31f40890beccde48b7519d2"
+    },
+    {
+      "id": "10",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudoKleinianMod5.fract",
+      "sha256": "076a93d0c1f43832068832dfa9853671964959ff784745d0db58b87a29e75ee6"
+    },
+    {
+      "id": "11",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid16.fract",
+      "sha256": "ba19f06138f0351692f5e84163de4428598c0d20ed088dcc02379c61e12c51ef"
+    },
+    {
+      "id": "12",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/mandelbulb_pupuku pow-4.fract",
+      "sha256": "d73f243dd683d3ea7d2caec79f6bf820622826f32a5762dc65b912034d32a22e"
+    },
+    {
+      "id": "13",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_difs_piriform.fract",
+      "sha256": "307aa167218bb7c63fce7ee98fbb6839247fd5cebfc1634a079c0d52f10da1ff"
+    },
+    {
+      "id": "14",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/two pseudo klienian.fract",
+      "sha256": "dac246366d4906985891dc91eac3ce874d8a801a5e4ec16dcd8e39fa06259249"
+    },
+    {
+      "id": "15",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Mix Pinski 4D hybrid.fract",
+      "sha256": "be0f8ed4cba195885557cd58d6627fa1f3d31a0cbe2ef4f3efc8ca012e790846"
+    },
+    {
+      "id": "16",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsOctahedron2.fract",
+      "sha256": "a550800d208f431cf1ad07c7b78d5f5f2d3024085db5e06d6dd23635770426d6"
+    },
+    {
+      "id": "17",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/xenodreambuieV2  pow -7 julia.fract",
+      "sha256": "82d6eb83b73ef38aa8f25e59da066b3c67632464a87fe7781348864fccd115e8"
+    },
+    {
+      "id": "18",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurfKlein_difsGreek.fract",
+      "sha256": "65437c8c8a897e35814ad72466f84d34b5468c3b9eb1b0313608845175242ebc"
+    },
+    {
+      "id": "19",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsTorusMenger.fract",
+      "sha256": "9c61227b0baf67d91e110bdabfa5dfe38d46876701a2fb9a5cf9dc0d534eca3e"
+    },
+    {
+      "id": "20",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_sincosHelix.fract",
+      "sha256": "4f965bc402de6303ff76bdd912abfc4aea345d31b6eb5b557aa0030686cda816"
+    },
+    {
+      "id": "21",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox24.fract",
+      "sha256": "1fd08e16820af8ca79cd59305e71cac2564c2420bad10fe3edfc0d645158b56a"
+    },
+    {
+      "id": "22",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf_klein.fract",
+      "sha256": "878220b14dc481aad77ed9ebf945b44cfdd3cd679f1cd48f5684378df327b94b"
+    },
+    {
+      "id": "23",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/boxFoldBulb_v3.fract",
+      "sha256": "616a024b051b035a64cd7eea75cb34fa7ad144c907ad1307e709386075f754b7"
+    },
+    {
+      "id": "24",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/aboxMod13_002.fract",
+      "sha256": "8d074f8cb4d6f8c0464c568b8965d1de8b60b469447d612f9e04f053f6ba3c0e"
+    },
+    {
+      "id": "25",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Jos Leys Kleinian v3 SphereGrid.fract",
+      "sha256": "8a7772132465f1662e04e969a460fb241aaaf600188a1ebfbd9762992654b71a"
+    },
+    {
+      "id": "26",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf_kleinV2.fract",
+      "sha256": "9ac02395052160cd1c59f4ef7e48181d150d3111bbe26ca795b7162ff6bd61c5"
+    },
+    {
+      "id": "27",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_juliaBox_bxFld_scale_mgrM1.fract",
+      "sha256": "1311e943edd381938d08251480137380f8d5bd96d768387eec4acf3e82b07cfb"
+    },
+    {
+      "id": "28",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Jos Leys Kleinian sphereInversion.fract",
+      "sha256": "3a0a08685862d926f2d703259329ecf4a88dd5a00ca820da03bd20aca9a128bc"
+    },
+    {
+      "id": "29",
+      "path": "menger 4D 001.fract",
+      "sha256": "5e3247e3b7957fe608f143a12ed85e95600021305eb92a2a2f1ffdf3492705a0"
+    },
+    {
+      "id": "30",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudoKleinianMod_4D.fract",
+      "sha256": "a4413dd119852ccd2ec9425ddcf85ba579e671e237592357d2e4104cc7c0546b"
+    },
+    {
+      "id": "31",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T_DIFS AmazIfs torus.fract",
+      "sha256": "e745a50ad478e2e2d68d18165ca55105398ca8694c8fe46b09f62e24b72d7846"
+    },
+    {
+      "id": "32",
+      "path": "hybrid005.fract",
+      "sha256": "089cdc1eb3977a9993854042e6d3e43982354d3058f071805a445a26d3d13843"
+    },
+    {
+      "id": "33",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pk3Abx15.fract",
+      "sha256": "1b2bb0128c18b93d993c1d53223727722e6dfd10904312ff91de62dd33783d97"
+    },
+    {
+      "id": "34",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudo_kleinian_mod6.fract",
+      "sha256": "17ef8a2fcc6934a353846857b03b5c9d4a79dcea2d5dce3ae98ce7303a129878"
+    },
+    {
+      "id": "35",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_quadratic_fold menger4D.fract",
+      "sha256": "e40d6d5543746e9ef467223842c8c9f470eb496c3e5fe95584730cc3fcfd429f"
+    },
+    {
+      "id": "36",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/mandelbulb_pupuku pow-4a.fract",
+      "sha256": "ffe875b67e55be14d515de6c51d95ed6ea5568c9fd74f965ae07aebd475e2b24"
+    },
+    {
+      "id": "37",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/FoldIntPow2 2.fract",
+      "sha256": "d6e64b69b64ccae9302f375f6f0e199568b5420a186c9a6d15a2167ddd300ae4"
+    },
+    {
+      "id": "38",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf_kleinV2 aa.fract",
+      "sha256": "f34b78bcb0632aeed0ddeed35a7667bc7a9e005556eb231ded3776d824d4d68c"
+    },
+    {
+      "id": "39",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/aboxMod14_torus.fract",
+      "sha256": "3a7aaf5fadf26185fb9a7625c22ed4a4d9344d0bbaf1de0e28153ccd9249bc93"
+    },
+    {
+      "id": "40",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/orbitTraps 005.fract",
+      "sha256": "96e4bec4d5d7dcbd535a39058c26c87b060954ab8cb8b7c3229a8f485ef37928"
+    },
+    {
+      "id": "41",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transfSinYm3d_menger3.fract",
+      "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+    },
+    {
+      "id": "42",
+      "path": "riemann bulb msltoe mod2 001.fract",
+      "sha256": "0f5ab1172a79efe695d4e0485bd2d99b02cc4f9a610da4b926b927f32e1cfd3b"
+    },
+    {
+      "id": "43",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Koch_Ifs aaa2.fract",
+      "sha256": "7cac3ff197807499349de1c3126bbf0de13d6f9f760c627f19e0700d28ace669"
+    },
+    {
+      "id": "44",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T_DIFS Tri_Grid asurf.fract",
+      "sha256": "98bb7b0c3118b338beeb5deb5997bb0bdd296534ec387548cd37cc565d096e67"
+    },
+    {
+      "id": "45",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T_difsSupershapeV2.fract",
+      "sha256": "2b24680e3cdded9d9a0cdc67573d25cc53f1e19b0fa50de49f9c06466a2bd477"
+    },
+    {
+      "id": "46",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/iter fog 005.fract",
+      "sha256": "eb863371ccafa5ce4ae8b2956cf2be62e0d426e1989e40d7970873badb3af8cf"
+    },
+    {
+      "id": "47",
+      "path": "pseudo kleinian std de 001.fract",
+      "sha256": "243b5626d7777f9a188b30ac1768af2815a8793f7c1c03ae648203fa6ecb083d"
+    },
+    {
+      "id": "48",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/RoadToExascale.fract",
+      "sha256": "98baaeb09ffaf586320bd07492fb72ed47f59bc504f5be3dc612db7fca2ed27e"
+    },
+    {
+      "id": "49",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/monte carlo global illumination.fract",
+      "sha256": "493e106a04fce09f220042eb9a6d93ee3e88c2dc14c6207162a850b0d1094a74"
+    },
+    {
+      "id": "50",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hex prism and chromatic.fract",
+      "sha256": "6969b43c486186e7aa218f13d20791a4e161403149e66f0a0cd020c0bb3c1dc1"
+    }
+  ]
+}
