@@ -92,6 +92,56 @@ compressed. This validates build packaging without the research caches, but does
 not certify third-party redistribution or the future CVOX library API. The new
 GitHub workflow has not run remotely because the branch has not been pushed.
 
+## Mandel hit/miss correction
+
+The next diagnosis found that `marchMandelbulber` correctly returned
+`found = false` for exhausted, stalled or non-finite rays, but `renderPath`
+discarded that flag through the position-only `march` wrapper. Positions inside
+the far-distance limit were then shaded as surfaces. The upstream OpenCL
+`engines/ray_recursion.cl` gates surface shading on its explicit `found` flag.
+
+The FPT Mandel integrator now retains that flag for primary and secondary rays.
+Misses take the existing background/environment path; native FPT marching,
+Mandel step decisions, iteration limits and material calculations are unchanged.
+A GPU readback regression forces an exhausted marcher and checks that it returns
+the configured background instead of shading the last position. It failed at
+that assertion before the fix and passed afterward.
+
+Fresh captures are in `reports/release-canaries-found-fixed`; detailed diagnostic
+commands, before/after differences and the rank-17 comparison are in
+`reports/march-found-fix`. These generated artifacts are not packaged source.
+
+| Rank | Changed geometry pixels vs checkpoint |
+| --- | ---: |
+| 01 | 0 |
+| 02 | 0 |
+| 03 | 2 |
+| 04 | 0 |
+| 05 | 0 |
+| 13 | 3 |
+| 17 | 54,392 |
+
+Rank 17 no longer has the large false surface covering its background. The
+other geometry differences are small, but the result is an intentional
+correctness change, not a byte-exact Mandel gate. Authored captures also change
+because secondary misses no longer shade false surfaces. Two native FPT controls
+(Exact Box and Cornell, 96x96, 1 SPP) are byte-exact against the saved binary.
+
+The full canary still completes only six of seven scene triplets: rank 17
+authored mode fails with `Impacting Interactivity` at 300x300/32 SPP with default
+bounces. Separate rank-17 probes completed at 300x300 with 1 SPP/1 bounce,
+1 SPP/4 bounces, and 32 SPP/1 bounce. This separates the hit/miss correction from
+the remaining long multi-bounce dispatch problem. Reducing bounces is not an
+accepted release workaround, and probe wall times are not GPU benchmarks.
+
+Build, formatting, documentation and five Python harness tests pass. Of 209 Rust
+tests, 206 passed; three stitched-library tests were blocked by Apple's GPU
+archiver reporting `No space left on device` on the system disk. Moving task
+temporary files to Ventura allowed ordinary tests to run but did not redirect
+the OS-owned GPU archiver cache. After system disk headroom returned, the full
+Rust gate was rerun successfully: all 209 tests passed. The hit/miss correction
+can therefore be retained independently of the remaining watchdog issue.
+
 ## Remaining work
 
 The initial fresh checkpoint sheet ran six of seven complete scene triplets
@@ -116,17 +166,26 @@ A sampled host stack was waiting in `MTLCommandBuffer waitUntilCompleted`.
 This is an inconclusive probe, not proof of a deadlock or an accepted fix; no
 tiled-renderer default or shader change was retained.
 
-1. Classify and fix the fresh canary differences; expand the gate to the ranked
-   50 and track the larger corpus separately.
-2. Extract the CLI-owned production Metal compiler/render/export orchestration
+1. Restore system disk headroom and rerun the three blocked tests plus the full
+   gate. Retain the isolated hit/miss correction only with verified checks.
+2. Bound rank-17 GPU command duration without reducing resolution, sample count,
+   bounce count or formula iterations. Test spatial tiles within sample chunks,
+   preserving pixel/sample identities and accumulation order; verify byte-exact
+   output on completed controls before retrying the failing full canary. The
+   existing batch tile mode evaluates all samples per tile and is not this gate.
+3. Audit authored shadow-ray origins/occlusion, lighting and palette behavior
+   independently. The shadow path still uses a fixed world-space offset and a
+   position-only march result; do not conflate its fix with primary geometry.
+   Expand the gate to the ranked 50 and track the larger corpus separately.
+4. Extract the CLI-owned production Metal compiler/render/export orchestration
    into a typed library API, requiring unchanged checkpoint captures.
-3. Factor validated occupancy/refinement and CVOX packaging into reusable Rust
+5. Factor validated occupancy/refinement and CVOX packaging into reusable Rust
    components and pin the required VoxQuant source changes.
-4. Expose CVOX plus required palette/local-mask/provenance sidecars as one asset
+6. Expose CVOX plus required palette/local-mask/provenance sidecars as one asset
    bundle. The native viewer can continue loading generated files without a
    runtime dependency on FPT or external NRD.
-5. Distinguish view-derived surfaces from camera-independent full volumes;
+7. Distinguish view-derived surfaces from camera-independent full volumes;
    validate unseen/secondary geometry before promising complete volumes.
-6. Complete clean-clone integration, licensing, API documentation and final
+8. Complete clean-clone integration, licensing, API documentation and final
    history consolidation. Generated metallibs, volumes, caches and large research
    captures must remain outside the published source package.

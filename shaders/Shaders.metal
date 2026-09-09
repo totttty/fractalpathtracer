@@ -6629,11 +6629,19 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
     float far_dist = max_dist * 0.99f;
     float far_dist_sq = far_dist * far_dist;
     for (int i = 0; i < bounces; i++) {
-        rp = march(dr, rp, local_ni, cfg.render[3], 0.0002f, cfg);
+        bool missed = false;
+        if (cfg.sdf_id == SDF_MANDELBULBER) {
+            // Exhausted or stalled Mandel rays can stop inside the distance limit.
+            MandelbulberMarchResult hit = marchMandelbulber(dr, rp, local_ni, cfg);
+            rp = hit.position;
+            missed = !hit.found;
+        } else {
+            rp = march(dr, rp, local_ni, cfg.render[3], 0.0002f, cfg);
+        }
         float travel_sq = dot(rp - cam_pos, rp - cam_pos);
-        if (i == 0 && travel_sq > max_dist_sq) sky_mask = 1.0f;
+        if (i == 0 && (missed || travel_sq > max_dist_sq)) sky_mask = 1.0f;
         local_ni = int(cfg.render[1] / (cfg.render[5] * 2.0f + 1.0f));
-        if (travel_sq > far_dist_sq) {
+        if (missed || travel_sq > far_dist_sq) {
             pixellight += authored_path
                 ? pixelcolor * environment(dr, cfg)
                 : environment(dr, cfg);

@@ -7805,6 +7805,57 @@ mod tests {
     use super::*;
 
     #[test]
+    fn exhausted_mandel_march_returns_background_without_shading() {
+        let _guard = metal_test_guard();
+        let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("scenes/mandelbulber/ifs-20.fract");
+        let args = parse_render_args(&[source.to_string_lossy().into_owned()]).unwrap();
+        let mut cfg = load_scene_config(&args).unwrap().config;
+        cfg.width = 16;
+        cfg.height = 16;
+        cfg.samples = 1;
+        cfg.render[0] = 1.0;
+        cfg.render[1] = 0.0;
+        cfg.mandel_appearance_mode = 1;
+        cfg.world[1] = 1.0;
+        cfg.world[5] = 1.0;
+        cfg.world[6] = 1.0;
+        cfg.background_gradient = [1.0, 0.0, 1.0, 0.5, 0.0, 0.5];
+        cfg.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = ProbeDirectory(std::env::temp_dir().join(format!(
+            "fpt-metal/exhausted-march-{}-{nonce}",
+            std::process::id()
+        )));
+        fs::create_dir_all(&directory.0).unwrap();
+        let output = directory.0.join("miss.png");
+        let mut pixels = vec![f32::NAN; cfg.width as usize * cfg.height as usize * 4];
+        let result = execute_metal_render_internal(
+            &cfg,
+            &default_metallib_path().unwrap(),
+            &default_stitch_metallib_path().unwrap(),
+            None,
+            &output,
+            METAL_SOURCE_BYTES,
+            Some(&mut pixels),
+        );
+        if let Err(error) = result {
+            assert!(
+                error.to_string().contains("blank or single-colour"),
+                "{error:#}"
+            );
+        }
+        assert!(
+            pixels
+                .chunks_exact(4)
+                .all(|pixel| pixel[0] > 0.0 && pixel[1] == 0.0 && pixel[0] == pixel[2]),
+            "an exhausted ray must return the background, not shade its last position"
+        );
+    }
+
+    #[test]
     fn structural_auto_fit_selector_only_accepts_catastrophic_bounds_waste() {
         let requested = Aabb::new([-4.0; 3], [4.0; 3]);
         let catastrophic = Aabb::new([-0.004; 3], [0.004; 3]);
