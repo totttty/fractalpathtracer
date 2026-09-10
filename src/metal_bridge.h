@@ -517,6 +517,8 @@ int fpt_compare_images(const char *baseline_path,
 
 int fpt_metal_device_name(char *name, size_t name_len);
 
+int fpt_mandel_perlin_permutation(uint32_t seed, uint8_t *output, size_t count);
+
 int fpt_test_voxel_dda(const char *metallib_path,
                        char *error,
                        size_t error_len);

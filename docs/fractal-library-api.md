@@ -982,6 +982,17 @@ the in-memory `VoxelGrid` remains the exact sparse volume.
 
 ## Consumer integration
 
+The continuous Metal renderer also specializes enabled OR-box primitives,
+including empty boundary shells, local transforms/limits, thickness and fixed
+primitive materials. Box repetition, smooth/non-OR combinations and grouped
+transforms are rejected. Material Perlin displacement is specialized for
+non-boolean fractals and the supported primitive distance paths. It preserves
+per-material period, rotation, offset, octave count, abs/invert and intensity,
+using the native CPU displacement operation order. Invalid parameters and
+boolean-fractal material routing fail explicitly. The validated case is scene
+`380`; this is not a claim of full material-graph or all-scene parity.
+This continuous-render validation does not certify downstream CVOX conversion.
+
 For built-ins or constructed volumes, depend on this repository as a normal
 Rust path/git dependency and call the in-memory API. For generated `.fract`
 formulas, invoke the versioned `voxel-export` process seam on macOS and ingest
@@ -991,6 +1002,24 @@ generated Metal compilation and device ownership can be exposed without
 coupling consumers to `FptRenderConfig`.
 
 ## Licensing boundary
+
+Active Perlin displacement imports `opencl/engines/perlin_noise.cl` from the
+external checkout at runtime, retaining its notices and recording its hash in
+generated source. Its permutation is generated with the native macOS libc++
+shuffle and `clouds_random_seed` (default 12345). This matches the tested native
+macOS build, not a cross-standard-library permutation guarantee. No evaluator
+body is checked into the repository. Scenes without active displacement do not
+read or include that evaluator. Perlin colour, luminosity and transparency
+modulation are separate, unimplemented material features.
+
+Enabled OR-water primitives import the upstream `PrimitiveWater` evaluator
+from `opencl/engines/primitives.cl` at runtime, with its source hash recorded in
+the generated shader. Scenes without water do not read that file or include
+the evaluator. Supported water parameters include local position/rotation,
+wave amplitude/length, animation phase, limits and shell thickness. Object-coupled
+waves, smooth or non-OR combinations and grouped primitive transforms are rejected
+explicitly. This restores geometry and fixed primitive material selection; it
+does not establish native reflection, refraction or volumetric parity.
 
 FPT Metal's hand-written Rust, bridge, voxel contract, and GLB encoder are
 Apache-2.0. Mandelbulber2 is GPLv3-or-later. The importer reads an external

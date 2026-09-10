@@ -66,12 +66,7 @@ impl AuxiliaryLighting {
     pub fn load(scene: &MandelbulberScene) -> Result<Self> {
         let mut result = Self::default();
         if version_is_before(&scene.source_version, 2, 25)? {
-            if scene.auxiliary_light_enabled {
-                result
-                    .unsupported
-                    .push("legacy auxiliary point lights".into());
-            }
-            return Ok(result);
+            return Self::load_legacy_points(scene);
         }
         let parameters = &scene.main_parameters;
         if parameters
@@ -325,6 +320,82 @@ impl AuxiliaryLighting {
         Ok(result)
     }
 
+    fn load_legacy_points(scene: &MandelbulberScene) -> Result<Self> {
+        let mut translated = scene.clone();
+        // Reuse the validated modern point-light path after native's pre-2.25
+        // renaming/scaling step. This does not rewrite the source scene.
+        translated.source_version = "2.25".into();
+        translated.main_parameters.clear();
+        let mut volumes = Vec::new();
+        for index in 1..=4 {
+            let get = |field: &str| {
+                scene
+                    .main_parameters
+                    .get(&format!("aux_light_{field}_{index}"))
+            };
+            if !get("enabled")
+                .map(|v| parse_bool(v))
+                .transpose()?
+                .unwrap_or(false)
+            {
+                continue;
+            }
+            let id = index + 1;
+            let p = &mut translated.main_parameters;
+            p.insert(format!("light{id}_enabled"), "true".into());
+            p.insert(format!("light{id}_type"), "point".into());
+            for (old, new) in [("position", "position"), ("colour", "color")] {
+                if let Some(value) = get(old) {
+                    p.insert(format!("light{id}_{new}"), value.clone());
+                }
+            }
+            if let Some(value) = get("intensity") {
+                let intensity = parse_number(value)?;
+                let default = [0.325, 0.25, 0.75, 0.5][index - 1];
+                let migrated = if intensity == default {
+                    intensity
+                } else {
+                    intensity / 4.0
+                };
+                p.insert(format!("light{id}_intensity"), migrated.to_string());
+            }
+            if let Some(value) = scene.main_parameters.get("aux_light_visibility_size") {
+                let size = parse_number(value)?;
+                let migrated = if size == 0.5 { size } else { size * 2.0 };
+                p.insert(format!("light{id}_size"), migrated.to_string());
+            }
+            p.insert(
+                format!("light{id}_cast_shadows"),
+                scene.main_light_cast_shadows.to_string(),
+            );
+            p.insert(
+                format!("light{id}_penetrating"),
+                scene.main_light_penetrating.to_string(),
+            );
+            if get("volumetric_enabled")
+                .map(|v| parse_bool(v))
+                .transpose()?
+                .unwrap_or(false)
+            {
+                volumes.push(format!(
+                    "light{id}: legacy point-light volume (surface light retained)"
+                ));
+            }
+        }
+        let mut result = Self::load(&translated)?;
+        result.unsupported.extend(volumes);
+        for (key, value) in &scene.main_parameters {
+            if let Some(index) = key.strip_prefix("aux_light_enabled_") {
+                if !matches!(index, "1" | "2" | "3" | "4") && parse_bool(value)? {
+                    result.unsupported.push(format!(
+                        "legacy auxiliary light {index}: outside predefined 1..4 range"
+                    ));
+                }
+            }
+        }
+        Ok(result)
+    }
+
     pub fn specialize(&self, source: &str) -> Result<String> {
         if self.directional.is_empty() && self.point.is_empty() && self.fake.is_none() {
             return Ok(source.to_owned());
@@ -454,6 +525,40 @@ mod tests {
             &source.replace("[main_parameters]", &format!("[main_parameters]\n{extra}")),
         )
         .unwrap()
+    }
+    #[test]
+    fn legacy_auxiliary_point_light_uses_native_migration_scale() {
+        let mut s = scene(
+            "aux_light_enabled_1 true;\naux_light_position_1 1 2 3;\naux_light_colour_1 ffff 0000 0000;\naux_light_intensity_1 0.04;\naux_light_visibility_size 0.2;\naux_light_volumetric_enabled_1 true;",
+        );
+        s.source_version = "2.21".into();
+        let lights = AuxiliaryLighting::load(&s).unwrap();
+        assert_eq!(lights.point.len(), 1);
+        let p = &lights.point[0];
+        assert_eq!(p.id, 2);
+        assert_eq!(p.position, [1.0, 3.0, 2.0]);
+        assert_eq!(p.color, [1.0, 0.0, 0.0]);
+        assert_eq!(p.intensity, 0.01);
+        assert_eq!(p.size, 0.4);
+        assert!(!p.camera_relative);
+        assert!(lights.unsupported.iter().any(|x| x.contains("volume")));
+    }
+    #[test]
+    fn legacy_defaults_disabled_and_out_of_range_lights_are_explicit() {
+        let mut s = scene(
+            "aux_light_enabled_1 true;\naux_light_intensity_1 0.325;\naux_light_enabled_2 false;\naux_light_enabled_5 true;",
+        );
+        s.source_version = "2.21".into();
+        let lights = AuxiliaryLighting::load(&s).unwrap();
+        assert_eq!(lights.point.len(), 1);
+        assert_eq!(lights.point[0].intensity, 0.325);
+        assert_eq!(lights.point[0].size, 0.5);
+        assert!(
+            lights
+                .unsupported
+                .iter()
+                .any(|x| x.contains("outside predefined"))
+        );
     }
     #[test]
     fn disabled_and_unsupported_lights_are_not_reinterpreted() {

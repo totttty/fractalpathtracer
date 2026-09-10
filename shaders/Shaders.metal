@@ -4,6 +4,8 @@ using namespace metal;
 constant float pi = 3.14159265359f;
 constant float inf = 1.0e20f;
 
+enum { RENDERER_SDF = 0 };
+
 #if defined(FPT_TOPOLOGY_DUAL_SURFACE)
 constant bool fptTopologyUseGeneratedSurface [[function_constant(0)]];
 #endif
@@ -992,14 +994,41 @@ static float4 mandelbulberFieldSample(float3 p,
 #endif
 
 static float mandelbulberPrimitiveUnionDistance(float3 p, constant FptRenderConfig &cfg);
+static float mandelbulberMarchThreshold(float3 position, constant FptRenderConfig &cfg);
 
 static float mandelbulberNormalDistance(float3 p,
-                                        constant FptRenderConfig &cfg) {
+                                        constant FptRenderConfig &cfg,
+                                        float detail_size = -1.0f) {
+#if defined(FPT_MANDEL_SCENE_LIMITS) || defined(FPT_MANDEL_INTERIOR)
+    if (detail_size < 0.0f) detail_size = mandelbulberMarchThreshold(p, cfg);
+#endif
+#ifdef FPT_MANDEL_SCENE_LIMITS
+    float limit_distance = cfg.renderer_backend == RENDERER_SDF
+        ? fptMandelLimitDistance(p, cfg) : -inf;
+    if (limit_distance > detail_size) return limit_distance;
+#endif
     int iteration_multiplier = cfg.vset_values[115] > 1.5f ? 5 : 1;
     float distance = mandelbulberFieldSample(p, cfg, iteration_multiplier).x;
+#ifdef FPT_MANDEL_INTERIOR
+    if (cfg.renderer_backend == RENDERER_SDF && distance < 0.9f * detail_size) {
+        distance = detail_size - distance;
+    }
+#endif
+#ifdef FPT_MANDEL_PERLIN
+    distance = fptFractalDisplace(distance, p, cfg);
+#endif
     if (cfg.sdf_flat_union_count > 0u) {
         distance = min(distance, mandelbulberPrimitiveUnionDistance(p, cfg));
     }
+#ifdef FPT_MANDEL_BOX
+    distance = mandelbulberBoxDistance(p, distance, cfg);
+#endif
+#ifdef FPT_MANDEL_WATER
+    distance = mandelbulberWaterDistance(p, distance, cfg);
+#endif
+#ifdef FPT_MANDEL_SCENE_LIMITS
+    distance = max(distance, limit_distance);
+#endif
     return distance;
 }
 
@@ -1024,7 +1053,12 @@ static float mandelbulberPrimitiveUnionDistance(
             // Mandelbulber clamps solid plane interiors to zero. Keeping that
             // convention suppresses enclosed fractal isosurfaces without
             // changing the plane boundary selected by marching cubes.
-            distance = min(distance, max(dot(p, plane.xyz) + plane.w, 0.0f));
+            float plane_distance = max(dot(p, plane.xyz) + plane.w, 0.0f);
+#ifdef FPT_MANDEL_PERLIN
+            float scale = max(setv(cfg,0),1.0f);
+            plane_distance = fptPerlinDisplace(plane_distance / scale, p.xzy / scale, primitive.source_instruction) * scale;
+#endif
+            distance = min(distance, plane_distance);
         } else if (primitive.opcode == SDF_OP_SPHERE) {
             float3 local = float3(
                 dot(float3(primitive.transform[0], primitive.transform[1],
@@ -1038,6 +1072,10 @@ static float mandelbulberPrimitiveUnionDistance(
                 sphere_distance = abs(sphere_distance);
             }
             sphere_distance = max(sphere_distance - primitive.data[1], 0.0f);
+#ifdef FPT_MANDEL_PERLIN
+            float scale = max(setv(cfg,0),1.0f);
+            sphere_distance = fptPerlinDisplace(sphere_distance / scale, p.xzy / scale, primitive.source_instruction) * scale;
+#endif
             distance = min(distance, sphere_distance);
         }
     }
@@ -1048,36 +1086,83 @@ static float mandelbulberTopologyDistance(
     float fractal_distance, float3 p, float iso_distance,
     constant FptRenderConfig &cfg) {
     float distance = fractal_distance - iso_distance;
+#ifdef FPT_MANDEL_PERLIN
+    distance = fptFractalDisplace(fractal_distance, p, cfg) - iso_distance;
+#endif
     if (cfg.sdf_flat_union_count > 0u) {
         distance = min(distance,
                        mandelbulberPrimitiveUnionDistance(p, cfg) - iso_distance);
     }
+#ifdef FPT_MANDEL_BOX
+    distance = mandelbulberBoxDistance(p, distance + iso_distance, cfg) - iso_distance;
+#endif
+#ifdef FPT_MANDEL_WATER
+    distance = mandelbulberWaterDistance(p, distance + iso_distance, cfg) - iso_distance;
+#endif
     return distance;
 }
 
 static DeResult deMandelbulber(float3 p,
                               constant FptRenderConfig &cfg) {
+#ifdef FPT_MANDEL_SCENE_LIMITS
+    float limit_distance = cfg.renderer_backend == RENDERER_SDF
+        ? fptMandelLimitDistance(p, cfg) : -inf;
+    if (limit_distance > mandelbulberMarchThreshold(p, cfg)) {
+        DeResult outside;
+        outside.d = limit_distance;
+        outside.orbit = 0.0f;
+        return outside;
+    }
+#endif
     float4 sample = mandelbulberFieldSample(p, cfg, 1);
     DeResult result;
     result.d = sample.x;
-    // Mandelbulber's iteration-threshold mode treats points which reach the
-    // configured iteration limit as interior. Escaped points are kept just
-    // outside the current pixel-sized threshold so they cannot become false
-    // hits as the threshold grows with camera distance.
-    if (cfg.vset_values[115] > 1.5f) {
-        float threshold = clamp(
-            length(cameraPos(cfg) - p) * cfg.vset_values[116],
-            cfg.vset_values[118], cfg.vset_values[119]);
-        bool reached_iteration_limit = sample.w > 0.0f;
-        if (reached_iteration_limit) {
-            result.d = 0.0f;
-        } else if (result.d < threshold) {
-            result.d = threshold * 1.01f;
+#ifdef FPT_MANDEL_INTERIOR
+    if (cfg.renderer_backend == RENDERER_SDF) {
+        float detail_size = mandelbulberMarchThreshold(p, cfg);
+        bool reached_limit = sample.w > 0.0f;
+        bool threshold_mode = cfg.vset_values[115] > 1.5f;
+        bool interior_limit = reached_limit;
+#if FPT_MANDEL_INTERIOR_DELTA_UNBOUNDED
+        interior_limit = reached_limit && threshold_mode;
+#endif
+        if (threshold_mode && reached_limit) result.d = 0.0f;
+        if (result.d < 0.5f * detail_size || interior_limit) result.d = detail_size;
+        if (threshold_mode && !reached_limit && result.d < detail_size) {
+            result.d = detail_size * 1.01f;
+        }
+    } else
+#endif
+    {
+        // Escaped samples in iteration-threshold mode stay outside the
+        // current pixel-sized hit threshold.
+        if (cfg.vset_values[115] > 1.5f) {
+            float threshold = clamp(
+                length(cameraPos(cfg) - p) * cfg.vset_values[116],
+                cfg.vset_values[118], cfg.vset_values[119]);
+            bool reached_iteration_limit = sample.w > 0.0f;
+            if (reached_iteration_limit) {
+                result.d = 0.0f;
+            } else if (result.d < threshold) {
+                result.d = threshold * 1.01f;
+            }
         }
     }
+    #ifdef FPT_MANDEL_PERLIN
+    result.d = fptFractalDisplace(result.d, p, cfg);
+    #endif
     if (cfg.sdf_flat_union_count > 0u) {
         result.d = min(result.d, mandelbulberPrimitiveUnionDistance(p, cfg));
     }
+#ifdef FPT_MANDEL_BOX
+    result.d = mandelbulberBoxDistance(p, result.d, cfg);
+#endif
+#ifdef FPT_MANDEL_WATER
+    result.d = mandelbulberWaterDistance(p, result.d, cfg);
+#endif
+#ifdef FPT_MANDEL_SCENE_LIMITS
+    result.d = max(result.d, limit_distance);
+#endif
     result.orbit = abs(sample.w) / max(setv(cfg, 1), 1.0f);
     return result;
 }
@@ -3727,8 +3812,13 @@ static float mandelbulberMarchThreshold(float3 position,
 static float sdfMarchStep(float distance,
                           float threshold,
                           constant FptRenderConfig &cfg) {
+#ifdef FPT_MANDEL_INTERIOR
+    float surface_offset = cfg.renderer_backend == RENDERER_SDF ? 0.8f : 0.5f;
+#else
+    constexpr float surface_offset = 0.5f;
+#endif
 #if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
-    float step = max(distance - 0.5f * threshold, 0.0f) *
+    float step = max(distance - surface_offset * threshold, 0.0f) *
                  cfg.vset_values[113];
     if (cfg.vset_values[108] > 0.5f) {
         step = clamp(step, cfg.vset_values[109], cfg.vset_values[110]);
@@ -3743,7 +3833,7 @@ static float sdfMarchStep(float distance,
     return step;
 #else
     if (cfg.sdf_id == SDF_MANDELBULBER) {
-        float step = max(distance - 0.5f * threshold, 0.0f) *
+        float step = max(distance - surface_offset * threshold, 0.0f) *
                      cfg.vset_values[113];
         if (cfg.vset_values[108] > 0.5f) {
             step = clamp(step, cfg.vset_values[109], cfg.vset_values[110]);
@@ -3981,8 +4071,10 @@ static float3 normalAt(float3 p, constant FptRenderConfig &cfg) {
         }
         return normalize(slow_normal / magnitude_scale);
     }
+    float detail_size = cfg.sdf_id == SDF_MANDELBULBER
+        ? mandelbulberMarchThreshold(p, cfg) : 0.0f;
     float e = cfg.sdf_id == SDF_MANDELBULBER
-        ? mandelbulberMarchThreshold(p, cfg) * cfg.vset_values[114]
+        ? detail_size * cfg.vset_values[114]
         : max(cfg.render[2], 0.0002f);
     if ((cfg.sdf_normal_mode == 0u || cfg.sdf_normal_mode == 2u) && cfg.sdf_id == SDF_PROGRAM && cfg.sdf_program_count > 0u) {
         float3 gradient = programSurface(p, cfg).gradient;
@@ -4000,16 +4092,16 @@ static float3 normalAt(float3 p, constant FptRenderConfig &cfg) {
         float3 k2 = float3(-1.0f, 1.0f, -1.0f);
         float3 k3 = float3(1.0f, 1.0f, 1.0f);
         float d0 = cfg.sdf_id == SDF_MANDELBULBER
-            ? mandelbulberNormalDistance(p + k0 * tetra_e, cfg)
+            ? mandelbulberNormalDistance(p + k0 * tetra_e, cfg, detail_size)
             : mapSdf(p + k0 * tetra_e, cfg);
         float d1 = cfg.sdf_id == SDF_MANDELBULBER
-            ? mandelbulberNormalDistance(p + k1 * tetra_e, cfg)
+            ? mandelbulberNormalDistance(p + k1 * tetra_e, cfg, detail_size)
             : mapSdf(p + k1 * tetra_e, cfg);
         float d2 = cfg.sdf_id == SDF_MANDELBULBER
-            ? mandelbulberNormalDistance(p + k2 * tetra_e, cfg)
+            ? mandelbulberNormalDistance(p + k2 * tetra_e, cfg, detail_size)
             : mapSdf(p + k2 * tetra_e, cfg);
         float d3 = cfg.sdf_id == SDF_MANDELBULBER
-            ? mandelbulberNormalDistance(p + k3 * tetra_e, cfg)
+            ? mandelbulberNormalDistance(p + k3 * tetra_e, cfg, detail_size)
             : mapSdf(p + k3 * tetra_e, cfg);
         float3 n4 = k0 * d0 + k1 * d1 + k2 * d2 + k3 * d3;
         return normalizeFiniteDifference(n4);
@@ -4018,22 +4110,22 @@ static float3 normalAt(float3 p, constant FptRenderConfig &cfg) {
     float3 y_offset = float3(0.0f, e, 0.0f);
     float3 z_offset = float3(0.0f, 0.0f, e);
     float xp = cfg.sdf_id == SDF_MANDELBULBER
-        ? mandelbulberNormalDistance(p + x_offset, cfg)
+        ? mandelbulberNormalDistance(p + x_offset, cfg, detail_size)
         : mapSdf(p + x_offset, cfg);
     float xn = cfg.sdf_id == SDF_MANDELBULBER
-        ? mandelbulberNormalDistance(p - x_offset, cfg)
+        ? mandelbulberNormalDistance(p - x_offset, cfg, detail_size)
         : mapSdf(p - x_offset, cfg);
     float yp = cfg.sdf_id == SDF_MANDELBULBER
-        ? mandelbulberNormalDistance(p + y_offset, cfg)
+        ? mandelbulberNormalDistance(p + y_offset, cfg, detail_size)
         : mapSdf(p + y_offset, cfg);
     float yn = cfg.sdf_id == SDF_MANDELBULBER
-        ? mandelbulberNormalDistance(p - y_offset, cfg)
+        ? mandelbulberNormalDistance(p - y_offset, cfg, detail_size)
         : mapSdf(p - y_offset, cfg);
     float zp = cfg.sdf_id == SDF_MANDELBULBER
-        ? mandelbulberNormalDistance(p + z_offset, cfg)
+        ? mandelbulberNormalDistance(p + z_offset, cfg, detail_size)
         : mapSdf(p + z_offset, cfg);
     float zn = cfg.sdf_id == SDF_MANDELBULBER
-        ? mandelbulberNormalDistance(p - z_offset, cfg)
+        ? mandelbulberNormalDistance(p - z_offset, cfg, detail_size)
         : mapSdf(p - z_offset, cfg);
     float3 n = float3(xp - xn, yp - yn, zp - zn);
     if (cfg.sdf_id == SDF_MANDELBULBER &&
@@ -6769,6 +6861,126 @@ static float3 mandelAuthoredAmbient(float3 point, constant FptRenderConfig &cfg,
 }
 #endif
 
+// Kept separate from deterministic focus, shadow and diagnostic marching.
+// The regression test checks this loop against the ordinary marcher's body.
+static float mandelStepMultiplier(thread uint &seed) {
+    seed = uint((ulong(seed) * 16807ul) % 2147483647ul);
+    return 1.0f - float(seed % 1001u) / 10000.0f;
+}
+
+static float mandelSampledStep(float distance,
+                          float threshold,
+                          constant FptRenderConfig &cfg, thread uint &seed) {
+#ifdef FPT_MANDEL_INTERIOR
+    float surface_offset = cfg.renderer_backend == RENDERER_SDF ? 0.8f : 0.5f;
+#else
+    constexpr float surface_offset = 0.5f;
+#endif
+#if defined(FPT_MANDEL_SPECIALIZED_KERNEL)
+    float step = max(distance - surface_offset * threshold, 0.0f) *
+                 cfg.vset_values[113] * mandelStepMultiplier(seed);
+    if (cfg.vset_values[108] > 0.5f) {
+        step = clamp(step, cfg.vset_values[109], cfg.vset_values[110]);
+        if (threshold > cfg.vset_values[109]) {
+            step = clamp(step,
+                         cfg.vset_values[111] * threshold,
+                         cfg.vset_values[112] * threshold);
+        }
+    } else {
+        step = min(step, cfg.vset_values[110]);
+    }
+    return step;
+#else
+    if (cfg.sdf_id == SDF_MANDELBULBER) {
+        float step = max(distance - surface_offset * threshold, 0.0f) *
+                     cfg.vset_values[113] * mandelStepMultiplier(seed);
+        if (cfg.vset_values[108] > 0.5f) {
+            step = clamp(step, cfg.vset_values[109], cfg.vset_values[110]);
+            if (threshold > cfg.vset_values[109]) {
+                step = clamp(step,
+                             cfg.vset_values[111] * threshold,
+                             cfg.vset_values[112] * threshold);
+            }
+        } else {
+            // The ordinary Mandelbulber marcher still caps every step at
+            // three fractal units. Loose analytic estimators rely on this cap
+            // to avoid jumping over compact 4D and Amazing Box surfaces.
+            step = min(step, cfg.vset_values[110]);
+        }
+        return step;
+    }
+    return abs(distance) * 0.99f;
+#endif
+}
+static MandelbulberMarchResult marchMandelbulberSampled(float3 direction,
+                                                  float3 position,
+                                                  int iteration_count,
+                                                  constant FptRenderConfig &cfg, uint initial_seed) {
+    uint step_seed = initial_seed;
+    float3 start = position;
+    float distance = 0.0f;
+    float threshold = mandelbulberMarchThreshold(position, cfg);
+    float step = 0.0f;
+    bool found = false;
+    int maximum_iterations = sdfMarchIterationLimit(iteration_count, cfg);
+    for (int iteration = 0; iteration < maximum_iterations; ++iteration) {
+        threshold = mandelbulberMarchThreshold(position, cfg);
+        distance = mapSdf(position, cfg);
+        if (!isfinite(distance)) break;
+        // Mandelbulber's full OpenCL ray recursion accepts the whole
+        // distance < threshold band. The 0.95 factor is used only to bracket
+        // the boundary during the subsequent refinement search.
+        if (distance < threshold) {
+            found = true;
+            break;
+        }
+        step = mandelSampledStep(distance, threshold, cfg, step_seed);
+        float3 next_position = position + direction * step;
+        // Once fp32 can no longer represent the requested displacement, every
+        // remaining iteration evaluates the exact same point and returns the
+        // same final position. Stop that provably redundant fixed-point loop.
+        if (all(next_position == position)) break;
+        position = next_position;
+        if (length(position - start) >= cfg.render[4]) break;
+    }
+    if (!found) return MandelbulberMarchResult{position, false};
+
+    // Mandelbulber's full OpenCL engine brackets the threshold boundary with
+    // up to thirty half-steps. Its accepted band scales with detail_level.
+    float search_limit = 1.0f - 0.001f * max(cfg.vset_values[129], 0.0f);
+    step *= 0.5f;
+    for (int refinement = 0; refinement < 30; ++refinement) {
+        if (distance < threshold && distance > threshold * search_limit) break;
+        if (distance > threshold) {
+            float3 next_position = position + direction * step;
+            if (all(next_position == position)) break;
+            position = next_position;
+        } else if (distance < threshold * search_limit) {
+            float3 next_position = position - direction * step;
+            if (all(next_position == position)) break;
+            position = next_position;
+        }
+        distance = mapSdf(position, cfg);
+        step *= 0.5f;
+    }
+    return MandelbulberMarchResult{position, true};
+}
+
+static uint mandelStepMixBits(uint x) {
+    x ^= x >> 16u;
+    x *= 0x7feb352du;
+    x ^= x >> 15u;
+    x *= 0x846ca68bu;
+    return x ^ (x >> 16u);
+}
+static uint mandelPathStepSeed(float2 xy, uint sample, uint bounce, uint experiment) {
+    uint h = mandelStepMixBits(as_type<uint>(xy.x) ^ 0x4d415243u);
+    h = mandelStepMixBits(h ^ as_type<uint>(xy.y));
+    h = mandelStepMixBits(h ^ sample);
+    h = mandelStepMixBits(h ^ bounce);
+    return 1u + mandelStepMixBits(h ^ experiment) % 2147483646u;
+}
+
 static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &cfg) {
     float frame = float(sample_idx);
     float3 cam_pos = cameraPos(cfg);
@@ -6818,7 +7030,7 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
         bool missed = false;
         if (cfg.sdf_id == SDF_MANDELBULBER) {
             // Exhausted or stalled Mandel rays can stop inside the distance limit.
-            MandelbulberMarchResult hit = marchMandelbulber(dr, rp, local_ni, cfg);
+            MandelbulberMarchResult hit = marchMandelbulberSampled(dr, rp, local_ni, cfg, mandelPathStepSeed(xy, sample_idx, uint(i), 1u));
             rp = hit.position;
             missed = !hit.found;
         } else {
@@ -7960,7 +8172,8 @@ static float3 marchMandelbulberProfiled(float3 direction,
                                         int iteration_count,
                                         constant FptRenderConfig &cfg,
                                         thread SdfProfileLocalStats &stats,
-                                        thread uint &ray_steps) {
+                                        thread uint &ray_steps,
+                                        uint step_seed = 0u) {
     float3 start = position;
     float distance = 0.0f;
     float threshold = mandelbulberMarchThreshold(position, cfg);
@@ -7976,7 +8189,7 @@ static float3 marchMandelbulberProfiled(float3 direction,
             found = true;
             break;
         }
-        step = sdfMarchStep(distance, threshold, cfg);
+        step = mandelSampledStep(distance, threshold, cfg, step_seed);
         float3 next_position = position + direction * step;
         if (all(next_position == position)) break;
         position = next_position;
@@ -8012,10 +8225,11 @@ static float3 marchProfiled(float3 direction,
                             float lod_falloff,
                             constant FptRenderConfig &cfg,
                             thread SdfProfileLocalStats &stats,
-                            thread uint &ray_steps) {
+                            thread uint &ray_steps,
+                            uint step_seed = 0u) {
     if (cfg.sdf_id == SDF_MANDELBULBER) {
         return marchMandelbulberProfiled(direction, position, iteration_count,
-                                         cfg, stats, ray_steps);
+                                         cfg, stats, ray_steps, step_seed);
     }
     float3 result = marchCounted(direction, position, iteration_count,
                                  minimum_distance, lod_falloff, cfg, ray_steps);
@@ -8076,7 +8290,7 @@ static void sdfProfilePath(float2 xy,
         uint local_primary = 0u;
         stats.phase = i == 0 ? 0u : 1u;
         rp = marchProfiled(dr, rp, local_ni, cfg.render[3], 0.0002f, cfg,
-                           stats, local_primary);
+                           stats, local_primary, mandelPathStepSeed(xy, sample_idx, uint(i), 1u));
         stats.max_ray_steps = max(stats.max_ray_steps, local_primary);
         if (i == 0) stats.primary_steps += local_primary;
         else stats.secondary_steps += local_primary;

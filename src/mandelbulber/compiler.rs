@@ -329,6 +329,22 @@ pub fn specialize_scene_with_kernel_specialization(
     }?;
     let mut specialized =
         specialize_mandelbulber_appearance(&specialized, scene, &formulas, &configured_values)?;
+    specialized = super::primitive_box::specialize(&specialized, scene)?;
+    specialized = super::water::specialize(&specialized, scene, source_root)?;
+    specialized = super::displacement::specialize(&specialized, scene, source_root)?;
+    specialized = super::scene_limits::specialize(&specialized, scene)?;
+    let interior_uses_delta = scene.force_delta_de
+        || if scene.hybrid_enabled {
+            !scene.force_analytic_de
+                && formulas
+                    .iter()
+                    .any(|(_, formula)| formula.source.de_type == "deltaDEType")
+        } else {
+            formulas
+                .first()
+                .is_some_and(|(_, formula)| formula.source.de_type == "deltaDEType")
+        };
+    specialized = super::interior::specialize(&specialized, scene, interior_uses_delta)?;
     if std::env::var_os("FPT_MANDEL_INTERACTIVE_REFINEMENT").is_some() {
         specialized = specialized.replace(
             "int(setv(cfg, 1)) * iteration_multiplier",
@@ -908,8 +924,13 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
         .join(",\n");
     let base = scene.material.surface_color.map(metal_float);
     let mut plane_materials = String::new();
-    for (index, plane) in scene.primitive_planes.iter().enumerate() {
-        let Some(material) = scene.materials.get(&plane.material_id) else {
+    let primitive_material_ids = scene
+        .primitive_planes
+        .iter()
+        .map(|p| p.material_id)
+        .chain(scene.primitive_spheres.iter().map(|p| p.material_id));
+    for (index, material_id) in primitive_material_ids.enumerate() {
+        let Some(material) = scene.materials.get(&material_id) else {
             continue;
         };
         // Fixed-color primitive materials do not use the fractal's color orbit.
@@ -918,9 +939,21 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
             continue;
         }
         let c = material.surface_color.map(metal_float);
+        let distance_source = if index < scene.primitive_planes.len() {
+            format!(
+                "const FptPrimitiveInstance plane = cfg.sdf_flat_union_instances[{index}];\n        float distance = max(dot(p,float3(plane.data[0],plane.data[1],plane.data[2]))+plane.data[3],0.0f);"
+            )
+        } else {
+            format!(
+                "const FptPrimitiveInstance sphere = cfg.sdf_flat_union_instances[{index}];\n        float3 local = p + float3(sphere.transform[3],sphere.transform[7],sphere.transform[11]);\n        float distance = length(local) - sphere.data[0];\n        if ((sphere._pad0 & 1u) != 0u) distance = abs(distance);\n        distance = max(distance - sphere.data[1],0.0f);"
+            )
+        };
         writeln!(plane_materials,r#"    {{
-        const FptPrimitiveInstance plane = cfg.sdf_flat_union_instances[{index}];
-        float distance = max(dot(p,float3(plane.data[0],plane.data[1],plane.data[2]))+plane.data[3],0.0f);
+        {distance_source}
+#ifdef FPT_MANDEL_PERLIN
+        float scale = max(setv(cfg,0),1.0f);
+        distance = fptPerlinDisplace(distance / scale, p.xzy / scale, {material_id}u) * scale;
+#endif
         if (distance < selected_distance) {{
             selected_distance = distance;
             material.rgb = float3({r},{g},{b});
@@ -991,6 +1024,12 @@ static Material mandelbulberGeneratedMaterial(float3 p,
     material.ior = {ior};
     material.emission = cfg.fractal_style[6];
 {plane_materials}
+#ifdef FPT_MANDEL_BOX
+    material = mandelbulberBoxMaterial(p, cfg, material);
+#endif
+#ifdef FPT_MANDEL_WATER
+    material = mandelbulberWaterMaterial(p, cfg, material);
+#endif
     return material;
 }}
 "#,
@@ -7260,6 +7299,17 @@ target 0 0 0;
         assert!(source.contains(&format!("material.rgb = float3(0.0f,{green},0.0f)")));
         assert!(source.contains("if (distance < selected_distance)"));
         assert!(source.contains("cfg.sdf_flat_union_instances[0]"));
+    }
+
+    #[test]
+    fn fixed_color_sphere_selects_its_own_material_with_planes_present() {
+        let scene=MandelbulberScene::parse(&COLOR_SCENE.replace("[main_parameters]",
+            "[main_parameters]\nprimitive_plane_1_enabled true;\nprimitive_sphere_1_enabled true;\nprimitive_sphere_1_material_id 2;\nmat2_is_defined true;\nmat2_use_colors_from_palette false;\nmat2_surface_color ff00 0000 0000;" )).unwrap();
+        let source = mandelbulber_palette_source(&scene);
+        let red = metal_float(65280.0 / 65535.0);
+        assert!(source.contains(&format!("material.rgb = float3({red},0.0f,0.0f)")));
+        assert!(source.contains("cfg.sdf_flat_union_instances[1]"));
+        assert!(source.contains("sphere._pad0 & 1u"));
     }
 
     #[test]

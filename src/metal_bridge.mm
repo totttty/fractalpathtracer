@@ -18,6 +18,7 @@
 #include <fstream>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -3717,6 +3718,15 @@ static CVReturn fpt_sdf_display_link_callback(CVDisplayLinkRef displayLink,
     }
 }
 @end
+
+extern "C" int fpt_mandel_perlin_permutation(uint32_t seed, uint8_t *output, size_t count) {
+    if (!output || count != 512u) return -1;
+    // Match the native macOS Mandelbulber runtime, including libc++ shuffle.
+    for (size_t i = 0; i < 256u; ++i) output[i] = static_cast<uint8_t>(i);
+    std::shuffle(output, output + 256u, std::default_random_engine(seed));
+    std::copy(output, output + 256u, output + 256u);
+    return 0;
+}
 
 extern "C" int fpt_metal_device_name(char *name, size_t name_len) {
     @autoreleasepool {

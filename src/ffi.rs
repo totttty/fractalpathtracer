@@ -412,6 +412,7 @@ pub struct FptMandelbulberFieldSample {
 }
 
 unsafe extern "C" {
+    pub fn fpt_mandel_perlin_permutation(seed: u32, output: *mut u8, count: usize) -> i32;
     pub fn fpt_metal_render(
         metallib_path: *const c_char,
         stitch_metallib_path: *const c_char,

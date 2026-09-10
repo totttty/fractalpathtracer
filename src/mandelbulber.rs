@@ -11,10 +11,17 @@ pub mod ambient;
 pub mod catalog;
 pub mod compiler;
 pub mod coverage;
+mod displacement;
 mod formula_optimizer;
+mod interior;
 pub mod lighting;
 mod lighting_random;
 pub mod orbit;
+mod primitive_box;
+mod scene_limits;
+#[cfg(test)]
+mod step_sampling_tests;
+mod water;
 
 const DEFAULT_FOV_DEGREES: f64 = 53.13;
 const DEFAULT_MAX_ITERATIONS: u32 = 250;
@@ -1080,22 +1087,12 @@ impl MandelbulberScene {
             primitive_planes.len() + primitive_spheres.len() <= SDF_FLAT_UNION_MAX_PRIMITIVES,
             "enabled Mandelbulber primitives exceed the supported limit"
         );
-        let (force_delta_de, force_analytic_de) = if document
-            .value("main_parameters", "delta_DE_method")
-            .is_some()
-        {
-            let method = document.integer("main_parameters", "delta_DE_method", 0)?;
-            ensure!(method <= 2, "delta_DE_method must be 0..2");
-            (method == 1, method == 2)
-        } else if let Some(legacy) = document.value("main_parameters", "analityc_DE_mode") {
-            match legacy {
-                "true" => (false, true),
-                "false" => (true, false),
-                value => bail!("invalid main_parameters.analityc_DE_mode boolean: {value}"),
-            }
-        } else {
-            (false, false)
-        };
+        // Native Mandelbulber 2.x retains the old spelling in its settings
+        // container, but cNineFractals selects DE using delta_DE_method only.
+        // Inferring a forced mode from the stale flag changes the geometry.
+        let method = document.integer("main_parameters", "delta_DE_method", 0)?;
+        ensure!(method <= 2, "delta_DE_method must be 0..2");
+        let (force_delta_de, force_analytic_de) = (method == 1, method == 2);
         let delta_de_function = document.integer("main_parameters", "delta_DE_function", 0)?;
         ensure!(delta_de_function <= 6, "delta_DE_function must be 0..6");
         let use_default_bailout =
@@ -4014,15 +4011,21 @@ IFS_scale 1,4;
                 .force_analytic_de
         );
 
-        let legacy_delta = IFS_SCENE.replace(
-            "[main_parameters]",
-            "[main_parameters]\nanalityc_DE_mode false;",
-        );
-        assert!(
-            MandelbulberScene::parse(&legacy_delta)
-                .unwrap()
-                .force_delta_de
-        );
+        for version in ["2.18", "2.33"] {
+            for legacy in ["false", "true"] {
+                let source = IFS_SCENE
+                    .replace("# version 2.33", &format!("# version {version}"))
+                    .replace(
+                        "[main_parameters]",
+                        &format!("[main_parameters]\nanalityc_DE_mode {legacy};"),
+                    );
+                let parsed = MandelbulberScene::parse(&source).unwrap();
+                assert!(
+                    !parsed.force_delta_de && !parsed.force_analytic_de,
+                    "native 2.x ignores stale analityc_DE_mode ({version}, {legacy})"
+                );
+            }
+        }
 
         let preferred = MandelbulberScene::parse(IFS_SCENE).unwrap();
         assert!(!preferred.force_delta_de);
