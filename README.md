@@ -54,6 +54,20 @@ a scene-specialized Metal distance estimator, and renders the exact procedural
 surface through FPT Metal's own camera, materials, lighting, and path tracer.
 It does not bake the fractal into voxels or a cached SDF.
 
+### Complete Experimental Catalogue
+
+[Browse all 746 unique Mandel scenes](docs/mandel-catalog/README.md), with
+stable IDs, source hashes, upstream attribution, historical screening results
+and explicit **reviewed / experimental / blocked** status. The catalogue
+references an external Mandelbulber checkout; it does not bundle scenes,
+textures or generated volumes. Use `python3 scripts/mandel_catalog.py list`
+to browse and `show <id>` for limitations and evidence. The scene-ID render
+launcher preserves authored aspect ratio and verifies the source hash.
+
+Catalogue inclusion is not a claim of full native appearance parity or
+NAADF/CVOX validation. Existing gallery captures and screening scores remain
+labelled with their original settings; they have not been rerendered here.
+
 ### Latest Ranked-50 Gallery
 
 [View all 50 scenes and the five detailed comparison sheets](docs/mandel-gallery/README.md).
@@ -172,7 +186,9 @@ still make an otherwise correct fractal look different. The historical
 successful render can still have major lighting or material differences.
 The [ranked-50 support audit](docs/release-preparation.md#completed-checkpoint-audit)
 separates compilation, neutral-geometry rendering, authored rendering and
-manual reference review. At checkpoint `2e4917f`, all 50 scenes produced both
+manual reference review. The [remaining-scene audit](docs/mandel-remaining-scenes.md)
+provides a deduplicated 696-scene inventory and resumable screening workflow;
+screening success is not a visual-parity certificate. At checkpoint `2e4917f`, all 50 scenes produced both
 FPT modes (one authored render needed a retry), while 47 native references
 completed. Corrected shadow-free headlight controls show coarse alignment in
 25 and 38; their earlier structural diagnosis was confounded by authored shadows.
@@ -199,6 +215,13 @@ on scenes 14/30, with ordinary FPT and neutral Mandel captures byte-exact.
 The [sampling diagnosis and light inventory](docs/mandel-sampling-and-light-inventory.md)
 separates anti-aliasing differences from geometry and identifies the remaining
 auxiliary-light gaps; production anti-aliasing remains unchanged.
+Continuous Mandel path renders now use independent per-pixel/sample/bounce
+step jitter, without changing camera anti-aliasing or scattering samples.
+The [32-SPP promotion gate](docs/mandel-remaining-scenes.md#independent-step-jitter-promotion-2026-09-11)
+reproduces the reviewed sampled captures across ten geometry scenes and two
+authored controls. Dynamic refinement remains experimental; higher-SPP checks
+were explicitly deferred. Existing gallery images and timing tables predate
+this sampling change, and complete native image parity is not claimed.
 The [auxiliary directional follow-up](docs/mandel-auxiliary-directional-lights.md)
 adds camera-relative sources for 21/42/50. All nine isolated light controls
 improve and ten unchanged-path captures remain byte-exact. Original authored
