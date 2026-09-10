@@ -54,12 +54,38 @@ a scene-specialized Metal distance estimator, and renders the exact procedural
 surface through FPT Metal's own camera, materials, lighting, and path tracer.
 It does not bake the fractal into voxels or a cached SDF.
 
+### Latest Ranked-50 Gallery
+
+[View all 50 scenes and the five detailed comparison sheets](docs/mandel-gallery/README.md).
+The refreshed FPT captures include the surface-lighting fixes for scenes **07,
+08 and 40**, at **300 pixels on the longest edge, 32 SPP**, preserving each
+scene's aspect ratio and default bounce settings.
+
+[![Ranked-50 review: cached Mandelbulber reference on the left of each pair, current FPT Metal authored render on the right](docs/mandel-gallery/overview.png)](docs/mandel-gallery/README.md)
+
+This is a **continuous FPT Metal review gallery, not a NAADF voxel gallery or
+a complete visual-parity certificate**. Scene **48** still has a major deep-zoom
+geometry failure; **46** has unresolved precision-related misses. Clouds and
+volumetric halos are unsupported, and **32/37** remain noticeably underlit.
+Native references for **09/17/49** are
+lower-resolution and labelled accordingly; the other 47 match the FPT image
+dimensions. Remaining colour/material differences are documented in the gallery.
+
+[Scenes 01-10](docs/mandel-gallery/README.md#scenes-01-10) |
+[11-20](docs/mandel-gallery/README.md#scenes-11-20) |
+[21-30](docs/mandel-gallery/README.md#scenes-21-30) |
+[31-40](docs/mandel-gallery/README.md#scenes-31-40) |
+[41-50](docs/mandel-gallery/README.md#scenes-41-50)
+
+### Earlier 720p Performance Examples
+
 <img src="docs/mandel-renders/production-quality-720p-50spp-contact-sheet.jpg" alt="Three Mandelbulber2 scenes path traced by FPT Metal at 1280 by 720 and 50 samples per pixel" width="1200">
 
 These three production examples span the measured fast, median, and slow
 cohort at `1280x720`, 50 spp on an Apple M1 Max. Their GPU times were 120.910
 ms, 4,082.461 ms, and 127,142.222 ms respectively; shader compilation is not
-included.
+included. These are historical measurements, not a new benchmark of the
+ranked-50 lighting fixes above.
 
 <table>
   <tr>
@@ -148,8 +174,51 @@ The [ranked-50 support audit](docs/release-preparation.md#completed-checkpoint-a
 separates compilation, neutral-geometry rendering, authored rendering and
 manual reference review. At checkpoint `2e4917f`, all 50 scenes produced both
 FPT modes (one authored render needed a retry), while 47 native references
-completed. White-material controls confirm structural outliers in scenes
-25, 38 and 48, and many authored appearance differences remain. Neither this
+completed. Corrected shadow-free headlight controls show coarse alignment in
+25 and 38; their earlier structural diagnosis was confounded by authored shadows.
+Scene 48 remains a deep-zoom geometry failure in the release renderer, including
+in native OpenCL. An [isolated high/low-precision prototype](docs/release-preparation.md#isolated-highlow-precision-prototype)
+recovered the initial diagnostic view; a wider three-term arithmetic prototype
+now passes a 13-view / 249,600-ray numerical gate after catching two-term depth
+outliers. An opt-in, source-pinned `mandel_precise_render` example now produces
+offline white-headlight references from the original float64 scene parameters.
+It is slow and is not part of the production renderer or voxel exporter.
+The command, supported-input restrictions and arithmetic tests are documented in
+[`examples/precision`](examples/precision/README.md).
+The [latest priority follow-up](docs/mandel-priority-followup.md) adds depth
+controls with zero hit/miss disagreements for 9/11/22/32, reduced-resolution
+native references for 9/17/49, and confirmed float32 position stalls in scene 46.
+The subsequent [main-light shadow correction](docs/mandel-main-shadow-correction.md)
+implements the fog-free directional subset in authored Mandel rendering. It
+reduces matched penetrating-shadow control errors by 21-55% on scenes 14/30;
+four ordinary FPT scene captures remain byte-exact. Full lighting parity is
+still not established.
+The follow-up [light-direction correction](docs/mandel-light-direction-correction.md)
+fixes a Y/Z handedness error: matched unshadowed errors fall a further 91%/65%
+on scenes 14/30, with ordinary FPT and neutral Mandel captures byte-exact.
+The [sampling diagnosis and light inventory](docs/mandel-sampling-and-light-inventory.md)
+separates anti-aliasing differences from geometry and identifies the remaining
+auxiliary-light gaps; production anti-aliasing remains unchanged.
+The [auxiliary directional follow-up](docs/mandel-auxiliary-directional-lights.md)
+adds camera-relative sources for 21/42/50. All nine isolated light controls
+improve and ten unchanged-path captures remain byte-exact. Original authored
+21/42 improve, but 50's overall colour error increases; full material/exposure
+parity remains unresolved.
+The [appearance/normal isolation](docs/mandel-appearance-and-normal-isolation.md)
+identifies scene 50's dominant brightness difference as unmatched indirect
+transport: a one-bounce comparison reduces error by 75%. Production path
+tracing is unchanged.
+Those [identical-point tests](docs/mandel-identical-point-stencils.md) now isolate
+a scene-42 distance-evaluator error: 7.51-degree median normal disagreement
+versus 0.15 degrees in the independent control. Step-size tuning was not retained.
+A diagnostic-only analytic derivative reduces scene 42's identical-point
+normal error to 0.49 degrees, and fresh-ray median error from 9.21 to 0.67
+degrees with no native-visible misses. It is not enabled in production;
+the [larger camera/beauty checks](docs/mandel-analytic-derivative-camera-gates.md)
+show roughly 49% lower white-diffuse error and 3.5-4.0% lower authored error,
+but reveal ten newly missing pixels. The strict coverage gate failed; the
+full-field analytic replacement remains disabled in production.
+Many authored appearance differences remain. Neither this
 audit nor the historical sweep certifies all Mandelbulber scenes or complete
 appearance parity. Generated formula artifacts retain
 Mandelbulber2's GPLv3-or-later boundary and stay in ignored runtime caches; the

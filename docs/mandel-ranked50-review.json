@@ -4,6 +4,22 @@
   "audit_harness_commit": "86063a2",
   "scene_manifest": "tests/fixtures/mandel-release-ranked50.json",
   "visual_parity_certified": false,
+  "main_shadow_followup": {
+    "document": "docs/mandel-main-shadow-correction.md",
+    "scope": "authored Mandel fog-free directional main-light shadows",
+    "integration_status": "retained on release/fractal-library",
+    "full_ranked50_audit_repeated": false,
+    "fresh_fpt_gallery": "docs/mandel-gallery/README.md"
+  },
+  "priority_followup": {
+    "document": "docs/mandel-priority-followup.md",
+    "original_audit_counts_preserved": true,
+    "zero_hit_disagreement_depth_controls": ["09", "11", "22", "32"],
+    "depth_controls_with_remaining_differences": ["17", "46", "49"],
+    "recovered_96px_native_references": ["09", "17", "49"],
+    "production_shading_changed": false,
+    "structural_cli_manifest_fixed": "version 3, 80-byte records"
+  },
   "settings": {
     "max_axis": 300,
     "samples": 32,
@@ -47,10 +63,10 @@
   },
   "visual_counts": {
     "geometry": {
-      "coarse_match": 40,
+      "coarse_match": 42,
       "reference_unavailable": 3,
       "detail_uncertain": 4,
-      "major_mismatch": 3
+      "major_mismatch": 1
     },
     "appearance": {
       "different": 17,
@@ -70,7 +86,7 @@
       "38": "ok",
       "48": "ok"
     },
-    "finding": "All three retain structural/composition mismatches after disabling volumes, AO, specular/reflection, DOF and palette colour in native controls.",
+    "finding": "Superseded diagnosis: these controls retained authored shadows and light directions, so they did not establish structural failure in 25/38. Corrected headlight controls show coarse alignment there. Scene 48 remains a major mismatch.",
     "lighting_matched_to_fpt": false
   },
   "artifacts": {
@@ -90,7 +106,7 @@
     "coarse_match refers only to large-scale structure/framing at 300 maximum axis, not exact geometry parity.",
     "Appearance labels are qualitative, not thresholds derived from global MAE.",
     "Unavailable references remain unassessed.",
-    "Additional native white controls for 25, 38 and 48 disable fog, AO, specular, reflection, DOF and palette colour without changing camera/formulas; direct lighting is not matched to FPT.",
+    "Initial white controls retained authored shadows; corrected headlight controls for 25/38 are recorded in docs/mandel-outlier-diagnosis.json. Frozen raw audit and first-review hashes remain unchanged.",
     "Only ranked 50 audited; this is not current validation of the full 746-scene corpus or arbitrary Mandel scenes.",
     "Native references retain authored Monte Carlo/DOF sample settings; 32 SPP applies only to FPT.",
     "No CVOX/NAADF export gate was run in this audit.",
@@ -345,9 +361,9 @@
       "authored_status": "ok",
       "native_status": "ok",
       "appearance_mae": 0.4464430694747034,
-      "geometry": "major_mismatch",
+      "geometry": "coarse_match",
       "appearance": "major_gap",
-      "notes": "Fog-free, white-material native control retains curved ring/arm structures; FPT instead shows a dense cross/grid of spheres. Structural/composition mismatch persists without fog, AO or reflections."
+      "notes": "Corrected unshadowed camera-headlight control reveals the same dense sphere grid and large arms as FPT. Initial structural diagnosis was confounded by authored shadows. Sampling/normal/detail differences remain; authored appearance rating is unchanged."
     },
     {
       "id": "26",
@@ -475,9 +491,9 @@
       "authored_status": "ok",
       "native_status": "ok",
       "appearance_mae": 0.5551764270152506,
-      "geometry": "major_mismatch",
+      "geometry": "coarse_match",
       "appearance": "major_gap",
-      "notes": "Fog-free native control retains separated twisting columns and open gaps. FPT instead shows dense geometry and a narrow horizon gap. Structural/composition mismatch persists without volume/light effects."
+      "notes": "Corrected unshadowed camera-headlight control reveals dense geometry and the same narrow horizon gap as FPT. Authored shadows hid those surfaces in the initial control. Fine detail/normal differences are not certified; authored appearance rating is unchanged."
     },
     {
       "id": "39",
@@ -577,7 +593,7 @@
       "appearance_mae": 0.41018534979423865,
       "geometry": "major_mismatch",
       "appearance": "major_gap",
-      "notes": "White native control retains a large plane, thin supports and foreground structures; FPT is almost empty. Source camera-to-target distance is about 3e-8 at coordinates near 20. Precision/deep-zoom handling is a hypothesis, not an established cause."
+      "notes": "Native CPU retains the plane/supports; native OpenCL on Apple M1 Max is uniformly RGB 1 at 160x120 and FPT retains only a corner. Camera-target distance 2.9564e-8 is below coordinate float32 spacing (1.1921e-7 to 1.9073e-6). Strong precision evidence, not a fully isolated root cause; camera direction is computed in float64 in FPT."
     },
     {
       "id": "49",

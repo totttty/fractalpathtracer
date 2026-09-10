@@ -1,0 +1,1326 @@
+{
+  "version": 1,
+  "scope": "Continuous FPT Metal; not NAADF or voxel captures.",
+  "production_sha256": "cf8b020ae682eef515020dc2dfda3178f963b1e12b39f1df2cec4169aa53cbcb",
+  "renderer_revision": "fc3685578891ac006c972c0abb01c59e1eb46415",
+  "samples": 32,
+  "max_axis": 300,
+  "bounces": "unchanged scene/config default",
+  "environment": {
+    "FPT_MANDEL_TILED_DISPATCH": "1",
+    "FPT_MANDEL_TILE_ROWS": "8"
+  },
+  "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+  "native_references": "Cached CPU renders; source and image hashes checked, not freshly rendered.",
+  "visual_parity_certified": false,
+  "rows": [
+    {
+      "id": "01",
+      "source": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddConditional4D.fract",
+      "source_sha256": "fde8d0d0b9c328abcfcbb328a029420f769d764d9a00618712864cae205cb92e",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Robert%20Pancoast%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/menger-FabsAddConditional4D.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "9c5329a96e1c1a6fa82d6dc20fa16bcae8a5d2a0ff291ae4f05942fa548963f1",
+          "rgb_sha256": "c07a8f8f1b83d5f2959a365188695632d5cfbdf8d9a0f12231ce89a5c6abc173"
+        },
+        "geometry": {
+          "sha256": "4a7f0c9ae9d7853f05144575c4881f6d1f746f1e487fc666efc608f5a5a05786",
+          "rgb_sha256": "4bdbc4c9f3c35c48cf9b5f87b0623f7a03c28bca31fb440388907a32eb69f266"
+        },
+        "authored": {
+          "sha256": "824f2d7e7d069fc08b1478316fbc510173e31b3921259f285c625726ed8ad8bd",
+          "rgb_sha256": "600c1de459a0601291de5787ff7ccc49edc6f784315ef0ae5495b190bb37865c"
+        }
+      }
+    },
+    {
+      "id": "02",
+      "source": "Sebastian Jennen collection - license Creative Commons  (CC-BY 4.0)/hybrid 03 - christmas ornaments.fract",
+      "source_sha256": "27d4cf989838051969d0d0df8ce84664ebecc8ec165f645c78efac8febc71888",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Sebastian%20Jennen%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/hybrid%2003%20-%20christmas%20ornaments.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "8b70fdbd1d41c4bfeb95ded417a612298f43cc69964dcb6c7612cf12e3234044",
+          "rgb_sha256": "5e30311e1d24c737ded3ba609f92b9e6c8c5351e25af2a357423990bfff7c33a"
+        },
+        "geometry": {
+          "sha256": "cbb38c9f4b3707e93fc5bf71cd5f9eb39b766b56527b0aae19db908b88bdd734",
+          "rgb_sha256": "3c901cc4435bece5342f66b93b45a0b55c800745e63f4bdd1c9d57cd6849083a"
+        },
+        "authored": {
+          "sha256": "82a12084329eeb23dd256ec8f4f1af7b057353ad03ff0d946b405cb7fff9ed0e",
+          "rgb_sha256": "61754ea68734278b9d4fe86f93d488e2468e8e9018225afc0156a82fac4d07da"
+        }
+      }
+    },
+    {
+      "id": "03",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Mix Pinski 4D - DE linear cube.fract",
+      "source_sha256": "66e4f4628004100f0a89316b367a988293cd4f8b36d8488bcb4e88cb8782eb8f",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Mix%20Pinski%204D%20-%20DE%20linear%20cube.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "675c5f424f9f6afd296f201f98ccf0a61d79bef91306895a7af413d29accdde9",
+          "rgb_sha256": "626f57886d264e913cfcad8c8919dfdd1ac270ea3563b15866cbd314abf7b030"
+        },
+        "geometry": {
+          "sha256": "493513ab2602c0c70aebb945257708c5197ee4d17f37f95d01126fb680f473a1",
+          "rgb_sha256": "84b1b5f9c8ed6ede429e7918921faa0db87f70859ce7ba759f7da4567c0130d4"
+        },
+        "authored": {
+          "sha256": "0a51a1aad0cdbabd5d62e7cac5d1cf460c82d974c4a2919c98958516a98645ed",
+          "rgb_sha256": "ac0d6d35ea1eb0b8337f8f42f8423896b31ef49e57815dc419708d1c798270bc"
+        }
+      }
+    },
+    {
+      "id": "04",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/DIFS Cylinder complex primitive.fract",
+      "source_sha256": "8e60def0f10c74a0e863033fd38925771f98794af6bdb02c7ed696f04486e21c",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/DIFS%20Cylinder%20complex%20primitive.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "62c43cb29c2166e911e5e0c32d0089d21beb2db20a3e8c70f1fb3985ec333e4a",
+          "rgb_sha256": "5ce925b2072b22ebd8c5e0935fda1fd3c0055a1e10cdf8acc895ba0fa6730396"
+        },
+        "geometry": {
+          "sha256": "3c43b28e868ca9788466ee88ee1ac77ee71e7936f445eb80aaaebebb3ae5bc50",
+          "rgb_sha256": "815065a766bf48d3ce77a3e60694f67ac8a7594981d9e8ec4f0598b0ca8f3030"
+        },
+        "authored": {
+          "sha256": "1fdeb394b8858772f2d0fd54c6457e31643c4501ce4d9ea331928cee32ed08c7",
+          "rgb_sha256": "39eeb87dfad74eae861152b7767f7be6cab5036c113aede2b6a44b701c9b7566"
+        }
+      }
+    },
+    {
+      "id": "05",
+      "source": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-IterationWeight4D.fract",
+      "source_sha256": "eb77680b3a7eea4c9548d0cb36e5a5fa0733f1dbaf6660e8b76889e1867cdc93",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Robert%20Pancoast%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/menger-IterationWeight4D.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "e49d8ebc9a5128325143701c8c2eb7a095e25fde637318fdfa0828c8cf0c3a31",
+          "rgb_sha256": "a4712a6ad6418cae2ab5d5fde6badba77cb05493223efd423c07e5fadfb84f74"
+        },
+        "geometry": {
+          "sha256": "6237913b9427b2b8edf314abed45bad4c423cce8a75f57057f146bd3327b6a93",
+          "rgb_sha256": "a094dcc057a2c51d39e43a844fe93d5d14286954690c6952e3445216eef9d0fe"
+        },
+        "authored": {
+          "sha256": "3d805739f36e981304b05765e05a9285e7b3d7f2dee2cafed5fc186e7294704c",
+          "rgb_sha256": "40a621082e384d56fbbd083df56c741ba21a90907ede46ebbf686c61e98d8024"
+        }
+      }
+    },
+    {
+      "id": "06",
+      "source": "amoxmodkali_001.fract",
+      "source_sha256": "0cdf80168de4b3aec71fa2694e8ad317a86f240694648b9aed7e8417fb6a094e",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/amoxmodkali_001.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "3b010f897214d788fb7f1df5ac8b6c96b9a03cbf15c0c7a73c976729b0730264",
+          "rgb_sha256": "136519b9c912f47d058d86b45fde301b7b49d5b3a6c72cbd751395736be12d25"
+        },
+        "geometry": {
+          "sha256": "70e7a53158bb701b16aea9a46b5950ed4d7e16127a396f4c78b57b0b4a049099",
+          "rgb_sha256": "e4a88f26e4763463a9799cdde74b75a6a3ea91f623ee01ae295326a117ac2b94"
+        },
+        "authored": {
+          "sha256": "be95efee73f802f70e3ebc9e95fb48a571006dafb4e6aa3094047a9d6c3978d4",
+          "rgb_sha256": "96c33413b57ba2ff95fc2efb50dc689050c07e81767692db4e71646eb2e1bafa"
+        }
+      }
+    },
+    {
+      "id": "07",
+      "source": "clouds 004.fract",
+      "source_sha256": "3ff12dff5a60186e5e21c14e478f110de47d7e6d0f334b19a785e08e58eb239f",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/clouds%20004.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "Surface lighting restored; cloud volume remains unsupported.",
+      "captures": {
+        "mandel": {
+          "sha256": "720f1de33a2e4e92df591a1493c131367a5d8330680ae907d72c210f080b17bf",
+          "rgb_sha256": "55bad02dfcbce72f3b3acc2b0b3ddc58cd8e123ed6078a96decbfa00e2007fdf"
+        },
+        "geometry": {
+          "sha256": "16d8fda367dec0470dd06768fb0a595cf5b781f3b60010ef37f650f86530dcd8",
+          "rgb_sha256": "737754f88d8de18d6c93675a9cfe2286635bdabafd435542cd2f0da817f2749a"
+        },
+        "authored": {
+          "sha256": "a4e4b6d610b806ef1cbfbf3df1519d0bc8d1175563f0da2ffef311aa6bf3addd",
+          "rgb_sha256": "d04424b3167612a4781300a69b5859c559f47db92b08bc3363d331b2ef7e7ecd"
+        }
+      }
+    },
+    {
+      "id": "08",
+      "source": "pseudo kleinian 002.fract",
+      "source_sha256": "af8ef643a642d29424887b19766201988921dc7f8e3bfb8bc7c58ecdd8f24f80",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/pseudo%20kleinian%20002.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "Generated point lights restored; native light placement is not bit-exact.",
+      "captures": {
+        "mandel": {
+          "sha256": "33447e38207c6bbd76224f216f88088aeeef4b0c3da6f00a6ac4a5b6fb9f5de2",
+          "rgb_sha256": "b412920cae01457696a7b50e11564c35bcaa44c4270595bb27269af1a0308099"
+        },
+        "geometry": {
+          "sha256": "a67fe1d69df27f8938d9dcb8bc90689f4d3681f857df4de6d63da5a1d7636906",
+          "rgb_sha256": "325cb84a4b0130196e15f19c4b0bd455ec494904e79d195564354c17b689774e"
+        },
+        "authored": {
+          "sha256": "f3787190069c88a536b40a6eb08462a4feac16f89a724d095c28e0c582bde874",
+          "rgb_sha256": "60bf4c1f295e28d444c3604cd83f9a87c309a3448f11405207f08df61d8bf0b7"
+        }
+      }
+    },
+    {
+      "id": "09",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/iridescence.fract",
+      "source_sha256": "0e98b3bbaf324312ec87b7cf5a4d505ccf0fd430d31f40890beccde48b7519d2",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/iridescence.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": true,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "e5a46dec2c5a1fee01b1f645c6054a858a003f2172670e84517bd89450be4fe4",
+          "rgb_sha256": "cd63456559f0adce55b68e2e9c13c8e9a661746c425949baee9bec0042e9cd9f"
+        },
+        "geometry": {
+          "sha256": "550a16924ec2a1e5e1ed63a43ba89723119f8bd901b64904f766a3a92758c21a",
+          "rgb_sha256": "e65c4134fddb0f8c347be8857b978539487fe28ad1778ef92df19f2792c9c0dc"
+        },
+        "authored": {
+          "sha256": "b148900ba84ef3ddddd2ec5d9b6b0c971e33d4e511ff205e6c776dffa5906a45",
+          "rgb_sha256": "8fd2ad4e563b3121e30c74be7d9b8715e49b4992f776ba4f34bc26d1938e66e8"
+        }
+      }
+    },
+    {
+      "id": "10",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudoKleinianMod5.fract",
+      "source_sha256": "076a93d0c1f43832068832dfa9853671964959ff784745d0db58b87a29e75ee6",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/pseudoKleinianMod5.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "84d3f8fee0576cae1f85eba0ee3e73b67358b947b602fc8a18e8cb238b7891ca",
+          "rgb_sha256": "ff83d9b41e75b574aa71364f970be589ff9c469349e5aae8607319affc0c7299"
+        },
+        "geometry": {
+          "sha256": "ade30b9b9a03d281ef1982cc138f264847b425c220d64883ce93a47a9d1a3d13",
+          "rgb_sha256": "e04a410bf54e551dc4aae5d706b18d6cb49880f017c51dbe77415c80a4b4e960"
+        },
+        "authored": {
+          "sha256": "9bb795dcc220eb0dfcf8ad0ca31ab09c5962b5a9b494158245dc8d1e2ff1ef5d",
+          "rgb_sha256": "1765bc6d588deeb3d731173527f2242b8fcaf4cc3510678b9073ac8649eb17c9"
+        }
+      }
+    },
+    {
+      "id": "11",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid16.fract",
+      "source_sha256": "ba19f06138f0351692f5e84163de4428598c0d20ed088dcc02379c61e12c51ef",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/hybrid16.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "e483aee8ceca4d69d52a400ff3e8226f4620a10fe87b712763dac333633009a6",
+          "rgb_sha256": "174eecf2b7268d66e5fbc3fa7731c58b2b5e6373de1b325a2f4ccbb32c836476"
+        },
+        "geometry": {
+          "sha256": "fbabacf159af3fe059982e63c50ee5c83529210d0f844d2e55fdd94f98442d50",
+          "rgb_sha256": "b84469d6172e75362527cb6ffeac86c98ce10e6a67d211bd2a702900014595b6"
+        },
+        "authored": {
+          "sha256": "4adcd959d7d2d871e9dd99d8403dc40adbf64c1f778c97272dc9ceea49245a3a",
+          "rgb_sha256": "bf791fa82a44ff52681379444f023f65b2a5897bcd6c1fd805ddfabcd1aee6ae"
+        }
+      }
+    },
+    {
+      "id": "12",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/mandelbulb_pupuku pow-4.fract",
+      "source_sha256": "d73f243dd683d3ea7d2caec79f6bf820622826f32a5762dc65b912034d32a22e",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/mandelbulb_pupuku%20pow-4.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "257f8f749313a4e2b3a75a88c8860acab3ed4dbce0e6b0bae5cd538514f6168c",
+          "rgb_sha256": "5ba432c560a3eeeee8f16e652632e86d97d258bb9498a54d0bceeffdd99fccb3"
+        },
+        "geometry": {
+          "sha256": "d0709acfb1eb2471b90d2d2cdb07840e345a792f75221379587a1e34abcf6609",
+          "rgb_sha256": "3b56a07d7eb7b56a99c6f0f104f67f8394058b53c400668d487733f683ec6f0e"
+        },
+        "authored": {
+          "sha256": "4b5b179b314a0617f6459510e02f2eb8bf6b239614e90f79c10db5a3e8364d5f",
+          "rgb_sha256": "43b62b4fd7af42a1c20b1edc0bdbf60536afc05c88a1e7104f9cc50f16470ff3"
+        }
+      }
+    },
+    {
+      "id": "13",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_difs_piriform.fract",
+      "source_sha256": "307aa167218bb7c63fce7ee98fbb6839247fd5cebfc1634a079c0d52f10da1ff",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/transf_difs_piriform.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "2ae5925f4e5e53e735303b0a7b3211f34bc28ebb3e8a3adf0bc84c942929dd33",
+          "rgb_sha256": "7a9826567f9c60176d102c0edb2bbbec140a5cebcd2863ea1f2a48ea2d3d4012"
+        },
+        "geometry": {
+          "sha256": "55568cc2033dab1c609a382288d309b9e547711bcc919408dbf05cab8518de9c",
+          "rgb_sha256": "c6269ba2c4bd313c72715ef851bec24d5e6230dc4e215084f7d7be099d44bacc"
+        },
+        "authored": {
+          "sha256": "70062f92abb81ffca5bf459aa75af941f4acca1b8d0a8e1f5e559d9fdf17cda5",
+          "rgb_sha256": "c61c7bcb3351590741df2959620802e8679b7159732b66862d92d9a9874c8bb5"
+        }
+      }
+    },
+    {
+      "id": "14",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/two pseudo klienian.fract",
+      "source_sha256": "dac246366d4906985891dc91eac3ce874d8a801a5e4ec16dcd8e39fa06259249",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/two%20pseudo%20klienian.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "211a1c670ef4a33965b422b65674f9bfa13504933a9adbf152cd7bbd24d46671",
+          "rgb_sha256": "20b266554abf15815e3b42a7629c641488740a38e7d37a0098f250f2be96b025"
+        },
+        "geometry": {
+          "sha256": "f3992011171ac2a86707670e10c80da1938961dd0d72109e17669edec430c273",
+          "rgb_sha256": "499b076aeec0d9f9046855cf5da9b8fc3a51ad656d365e6c87ce22f6a2b36145"
+        },
+        "authored": {
+          "sha256": "180a7f777847d7edb053433167f0b82322f647d574af4e5d0cd7ff0510b19514",
+          "rgb_sha256": "d7df1f3939567fc5638842e86f385684b67382f329b8bf07a58547bb61ca5ff7"
+        }
+      }
+    },
+    {
+      "id": "15",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Mix Pinski 4D hybrid.fract",
+      "source_sha256": "be0f8ed4cba195885557cd58d6627fa1f3d31a0cbe2ef4f3efc8ca012e790846",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Mix%20Pinski%204D%20hybrid.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "83f2bf95f6d4e7991ceae8ed3d9039eda6080859644fa738b235cc19085d2e43",
+          "rgb_sha256": "0066fd23e47e565d1f155b8069f965c4a6fc21f752650c99c934e102131a6470"
+        },
+        "geometry": {
+          "sha256": "5a989c000c595ecde69786d1806e295178142f868f468b1b8f105fedb1534a4a",
+          "rgb_sha256": "2a50957f9d8b1015cc6d4862be17255074ac029447e9fbd06f48579bce310a41"
+        },
+        "authored": {
+          "sha256": "8e5e2499e57e4d88e34d63450f1416806ba0f97c181e1fdf2d4d7e12ccbdd57c",
+          "rgb_sha256": "f4c1ab85288839169e302bb1d94a621a051b152c03a1ee84d474a24feaf1366f"
+        }
+      }
+    },
+    {
+      "id": "16",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsOctahedron2.fract",
+      "source_sha256": "a550800d208f431cf1ad07c7b78d5f5f2d3024085db5e06d6dd23635770426d6",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/T-DifsOctahedron2.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "f4fde505c17bb8488b684b7fdcf30671bf12d8b88a13fd4e958c594e9242570f",
+          "rgb_sha256": "7e81da7a73315a46c4fe0f8c33be38d899957a7491adce0a22af5db720328ec2"
+        },
+        "geometry": {
+          "sha256": "e0e56a21cfdef4df43d3885855f7051eed2fbd9989ea82d9a7c7137bd77e3076",
+          "rgb_sha256": "1158b8fe4b88764b96ac8b928033f167bd9a79990a105563670d369b118cca7a"
+        },
+        "authored": {
+          "sha256": "90510b9ba323c0fdcafc7732e22e40b480dd771a5bda8af8915d6ab171152fb9",
+          "rgb_sha256": "a036459b0aa0ea94438adb7ae04e67d437c7cd1e8396dc36c018219c7f8deb0a"
+        }
+      }
+    },
+    {
+      "id": "17",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/xenodreambuieV2  pow -7 julia.fract",
+      "source_sha256": "82d6eb83b73ef38aa8f25e59da066b3c67632464a87fe7781348864fccd115e8",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/xenodreambuieV2%20%20pow%20-7%20julia.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": true,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "7a7d2fa2ea4a0e04e9a36c34b7ac71cc9879b4bb9da71891295cd4f4028c45ab",
+          "rgb_sha256": "8887ddb463be8a833e1cf7e48d9b9cee0c96af048a87363026893432eb316e8d"
+        },
+        "geometry": {
+          "sha256": "83e91375d0a8e51b8e3eaff3a3995bf00123deaa2d269af26331ed3adcc1a7ef",
+          "rgb_sha256": "4cdfaaf081f989aab6b3ec2e3c350830ee00747b97c7324f444155c68831d7f9"
+        },
+        "authored": {
+          "sha256": "0e0a23b51bf0af9785403fa086d7dbadb079109aa1fc5e4825bb436160f6f392",
+          "rgb_sha256": "36a3afd76da324d59ed49acff1ae653591f46ae1003b177b730abca1bcf67fa1"
+        }
+      }
+    },
+    {
+      "id": "18",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurfKlein_difsGreek.fract",
+      "source_sha256": "65437c8c8a897e35814ad72466f84d34b5468c3b9eb1b0313608845175242ebc",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/asurfKlein_difsGreek.fract",
+      "dimensions": [
+        300,
+        200
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "1c2afd75df77eb48ee85d77273f05089fc2ebf93b7d58c43b5a788f1a913c097",
+          "rgb_sha256": "6847b1ae9d7aa8fab94ae7295d7cb7da2b61d35150b8a9fa4a43a04cf80ff27c"
+        },
+        "geometry": {
+          "sha256": "4c573a368829d2f38aa8b3cfbf4cd871b92e57c8f7f9b95061a393fcd746aee3",
+          "rgb_sha256": "49ad452e596e9ebef2036d5031d188b68e1681c06eb22162ebe9efb1de1cb76f"
+        },
+        "authored": {
+          "sha256": "e54c21470d3bf3b38c241e1564f476483dbf8b24d8ae56ad6d7a1d98c40fa8f8",
+          "rgb_sha256": "efcfce83da689f6904b40cbd7903682b2892beccfb85af149d1d3adad81d69a5"
+        }
+      }
+    },
+    {
+      "id": "19",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsTorusMenger.fract",
+      "source_sha256": "9c61227b0baf67d91e110bdabfa5dfe38d46876701a2fb9a5cf9dc0d534eca3e",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/T-DifsTorusMenger.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "819d2e2497bf15efbdbcbe973f358dfcbe1ceb6b5dcfdf6899d896b17250b598",
+          "rgb_sha256": "846e7b7724877873e7a5c41395d6b2299d45693296735f385f39237d98b82ca5"
+        },
+        "geometry": {
+          "sha256": "eb076eb9185c05094263f9f79ae37e9b82b25302f9aaca1e6faa85220408b3f1",
+          "rgb_sha256": "1c5ab51318fe99703b16d6039545c287203e87f350bca2bba4cbdaeddae0c4ed"
+        },
+        "authored": {
+          "sha256": "bb34070af69e2977e025f0bbf8e9ad3ef0a9e1c9828cd9a982dc7f7ab520f696",
+          "rgb_sha256": "1476a945dbeccfa8baa5b36f0f0bf1fb787d131213af7d0c61b47ad747da9bec"
+        }
+      }
+    },
+    {
+      "id": "20",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_sincosHelix.fract",
+      "source_sha256": "4f965bc402de6303ff76bdd912abfc4aea345d31b6eb5b557aa0030686cda816",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/transf_sincosHelix.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "c6afa0f1ed3b1204f50bb5172d1f3eaa93ec621bbccd3eb2b3c9d219481b823e",
+          "rgb_sha256": "cba5bd3f29b6894fceb5fcc6b7c88c8e4e15d56191fa5540aef2b72e1e723a1e"
+        },
+        "geometry": {
+          "sha256": "2a2386aeed8dafc305539e5ce2380ae333ec29d9ce36f448688464b5c6fbd4cd",
+          "rgb_sha256": "7c587f7a05e5552d6b1bf1756e05cf902c705234baf06673998dedd32be0c6be"
+        },
+        "authored": {
+          "sha256": "f81c84ce8027cd128b15a9486309875d8aecb0003eca76cfdc6a07ff00ea84d6",
+          "rgb_sha256": "0b0a5619a2dbf1f3e3657948cc9316b2083d9241ce3eacccf82ce77ad65fc5a2"
+        }
+      }
+    },
+    {
+      "id": "21",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox24.fract",
+      "source_sha256": "1fd08e16820af8ca79cd59305e71cac2564c2420bad10fe3edfc0d645158b56a",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/mandelbox24.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "93605173fb593e170fe28b7418c0cda6061451c33793161fff7ed9078f1f08af",
+          "rgb_sha256": "4cfcc56d74c2c4bc09e8d9b34681d379cfbf077e05ffd2cfd8e612ecf428b842"
+        },
+        "geometry": {
+          "sha256": "fe2c9b04ad5fa907ec76b6e62a54be006b747b0923450cede1c4a3f1ca886c4c",
+          "rgb_sha256": "8249e18e1daf3d793b9e5ca634394e0b3b19846af11054952360aa23d72f26fa"
+        },
+        "authored": {
+          "sha256": "726a4c78a2e4d393634f36c0e561e2ca16750e2182e6b40da4443bbfd29c62b0",
+          "rgb_sha256": "88d675f339bc8b6a90ab48cd881053b4ff03768dc61cf2e6e5e57750b455f915"
+        }
+      }
+    },
+    {
+      "id": "22",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf_klein.fract",
+      "source_sha256": "878220b14dc481aad77ed9ebf945b44cfdd3cd679f1cd48f5684378df327b94b",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/asurf_klein.fract",
+      "dimensions": [
+        300,
+        200
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "30c459c94ca52cb95eb7dcf07227775a867ae9c3084ed4a302c58679ddb18f01",
+          "rgb_sha256": "9dc7f4aea89903ffb800d2628e408a92dd1212e691fe13cfb1a7a30cf0049de0"
+        },
+        "geometry": {
+          "sha256": "cbd7541a46961f5926ede0dcd1b40a14d2f7b0902c589a380b721d98ad504bb0",
+          "rgb_sha256": "5e2fedbba1730cda43bd47464d7f2c1fdb5f76a26f34f0735448e4f6b48ca49f"
+        },
+        "authored": {
+          "sha256": "5558fff357ff850df10b8b5bfb419209b965b77109fb846179c4bacfc4ffaaca",
+          "rgb_sha256": "6c4fc281d134ffd87106f6dc3145a28c2d54948cb1e7639aa3384fa2428235bf"
+        }
+      }
+    },
+    {
+      "id": "23",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/boxFoldBulb_v3.fract",
+      "source_sha256": "616a024b051b035a64cd7eea75cb34fa7ad144c907ad1307e709386075f754b7",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/boxFoldBulb_v3.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "09868e6581c10354cc3608129cc5dd3c801635763f6fbd0635a5fdd9b021dc3e",
+          "rgb_sha256": "6a0d7465ed5271f63130dbf3bc3b1b82587fe121e6605504457d8cf29380857b"
+        },
+        "geometry": {
+          "sha256": "2567ed62ad79f9c6bce526cede67df861aec581152ec87f709e4bd46950b9966",
+          "rgb_sha256": "4d5ac07385e0352e5d74a5e8ee18d8da159ee156ce1ced3b9127789dc0b4f681"
+        },
+        "authored": {
+          "sha256": "ab4fc042475dacf1d381b9b28324a081e792190f1904b7362a84f47cd17a791a",
+          "rgb_sha256": "c8fbee5e5ef1df7d953938d207b66801dd07f3f9b7a88d79dd083617480bb982"
+        }
+      }
+    },
+    {
+      "id": "24",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/aboxMod13_002.fract",
+      "source_sha256": "8d074f8cb4d6f8c0464c568b8965d1de8b60b469447d612f9e04f053f6ba3c0e",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/aboxMod13_002.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "bb3ee1d79290d2b12346726b1829cf6c452ca0daac3ec2f2c71c39bcb1dca63a",
+          "rgb_sha256": "c58c9593f48dbc2f27bad894ea0d4f1aef156366ce45c66fb9703f95d61730d9"
+        },
+        "geometry": {
+          "sha256": "0d9bec4aed52bc509fe0f8be4dd6b19fa7e0c6096230df0ce88baed2b5c328ec",
+          "rgb_sha256": "91ad6f5887c3fb3bce8db5e70c2b7a544310e2a203b566c070fbe7b4d012538b"
+        },
+        "authored": {
+          "sha256": "9e5d53719b41c676dc486e28c94b22061f07583719dfabd2537fd2d3dd4331cc",
+          "rgb_sha256": "a2e98ce66be255210ee1df456ddc5cf1d24f9e62c34f8d51ffbe1b05cf45671e"
+        }
+      }
+    },
+    {
+      "id": "25",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Jos Leys Kleinian v3 SphereGrid.fract",
+      "source_sha256": "8a7772132465f1662e04e969a460fb241aaaf600188a1ebfbd9762992654b71a",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Jos%20Leys%20Kleinian%20v3%20SphereGrid.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "13c8427efb6e07eb83ebff4e459e1d0ad66c1fd9a8db8b16ce9f039680e6f0a1",
+          "rgb_sha256": "9bc04089ca20bc60c4f62f384dc9f9756eef1fa69b33108608c5028c2319d5c4"
+        },
+        "geometry": {
+          "sha256": "cd5acd0dfdeeb690dfdf5088f4ebb37af9cf4403d06b47745ac55abf33989bb3",
+          "rgb_sha256": "13cb2221be5b7bf835e074cf13008d80a077d1822010128d5665c13d100ac8ac"
+        },
+        "authored": {
+          "sha256": "b66d807d4eed9e370197de3e8470e1f548ec6e283a41fe1bbf36ad4a85e84e03",
+          "rgb_sha256": "f3fac0c78870b025e0ec407f92153b21665086ef6d12ca0c34ddd0e563319ab1"
+        }
+      }
+    },
+    {
+      "id": "26",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf_kleinV2.fract",
+      "source_sha256": "9ac02395052160cd1c59f4ef7e48181d150d3111bbe26ca795b7162ff6bd61c5",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/asurf_kleinV2.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "e4acdb4dca914f7a386fe9bea540ccc7f85a4103b61be98b38dcb94fd7d793bd",
+          "rgb_sha256": "086633d686600d9ac670abcd8e03f2f2fe4bc8cfae9f552732ccfef5ba1668a6"
+        },
+        "geometry": {
+          "sha256": "bd8dd7bf2e4be097fb6885fe719a1d61d02fccde0f9cb75d2ec27685bcabcd52",
+          "rgb_sha256": "9adecc09648c629c24f9082e2518b5b11a9fd4aa639cd8803934a05b696f9556"
+        },
+        "authored": {
+          "sha256": "0148e1e0fe41dd20f7d623a376f28ceb226befcdad2034fbd36fc0a337c3ef8a",
+          "rgb_sha256": "0b4170d456c4f81c1dbb7bd7c684446636f3ff91116d050ebf14ccf3ce7d0026"
+        }
+      }
+    },
+    {
+      "id": "27",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_juliaBox_bxFld_scale_mgrM1.fract",
+      "source_sha256": "1311e943edd381938d08251480137380f8d5bd96d768387eec4acf3e82b07cfb",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/transf_juliaBox_bxFld_scale_mgrM1.fract",
+      "dimensions": [
+        300,
+        200
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "49f850e91553e9f69e87ab0a10b1c35d0b6f9fcc2f4aa74be2e60f1ce48f4014",
+          "rgb_sha256": "884f67778195ecd6e9ba80e0309d66d942a7bb886d2d794f844ba58b94bbfc19"
+        },
+        "geometry": {
+          "sha256": "d31b6c58f7dab874c1d497baa261b8cb18befe8f374204fd522d6469f50feba4",
+          "rgb_sha256": "7fc44203e8493f4cd2ebab2eff14394078abd7cc8c6376b01e95fa438dd37fb4"
+        },
+        "authored": {
+          "sha256": "053d94a69b014e66bc4d320ae5f1a390e982e50b319b86b644af4c817baeba44",
+          "rgb_sha256": "4684fd4ce97b9a51c2d9f5405bab38d42c0992a1baec9c6bfc2ba5a485d1b8cd"
+        }
+      }
+    },
+    {
+      "id": "28",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Jos Leys Kleinian sphereInversion.fract",
+      "source_sha256": "3a0a08685862d926f2d703259329ecf4a88dd5a00ca820da03bd20aca9a128bc",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Jos%20Leys%20Kleinian%20sphereInversion.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "52045c750c532f44624b0da04e2d58422ed7f4635e88d9867eaeb17572e91b4d",
+          "rgb_sha256": "1056340bcd17d0e25a55f22d2a3187dec36066b2e1e3ed1913a0022cc12b976d"
+        },
+        "geometry": {
+          "sha256": "7cdebf41b3d0a8178d8d34cdf5fbeb1ed91b459c031e0827e47d99ae446819c0",
+          "rgb_sha256": "c65b11e7629e7dc522d8eda44f8814d80325c46c772aa0738b473bb134a3211a"
+        },
+        "authored": {
+          "sha256": "09a562669cc60ac1304ded9632543727ebbba9db74e9cb19bf5305218cd0d383",
+          "rgb_sha256": "fe20bd31c12d95a4ffb2cf311bdbd5d55c6a1ff79ef1584b6c81dca30da81303"
+        }
+      }
+    },
+    {
+      "id": "29",
+      "source": "menger 4D 001.fract",
+      "source_sha256": "5e3247e3b7957fe608f143a12ed85e95600021305eb92a2a2f1ffdf3492705a0",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/menger%204D%20001.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "1ba92fadd37e6535d545910a7b75aa01f1968bcad511b826a8123b71905644b4",
+          "rgb_sha256": "44a68928fda2679808f000f969828cfbd4d582115bff57ff2467552f900dd618"
+        },
+        "geometry": {
+          "sha256": "02fd91f1e0602660252d244c3d7b6703e6d4c36be29513dc7d4582e95949ae88",
+          "rgb_sha256": "e4a777d8c9324c29c3fb33baa1e97c91c15f12ba2bc0f7febf878bb3f3ef3ba7"
+        },
+        "authored": {
+          "sha256": "6ee7574e528d5a2c5629f918e1f324b3f7b5034625068027ca1eea5d4ddada03",
+          "rgb_sha256": "2c2efa8fb620b7a63c4717216a41c7580e1c7d715f38b90a2bc791b85aab267f"
+        }
+      }
+    },
+    {
+      "id": "30",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudoKleinianMod_4D.fract",
+      "source_sha256": "a4413dd119852ccd2ec9425ddcf85ba579e671e237592357d2e4104cc7c0546b",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/pseudoKleinianMod_4D.fract",
+      "dimensions": [
+        300,
+        200
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "7050cbc99a237dda91a59f86e0ed161067bcd796747b05eb7887a797b8b23a91",
+          "rgb_sha256": "0a9834a0b6a562a84e71963377003f3caa8398afd1a49d6653c47d8c542c2e83"
+        },
+        "geometry": {
+          "sha256": "0d888da48bc410906b8ea1880e53a49786c728a9ae161c731833780d0c70be1e",
+          "rgb_sha256": "ffdce8dc4f4356f8b563276695e3144a680d0202f2fb1904acc42bb0b45c89b0"
+        },
+        "authored": {
+          "sha256": "59fd9d50e1a61e8be26c85ec4cef94c3e151f118e6480332966e56ef7f9518ba",
+          "rgb_sha256": "6f396a6cbb82f0b1b78b91e58eb824002025bab501855ac6b8ff0909a884b2ba"
+        }
+      }
+    },
+    {
+      "id": "31",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T_DIFS AmazIfs torus.fract",
+      "source_sha256": "e745a50ad478e2e2d68d18165ca55105398ca8694c8fe46b09f62e24b72d7846",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/T_DIFS%20AmazIfs%20torus.fract",
+      "dimensions": [
+        300,
+        200
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "2279e927d07edde33ad65b2fad26d56c1fae6cca59a071802207434eb445ac28",
+          "rgb_sha256": "b200854b9e7a6670c954d630fa6d598a027281eb4e331a9152875c7055dad2c5"
+        },
+        "geometry": {
+          "sha256": "0c1a21d5328c962892794c6c275f3495577553694746e2d68692b3eeaac8f86a",
+          "rgb_sha256": "a8ed4c65f02ea24331746c9f14de0f71c0346449f3d51ca9d0aaabaecd56225c"
+        },
+        "authored": {
+          "sha256": "ff78e233d0c59ad9d0b0dedb90f7d28f628fb5bcb5b6f6c54c5ce2b977a196ec",
+          "rgb_sha256": "8da62e73a1c3241b8d2914cd448427d37735e19e69cb75f7642ef6b12d201484"
+        }
+      }
+    },
+    {
+      "id": "32",
+      "source": "hybrid005.fract",
+      "source_sha256": "089cdc1eb3977a9993854042e6d3e43982354d3058f071805a445a26d3d13843",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/hybrid005.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "Known illumination gap: authored output remains much darker than native.",
+      "captures": {
+        "mandel": {
+          "sha256": "17424a3d022b01b6bb268688ad3a8fb8d83a8ceab7f68d70694e9c413c7f3207",
+          "rgb_sha256": "f9e614d284a27a1026f21331d86679057f7cd1d1c1b4a5819d1032f68cfec1cb"
+        },
+        "geometry": {
+          "sha256": "32b10b32b6b3957e9e4d8d3763b7b2f31d2e10dec2c17a6818b7732d167b6c07",
+          "rgb_sha256": "5ddf4cfc6a81ebfc210fea7b3b9c3cd646f151432c62c7011744c9e164e71f17"
+        },
+        "authored": {
+          "sha256": "cf4d481efe4dc2075a75aeae27d8111589514587d38fc609c45b3430aee1a7b4",
+          "rgb_sha256": "e9482803cbc7bd65169ee999ab66c3053802a28bb65fa66b2d57f4e787609381"
+        }
+      }
+    },
+    {
+      "id": "33",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pk3Abx15.fract",
+      "source_sha256": "1b2bb0128c18b93d993c1d53223727722e6dfd10904312ff91de62dd33783d97",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/pk3Abx15.fract",
+      "dimensions": [
+        300,
+        200
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "d1fd307e874777d83b83aa71717dc3ee5fb193c5615c6c159348aa4af5fe9a1e",
+          "rgb_sha256": "9ce368ac994c3459db00a68f84ada678fd5156b9d2c660423e6b274a9f2a2361"
+        },
+        "geometry": {
+          "sha256": "bb467c12e2c71299fae9cb13b39e509b2fd9ff69e2d738f8d9fede31235494bc",
+          "rgb_sha256": "24c0381dfb5ca261c30d1accfd85d06553b6e877435ebc346c828f1f62d38a45"
+        },
+        "authored": {
+          "sha256": "a57cddf7637781e36cfec51b3e0e3a4cd0f46d137e66699fb2a225df2be7bf42",
+          "rgb_sha256": "98f0955384952d42bf37b065faba79a4af8a4abc1fd85c685a51f04726925488"
+        }
+      }
+    },
+    {
+      "id": "34",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudo_kleinian_mod6.fract",
+      "source_sha256": "17ef8a2fcc6934a353846857b03b5c9d4a79dcea2d5dce3ae98ce7303a129878",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/pseudo_kleinian_mod6.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "691e92c44b97ca5871170242e9f4f51698ce2101e8f667e292bb899fa63e2f56",
+          "rgb_sha256": "230f865a4ab2e46c4085079a3abc39f029afe4be6a3079b43d48aecfd264a999"
+        },
+        "geometry": {
+          "sha256": "8885cc2b4cbb06a7eca1a62c7997c220269a56f5f43272e229e14395ec9718dc",
+          "rgb_sha256": "bad58bf50d58c9bc06c708d23594c6bf024cd094c2c7ce213ea7d17b0f9aa1e6"
+        },
+        "authored": {
+          "sha256": "2c1081d5da3eb04e421b4f00faa3420126d9c06b157469355cfb2256cf2cc3f0",
+          "rgb_sha256": "77a8a339cf977ba8a7fd9a1a1da50a8b6a95109465c84037224280d087bdbec6"
+        }
+      }
+    },
+    {
+      "id": "35",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_quadratic_fold menger4D.fract",
+      "source_sha256": "e40d6d5543746e9ef467223842c8c9f470eb496c3e5fe95584730cc3fcfd429f",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/transf_quadratic_fold%20menger4D.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "9afe1fc84c342cef6e352f522c7fa8edf35d34334fd418c8bde5c0c3f4a704ec",
+          "rgb_sha256": "7e9ea4aee7468a2b6412c0e607bd5197eadda7470f75865fe9a2c72a5cfe7225"
+        },
+        "geometry": {
+          "sha256": "520d446b91e336f737cda662f0d73a4f55d6734c98ed7e661546ac38a70abd32",
+          "rgb_sha256": "b514673659d24728b243b81c2bf67fddc00d5565f523a0e47c630b7c9ba72eb3"
+        },
+        "authored": {
+          "sha256": "e09f2d8ec203ffa41e6cc251e1ffdc757972e43cb9801b33a58f4d9908fbcf15",
+          "rgb_sha256": "1197c7acbcd12f4cb09fd6b2da27d33af7ec6dfe00f3eca7c4c726a334d546a7"
+        }
+      }
+    },
+    {
+      "id": "36",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/mandelbulb_pupuku pow-4a.fract",
+      "source_sha256": "ffe875b67e55be14d515de6c51d95ed6ea5568c9fd74f965ae07aebd475e2b24",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/mandelbulb_pupuku%20pow-4a.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "d0623a000cd0ccb92cdb3ec4470cc76fa5a73a384e43204c92b2c3edfcdf87cf",
+          "rgb_sha256": "f4bf52bfc1f3e1c2f23bed2677fc0c626e2fc133507658810a62f8d84e97e1ae"
+        },
+        "geometry": {
+          "sha256": "86cb7e3c7e1e280ed444d899507856b20b7e7484c7335597bde8c97b72dab720",
+          "rgb_sha256": "862a63c8ae8ba2b7e7e5d161abe2f5b9d4d31b868e451b8e07a8e42a94a17839"
+        },
+        "authored": {
+          "sha256": "d4574722185a26e393345d39e24faaceed5396227de9d2ee34687929f508631c",
+          "rgb_sha256": "7b7b9508bb998fdfb91ac71e44baa91f271ea8db8717c47a06949636573ffde1"
+        }
+      }
+    },
+    {
+      "id": "37",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/FoldIntPow2 2.fract",
+      "source_sha256": "d6e64b69b64ccae9302f375f6f0e199568b5420a186c9a6d15a2167ddd300ae4",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/FoldIntPow2%202.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "Known illumination gap: authored output remains darker than native.",
+      "captures": {
+        "mandel": {
+          "sha256": "26a6967dd0876c8eb5a9ab8f8865b400e5ce1fdd45e386a08d3ab3ae84e0c44b",
+          "rgb_sha256": "9ade69019953aa2ebe69a4e21c9374c2443e3fc73ad86791a10763617a1fddbb"
+        },
+        "geometry": {
+          "sha256": "b399f5d509c57b6b589fc18c783bb4e6a22675bc4188366a543fb36f4170f773",
+          "rgb_sha256": "35fd7c98e7f8e5ad4d5788b8b32342a0b6f0e9c07989b8260996235d1be32911"
+        },
+        "authored": {
+          "sha256": "736c830fe9edd4e0cc1c6cd0ea7baee30819e07b16e0f80ed7eaac74740170bd",
+          "rgb_sha256": "68d8f55b49eda360f2cc98c576dd97a3b28b13a73e5d78495c5ccb6845309b3a"
+        }
+      }
+    },
+    {
+      "id": "38",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf_kleinV2 aa.fract",
+      "source_sha256": "f34b78bcb0632aeed0ddeed35a7667bc7a9e005556eb231ded3776d824d4d68c",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/asurf_kleinV2%20aa.fract",
+      "dimensions": [
+        300,
+        200
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "071f9a466e2a934e7230eecc0f0cc2ec9536e7e01786b3e1c6545fec5b6417fe",
+          "rgb_sha256": "fd77b295f5d76710790d595811dd5afe657da88a138af1d47fb644ad78d624b2"
+        },
+        "geometry": {
+          "sha256": "5d50f93f7b6d492692f61013cba56a2a212ce87e0af307dc77d81681c7ff5d39",
+          "rgb_sha256": "9773f5c9283884a1bf93e05b1713aa8ae45d81e2d5f887523f4301da91fc35ab"
+        },
+        "authored": {
+          "sha256": "98f4f65eb3d08a535c1e0d7d0a3172cbdcd437c5ffcd1cf163b78d9fa9208209",
+          "rgb_sha256": "c6289cde9f51706cf36f3f9b91d6ee6dc4b1d939a26a4ee9840a8cff1357bdc8"
+        }
+      }
+    },
+    {
+      "id": "39",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/aboxMod14_torus.fract",
+      "source_sha256": "3a7aaf5fadf26185fb9a7625c22ed4a4d9344d0bbaf1de0e28153ccd9249bc93",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/aboxMod14_torus.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "0648651e73f308b9d916226c37b2c6de372a4824d55045d5616a622a21175b7b",
+          "rgb_sha256": "edb7ed21291004501e6a81c958f3b86a41d08f9522cfeef857a0e84a6c88e587"
+        },
+        "geometry": {
+          "sha256": "15036ec5c9958347dbae906471ee6311a14d550892f714d82cfe659543416077",
+          "rgb_sha256": "cdfda82b128655cafb1a5c0c74139e80ab40790d2670e4548cc8f096f38d2329"
+        },
+        "authored": {
+          "sha256": "3e2de2bc6286764aa7203f882ce21772dc09dc8574b3fc52d43f1e1f6183efbe",
+          "rgb_sha256": "01265cbd67f4347368f8d27fad74533ce8bc21d15f45dd05175b0495a5abf3c0"
+        }
+      }
+    },
+    {
+      "id": "40",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/orbitTraps 005.fract",
+      "source_sha256": "96e4bec4d5d7dcbd535a39058c26c87b060954ab8cb8b7c3229a8f485ef37928",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/orbitTraps%20005.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "Orbit-trap surface lighting restored; volumetric halos remain unsupported.",
+      "captures": {
+        "mandel": {
+          "sha256": "d82d1590b23ac9e7841253f75948afe7c395d64e7d5aec45e001a3f5faccbc22",
+          "rgb_sha256": "ed7e40467baf7c74f518842bec80c7b321b286ecb354cca5ea72ac98d3739cb7"
+        },
+        "geometry": {
+          "sha256": "3ffb3164dcf796fab7b923fceebc202c1e0e64ff867ff51d6d2f93fdc823a785",
+          "rgb_sha256": "9680a7570e5c9833b6dfa68e72e788c48c10527995b2b142bdc17266632ff844"
+        },
+        "authored": {
+          "sha256": "9bcec72d7234a51e8eba3edc8b88bb6d8c2f4fac9e74f735996a497889e5745f",
+          "rgb_sha256": "c902bd46cd9f40f5de894b83969fbf7ee617c7d4c1975e09d14e95c57142a509"
+        }
+      }
+    },
+    {
+      "id": "41",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transfSinYm3d_menger3.fract",
+      "source_sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/transfSinYm3d_menger3.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "87104f7bc107d11746878196f0b670ffa09653dfc18119b05b8afbd019ddf59a",
+          "rgb_sha256": "a2270d251ce113480da5585027610abd8d79cfe17d9d853d06b0436eca133d23"
+        },
+        "geometry": {
+          "sha256": "5441c62bab4cb51a837d47367ba2c51b9f5032865dde74c05c2a36af1186bacd",
+          "rgb_sha256": "e96966bf5daaf0629074033491e6dabcad682fbd909a80497044dad1eccd549a"
+        },
+        "authored": {
+          "sha256": "653311373c42de5dcf45e3e4a68ae50c08a3797298b628f95e55ff7af8da9e21",
+          "rgb_sha256": "868c2c62db164aebc5beceeb84e09e7082978d0ec1877d1403414b03fc234d1a"
+        }
+      }
+    },
+    {
+      "id": "42",
+      "source": "riemann bulb msltoe mod2 001.fract",
+      "source_sha256": "0f5ab1172a79efe695d4e0485bd2d99b02cc4f9a610da4b926b927f32e1cfd3b",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/riemann%20bulb%20msltoe%20mod2%20001.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "Known normal/lighting residual; rejected analytic derivative is NOT included.",
+      "captures": {
+        "mandel": {
+          "sha256": "d4e8aefb9ade06e06be8c0aadfabcdddb7808cda3fd931f7adccb928b9bf3dc9",
+          "rgb_sha256": "7cca2a62f573ae8fef8214247f54c30503d9ff21dfb12b4423b1d5a309677961"
+        },
+        "geometry": {
+          "sha256": "83bd1f08dc4740db958c0bd9a9c53f53c0cbdc2191bf3b2602cc264dff0e0c3a",
+          "rgb_sha256": "2bc04b4592b34787a40c570786dfbccfb025693a2709b534811e5f0f4cd22630"
+        },
+        "authored": {
+          "sha256": "2a08ed929dbe6d7e360d479589a0d1689bcd2ff83707b803129d4c15dadb74ea",
+          "rgb_sha256": "d778b2fb5351dbcf40ae335f5b6f72cf536c00a960fec1860dfc259458a74d6f"
+        }
+      }
+    },
+    {
+      "id": "43",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Koch_Ifs aaa2.fract",
+      "source_sha256": "7cac3ff197807499349de1c3126bbf0de13d6f9f760c627f19e0700d28ace669",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Koch_Ifs%20aaa2.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "ee9d2314a61f295ca7c00f202984a7e27af226c9e3c303426483e1e68de03bd3",
+          "rgb_sha256": "d273163bc9dcd79d7622aad974d977dde44e699fde2b63013a0c9f79894acbb8"
+        },
+        "geometry": {
+          "sha256": "b5d3d5e9bb9329583312afef8e160bdc69dea16462a50f636745c2c39adec384",
+          "rgb_sha256": "55858f9069551e09ca6791779b94fdc5150c1cf2f57af676fef417262c619c08"
+        },
+        "authored": {
+          "sha256": "2a361325b5285b8b61c2d04e22044c95d9ea1b20ab4c607178a21a41ab5f2e99",
+          "rgb_sha256": "333c491a605a580147bfbe2204149c8930ffb393535846bf1921a55d780c4784"
+        }
+      }
+    },
+    {
+      "id": "44",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T_DIFS Tri_Grid asurf.fract",
+      "source_sha256": "98bb7b0c3118b338beeb5deb5997bb0bdd296534ec387548cd37cc565d096e67",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/T_DIFS%20Tri_Grid%20asurf.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "c5b4bb855caa0fecdf06a19d3a5a2a27fc258089b845738f07e19a6aa4a99e83",
+          "rgb_sha256": "9422c0f57102171c0a8e3a23091ed24d2d35f4953182b7cac66adafc71e80d9b"
+        },
+        "geometry": {
+          "sha256": "554aaf39107ae0e0ccee0a2c39a3a4b9e540ced18f1da5ad75b6784deeb86644",
+          "rgb_sha256": "8abb081d18d95cd1353af146d0ea0c8152f3297c0c74d4d05cb9a18708608400"
+        },
+        "authored": {
+          "sha256": "65ef5762611ed1d95ffb8059a279597bf3f3ce27eef5a1561def0461f9457515",
+          "rgb_sha256": "8b6b63382622cbf7831e90ec1112e75ab09b534d5a1b13dc93e0930a890bbba5"
+        }
+      }
+    },
+    {
+      "id": "45",
+      "source": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T_difsSupershapeV2.fract",
+      "source_sha256": "2b24680e3cdded9d9a0cdc67573d25cc53f1e19b0fa50de49f9c06466a2bd477",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/T_difsSupershapeV2.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "dafc7e6c2763186dcb06128ba6249911e1a60446a2d6dcc5c7570cd72fcf35c6",
+          "rgb_sha256": "ca5dff5c0acec69fabccff45e7c33badcff14bd9cc84f8882c129276027bcade"
+        },
+        "geometry": {
+          "sha256": "2a33af232b76d7c5ff32ee59ff3b3b37c75b21900ae4abe1efa92dfa4032dffb",
+          "rgb_sha256": "4b9e62923fbf692557309eb77baae5e8d0dbdb32a49ee7070b30b4d06cd471a2"
+        },
+        "authored": {
+          "sha256": "9cfce20073de268efe8c924d0f8280c6a9fe53cfe82b1f26e6522e65ee93b53c",
+          "rgb_sha256": "f008ea6789401e32791eff5f0d81e0d241cb35763b06231c42ca7f4f2f18e8e1"
+        }
+      }
+    },
+    {
+      "id": "46",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/iter fog 005.fract",
+      "source_sha256": "eb863371ccafa5ce4ae8b2956cf2be62e0d426e1989e40d7970873badb3af8cf",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/iter%20fog%20005.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": false,
+      "note": "Known production float32 position-stall issue; inspect geometry carefully.",
+      "captures": {
+        "mandel": {
+          "sha256": "358aa04949a2a8c03b6b93cdaca58f2a6d4f7fb2733567c58e2b50cfcc4911d7",
+          "rgb_sha256": "9254aaa915121921ea9f0511b84216d4b0ee6c771235cb7bacb85e1372e1e215"
+        },
+        "geometry": {
+          "sha256": "ef45aa73f842769468c7158e5bae4cf0db1a082f0eb18920609c48775108b8a7",
+          "rgb_sha256": "a93ed71218c0b976e887abbd0f28d86d5abf6ff892fd9cbed1108ab86a55b449"
+        },
+        "authored": {
+          "sha256": "deae45282857b9654a3b171c3dffe66ffa0f58d509aa36e4001da7450f54fb79",
+          "rgb_sha256": "247e829f47ec96cbe1a31dd84ac7d9a64d81c6a24434a6a4948ba539aaa6dd69"
+        }
+      }
+    },
+    {
+      "id": "47",
+      "source": "pseudo kleinian std de 001.fract",
+      "source_sha256": "243b5626d7777f9a188b30ac1768af2815a8793f7c1c03ae648203fa6ecb083d",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/pseudo%20kleinian%20std%20de%20001.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "81ffba3f6672b974cf81499dffeac2ee8687c6cd645314ccf3d0d13687d5dee1",
+          "rgb_sha256": "3865c13b0f74fe3551ffd921c9c0677c2cb7d8e097e4464e2ca105dc7875836e"
+        },
+        "geometry": {
+          "sha256": "92db2013d6c90c3663fe31d85c1ba862bf95331772617d903d9d2e0c06d9a591",
+          "rgb_sha256": "40ca5c5cc49747cf437cbf531614a2737c8dab0af80af3755e5ce2ea12fccc6e"
+        },
+        "authored": {
+          "sha256": "da60e4370de0fe2c3d50e225dbc9b3416152b8a2319b5d43b86db284e2855bb0",
+          "rgb_sha256": "8408c95d4f82666028c496c4843d1674586e6f025dce3b05f37905601048d3c6"
+        }
+      }
+    },
+    {
+      "id": "48",
+      "source": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/RoadToExascale.fract",
+      "source_sha256": "98baaeb09ffaf586320bd07492fb72ed47f59bc504f5be3dc612db7fca2ed27e",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Robert%20Pancoast%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/RoadToExascale.fract",
+      "dimensions": [
+        300,
+        225
+      ],
+      "native_reference_reduced": false,
+      "note": "Known production deep-zoom precision failure; offline precision prototype is NOT included.",
+      "captures": {
+        "mandel": {
+          "sha256": "0f2edd734e0cb6e390d46f534e60fbb5b9ae73d915b23ff41f4a6de173b14eaf",
+          "rgb_sha256": "42c6e6b7838daea72332da68316ed2c0b40b6927d5f6faadedfb7f42d5761d27"
+        },
+        "geometry": {
+          "sha256": "9c70a07cf4f277f6fd1f265dda78b5b80469ddfcca1e42bc1996fb2da036e915",
+          "rgb_sha256": "2f7901be423d0e1d9ec8fff4b235b7c7ceb24be6d8ef392aa94dafe1a9f9ee7e"
+        },
+        "authored": {
+          "sha256": "64e8a7d174711209fe5764d13da72a63167fe52a1095c1cff469c5e1d86148de",
+          "rgb_sha256": "6bf130ef86b3ce5354b5414b0ddaf1b71b5e083917d8ed017ca7e4db54445dad"
+        }
+      }
+    },
+    {
+      "id": "49",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/monte carlo global illumination.fract",
+      "source_sha256": "493e106a04fce09f220042eb9a6d93ee3e88c2dc14c6207162a850b0d1094a74",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/monte%20carlo%20global%20illumination.fract",
+      "dimensions": [
+        300,
+        169
+      ],
+      "native_reference_reduced": true,
+      "note": "",
+      "captures": {
+        "mandel": {
+          "sha256": "6b3711956a6772c6f4f469abd859e1c4e5e786eed731d3d01c233ff1799a22c3",
+          "rgb_sha256": "7b75add684d5a4cbd946c0e8139e4e39c0bb6d92bb4f8648f7f44fbce9146b9a"
+        },
+        "geometry": {
+          "sha256": "054667c3f66ae34738d85faad61c1cdc3c58f99e3ff751a85cf444b8da5f3356",
+          "rgb_sha256": "f9a341ba8d8f54788503b0c2892bf074a55d6fb71c82531db7b470b1706542fc"
+        },
+        "authored": {
+          "sha256": "0ee9780397171284959593634e68d8f9163c2ce0ebc34a98919e3e68fdbf3767",
+          "rgb_sha256": "3c224cf6ff72994e5c1cc5f3e6b7d38ee512002093bf34144a1063536d9f66dc"
+        }
+      }
+    },
+    {
+      "id": "50",
+      "source": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hex prism and chromatic.fract",
+      "source_sha256": "6969b43c486186e7aa218f13d20791a4e161403149e66f0a0cd020c0bb3c1dc1",
+      "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/hex%20prism%20and%20chromatic.fract",
+      "dimensions": [
+        300,
+        300
+      ],
+      "native_reference_reduced": false,
+      "note": "Known authored-lighting/indirect-transport mismatch.",
+      "captures": {
+        "mandel": {
+          "sha256": "17ad38504a75022c43820b6420767a24ccadb36968eca4084588bb126b12f0ad",
+          "rgb_sha256": "0ac5fa3910336927de811da518fc7c875742a38b0e5d18139148b02cdec9dd1e"
+        },
+        "geometry": {
+          "sha256": "3f11693778c218e5421948a2cdafffa9e31063377c3d05af6507bde38545714b",
+          "rgb_sha256": "a48987bd778f1bc49f35201e32d07713b5ec8f2d13f9e1ec76f842a2e9984c37"
+        },
+        "authored": {
+          "sha256": "0c82a1190918fbfd694475c3aa572b4c3de8d5a091a6bcc3f30409eb1e0cf46c",
+          "rgb_sha256": "e1ed945a496da7e3f0d0b35358d9cc50f8f1159c71bf6897fd7078a7c280054d"
+        }
+      }
+    }
+  ],
+  "sheets": {
+    "overview.png": "e1111c6117fe473a38ea7d2f1ae6dd36c9e14d2253cf851865215327021eaf2e",
+    "scenes-01-10.png": "e56ced313f2e78189b34091c49b7566fd2adbaa383c9c81210b2134d18978ff7",
+    "scenes-11-20.png": "a99152df14b37b232b199396043556d21b68a4a295cfbb4562dc30675d7e5462",
+    "scenes-21-30.png": "334cd2ecf540d4ac12f5009a61470f394fbfdfb0f5e1aa15893ea78d48edf0d1",
+    "scenes-31-40.png": "39fb684e69bed0332124358d5636a5c2b318f7b3fba2574cb22c166b2889990f",
+    "scenes-41-50.png": "960cb85ed0f3a55173aa768005633de458e7ea6f80ce8279fcdfd010397a0a25"
+  }
+}

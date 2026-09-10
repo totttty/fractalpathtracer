@@ -4,14 +4,75 @@ This branch prepares FPT Metal for two workflows: continuous Mandelbulber
 rendering and reusable generation of voxel assets for native NAADF. It is not
 yet a release-certified CVOX library.
 
+## Current Review Gallery
+
+The [ranked-50 gallery](mandel-gallery/README.md) provides fresh continuous-FPT
+neutral and authored captures after the retained shadow, direction, auxiliary,
+point/random and orbit-trap surface-lighting changes. See
+[dark-scene lighting](mandel-dark-scene-lighting.md) for the 07/08/40 diagnosis.
+The gallery's portable manifest records image hashes and dimensions; raw reports,
+runtime shader caches and scene volumes stay outside Git.
+
+This is a review-branch checkpoint, not a merge or full release certification.
+Production precision failures in 46/48 and unsupported volumes remain explicit.
+Native references are cached; 09/17/49 are reduced-resolution. Historical
+audit counts and performance measurements below are not silently replaced by
+this appearance refresh. Asset redistribution review remains a separate task;
+the gallery does not add the upstream scene/formula files.
+
+The completed refresh contains **50 neutral + 50 authored** FPT captures at
+300px max axis / 32 SPP, with **zero retries**. All 50 cached native images are
+hash-verified, but only 47 match the FPT dimensions. The approved 07/08/40
+captures are byte-identical. Neutral output is byte-identical in 48/50 scenes;
+07/49 contain the corrected primitive planes. Their structural controls show
+unchanged hit positions/depth and no new misses/extras. Scenes 32/37 still have
+substantial illumination gaps and are labelled in the gallery.
+
+Verification passes: release build, 234 Rust tests, 12 example checks, 60 Python
+tests, formatting, API documentation, whitespace checks and source-package
+inspection. Root package patterns are anchored so ignored report READMEs cannot
+be packaged accidentally. These checks establish this review checkpoint, not
+complete native appearance parity or a performance improvement.
+
+## Investigation History
+
+Initial priority investigation: [ranked-50 priority follow-up](mandel-priority-followup.md).
+It adds native depth controls, reduced-resolution references for 9/17/49,
+confirmed float32 stalls on scene 46, and a diagnostic-only penetrating-shadow
+prototype. The original audit counts below remain historical, not silently
+replaced by lower-resolution results.
+The subsequent [authored main-light correction](mandel-main-shadow-correction.md)
+now implements the tested fog-free directional shadow subset. It does not
+include scene 46's precision fix or certify complete lighting parity.
+The [light-direction follow-up](mandel-light-direction-correction.md) then
+corrects native-space rotation handedness. Matched controls improve strongly;
+normal/depth checks do not support changing the normal estimator.
+The [auxiliary directional follow-up](mandel-auxiliary-directional-lights.md)
+implements camera-relative lights in 21/42/50. Nine isolated controls improve;
+ten unchanged-path captures are byte-exact. Full authored results remain mixed:
+21/42 improve, 50 worsens. Scene 42 also has a separately measured normal/depth
+discrepancy. This does not replace the historical all-50 audit.
+The [appearance/normal isolation](mandel-appearance-and-normal-isolation.md)
+then identifies unmatched indirect transport as scene 50's dominant brightness
+difference. Its one-bounce control improves substantially without altering path
+tracing defaults. The subsequent
+[identical-point investigation](mandel-identical-point-stencils.md) isolates
+scene 42's radial-derivative precision loss. An analytic diagnostic passes the
+one-degree normal gate at 200x112. The subsequent
+[400x224 camera/beauty sweep](mandel-analytic-derivative-camera-gates.md) improves
+white-diffuse and authored output on three cameras, but fails coverage with ten
+newly missing pixels. Production integration remains blocked on that failure;
+the historical all-50 audit is unchanged.
+
 ## Preserved checkpoint
 
 Research commit `0387d0b` preserves the previously dirty authored-appearance and
 surface-diagnostic implementation on `codex/fractal-library-api`. The permanent
 local ref `archive/fpt-research-20260909` preserves that checkpoint. Original
 reports, experiment directories and caches were left in place; an independently
-verified archive and Git bundle were saved outside the repository. Nothing has
-been pushed or merged into main.
+verified archive and Git bundle were saved outside the repository. That initial
+checkpoint was local-only. Subsequent gallery integration is prepared on the
+review branch; main has not been merged or rewritten.
 
 Release work is on `release/fractal-library`. It starts from the complete
 checkpoint to preserve executable output during validation. Consolidate onto
@@ -134,8 +195,8 @@ and raw-artifact hashes are in
 | FPT authored capture, first pass | 49/50 |
 | FPT authored capture, after one identical-settings retry | 50/50 |
 | Fresh native CPU reference | 47/50 |
-| Coarse structure/framing visually consistent | 40/50 |
-| Confirmed structural/composition outliers | 25, 38, 48 |
+| Coarse structure/framing visually consistent after corrected controls | 42/50 |
+| Remaining major structural/composition outlier | 48 |
 | Geometry detail still uncertain | 11, 22, 32, 46 |
 | Reference unavailable after 900-second timeout | 09, 17, 49 |
 | Authored appearance: close / different / major gap / unassessed | 5 / 17 / 25 / 3 |
@@ -150,13 +211,277 @@ Scene 31 initially failed at sample 10, row 96 with a Metal GPU-recovery
 reviewable image. The original failure remains recorded; one successful retry
 does not establish that recovery failures cannot recur.
 
-Additional native white-material controls for 25, 38 and 48 disabled volumes,
-AO, specular/reflections, DOF and palette colour without changing camera or
-formulas. Their structural/composition mismatch persists. The controls retain
-native direct-light directions, so they are not pixel-equivalent lighting
-references. Scene 48 is also an extreme-scale diagnostic candidate: its
-camera-to-target separation is about `3e-8` at coordinates near `20`. This is
-evidence to investigate precision, not a proven diagnosis.
+The initial white controls were insufficient: they disabled volumes, AO,
+specular/reflections, DOF and palettes, but retained authored shadows and light
+directions. They did **not** establish structural failures in 25 and 38.
+New controls use a unit white, camera-facing directional light with shadows
+disabled. Both scenes now show coarse alignment with the unchanged FPT output.
+No camera or evaluator patch was made. Normal estimation, sampling and fine
+detail still differ; this is not a byte-exact geometry gate.
+
+Scene 48 remains a deep-zoom failure. At 160x120 the native CPU control preserves
+the plane/supports, native OpenCL on Apple M1 Max is uniformly RGB (1,1,1), and
+FPT retains only a small corner. Its camera-target separation is `2.9564e-8`
+fractal units, while float32 coordinate spacing is `1.1921e-7` to `1.9073e-6`.
+This strongly implicates world/field precision, but does not isolate every
+failure mechanism (the native OpenCL threshold also differs). FPT computes
+the camera direction in float64 before casting: this is not evidence that its
+camera basis is simply zero. A precision-aware evaluator/coordinate design or
+explicit high-precision fallback is required before claiming support.
+
+Reproduce the corrected controls without modifying source scene files or the
+frozen audit:
+
+```sh
+python3 scripts/run_mandel_geometry_controls.py \
+  --audit reports/mandel-release-ranked50 \
+  --output reports/mandel-geometry-headlight-controls \
+  --scenes 25 38
+```
+
+Use a new output directory for another run. The helper checks audited binary,
+scene, lightmap and FPT capture hashes. It rejects unknown native overrides and
+does not silently accept an OpenCL reference. The new sheet is
+`reports/mandel-geometry-headlight-controls/comparison.png`.
+Backend isolation commands/logs are under `reports/mandel-outlier-diagnosis`;
+its intermediate shadow/headlight probes with nonexistent-setting warnings
+are superseded by the warning-free helper captures above.
+
+#### Deep-Zoom Numerical Follow-Up
+
+The scene-48 precision hypothesis now has direct numerical evidence. The
+diagnostic example calls the existing generated field evaluator and marcher
+without changing production kernels. Its 25-ray grid repeats identically:
+
+| Probe | Scene 48 | Ordinary-scale scene 25 control |
+| --- | --- | --- |
+| First-step stalls | 8/25 | 0/25 |
+| Final misses in sampled grid | 23/25 | 1/25 |
+| Centre first-step direction error | 47.04 degrees | Not an acceptance metric |
+
+The 17 moving scene-48 rays have first-step direction errors of 23.29-58.06
+degrees. The centre ray advances only X; its Y and Z increments are lost.
+Read back **absolute next positions** and subtract the origin on the CPU:
+an in-shader `(origin + step) - origin` expression was algebraically simplified
+by fast math and incorrectly reported ideal, unrounded motion. That discarded
+diagnostic is retained only as superseded evidence in the local reports.
+
+Two separate native CPU controls confirm that marching is not the only issue:
+
+| CPU control, original direct-light setup retained | RGB MAE (0-1) |
+| --- | --- |
+| Original repeat | 0.000078 |
+| Round only camera origin; preserve camera-target direction | 0.278657 |
+| Round only explicitly authored formula numbers | 0.342941 |
+
+Camera rounding alone shifts the origin by 23.33 times the camera-target
+distance. Parameter rounding changes the geometry even with the original
+camera. These RGB differences are not geometric-distance metrics, but the
+large controlled visual changes establish independent precision sensitivity.
+The native control repeats are not byte-exact. No camera rotation or image
+registration was used.
+
+```sh
+cargo build --release --example mandel_precision_probe
+target/release/examples/mandel_precision_probe \
+  /path/to/RoadToExascale.fract /path/to/mandelbulber2 \
+  reports/precision-probe.json
+```
+
+The example records source, shader and executable hashes, FPT environment,
+float64 source sample points, float32 GPU inputs, field values, rays, first
+steps and actual marcher outcomes. It refuses to overwrite a report. It is
+diagnostic infrastructure, not a high-precision rendering backend.
+
+Local evidence: `reports/mandel-outlier-diagnosis/48-precision/summary.json`
+and `precision-controls.png`. The three CPU images in that sheet share
+lighting; the FPT neutral image has a different key. The renderer is unchanged.
+
+### Isolated high/low precision prototype
+
+The scene-48 prototype now preserves coordinates, authored parameters and orbit
+arithmetic as high/low float pairs. It runs in a separate diagnostic Metal
+library with fast math disabled and contraction disabled except for explicit
+`fma` residuals. Neither production Rust/shaders nor the release executable
+changed. This is not yet a selectable rendering backend.
+
+The CPU oracle compiles the actual `PseudoKleinianMod2::FormulaCode` body from
+the local Mandelbulber checkout in double precision. The GPU implements only
+the active scene-48 branches, not arbitrary formula-117 configurations. Both
+use native XYZ coordinates and the same FPT-style bailout wrapper. Enabling
+native's additional two-previous-orbit bailout changed none of the 1,281 field
+samples. The samples cover the camera and seeded offsets from 1e-10 to 1e-6
+fractal units.
+
+| Field experiment | Samples within 1% relative DE error | Median relative DE error |
+| --- | ---: | ---: |
+| Safe-math float32 control | 5 / 1,281 | 2,488.51% |
+| High/low, but formula parameters rounded to float32 | 7 / 1,281 | 93.88% |
+| High/low, but query coordinates rounded to float32 | 4 / 1,281 | 783.21% |
+| High/low coordinates, parameters and arithmetic | 1,281 / 1,281 | 0.000195% |
+
+The complete high/low field has 0 iteration-count disagreements and worst-case
+relative DE error 0.05305%. Thus fixing only the coordinate transport or only
+the parameter storage is insufficient.
+
+The next gate used 19,200 identical authored-camera rays at 160x120, with white
+camera-headlight shading, no shadows, AO, specular, tone mapping or jitter.
+The CPU oracle and GPU diagnostic share threshold/stepping/refinement rules.
+The CPU path still calls the native formula body; this is not a fresh full
+Mandelbulber beauty-render comparison.
+
+| Ray experiment | Hits | Stalled rays | Median / maximum relative depth error |
+| --- | ---: | ---: | ---: |
+| CPU double oracle | 19,200 | 0 | Reference |
+| Safe-math float32 control | 324 | 18,876 | Not comparable: most rays fail |
+| Complete high/low GPU | 19,200 | 0 | 0.000297% / 0.03780% |
+
+The high/low ray gate has zero hit/miss disagreements or max-step exits;
+95th-percentile relative depth error is 0.002145%. Linear headlight shade MAE
+is 0.0003015 on a 0..1 scale. The image was visually inspected and the field
+and ray GPU outputs reproduced byte-for-byte on a second run. These are
+exploratory numerical gates, not an exact-output or full-corpus guarantee.
+
+The high/low ray diagnostic took 25.98 ms, then 25.76 ms on repeat, with
+`maxTotalThreadsPerThreadgroup=640` and execution width 32 on Apple M1 Max.
+These are two diagnostic dispatches, not a warmed performance benchmark.
+Float32's lower cost is not a fair speed baseline because almost all its rays
+stall. Keep the ordinary fast renderer for scenes that do not need precision.
+
+Local source, raw buffers, settings, hashes and comparisons are retained under
+`reports/mandel-outlier-diagnosis/48-double-single/`: `summary.json`,
+`ray-summary.json`, `verification.json`, `manifest.json`, and
+`ray-comparison.png`. Run `run.py`, `rays.py`, then `verify.py` there to rebuild
+and recheck this fixed-scene experiment. The diagnostic scripts intentionally
+use local checkout paths and require the existing native `algebra.o`, QtCore,
+Apple clang, Python/Pillow and Metal. Formula-derived source stays in ignored
+reports under the upstream GPL boundary, outside the published source package.
+The production executable hash remains
+`1ce3d5fd5d3d2c5ad55559a05ef032eaaecdc204eb1a859c3d668ec0f1c5a21e`.
+
+Next: extract reusable, independently tested high/low arithmetic and generate
+the optional precise evaluator from original float64 parameters. Preserve
+precision through camera position, thresholds, normals and all field calls,
+not just the first ray. Gate perturbed cameras and native CPU depth/geometry
+before integrating authored shading or voxel export. Keep the diagnostic
+scene specialization out of production and do not relabel scene 48 as fixed
+until the actual release path passes.
+
+### Nearby-camera precision gate
+
+The wider gate exposed a limitation of the original two-term prototype:
+across 13 views / 249,600 rays, two pixels exceeded the 0.1% relative depth
+threshold. One selected a surface at 69.21% different depth. Hit counts alone
+would have missed both failures: all rays hit and none stalled.
+
+The 13 views comprise the authored view, six translations by one quarter of
+camera-target distance along camera-local axes, yaw/pitch changes of +/-5
+degrees, and image-plane FOV factors 0.5/2. The CPU and GPU receive identical
+float64-derived rays. The threshold scale stays fixed across the FOV probes
+to isolate direction changes; this is not a release-parser zoom-settings test.
+
+| Candidate | Passing views | Worst relative depth error | Decision |
+| --- | ---: | ---: | --- |
+| Original two-term arithmetic | 11 / 13 | 69.21% | Reject for integration |
+| Scalar ray-distance accumulation | 12 / 13 | 0.1463% | Still fails |
+| Scalar distance also used for threshold/depth | 12 / 13 | 0.1463% | Still fails |
+| Compensated low-term addition | 12 / 13 | 15.14% | Reject; different outlier |
+| Fixed three-term arithmetic | 13 / 13 | 0.01874% | Offline numerical gate passes |
+
+Replaying the two original failing rays' CPU query positions through the
+two-term GPU field found no hit-threshold disagreements at those positions.
+Scalar-distance reconstruction removed the severe outlier, identifying ray
+advancement as a contributor, but changed the location of the residual error.
+A separate 53/113-bit CPU precision ladder checked all four unique outlier
+rays. The 53-bit active-branch implementation reproduced the actual native
+formula oracle exactly; 113-bit depth differed from native double by less
+than 0.000060%. This rejects the hypothesis that a badly unstable native
+reference explains the large GPU depth errors in these probes.
+
+Both a generic three-term expansion and a fixed-size version then recovered
+those four rays. The fixed-size version's complete 13-view gate reports zero
+hit/miss disagreements, stalls or max-step exits. Full images were visually
+inspected. They are not byte-identical to the CPU reference, and the entire
+image suite was not repeated. The four outlier rays were separately repeated
+through the extracted arithmetic module with byte-identical GPU outputs.
+
+Performance remains unsuitable for a normal rendering default: the fixed
+three-term suite required 9.47-40.54 seconds of accumulated GPU intervals per
+160x120 view, in batches of 256 rays. Maximum individual dispatch was 2.203
+seconds. These diagnostic scheduling measurements are not an isolated warmed
+renderer benchmark. Single-ray warm checks also confirm that the generic
+expansion's cost is not just cold compilation. The wider representation is
+retained as an offline correctness tool, not a performance improvement.
+
+Reusable, formula-independent support is now in `examples/precision/`:
+`Expansion.metal`, a standalone safe-math `probe.mm`, and a limitations guide.
+`scripts/run_metal_precision_gate.py` validates the extracted implementation
+on actual Metal without requiring Mandelbulber or Qt. Its 4,112 arithmetic
+checks pass with maximum relative error below 1.8e-15 (output is packed into
+two floats); repeat GPU outputs are byte-identical. Seven Python harness
+tests cover input splitting, exceptional inputs and invalid/failed reports.
+These tests do not certify arbitrary exponent ranges or full IEEE semantics.
+
+Local numerical source, raw buffers, CPU precision ladder, image sheets and
+independent verification are under
+`reports/mandel-outlier-diagnosis/48-double-single-camera-gate/`.
+The final images are `three-term-full-gate/comparison-1.png` through
+`comparison-3.png`. Compact aggregate evidence is retained in
+`docs/mandel-outlier-diagnosis.json`. Formula-derived scaffolding stays ignored
+and is not part of the source package. No production renderer/export source
+or executable changed, and scene 48 remains unsupported by the release path.
+
+### Opt-in offline precision reference
+
+`examples/mandel_precise_render.rs` now provides an executable offline reference
+command, documented in `examples/precision/README.md`. It reads the validated
+scene through the existing Rust parser without passing through the float32
+render configuration, emits three-term formula parameters and camera inputs,
+and keeps field, marching and normal queries in the precision path. The actual
+active formula branches are imported at runtime from the external native C++
+source. No formula body is added to the Apache source package.
+
+This is intentionally a **scene-and-source-hash-pinned experiment**, not a
+general formula-117 renderer: only the original `RoadToExascale.fract` and
+tested upstream formula revision are accepted. Changed inputs fail before
+creating an output directory or compiling Metal. It generates white
+camera-headlight output, raw hit/depth/shade records, original double rays,
+source hashes and GPU/process timings. It does not implement authored beauty,
+path tracing, materials, voxel export or an interactive precision mode.
+
+The standalone 160x120 render agreed with the independent native-double oracle
+on all 19,200 hit decisions, with zero stalls or step-limit exits. Maximum
+relative depth error was **0.00934%**, and linear headlight MAE was
+**0.000009884**. It used 8.769 seconds of accumulated GPU intervals and 10.783
+seconds of GPU-process wall time; compiling the small Objective-C++ driver
+took a separate 0.937 seconds. These are single-run diagnostic measurements,
+not a speedup benchmark.
+
+The new runtime-imported formula also passed the frozen **13-view / 249,600-ray**
+gate: zero hit disagreements, stalls or step-limit exits; maximum relative
+depth error **0.01874%** and maximum per-view headlight MAE **0.00002847**.
+The authored image was repeated byte-exactly. All three CPU/GPU comparison
+pages were visually inspected. As before, FOV perturbations hold the threshold
+fixed to isolate ray changes; they do not certify arbitrary resolution/quality
+settings. Larger command sizes remain experimental. Replay timings are not
+isolated benchmarks (repository regression tests overlapped part of the run).
+
+Evidence is under `reports/mandel-outlier-diagnosis/48-offline-command-160/`
+and `48-offline-command-camera-gate/`; the latter includes per-view raw outputs,
+three comparison pages and a hashed manifest. The final packaged-source command
+also reproduced the initial raw output byte-for-byte; its evidence is in
+`48-offline-command-final/verification.json`. A real unsupported-scene CLI call
+was rejected without creating output. All 218 repository Rust tests, five new
+example helper tests and 25 Python tests pass. Package listing includes the
+example/support source but no generated reports or imported formula bodies.
+The production executable SHA-256 remains
+`1ce3d5fd5d3d2c5ad55559a05ef032eaaecdc204eb1a859c3d668ec0f1c5a21e`.
+
+The fast default remains unchanged. Next work is either a faster measured
+precision implementation or a separately validated expansion of supported
+formula configurations, not weakening this depth gate or silently selecting
+the slow reference path in normal rendering. Scene 48 remains a production
+release limitation; this experiment does not alter the ranked-50 verdict.
 
 The five final local sheets are
 `reports/mandel-release-ranked50/reviewed-pages/page-01.png` through
@@ -169,9 +494,11 @@ hash are retained with those local artifacts.
 
 Next work, in order:
 
-1. Isolate geometry/camera/evaluator differences in 25 and 38, and precision
-   limits in 48, using matched neutral depth/normal probes before changing
-   appearance. Do not assume every disagreement is a camera flip.
+1. Integrate the validated scene-48 precision approach only after a reusable
+   opt-in evaluator passes perturbed-camera and native CPU geometry gates.
+   Keep 25/38 as shadow-free controls; use depth
+   and normal probes to test residual fine differences rather than infer
+   missing geometry from authored shading.
 2. Keep the scene-31 recovery case as a repeatability canary for tiled dispatch.
 3. Diagnose non-volume appearance failures separately: dark authored scenes
    such as 14/21/30, and palette/material differences such as 36. Fog and clouds
