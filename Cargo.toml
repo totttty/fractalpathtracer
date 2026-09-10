@@ -6,7 +6,7 @@ license = "Apache-2.0"
 description = "Metal SDF path tracer compatible with FPT Beauty scenes"
 repository = "https://github.com/totttty/fractalpathtracer"
 build = "build.rs"
-include = ["Cargo.toml", "Cargo.lock", "build.rs", "rust-toolchain.toml", "src/**", "shaders/**", "scenes/**", "tests/**", "examples/**", "README.md", "LICENSE", "NOTICE", "docs/fractal-library-api.md", "docs/release-preparation.md", "docs/mandel-release-results.json", "docs/mandel-ranked50-review.json", "scripts/run_release_canaries.py", "scripts/run_mandel_tile_gate.py", "scripts/run_mandel_support_suite.py", "scripts/test_release_canaries.py", "scripts/test_mandel_support_suite.py", "scripts/requirements-release.txt"]
+include = ["/Cargo.toml", "/Cargo.lock", "/build.rs", "/rust-toolchain.toml", "src/**", "shaders/**", "scenes/**", "tests/**", "examples/**", "/README.md", "/LICENSE", "/NOTICE", "docs/fractal-library-api.md", "docs/release-preparation.md", "docs/mandel-release-results.json", "docs/mandel-ranked50-review.json", "docs/mandel-outlier-diagnosis.json", "scripts/run_release_canaries.py", "scripts/run_mandel_tile_gate.py", "scripts/run_mandel_support_suite.py", "scripts/run_mandel_geometry_controls.py", "scripts/test_release_canaries.py", "scripts/test_mandel_support_suite.py", "scripts/test_mandel_geometry_controls.py", "scripts/requirements-release.txt", "scripts/run_metal_precision_gate.py", "scripts/test_metal_precision_gate.py"]
 
 [dependencies]
 anyhow = "1.0"
