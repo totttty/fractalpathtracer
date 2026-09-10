@@ -52,10 +52,33 @@ def geometry_overrides(source):
     return overrides
 
 
-def headlight_command(command, source, folder):
+def headlight_command(command, source, folder, *, bake_lights=False):
     command = list(command)
     overrides = geometry_overrides(source)
-    command[command.index('-O') + 1] += '#' + '#'.join(f'{k}={v}' for k, v in overrides.items())
+    cli_overrides = overrides
+    if bake_lights:
+        # Shadow controls also import geometry_overrides, so defer this helper.
+        from run_mandel_shadow_controls import replace_main_parameters
+        # The pinned native executable renders some legacy hybrid headlight
+        # CLI controls black; loading the same light settings from file works.
+        # Keep this explicit and preserve the original authored scene.
+        lights = {k: v for k, v in overrides.items() if k.startswith('light')}
+        for key in lights:
+            if key.endswith(('_enabled', '_relative_position', '_use_target_point',
+                             '_cast_shadows', '_volumetric')):
+                lights[key] = 'true' if lights[key] == '1' else 'false'
+        lights['light1_type'] = 'directional'
+        folder.mkdir(parents=True, exist_ok=True)
+        control = folder / 'native-headlight.fract'
+        with control.open('x') as stream:
+            stream.write(replace_main_parameters(source, lights))
+        command[-1] = str(control.resolve())
+        cli_overrides = {k: v for k, v in overrides.items() if not k.startswith('light')}
+        index = command.index('-O') + 1
+        command[index] = '#'.join(part for part in command[index].split('#')
+                                 if not re.match(r'^light\d+_', part)
+                                 and part.split('=', 1)[0] not in cli_overrides)
+    command[command.index('-O') + 1] += '#' + '#'.join(f'{k}={v}' for k, v in cli_overrides.items())
     command[command.index('-o') + 1] = str(folder / 'scene.png')
     return command, overrides
 

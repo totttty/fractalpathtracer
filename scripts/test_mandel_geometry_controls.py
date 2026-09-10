@@ -1,9 +1,36 @@
 import unittest
+import tempfile
 from pathlib import Path
 from run_mandel_geometry_controls import geometry_overrides, headlight_command
+from run_mandel_support_suite import parameters
 
 
 class GeometryControlTests(unittest.TestCase):
+    def test_baked_lights_preserve_geometry_and_use_file_syntax(self):
+        source = ('[main_parameters]\ncamera 1 2 3;\nformula_1 8;\nDE_thresh 0.001;\n'
+                  'light1_is_defined true;\nlight7_is_defined true;\n'
+                  '[fractal_1]\nmandelbox_scale 2;\n')
+        command = ['mandel', '-O', 'opencl_enabled=0#light1_intensity=0#gamma=1',
+                   '-o', 'old.png', 'source.fract']
+        with tempfile.TemporaryDirectory() as temp:
+            result, _ = headlight_command(command, source, Path(temp), bake_lights=True)
+            control = Path(result[-1]).read_text()
+            values = parameters(control)
+            for key in ('camera', 'formula_1', 'DE_thresh'):
+                self.assertEqual(values[key], parameters(source)[key])
+            self.assertEqual(control.split('[fractal_1]')[1], source.split('[fractal_1]')[1])
+            self.assertEqual(values['light1_type'], 'directional')
+            self.assertEqual(values['light1_enabled'], 'true')
+            self.assertEqual(values['light1_cast_shadows'], 'false')
+            self.assertEqual(values['light7_enabled'], 'false')
+            self.assertNotIn('light1_', result[2])
+            self.assertIn('opencl_enabled=0', result[2])
+            self.assertIn('mat1_surface_color=', result[2])
+            self.assertEqual(result[2].count('gamma='), 1)
+            self.assertEqual(command[-1], 'source.fract')
+            with self.assertRaises(FileExistsError):
+                headlight_command(command, source, Path(temp), bake_lights=True)
+
     def test_control_is_unshadowed_white_camera_facing_lambert(self):
         settings = geometry_overrides('[main_parameters]\nlight1_cast_shadows true;\n')
         self.assertEqual(settings['light1_cast_shadows'], '0')

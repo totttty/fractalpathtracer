@@ -4,11 +4,40 @@ import tempfile
 import unittest
 from pathlib import Path
 from PIL import Image
-from run_mandel_support_suite import capture, classify, failure_kind, parameters, resolve_lightmap, validate_resume
+from run_mandel_support_suite import capture, classify, failure_kind, parameters, resolve_lightmap, validate_resume, save, pages
 from run_release_canaries import image_result
 
 
 class SupportSuiteTests(unittest.TestCase):
+    def test_empty_and_tab_separated_parameters(self):
+        self.assertEqual(parameters('[main_parameters]\nfile_background ;\nformula_1\t42;\n;\n'),
+            {'file_background':'','formula_1':'42'})
+
+    def test_two_mode_screening_is_complete_without_native_reference(self):
+        row=dict(id='051',path='scene.fract',size=(16,12),modes={m:dict(status='ok') for m in ('geometry','authored')})
+        classify(row,('geometry','authored'))
+        self.assertEqual(row['status'],'ok')
+        self.assertNotIn('appearance_difference',row)
+        summary=dict(identity=dict(settings=dict(modes=['geometry','authored'],max_axis=16,samples=1)),rows=[row])
+        with tempfile.TemporaryDirectory() as temp:
+            save(summary,Path(temp))
+            pages(summary,Path(temp))
+            self.assertEqual(summary['counts']['completed_scenes'],1)
+            self.assertEqual(summary['counts']['mandel'],0)
+            with Image.open(Path(temp)/'page-01.png') as image:
+                self.assertEqual(image.width,32)
+
+    def test_successful_blank_capture_is_flagged_not_certified(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp)
+            def blank(command,folder,timeout):
+                Image.new('RGB',(2,2),'black').save(folder/'scene.png')
+                return 0.1
+            result=capture(['fake'],folder,(2,2),1,runner=blank)
+            self.assertEqual(result['status'],'ok')
+            self.assertEqual(result['screening']['review_flags'],['single_color'])
+            self.assertEqual(result['screening']['dark_fraction'],1)
+
     def test_parameter_section_and_authored_lightmap_resolution(self):
         text='[main_parameters]\nfile_lightmap /usr/share/mandelbulber2/textures/custom.png;\n[fractal_1]\nfile_lightmap wrong.png;\n'
         self.assertEqual(parameters(text)['file_lightmap'],'/usr/share/mandelbulber2/textures/custom.png')

@@ -20,7 +20,7 @@ def main():
     makefile.write_text(f'''include {build / 'Makefile'}
 .PHONY: fpt-distance-probe
 fpt-distance-probe:
-\t$(CXX) $(CXXFLAGS) $(INCPATH) -fno-fast-math -c "{source}" -o "{out / 'probe.o'}"
+\t$(CXX) $(CXXFLAGS) $(INCPATH) -fno-fast-math -fno-access-control -c "{source}" -o "{out / 'probe.o'}"
 \t$(LINK) $(LFLAGS) -o "{out / 'native-distance-probe'}" "{out / 'probe.o'}" $(filter-out main.o,$(OBJECTS)) $(LIBS)
 ''')
     command = ['make', '-C', str(build), '-f', str(makefile), 'fpt-distance-probe']

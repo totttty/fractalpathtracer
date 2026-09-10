@@ -26,14 +26,14 @@ SCENE_NOTES = {
 
 
 def sheets(report, out):
-    columns = [('mandel', 'Mandelbulber CPU reference (cached)'),
+    columns = [('mandel', report.get('native_reference_label', 'Mandelbulber CPU reference (cached)')),
                ('geometry', 'Current FPT - neutral geometry'),
                ('authored', 'Current FPT - authored path tracing')]
     for start in range(0, len(report['rows']), 10):
         rows = report['rows'][start:start+10]
         canvas = Image.new('RGB', (900, 70+len(rows)*352), '#1d2023')
         draw = ImageDraw.Draw(canvas)
-        draw.text((8, 8), 'MERGE REVIEW | current production renderer | 32 SPP | no experimental derivative', fill='white')
+        draw.text((8, 8), report.get('gallery_title', 'MERGE REVIEW | current production renderer | 32 SPP | no experimental derivative'), fill='white')
         for col, (_, title) in enumerate(columns):
             draw.text((col*300+8, 36), title, fill='white')
         for i, row in enumerate(rows):
@@ -57,9 +57,9 @@ def sheets(report, out):
                 draw.text((8, top+335), row['note'], fill='#ffce86')
         canvas.save(out/f'scenes-{start+1:02d}-{start+len(rows):02d}.png')
     # A compact navigation sheet; the detailed pages remain the visual gate.
-    canvas = Image.new('RGB', (1500, 36+10*160), '#1d2023')
+    canvas = Image.new('RGB', (1500, 36+((len(report['rows'])+4)//5)*160), '#1d2023')
     draw = ImageDraw.Draw(canvas)
-    draw.text((8, 10), 'Scenes 01-50 | Each pair: native reference / current FPT authored | detail in the five full sheets', fill='white')
+    draw.text((8, 10), report.get('overview_title', 'Scenes 01-50 | Each pair: native reference / current FPT authored | detail in the five full sheets'), fill='white')
     for i, row in enumerate(report['rows']):
         x,y = (i%5)*300,36+(i//5)*160
         for col,mode in enumerate(['mandel','authored']):

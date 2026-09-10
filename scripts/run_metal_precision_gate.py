@@ -58,10 +58,11 @@ def compare(values, raw):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, required=True, help="New report directory")
+    parser.add_argument("--arithmetic", choices=("three", "two"), default="three")
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=False)
     support = ROOT / "examples/precision"
-    source = (support / "Expansion.metal").read_text() + """
+    source = (support / ("Expansion.metal" if args.arithmetic == "three" else "TwoTerm.metal")).read_text() + """
 using namespace fpt_precision;
 kernel void probe(device const float *p [[buffer(0)]], device float *out [[buffer(1)]],
                   uint i [[thread_position_in_grid]]) {
@@ -90,7 +91,7 @@ kernel void probe(device const float *p [[buffer(0)]], device float *out [[buffe
     raw = (args.out / "first.bin").read_bytes()
     repeat = raw == (args.out / "repeat.bin").read_bytes()
     report = compare(values, raw)
-    report.update(samples=len(values), operations=len(values) * 4, repeat_byte_exact=repeat,
+    report.update(samples=len(values), operations=len(values) * 4, repeat_byte_exact=repeat, arithmetic=args.arithmetic,
                   scope="Experimental finite-range arithmetic only; not a renderer or full IEEE implementation",
                   pipeline=metadata, commands=commands,
                   source_sha256=hashlib.sha256(source.encode()).hexdigest(),

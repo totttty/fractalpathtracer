@@ -12,6 +12,12 @@ kernel void mandelbulber_field_sample_kernel(
     constant FptRenderConfig &cfg [[buffer(2)]],
     uint gid [[thread_position_in_grid]]) {
     float4 input = points[gid];
+#ifdef FPT_MANDEL_PERLIN
+    if (input.w >= 1000.0f) {
+        samples[gid] = float4(fptPerlinDisplace(0.0f,input.xyz,uint(input.w)-1000u),0,0,0);
+        return;
+    }
+#endif
     if (input.w == 0.0f) {
         samples[gid] = mandelbulberFieldSample(input.xyz, cfg, 1);
         return;
@@ -92,11 +98,42 @@ fn main() -> Result<()> {
     let direction = delta.map(|x| x / separation);
     let mut points = Vec::<[f32; 4]>::new();
     let mut labels = Vec::new();
+    if shader.contains("#define FPT_MANDEL_PERLIN 1") {
+        for material in [1u32, 2u32] {
+            for point in [[0.0; 3], [0.01, -0.03, 0.02], source.camera] {
+                points.push([
+                    point[0] as f32,
+                    point[1] as f32,
+                    point[2] as f32,
+                    (1000 + material) as f32,
+                ]);
+                labels.push(json!({"kind":"perlin_displacement","material":material,"source_point":point,"output_units":"fractal distance"}));
+            }
+        }
+    }
     for t in [-2e-6, -1e-7, 0.0, 1e-9, 1e-8, separation, 1e-7, 2e-6] {
         let point: [f64; 3] = std::array::from_fn(|i| source.camera[i] + direction[i] * t);
         let gpu = gpu_point(point, scale);
         points.push(gpu);
         labels.push(json!({"kind":"field", "ray_t_fractal_units":t, "source_point_f64":point, "gpu_input":gpu}));
+        if source.has_cpu_reference() && source.formula_id == 10 && !source.hybrid_enabled {
+            let rounded = [
+                f64::from(gpu[0]) / scale,
+                f64::from(gpu[2]) / scale,
+                f64::from(gpu[1]) / scale,
+            ];
+            for (name, input) in [
+                ("cpu_f64_original", point),
+                ("cpu_f64_rounded_input", rounded),
+            ] {
+                let sample = source.distance(input);
+                labels.last_mut().unwrap()[name] = json!({
+                    "distance_fractal_units":sample.distance, "radius":sample.radius,
+                    "derivative":sample.derivative, "iterations":sample.iterations,
+                    "escaped":sample.escaped
+                });
+            }
+        }
     }
     for y in [-0.45, -0.225, 0.0, 0.225, 0.45] {
         for x in [-0.6, -0.3, 0.0, 0.3, 0.6] {
@@ -152,6 +189,7 @@ fn main() -> Result<()> {
         "render_size":[160,120], "world_scale":scale, "camera_source":source.camera,
         "camera_gpu":cfg.camera_position, "camera_yaw_pitch":cfg.camera_yaw_pitch,
         "camera_target_separation":separation,
+        "cpu_comparison_scope":"When present, CPU values use the local independent formula-10 orbit evaluator, not native Mandelbulber. Its preferred finalizer ignores authored DE overrides; compare orbit radius/derivative/iterations before interpreting distance differences. Global transforms and primitive unions are not included.",
         "output_layouts": {
             "field":["distance_world_units","orbit_radius","derivative","signed_iterations"],
             "ray":["direction_x","direction_y","direction_z","unused"],

@@ -7,9 +7,10 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageStat
 from run_release_canaries import (ROOT, difference, execute, image_result,
     lightmap_asset, mandel_reference_command, scene_dimensions, sha256,
     validate_manifest, verify_lightmap)
@@ -24,9 +25,10 @@ def parameters(text):
         line = line.strip()
         if line.startswith('[') and line.endswith(']'):
             section = line[1:-1]
-        elif section == 'main_parameters' and line.endswith(';') and ' ' in line:
-            key, value = line[:-1].split(None, 1)
-            values[key] = value.strip()
+        elif section == 'main_parameters' and line.endswith(';'):
+            parts = line[:-1].split(None, 1)
+            if parts:
+                values[parts[0]] = parts[1].strip() if len(parts) == 2 else ''
     return values
 
 
@@ -71,6 +73,17 @@ def capture(command, folder, size, timeout, runner=execute):
     try:
         seconds = runner(command, folder, timeout)
         result = dict(status='ok', capture=dict(image_result(folder, size), wall_seconds=seconds))
+        with Image.open(result['capture']['path']) as image:
+            rgb = image.convert('RGB')
+            luminance = rgb.convert('L')
+            histogram = luminance.histogram()
+            extrema = rgb.getextrema()
+            result['screening'] = dict(mean_luminance_255=ImageStat.Stat(luminance).mean[0],
+                dark_fraction=sum(histogram[:9])/(rgb.width*rgb.height),
+                single_color=all(low == high for low,high in extrema),
+                review_flags=['single_color'] if all(low == high for low,high in extrema) else
+                    ['mostly_dark'] if sum(histogram[:9])/(rgb.width*rgb.height) > 0.95 else [],
+                note='Advisory only; cannot establish geometry completeness or reference parity.')
         metadata = list(folder.glob('*.render.json'))
         if len(metadata) == 1:
             data = json.loads(metadata[0].read_text())
@@ -100,7 +113,7 @@ def validate_resume(summary, identity):
                     raise ValueError('resume artifact hash mismatch: '+asset['path'])
 
 
-def classify(row):
+def classify(row, requested_modes=MODES):
     modes = row['modes']
     fpt = [modes.get(k, {}) for k in ('geometry', 'authored')]
     # A successful production image establishes compilation. A timeout alone
@@ -109,16 +122,17 @@ def classify(row):
         'failed' if any(r.get('status') == 'compile_failed' for r in fpt) else 'not_established')
     row['geometry_fidelity'] = 'requires_visual_review'
     row['appearance_fidelity'] = 'requires_visual_review'
-    row['status'] = ('running' if len(modes) < len(MODES) else
-                     'ok' if all(r['status'] == 'ok' for r in modes.values()) else 'incomplete')
+    row['status'] = ('running' if any(m not in modes for m in requested_modes) else
+                     'ok' if all(modes[m]['status'] == 'ok' for m in requested_modes) else 'incomplete')
     if all(modes.get(k, {}).get('status') == 'ok' for k in ('mandel', 'authored')):
         row['appearance_difference'] = difference(modes['mandel']['capture']['path'], modes['authored']['capture']['path'])
 
 
 def save(summary, output):
+    requested_modes = summary['identity']['settings'].get('modes', MODES)
     summary['counts'] = {mode: sum(r['modes'].get(mode, {}).get('status') == 'ok' for r in summary['rows']) for mode in MODES}
     summary['counts']['compilation_passed'] = sum(r.get('compilation') == 'passed' for r in summary['rows'])
-    summary['counts']['completed_scenes'] = sum(len(r['modes']) == len(MODES) for r in summary['rows'])
+    summary['counts']['completed_scenes'] = sum(all(m in r['modes'] for m in requested_modes) for r in summary['rows'])
     temp = output/'summary.tmp'
     temp.write_text(json.dumps(summary, indent=2))
     temp.replace(output/'summary.json')
@@ -134,9 +148,11 @@ def save(summary, output):
 def pages(summary, output, rows_per_page=10):
     maximum = summary['identity']['settings']['max_axis']
     columns = [('mandel','Mandelbulber CPU authored'),('geometry','FPT neutral geometry'),('authored','FPT authored path')]
+    requested_modes = summary['identity']['settings'].get('modes', MODES)
+    columns = [(mode, label) for mode, label in columns if mode in requested_modes]
     for start in range(0,len(summary['rows']),rows_per_page):
         rows = summary['rows'][start:start+rows_per_page]
-        canvas = Image.new('RGB',(maximum*3,40+len(rows)*(maximum+58)),'#202326')
+        canvas = Image.new('RGB',(maximum*len(columns),40+len(rows)*(maximum+58)),'#202326')
         draw = ImageDraw.Draw(canvas)
         for col,(_,label) in enumerate(columns):
             draw.text((col*maximum+7,12),label,fill='white')
@@ -153,7 +169,7 @@ def pages(summary, output, rows_per_page=10):
                     draw.text((col*maximum+8,top+maximum//2),result.get('status','pending'),fill='#ffaaaa')
             draw.text((8,top+maximum+6),row['id']+' '+Path(row['path']).stem,fill='white')
             samples=summary['identity']['settings']['samples']
-            draw.text((8,top+maximum+22),f"{row.get('size')} | {samples} SPP FPT | " + ' / '.join(row['modes'].get(m,{}).get('status','pending') for m in ('mandel','geometry','authored')),fill='white')
+            draw.text((8,top+maximum+22),f"{row.get('size')} | {samples} SPP FPT | " + ' / '.join(row['modes'].get(m,{}).get('status','pending') for m,_ in columns),fill='white')
             if 'appearance_difference' in row:
                 draw.text((8,top+maximum+38),f"Appearance MAE {row['appearance_difference']['mae']:.4f}; not a geometry/parity certificate",fill='#cccccc')
         canvas.save(output/f'page-{start//rows_per_page+1:02d}.png')
@@ -164,16 +180,23 @@ def main():
     parser.add_argument('--manifest',type=Path,default=ROOT/'tests/fixtures/mandel-release-ranked50.json')
     parser.add_argument('--scene-root',type=Path,required=True)
     parser.add_argument('--mandelbulber-root',type=Path,required=True)
-    parser.add_argument('--mandelbulber-bin',type=Path,required=True)
+    parser.add_argument('--mandelbulber-bin',type=Path)
+    parser.add_argument('--modes',nargs='+',choices=MODES,default=list(MODES))
     parser.add_argument('--fpt',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--max-axis',type=int,default=300)
     parser.add_argument('--samples',type=int,default=32)
     parser.add_argument('--timeout',type=int,default=900)
     parser.add_argument('--resume',action='store_true')
+    parser.add_argument('--scene-limit',type=int,help='Stop after this many total scenes; resume can extend the limit.')
+    parser.add_argument('--pages-every',type=int,default=10)
     args=parser.parse_args()
     if not 16<=args.max_axis<=2048 or not 1<=args.samples<=512 or args.timeout<=0:
         parser.error('invalid dimensions/samples/timeout')
+    if len(set(args.modes)) != len(args.modes) or args.pages_every < 1 or (args.scene_limit is not None and args.scene_limit < 1):
+        parser.error('duplicate modes or invalid scene/page limit')
+    if 'mandel' in args.modes and args.mandelbulber_bin is None:
+        parser.error('--mandelbulber-bin is required for Mandel references')
     manifest=json.loads(args.manifest.read_text())
     validate_manifest(manifest,args.scene_root)
     output=args.output.resolve()
@@ -183,9 +206,10 @@ def main():
     for row in manifest['scenes']:
         try: assets[row['id']]=resolve_lightmap(args.scene_root/row['path'],args.mandelbulber_root,default_map)
         except ValueError as error: assets[row['id']]=dict(error=str(error))
-    identity=dict(manifest=manifest,harnesses={p.name:sha256(p) for p in (Path(__file__),ROOT/'scripts/run_release_canaries.py')},executables={str(p.resolve()):sha256(p) for p in (args.fpt,args.mandelbulber_bin)},
+    binaries = [args.fpt] + ([args.mandelbulber_bin] if 'mandel' in args.modes else [])
+    identity=dict(manifest=manifest,harnesses={p.name:sha256(p) for p in (Path(__file__),ROOT/'scripts/run_release_canaries.py')},executables={str(p.resolve()):sha256(p) for p in binaries},
         settings=dict(max_axis=args.max_axis,samples=args.samples,aspect='authored',chunk_samples=1,timeout=args.timeout,
-                      orientation='native; no postprocessing flips/crops',reference_backend='CPU',
+                      modes=args.modes,orientation='native; no postprocessing flips/crops',reference_backend='CPU' if 'mandel' in args.modes else 'not_requested',
                       bounces='FPT scene/config default; metadata records effective configuration'),
         environment={k:v for k,v in os.environ.items() if k.startswith('FPT_')},lightmaps=assets)
     if args.resume:
@@ -198,7 +222,7 @@ def main():
                          'Only AO maps are fingerprinted; other external textures remain untracked.',
                          'Timeouts do not prove a scene unsupported.',
                          'No renderer changes or performance claims in this support audit.'])
-    for scene in manifest['scenes']:
+    for scene in manifest['scenes'][:args.scene_limit]:
         row=next((r for r in summary['rows'] if r['id']==scene['id']),None)
         if row is None:
             row=dict(scene,modes={})
@@ -207,12 +231,12 @@ def main():
         row['size']=scene_dimensions(path.read_text(),args.max_axis)
         row['authored_effect_flags']={k:v for k,v in parameters(path.read_text()).items()
             if (any(s in k for s in ('fog','cloud','texture','dof','ambient_occlusion')) and v not in ('false','0'))}
-        classify(row)
+        classify(row,args.modes)
         save(summary,output)
-        for mode in MODES:
+        for mode in args.modes:
             if mode in row['modes']: continue
-            if shutil.disk_usage(output).free < 1024**3:
-                raise RuntimeError('less than 1 GiB free; resume after restoring disk headroom')
+            if min(shutil.disk_usage(output).free, shutil.disk_usage(tempfile.gettempdir()).free) < 1024**3:
+                raise RuntimeError('less than 1 GiB free on output or temporary volume; resume after restoring disk headroom')
             if sha256(path)!=scene['sha256']: raise ValueError('scene mutated: '+str(path))
             for binary,digest in identity['executables'].items():
                 if sha256(Path(binary))!=digest: raise ValueError('binary changed during suite')
@@ -240,10 +264,11 @@ def main():
                     result=dict(status='invalid_reference_backend',error='OpenCL used despite CPU override')
                 if sha256(path)!=scene['sha256']: raise ValueError('scene changed while rendering')
                 row['modes'][mode]=result
-            classify(row)
+            classify(row,args.modes)
             save(summary,output)
             print(scene['id'],mode,row['modes'][mode]['status'],row['modes'][mode].get('capture',{}).get('wall_seconds',''),flush=True)
-        pages(summary,output)
+        if len(summary['rows']) % args.pages_every == 0:
+            pages(summary,output)
     save(summary,output)
     pages(summary,output)
     print(json.dumps(summary['counts']),flush=True)

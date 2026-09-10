@@ -9,6 +9,15 @@ use std::{
 };
 
 pub fn render(source: &str, cfg: &FptRenderConfig, out: &Path) -> Result<f64> {
+    render_with_math(source, cfg, out, false)
+}
+
+pub fn render_with_math(
+    source: &str,
+    cfg: &FptRenderConfig,
+    out: &Path,
+    safe: bool,
+) -> Result<f64> {
     ensure!(
         cfg.preview == 0 && cfg.sdf_accumulation_mode == SDF_ACCUMULATION_CHUNKED,
         "beauty probe requires offline chunked accumulation"
@@ -29,7 +38,11 @@ pub fn render(source: &str, cfg: &FptRenderConfig, out: &Path) -> Result<f64> {
                 "macosx",
                 "metal",
                 "-std=macos-metal2.4",
-                "-ffast-math",
+                if safe {
+                    "-fno-fast-math"
+                } else {
+                    "-ffast-math"
+                },
                 "-c",
             ])
             .arg(&metal)

@@ -34,6 +34,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--scene', default='50')
     parser.add_argument('--max-axis', type=int, default=160)
+    parser.add_argument('--variants-file', type=Path,
+                        help='JSON list of [label, parent, main-parameter overrides, bounce cap].')
     args = parser.parse_args()
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -48,7 +50,13 @@ def main():
                            native_template[0]: sha256(Path(native_template[0]))},
               'scope': 'Authored settings with explicit ablations. Native CPU and FPT pixel sampling differ. No image registration.',
               'rows': []}
-    for label, parent, overrides, bounces in variants():
+    controls = json.loads(args.variants_file.read_text()) if args.variants_file else variants()
+    labels = [row[0] for row in controls]
+    if not controls or len(labels) != len(set(labels)) or any(not label.replace('-', '').isalnum() for label in labels):
+        raise ValueError('variant labels must be unique safe directory names')
+    if args.variants_file:
+        report['variants_sha256'] = sha256(args.variants_file)
+    for label, parent, overrides, bounces in controls:
         folder = out / label
         folder.mkdir()
         derived = folder / 'control.fract'
