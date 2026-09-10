@@ -12,6 +12,8 @@ pub mod catalog;
 pub mod compiler;
 pub mod coverage;
 mod formula_optimizer;
+pub mod lighting;
+mod lighting_random;
 pub mod orbit;
 
 const DEFAULT_FOV_DEGREES: f64 = 53.13;
@@ -1928,13 +1930,7 @@ impl MandelbulberScene {
         config.camera_dof = 0.0;
         config.focus_distance = (length(direction) * WORLD_SCALE) as f32;
 
-        let internal_fov = if self.camera_projection == 0 {
-            2.0 * (self.fov_degrees.to_radians() * 0.5).tan()
-        } else if self.camera_projection == 2 {
-            self.fov_degrees.to_radians() * 0.5
-        } else {
-            self.fov_degrees.to_radians()
-        };
+        let internal_fov = self.internal_fov();
         let threshold_scale = internal_fov
             / f64::from(self.height)
             / if self.iteration_threshold_mode {
@@ -2110,12 +2106,12 @@ impl MandelbulberScene {
     }
 
     pub fn main_light_direction(&self) -> [f64; 3] {
-        let forward = normalize(map_mandel_vector(subtract(self.target, self.camera)))
-            .expect("camera direction is non-zero");
-        let top = normalize(map_mandel_vector(self.camera_top)).expect("camera top is non-zero");
+        let forward =
+            normalize(subtract(self.target, self.camera)).expect("camera direction is non-zero");
+        let top = normalize(self.camera_top).expect("camera top is non-zero");
         let right = normalize(cross(forward, top)).expect("camera basis is non-degenerate");
-        // Mandelbulber retains 180.8 in this legacy conversion path. Match it
-        // exactly because all pre-2.25 main-light angles pass through it.
+        // Mandelbulber's light.cpp retains 180.8 for these angles, including
+        // modern camera-relative directional lights.
         let rotation = self
             .main_light_rotation
             .map(|degrees| degrees / 180.8 * std::f64::consts::PI);
@@ -2123,7 +2119,9 @@ impl MandelbulberScene {
         direction = rotate_around_axis(direction, forward, rotation[2]);
         direction = rotate_around_axis(direction, right, -rotation[1]);
         direction = rotate_around_axis(direction, top, rotation[0]);
-        normalize(direction).expect("rotated light direction is non-zero")
+        // Swapping Y/Z reverses handedness. Rotate in native space first so
+        // the axial rotations are not silently mirrored by that mapping.
+        map_mandel_vector(normalize(direction).expect("rotated light direction is non-zero"))
     }
 
     pub fn apply_authored_path_appearance(&self, config: &mut FptRenderConfig) {
@@ -2151,6 +2149,20 @@ impl MandelbulberScene {
         config.mandel_appearance[3] = self.ambient_occlusion_quality as f32;
         config.mandel_appearance[4] = self.ambient_occlusion_fast_tune.max(0.0) as f32;
         config.mandel_appearance[5] = self.material.shading as f32;
+        // Reserved appearance lanes; keep the C/Metal configuration ABI stable.
+        config.mandel_appearance[6] = u32::from(self.main_light_penetrating) as f32;
+        config.mandel_appearance[7] = u32::from(self.main_light_cast_shadows) as f32;
+        config.mandel_appearance[8] = self.internal_fov() as f32;
+    }
+
+    fn internal_fov(&self) -> f64 {
+        if self.camera_projection == 0 {
+            2.0 * (self.fov_degrees.to_radians() * 0.5).tan()
+        } else if self.camera_projection == 2 {
+            self.fov_degrees.to_radians() * 0.5
+        } else {
+            self.fov_degrees.to_radians()
+        }
     }
 
     /// Appearance data that accompanies exported FPTVOX geometry. Positions
@@ -3834,6 +3846,65 @@ IFS_scale 1,4;
         scene.apply_authored_path_appearance(&mut config);
         assert_eq!(config.mandel_appearance[5], 0.35);
         assert_eq!(config.fractal_style[4], 0.2);
+    }
+
+    #[test]
+    fn authored_main_shadow_flags_and_range_reach_the_gpu() {
+        for (penetrating, shadows) in [(true, false), (false, true)] {
+            let source = IFS_SCENE.replace("detail_level 2;", &format!(
+                "detail_level 2;\nlight1_enabled true;\nlight1_penetrating {penetrating};\nlight1_cast_shadows {shadows};"
+            ));
+            let mut scene = MandelbulberScene::parse(&source).unwrap();
+            for projection in [0, 1, 2] {
+                scene.camera_projection = projection;
+                let mut config = FptRenderConfig::default();
+                scene.apply_to_config(&mut config);
+                assert_eq!(&config.mandel_appearance[6..9], &[0.0; 3]);
+                scene.apply_authored_path_appearance(&mut config);
+                assert_eq!(config.mandel_appearance[6], u32::from(penetrating) as f32);
+                assert_eq!(config.mandel_appearance[7], u32::from(shadows) as f32);
+                let radians = scene.fov_degrees.to_radians();
+                let expected = match projection {
+                    0 => 2.0 * (radians * 0.5).tan(),
+                    2 => radians * 0.5,
+                    _ => radians,
+                };
+                assert!((f64::from(config.mandel_appearance[8]) - expected).abs() < 1e-6);
+            }
+        }
+    }
+
+    #[test]
+    fn main_light_rotates_in_mandel_space_before_axis_mapping() {
+        let mut scene = MandelbulberScene::parse(IFS_SCENE).unwrap();
+        scene.camera = [0.0; 3];
+        scene.target = [0.0, 1.0, 0.0];
+        for degrees in [-45.0_f64, 45.0] {
+            scene.main_light_rotation = [degrees, 45.0, 0.0];
+            let yaw = degrees / 180.8 * std::f64::consts::PI;
+            let pitch = 45.0 / 180.8 * std::f64::consts::PI;
+            // Native forward is +Y, right is +X, and top is +Z. Directional
+            // lights negate pitch; apply yaw around +Z, then map Y/Z once.
+            let expected = [
+                yaw.sin() * pitch.cos(),
+                pitch.sin(),
+                -yaw.cos() * pitch.cos(),
+            ];
+            for (top, expected) in [
+                ([0.0, 0.0, 1.0], expected),
+                // Camera rolled +90 degrees around native +Y.
+                ([1.0, 0.0, 0.0], [expected[1], -expected[0], expected[2]]),
+            ] {
+                scene.camera_top = top;
+                let actual = scene.main_light_direction();
+                for axis in 0..3 {
+                    assert!(
+                        (actual[axis] - expected[axis]).abs() < 1e-12,
+                        "yaw {degrees}, top {top:?}, axis {axis}: {actual:?} != {expected:?}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]

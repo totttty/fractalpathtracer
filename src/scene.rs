@@ -297,6 +297,7 @@ pub struct LoadedScene {
     pub output_name: String,
     pub runtime_metal_source: Option<Vec<u8>>,
     pub mandel_ambient: Option<crate::mandelbulber::ambient::AmbientMetadata>,
+    pub mandel_auxiliary: Option<crate::mandelbulber::lighting::AuxiliaryLighting>,
 }
 
 fn next_value<'a>(args: &'a [String], index: &mut usize, flag: &str) -> Result<&'a str> {
@@ -875,6 +876,16 @@ pub fn apply_camera_args(config: &mut FptRenderConfig, args: &RenderArgs) {
     }
     if let Some(fov) = args.camera_fov {
         config.camera_fov = fov;
+        if config.sdf_id == SDF_MANDELBULBER && config.mandel_appearance_mode == 2 {
+            // CLI FOV is already in FPT camera space, unlike the authored
+            // source angle converted by MandelbulberScene::apply_to_config.
+            let radians = fov.to_radians();
+            config.mandel_appearance[8] = match config.vset_values[107] as u32 {
+                0 => (radians * 0.5).tan(),
+                2 => radians * 0.5,
+                _ => radians,
+            };
+        }
     }
 }
 
@@ -2112,6 +2123,7 @@ pub fn load_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
         output_name,
         runtime_metal_source: None,
         mandel_ambient: None,
+        mandel_auxiliary: None,
     })
 }
 
@@ -2162,6 +2174,46 @@ fn load_mandelbulber_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
     if args.mandel_authored_path {
         scene.apply_authored_path_appearance(&mut config);
     }
+    let mut mandel_auxiliary = if args.mandel_authored_path {
+        Some(crate::mandelbulber::lighting::AuxiliaryLighting::load(
+            &scene,
+        )?)
+    } else {
+        None
+    };
+    if let Some(lights) = &mut mandel_auxiliary {
+        lights.prepare_random(
+            &scene,
+            std::str::from_utf8(
+                runtime_metal_source
+                    .as_deref()
+                    .unwrap_or(include_bytes!("../shaders/Shaders.metal")),
+            )?,
+            &config,
+        )?;
+        if !lights.directional.is_empty() || !lights.point.is_empty() || lights.fake.is_some() {
+            ensure!(
+                args.metallib.is_none(),
+                "authored auxiliary lights require the scene-specialized metallib"
+            );
+            ensure!(
+                !args.sdf_profile,
+                "auxiliary directional shadow profiling is not implemented; omit --sdf-profile"
+            );
+            let source = runtime_metal_source
+                .as_deref()
+                .unwrap_or(include_bytes!("../shaders/Shaders.metal"));
+            runtime_metal_source = Some(
+                lights
+                    .specialize(std::str::from_utf8(source)?)?
+                    .into_bytes(),
+            );
+            config.sdf_runtime_source_bytecode = 1;
+        }
+        for unsupported in &lights.unsupported {
+            eprintln!("Mandel lighting not implemented in continuous FPT: {unsupported}");
+        }
+    }
     let mandel_ambient = if args.mandel_authored_path {
         crate::mandelbulber::ambient::AmbientLighting::load(
             &scene,
@@ -2200,6 +2252,7 @@ fn load_mandelbulber_scene_config(args: &RenderArgs) -> Result<LoadedScene> {
         output_name: format!("{name}.png"),
         runtime_metal_source,
         mandel_ambient: mandel_ambient.map(|ambient| ambient.metadata),
+        mandel_auxiliary,
     })
 }
 
@@ -2332,6 +2385,38 @@ mod tests {
             parsed.mandel_selection_cache,
             Some(PathBuf::from("selection.json"))
         );
+    }
+
+    #[test]
+    fn auxiliary_directional_source_is_authored_only() {
+        let directory =
+            std::env::temp_dir().join(format!("fpt-aux-directional-{}", std::process::id()));
+        fs::create_dir_all(&directory).unwrap();
+        let path = directory.join("light.fract");
+        let fixture = fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("scenes/mandelbulber/ifs-20.fract"),
+        )
+        .unwrap();
+        fs::write(&path, fixture.replace("[main_parameters]", "[main_parameters]\nlight2_enabled true;\nlight2_type directional;\nlight2_relative_position true;\nlight2_rotation -45 45 0;")).unwrap();
+        let mut args = parse_render_args(&[path.to_string_lossy().into_owned()]).unwrap();
+        let neutral = load_scene_config(&args).unwrap();
+        args.mandel_authored_path = true;
+        let authored = load_scene_config(&args).unwrap();
+        let source = String::from_utf8(authored.runtime_metal_source.unwrap_or_default()).unwrap();
+        assert!(
+            source.contains("constant uint mandelAuxDirectionalCount = 1u;"),
+            "enabled auxiliary directional light never reached the shader"
+        );
+        assert!(neutral.runtime_metal_source.is_none());
+        args.sdf_profile = true;
+        assert!(
+            load_scene_config(&args)
+                .err()
+                .unwrap()
+                .to_string()
+                .contains("shadow profiling")
+        );
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]
@@ -2986,6 +3071,37 @@ mod tests {
             parse_render_args(&args).unwrap().diagnostic_mode,
             DiagnosticMode::DiffuseNormal
         );
+    }
+
+    #[test]
+    fn camera_override_updates_only_authored_mandel_shadow_range() {
+        let args =
+            parse_render_args(&["scene.fract".into(), "--camera-fov".into(), "80".into()]).unwrap();
+        for (sdf, appearance) in [
+            (SDF_MANDELBULBER, 2),
+            (SDF_MANDELBULBER, 1),
+            (SDF_CAGE_FRACTAL, 0),
+        ] {
+            for projection in [0.0, 1.0, 2.0, 3.0] {
+                let mut config = FptRenderConfig::default();
+                config.sdf_id = sdf;
+                config.mandel_appearance_mode = appearance;
+                config.mandel_appearance[8] = 7.0;
+                config.vset_values[107] = projection;
+                apply_camera_args(&mut config, &args);
+                let radians = 80.0_f32.to_radians();
+                let expected = if sdf != SDF_MANDELBULBER || appearance != 2 {
+                    7.0
+                } else if projection == 0.0 {
+                    (radians * 0.5).tan()
+                } else if projection == 2.0 {
+                    radians * 0.5
+                } else {
+                    radians
+                };
+                assert!((config.mandel_appearance[8] - expected).abs() < 1e-6);
+            }
+        }
     }
 
     #[test]

@@ -890,6 +890,7 @@ static float mandelbulberCalculateColorIndex(float4 initial,
 }
 
 fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
+    use std::fmt::Write;
     let stops = scene
         .material
         .surface_gradient
@@ -906,6 +907,38 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
         .collect::<Vec<_>>()
         .join(",\n");
     let base = scene.material.surface_color.map(metal_float);
+    let mut plane_materials = String::new();
+    for (index, plane) in scene.primitive_planes.iter().enumerate() {
+        let Some(material) = scene.materials.get(&plane.material_id) else {
+            continue;
+        };
+        // Fixed-color primitive materials do not use the fractal's color orbit.
+        // Palette-driven primitive materials need their own coloring contract.
+        if material.use_colors_from_palette {
+            continue;
+        }
+        let c = material.surface_color.map(metal_float);
+        writeln!(plane_materials,r#"    {{
+        const FptPrimitiveInstance plane = cfg.sdf_flat_union_instances[{index}];
+        float distance = max(dot(p,float3(plane.data[0],plane.data[1],plane.data[2]))+plane.data[3],0.0f);
+        if (distance < selected_distance) {{
+            selected_distance = distance;
+            material.rgb = float3({r},{g},{b});
+            material.roughness = {roughness}; material.specular = {specular};
+            material.translucency = {translucency}; material.ior = {ior}; material.emission = {emission};
+        }}
+    }}"#,r=c[0],g=c[1],b=c[2],roughness=metal_float(material.surface_roughness.max(0.0).sqrt().clamp(0.0,1.0) as f32),
+            specular=metal_float((material.specular/10.0).max(material.metallic).max(material.reflectance).clamp(0.0,1.0) as f32),
+            translucency=metal_float(material.transparency_of_surface.clamp(0.0,1.0) as f32),ior=metal_float(material.index_of_refraction.max(1.0) as f32),
+            emission=metal_float(material.luminosity.max(0.0) as f32)).expect("format plane material");
+    }
+    let plane_materials = if plane_materials.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "    if (cfg.vset_values[115] <= 1.5f) {{\n    float selected_distance=mandelbulberGeneratedFieldSample(mandelbulberGlobalPoint(p,cfg),cfg,1,0).x;\n{plane_materials}    }}\n"
+        )
+    };
     format!(
         r#"constant uint kMandelSurfaceGradientCount = {count}u;
 constant float4 kMandelSurfaceGradient[{count}] = {{
@@ -957,6 +990,7 @@ static Material mandelbulberGeneratedMaterial(float3 p,
     material.translucency = {translucency};
     material.ior = {ior};
     material.emission = cfg.fractal_style[6];
+{plane_materials}
     return material;
 }}
 "#,
@@ -3568,7 +3602,42 @@ static float4 mandelbulberGeneratedFieldSample(float3 p,
     return float4(distance, aux.r, aux.DE, iteration_state);
 }}
 
+#if defined(FPT_MANDEL_FAKE_LIGHTS)
+#define FPT_MANDEL_HAS_FAKE_ORBIT 1
+// Shading-only orbit query. This never supplies a distance to the marcher.
+static float3 mandelFakeOrbit(float3 p, float3 trap, int first, int last,
+                             uint channels, bool relative,
+                             constant FptRenderConfig &cfg) {{
+    float3 scaled = p / max(setv(cfg, 0), 1.0f);
+    float4 z = float4(scaled.x, scaled.z, scaled.y, {initial_w});
+    MandelOrbitState aux = {{}};
+    aux.c = z; aux.const_c = z; aux.old_z = z;
+    aux.pos_neg = 1.0f; aux.r = length(z); aux.DE = 1.0f;
+    aux.dist = 1000.0f; aux.pseudoKleinianDE = 1.0f;
+    aux.actualScale = {actual_scale}; aux.color = 1.0f; aux.temp1000 = 1000.0f;
+    float3 sum = float3(0.0f);
+    int limit = clamp(int(setv(cfg, 1)), 1, 4096);
+    float bailout = max(setv(cfg, 2), 1.0f);
+    for (int iteration = 0; iteration < limit; ++iteration) {{
+        aux.i = uint(iteration); aux.old_z = z;
+        z = mandelApplyGlobalFoldings(z, cfg, aux);
+        z = {function_name}(z, kMandelFormulaParameters, aux);
+{post_iteration}        aux.r = length(z);
+        float3 offset = z.xyz - (relative ? aux.const_c.xyz : float3(0.0f)) - trap;
+        float distance = length(offset);
+        float value = 1.0f / max(dot(offset,offset),1.0e-30f);
+        if (iteration >= first && iteration <= (channels >= 2u ? first : last)) sum.x += value;
+        if (channels >= 2u && iteration >= first+1 && iteration <= (channels >= 3u ? first+1 : max(first+1,last))) sum.y += value;
+        if (channels >= 3u && iteration >= first+2 && iteration <= max(first+2,last)) sum.z += value;
+        if (distance > bailout) return sum;
+    }}
+    // Native orbit-trap mode only publishes its sum after escape.
+    return float3(0.0f);
+}}
+#endif
+
 {marker}"#,
+            function_name = formula.function_name,
         )
     };
     let specialized = base_source.replacen(marker, &fragment, 1);
@@ -7180,6 +7249,17 @@ target 0 0 0;
         assert!(palette.contains("kMandelSurfaceGradientCount = 3u"));
         assert!(palette.contains("* 3.0f + 0.25f"));
         assert!(palette.contains("float4(1.0f, 0.99609375f, 0.0f, 0.0f)"));
+    }
+
+    #[test]
+    fn fixed_color_plane_keeps_its_material_instead_of_the_fractal_palette() {
+        let scene=MandelbulberScene::parse(&COLOR_SCENE.replace("[main_parameters]",
+            "[main_parameters]\nprimitive_plane_1_enabled true;\nprimitive_plane_1_material_id 2;\nmat2_is_defined true;\nmat2_use_colors_from_palette false;\nmat2_surface_color 0000 ff00 0000;" )).unwrap();
+        let source = mandelbulber_palette_source(&scene);
+        let green = metal_float(65280.0 / 65535.0);
+        assert!(source.contains(&format!("material.rgb = float3(0.0f,{green},0.0f)")));
+        assert!(source.contains("if (distance < selected_distance)"));
+        assert!(source.contains("cfg.sdf_flat_union_instances[0]"));
     }
 
     #[test]

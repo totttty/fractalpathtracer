@@ -5217,6 +5217,7 @@ struct RenderMetadataInput<'a> {
     mandel_cache_status: Option<&'a str>,
     mandel_source_bytes: Option<usize>,
     mandel_ambient: Option<&'a mandelbulber::ambient::AmbientMetadata>,
+    mandel_auxiliary: Option<&'a mandelbulber::lighting::AuxiliaryLighting>,
     mandel_offline_compile_ms: Option<f64>,
 }
 
@@ -5235,6 +5236,7 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         mandel_cache_status,
         mandel_source_bytes,
         mandel_ambient,
+        mandel_auxiliary,
         mandel_offline_compile_ms,
     } = input;
     let MetalRenderStats {
@@ -5427,6 +5429,7 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         "mandel_cache_status": mandel_cache_status,
         "mandel_source_bytes": mandel_source_bytes,
         "mandel_ambient": mandel_ambient,
+        "mandel_auxiliary": mandel_auxiliary,
         "mandel_offline_compile_ms": mandel_offline_compile_ms,
         "mandel_pipeline_build_ms": mandel_offline_compile_ms.map(|compile_ms| (build_ms - compile_ms).max(0.0)),
         "sdf_flat_union_primitive_count": config.sdf_flat_union_count,
@@ -5885,6 +5888,7 @@ fn render(args: &RenderArgs) -> Result<()> {
         mandel_cache_status,
         mandel_source_bytes,
         mandel_ambient: loaded.mandel_ambient.as_ref(),
+        mandel_auxiliary: loaded.mandel_auxiliary.as_ref(),
         mandel_offline_compile_ms,
     })?;
     eprintln!(
@@ -6028,7 +6032,7 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
     if let Some(path) = &args.structural_dump {
         let expected_bytes = u64::from(loaded.config.width)
             .checked_mul(u64::from(loaded.config.height))
-            .and_then(|pixels| pixels.checked_mul(64))
+            .and_then(|pixels| pixels.checked_mul(STRUCTURAL_DIAGNOSTIC_RECORD_BYTES as u64))
             .context("structural diagnostic size overflow")?;
         let actual_bytes = fs::metadata(path)
             .with_context(|| format!("missing structural diagnostic {}", path.display()))?
@@ -6039,10 +6043,10 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         );
         let manifest = serde_json::json!({
             "format": "FptStructuralDiagnostic",
-            "version": 2,
+            "version": 3,
             "width": loaded.config.width,
             "height": loaded.config.height,
-            "record_bytes": 64,
+            "record_bytes": STRUCTURAL_DIAGNOSTIC_RECORD_BYTES,
             "byte_order": "little-endian",
             "row_order": "top-to-bottom",
             "coordinate_system": "right-handed-y-up",
@@ -6061,7 +6065,8 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
                 "position_distance": "float4: world_x, world_y, world_z, ray_distance",
                 "normal_hit": "float4: normal_x, normal_y, normal_z, hit_flag",
                 "material_coordinate": "float4: normalized_color_index, palette_position, reserved, reserved",
-                "material_color": "float4: linear_r, linear_g, linear_b, hit_flag"
+                "material_color": "float4: linear_r, linear_g, linear_b, hit_flag",
+                "incoming_direction_segment_distance": "float4: incoming_x, incoming_y, incoming_z, segment_distance"
             },
             "binary": path.file_name().map(|name| name.to_string_lossy()),
         });
@@ -6090,6 +6095,7 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         mandel_cache_status: None,
         mandel_source_bytes: None,
         mandel_ambient: None,
+        mandel_auxiliary: loaded.mandel_auxiliary.as_ref(),
         mandel_offline_compile_ms: None,
     })?;
     eprintln!(
@@ -8090,6 +8096,7 @@ mod tests {
         cfg.mandel_appearance_mode = 2;
         cfg.mandel_appearance[5] = 1.0;
         cfg.sun = [1.0, 0.0, 90.0, 1.0, 0.0];
+        cfg.mandel_appearance[7] = 1.0;
         cfg.sun_color = [1.0; 3];
         cfg.camera_dof = 0.0;
         cfg.focus_distance = 1.0;
@@ -8233,6 +8240,439 @@ mod tests {
                 "authored shading must interpolate between flat and Lambert diffuse"
             );
         }
+    }
+
+    #[test]
+    fn mandel_primitive_floor_normal_uses_the_selected_surface() {
+        let _guard = metal_test_guard();
+        let mut cfg = default_config();
+        let scene = mandelbulber::MandelbulberScene::parse(include_str!(
+            "../scenes/mandelbulber/ifs-20.fract"
+        ))
+        .unwrap();
+        scene.apply_to_config(&mut cfg);
+        cfg.vset_values[115] = 0.0;
+        cfg.vset_values[117] = 0.1;
+        cfg.vset_values[114] = 1.0;
+        cfg.render[7] = 0.0;
+        cfg.sdf_flat_union_count = 1;
+        cfg.sdf_flat_union_instances[0] = FptPrimitiveInstance {
+            data: [0.0, 1.0, 0.0, 0.0],
+            opcode: SDF_OP_PLANE,
+            ..Default::default()
+        };
+        let mut source = mandelbulber::compiler::retain_metal_kernels(
+            std::str::from_utf8(METAL_SOURCE_BYTES).unwrap(),
+            &[],
+        )
+        .unwrap();
+        source.push_str(r#"
+kernel void mandelbulber_field_sample_kernel(device const float4 *points [[buffer(0)]],
+    device float4 *samples [[buffer(1)]], constant FptRenderConfig &cfg [[buffer(2)]], uint gid [[thread_position_in_grid]]) {
+    samples[gid]=float4(normalAt(points[gid].xyz,cfg),0);
+}
+"#);
+        let points = [[100000.0f32, 0.01, 100000.0, 0.0]];
+        let mut samples = [FptMandelbulberFieldSample::default()];
+        let mut error = [0i8; 4096];
+        let status = unsafe {
+            fpt_mandelbulber_sample_field(
+                c"unused.metallib".as_ptr(),
+                source.as_ptr().cast(),
+                source.len(),
+                &cfg,
+                points.as_ptr().cast(),
+                points.len(),
+                samples.as_mut_ptr(),
+                error.as_mut_ptr(),
+                error.len(),
+            )
+        };
+        assert_eq!(
+            status,
+            0,
+            "{}",
+            unsafe { std::ffi::CStr::from_ptr(error.as_ptr()) }.to_string_lossy()
+        );
+        assert!(
+            samples[0].radius > 0.999
+                && samples[0].distance.abs() < 1e-5
+                && samples[0].derivative.abs() < 1e-5,
+            "floor normal: {:?}",
+            samples[0]
+        );
+    }
+
+    #[test]
+    fn mandel_point_light_falloff_and_finite_shadow_range() {
+        let _guard = metal_test_guard();
+        use mandelbulber::lighting::{AuxiliaryLighting, PointLight};
+        let lights = AuxiliaryLighting {
+            point: vec![PointLight {
+                id: 2,
+                position: [0.0, 2.0, 0.0],
+                camera_relative: false,
+                color: [1.0, 0.0, 0.0],
+                intensity: 0.06,
+                decay_power: 2,
+                cast_shadows: true,
+                penetrating: false,
+                cone_radians: 0.0,
+                size: 0.0,
+            }],
+            ..Default::default()
+        };
+        let source=lights.specialize(std::str::from_utf8(METAL_SOURCE_BYTES).unwrap()).unwrap()
+            .replacen("static float mapSdf(float3 p, constant FptRenderConfig &cfg) {",
+                "static float mapSdf(float3 p, constant FptRenderConfig &cfg) {\nreturn cfg.program_material[0] * max(cfg.set_values[0],1.0f) - p.y;",1);
+        let mut source = mandelbulber::compiler::retain_metal_kernels(&source, &[]).unwrap();
+        source.push_str(r#"
+kernel void mandelbulber_field_sample_kernel(device const float4 *points [[buffer(0)]],
+    device float4 *samples [[buffer(1)]], constant FptRenderConfig &cfg [[buffer(2)]], uint gid [[thread_position_in_grid]]) {
+    samples[gid]=float4(mandelAuxPointContribution(points[gid].xyz,float3(0,1,0),defaultMaterial(),cfg),0);
+}
+"#);
+        let mut cfg = FptRenderConfig::default();
+        cfg.sdf_id = SDF_MANDELBULBER;
+        cfg.mandel_appearance_mode = 2;
+        cfg.mandel_appearance[5] = 1.0;
+        cfg.render[1] = 100.0;
+        cfg.vset_values[113] = 1.0;
+        cfg.vset_values[117] = 1e-5;
+        cfg.vset_values[119] = 1e12;
+        cfg.vset_values[129] = 1.0;
+        for scale in [1.0, 1024.0] {
+            cfg.set_values[0] = scale;
+            for (surface, expected) in [(3.0, [0.25, 1.0]), (0.5, [0.0, 0.0])] {
+                cfg.program_material[0] = surface;
+                let points = [[0.0f32, 0.0, 0.0, 0.0], [0.0, scale, 0.0, 0.0]];
+                let mut samples = [FptMandelbulberFieldSample::default(); 2];
+                let mut error = [0i8; 4096];
+                let status = unsafe {
+                    fpt_mandelbulber_sample_field(
+                        c"unused.metallib".as_ptr(),
+                        source.as_ptr().cast(),
+                        source.len(),
+                        &cfg,
+                        points.as_ptr().cast(),
+                        points.len(),
+                        samples.as_mut_ptr(),
+                        error.as_mut_ptr(),
+                        error.len(),
+                    )
+                };
+                assert_eq!(
+                    status,
+                    0,
+                    "{}",
+                    unsafe { std::ffi::CStr::from_ptr(error.as_ptr()) }.to_string_lossy()
+                );
+                for (sample, value) in samples.iter().zip(expected) {
+                    assert!(
+                        (sample.distance - value).abs() < 1e-4,
+                        "scale {scale}, blocker {surface}: {} vs {value}",
+                        sample.distance
+                    );
+                    assert_eq!(sample.radius, 0.0);
+                    assert_eq!(sample.derivative, 0.0);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn mandel_auxiliary_directional_sum_and_camera_rotation() {
+        let _guard = metal_test_guard();
+        use mandelbulber::lighting::{AuxiliaryLighting, DirectionalLight};
+        let lights = AuxiliaryLighting {
+            point: vec![],
+            fake: None,
+            unsupported: vec![],
+            directional: vec![
+                DirectionalLight {
+                    id: 2,
+                    camera_direction: [0.0, 1.0, 0.0],
+                    color: [1.0, 0.0, 0.0],
+                    intensity: 0.25,
+                    cast_shadows: false,
+                    penetrating: false,
+                    cone_radians: 0.0,
+                },
+                DirectionalLight {
+                    id: 3,
+                    camera_direction: [0.0, 1.0, 0.0],
+                    color: [0.0, 0.0, 1.0],
+                    intensity: 0.5,
+                    cast_shadows: true,
+                    penetrating: true,
+                    cone_radians: 0.0,
+                },
+            ],
+        };
+        let source = lights.specialize(std::str::from_utf8(METAL_SOURCE_BYTES).unwrap()).unwrap()
+            .replacen("static float mapSdf(float3 p, constant FptRenderConfig &cfg) {", "static float mapSdf(float3 p, constant FptRenderConfig &cfg) {\nreturn cfg.program_material[0] * cfg.vset_values[117];", 1)
+            .replacen("static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &cfg) {", "static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &cfg) {\nreturn mandelAuxDirectionalContribution(float3(0), float3(0,1,0), defaultMaterial(), cfg);", 1);
+        let source = mandelbulber::compiler::retain_metal_kernels(
+            &source,
+            &["accumulate_all_kernel", "present_kernel"],
+        )
+        .unwrap();
+        let directory = ProbeDirectory(
+            std::env::temp_dir().join(format!("fpt-aux-light-test-{}", std::process::id())),
+        );
+        let (library, _) = compile_mandel_metallib(
+            source.as_bytes(),
+            &directory.0,
+            "aux-light",
+            MandelMetalOptimization::Default,
+        )
+        .unwrap();
+        let mut cfg = FptRenderConfig::default();
+        cfg.width = 16;
+        cfg.height = 16;
+        cfg.samples = 1;
+        cfg.sdf_id = SDF_MANDELBULBER;
+        cfg.sdf_accumulation_mode = SDF_ACCUMULATION_BATCH;
+        cfg.mandel_appearance_mode = 2;
+        cfg.mandel_appearance[5] = 1.0;
+        cfg.mandel_appearance[8] = 1.0;
+        cfg.focus_distance = 1.0;
+        cfg.camera_dof = 0.0;
+        cfg.render[1] = 1000.0;
+        cfg.vset_values[113] = 1.0;
+        cfg.vset_values[119] = 1e12;
+        cfg.vset_values[129] = 1.0;
+        cfg.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
+        for threshold in [0.00001_f32, 0.01, 10.0] {
+            cfg.set_values[0] = 1024.0;
+            cfg.vset_values[117] = threshold;
+            cfg.camera_position = [0.0, -10.0 * threshold, 0.0];
+            cfg.render[4] = 1000.0 * threshold;
+            for (field, roll, expected) in [
+                (0.5, 0.0, [0.25, 0.0, 0.05]),
+                (2000.0, 0.0, [0.25, 0.0, 0.5]),
+                (0.5, std::f32::consts::PI, [0.0; 3]),
+            ] {
+                cfg.program_material[0] = field;
+                cfg.camera_roll = roll;
+                let mut pixels = vec![f32::NAN; 16 * 16 * 4];
+                let result = execute_metal_render_internal(
+                    &cfg,
+                    &library,
+                    &default_stitch_metallib_path().unwrap(),
+                    None,
+                    &directory.0.join("probe.png"),
+                    &[],
+                    Some(&mut pixels),
+                );
+                if let Err(error) = result {
+                    assert!(
+                        error.to_string().contains("blank or single-colour"),
+                        "{error:#}"
+                    );
+                }
+                assert!(
+                    pixels.chunks_exact(4).all(|p| p[..3]
+                        .iter()
+                        .zip(expected)
+                        .all(|(a, b)| (*a - b).abs() < 1e-5)),
+                    "threshold={threshold}, field={field}, roll={roll}: {:?}",
+                    &pixels[..4]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn mandel_authored_main_shadow_visibility_matches_analytic_cases() {
+        let _guard = metal_test_guard();
+        let field_entry = "static float mapSdf(float3 p, constant FptRenderConfig &cfg) {";
+        let path_entry =
+            "static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &cfg) {";
+        let source = std::str::from_utf8(METAL_SOURCE_BYTES).unwrap();
+        assert_eq!(source.matches(field_entry).count(), 1);
+        assert_eq!(source.matches(path_entry).count(), 1);
+        // Scripted distances isolate visibility semantics at the real sunlight
+        // call, independently of fractal formula and normal-estimator errors.
+        let source = source.replacen(field_entry, &format!(
+            "{field_entry}\nreturn cfg.program_material[0] * cfg.vset_values[117];\n"
+        ), 1).replacen(path_entry, &format!(
+            "{path_entry}\nreturn sunContributionWithSurface(float3(0), xy, float(sample_idx), defaultMaterial(), float3(0,1,0), cfg);\n"
+        ), 1);
+        let source = mandelbulber::compiler::retain_metal_kernels(
+            &source,
+            &["accumulate_all_kernel", "present_kernel"],
+        )
+        .unwrap();
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = ProbeDirectory(std::env::temp_dir().join(format!(
+            "fpt-metal/main-shadow-{}-{nonce}",
+            std::process::id()
+        )));
+        let (library, _) = compile_mandel_metallib(
+            source.as_bytes(),
+            &directory.0,
+            "main-shadow",
+            MandelMetalOptimization::Default,
+        )
+        .unwrap();
+        let mut cfg = FptRenderConfig::default();
+        cfg.width = 16;
+        cfg.height = 16;
+        cfg.samples = 1;
+        cfg.sdf_id = SDF_MANDELBULBER;
+        cfg.sdf_accumulation_mode = SDF_ACCUMULATION_BATCH;
+        cfg.mandel_appearance_mode = 2;
+        cfg.mandel_appearance[5] = 1.0;
+        cfg.mandel_appearance[8] = 1.0;
+        cfg.sun = [1.0, 0.0, 90.0, 1.0, 0.0];
+        cfg.sun_color = [1.0; 3];
+        cfg.camera_dof = 0.0;
+        cfg.focus_distance = 1.0;
+        cfg.render[1] = 1000.0;
+        cfg.vset_values[108] = 0.0;
+        cfg.vset_values[113] = 1.0;
+        cfg.vset_values[115] = 0.0;
+        cfg.vset_values[118] = 0.0;
+        cfg.vset_values[119] = 1000.0;
+        cfg.vset_values[129] = 1.0;
+        cfg.post = [-1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0];
+        for threshold in [0.00001_f32, 0.01, 10.0] {
+            cfg.set_values[0] = 1024.0;
+            cfg.vset_values[117] = threshold;
+            cfg.camera_position = [0.0, -10.0 * threshold, 0.0];
+            cfg.render[4] = 1000.0 * threshold;
+            for (name, casts, penetrates, field, cone, expected) in [
+                ("shadows-disabled", false, false, 0.5, 0.0, 1.0),
+                ("hard-blocked", true, false, 0.5, 0.0, 0.0),
+                ("penetrating-blocked", true, true, 0.5, 0.0, 0.1),
+                ("clear", true, false, 2000.0, 0.0, 1.0),
+                ("penetrating-clear", true, true, 2000.0, 0.0, 1.0),
+                (
+                    "soft-penetrating-blocked",
+                    true,
+                    true,
+                    0.5,
+                    45.0_f32.to_radians(),
+                    0.1,
+                ),
+                (
+                    "soft-penetrating-near",
+                    true,
+                    true,
+                    2.0,
+                    45.0_f32.to_radians(),
+                    8.0 / 15.0,
+                ),
+                (
+                    "soft-disabled",
+                    false,
+                    true,
+                    0.5,
+                    45.0_f32.to_radians(),
+                    1.0,
+                ),
+            ] {
+                cfg.mandel_appearance[6] = u32::from(penetrates) as f32;
+                cfg.mandel_appearance[7] = u32::from(casts) as f32;
+                cfg.program_material[0] = field;
+                cfg.sun[4] = cone;
+                let mut pixels = vec![f32::NAN; 16 * 16 * 4];
+                let result = execute_metal_render_internal(
+                    &cfg,
+                    &library,
+                    &default_stitch_metallib_path().unwrap(),
+                    None,
+                    &directory.0.join("probe.png"),
+                    &[],
+                    Some(&mut pixels),
+                );
+                if let Err(error) = result {
+                    assert!(
+                        error.to_string().contains("blank or single-colour"),
+                        "{error:#}"
+                    );
+                }
+                assert!(
+                    pixels
+                        .chunks_exact(4)
+                        .all(|p| p[..3].iter().all(|v| (v - expected).abs() < 2e-5)),
+                    "{name} threshold={threshold}: expected {expected}, got {:?}",
+                    &pixels[..4]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn structural_diagnostic_cli_matches_metal_record_layout() {
+        let _guard = metal_test_guard();
+        // Compile only the production diagnostic kernels and built-in Mandel
+        // field; unrelated generic path kernels make this layout test costly.
+        let source = mandelbulber::compiler::retain_metal_kernels(
+            include_str!("../shaders/Shaders.metal"),
+            &["sdf_diagnostic_kernel", "sdf_structural_diagnostic_kernel"],
+        )
+        .unwrap();
+        let metallib = cached_diagnostic_metallib(
+            &format!("#define FPT_MANDEL_SPECIALIZED_KERNEL 1\n{source}"),
+            MandelMetalOptimization::O0,
+        )
+        .unwrap();
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = ProbeDirectory(std::env::temp_dir().join(format!(
+            "fpt-metal/structural-cli-{}-{nonce}",
+            std::process::id()
+        )));
+        let output = directory.0.join("hits.bin");
+        let args = parse_render_args(&[
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("scenes/mandelbulber/ifs-20.fract")
+                .to_string_lossy()
+                .into_owned(),
+            "--out".into(),
+            directory.0.to_string_lossy().into_owned(),
+            "--metallib".into(),
+            metallib.to_string_lossy().into_owned(),
+            "--width".into(),
+            "16".into(),
+            "--height".into(),
+            "12".into(),
+            "--samples".into(),
+            "1".into(),
+            "--mode".into(),
+            "normal".into(),
+            "--structural-dump".into(),
+            output.to_string_lossy().into_owned(),
+        ])
+        .unwrap();
+        diagnostic(&args).unwrap();
+        let bytes = fs::read(&output).unwrap();
+        assert_eq!(bytes.len(), 16 * 12 * STRUCTURAL_DIAGNOSTIC_RECORD_BYTES);
+        let manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(format!("{}.json", output.display())).unwrap())
+                .unwrap();
+        assert_eq!(manifest["version"], 3);
+        assert_eq!(manifest["record_bytes"], STRUCTURAL_DIAGNOSTIC_RECORD_BYTES);
+        assert!(manifest["records"]["incoming_direction_segment_distance"].is_string());
+        let mut hits = 0;
+        for record in bytes.chunks_exact(STRUCTURAL_DIAGNOSTIC_RECORD_BYTES) {
+            let read =
+                |offset: usize| f32::from_le_bytes(record[offset..offset + 4].try_into().unwrap());
+            if read(28) > 0.5 {
+                hits += 1;
+                let length = (read(64).powi(2) + read(68).powi(2) + read(72).powi(2)).sqrt();
+                assert!((length - 1.0).abs() < 1e-5);
+                assert!(read(76).is_finite() && read(76) > 0.0);
+            }
+        }
+        assert!(hits > 0);
     }
 
     #[test]

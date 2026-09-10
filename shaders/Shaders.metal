@@ -991,10 +991,16 @@ static float4 mandelbulberFieldSample(float3 p,
 }
 #endif
 
+static float mandelbulberPrimitiveUnionDistance(float3 p, constant FptRenderConfig &cfg);
+
 static float mandelbulberNormalDistance(float3 p,
                                         constant FptRenderConfig &cfg) {
     int iteration_multiplier = cfg.vset_values[115] > 1.5f ? 5 : 1;
-    return mandelbulberFieldSample(p, cfg, iteration_multiplier).x;
+    float distance = mandelbulberFieldSample(p, cfg, iteration_multiplier).x;
+    if (cfg.sdf_flat_union_count > 0u) {
+        distance = min(distance, mandelbulberPrimitiveUnionDistance(p, cfg));
+    }
+    return distance;
 }
 
 static float mandelbulberNormalOrbitRadius(float3 p,
@@ -6495,7 +6501,141 @@ static float3 environment(float3 viewDir, constant FptRenderConfig &cfg) {
     return max(env * power - float3(0.5f) * contrast + float3(0.5f), float3(0.0f));
 }
 
+// Fog-free directional shadows for authored Mandel scenes. A penetrating light
+// attenuates blockers by distance within its camera-footprint range, rather than
+// declaring every blocker before the global view limit completely opaque.
+static float mandelLightShadowVisibility(float3 position, float3 direction, float limit,
+                                        bool casts, bool penetrating, float cone,
+                                        constant FptRenderConfig &cfg) {
+    if (!casts) return 1.0f;
+    float threshold = mandelbulberMarchThreshold(position, cfg);
+    if (!isfinite(limit) || !isfinite(threshold) || threshold <= 0.0f) return 0.0f;
+    float travel = threshold;
+    float soft_range = tan(cone);
+    bool soft = soft_range > 0.0f && isfinite(soft_range) && cfg.vset_values[115] != 2.0f;
+    float maximum_occlusion = 0.0f;
+    float world_scale = max(cfg.set_values[0], 1.0f);
+    int steps = max(int(cfg.render[1]), 1);
+    for (int i = 0; i < steps; ++i) {
+        if (travel >= limit) return 1.0f - maximum_occlusion;
+        float distance = mapSdf(position + direction * travel, cfg);
+        if (!isfinite(distance)) return 0.0f;
+        if (soft) {
+            float angle = max(distance - threshold, 0.0f) / travel;
+            float occlusion = max(1.0f - angle / soft_range, 0.0f);
+            if (penetrating) occlusion *= (limit - travel) / limit;
+            maximum_occlusion = max(maximum_occlusion, occlusion);
+        }
+        if (distance < threshold) {
+            return soft ? 1.0f - maximum_occlusion
+                : penetrating ? clamp(travel / limit, 0.0f, 1.0f) : 0.0f;
+        }
+        float step = max(min(distance, 1.0e6f * world_scale) * cfg.vset_values[113],
+                         1.0e-15f * world_scale);
+        float next_travel = travel + step;
+        if (!(next_travel > travel)) return 0.0f;
+        travel = next_travel;
+    }
+    // An exhausted or numerically stalled query does not establish visibility.
+    return 0.0f;
+}
+
+static float mandelDirectionalShadowVisibility(float3 position, float3 direction,
+                                        bool casts, bool penetrating, float cone,
+                                        constant FptRenderConfig &cfg) {
+    float limit = penetrating
+        ? length(position - cameraPos(cfg)) * cfg.mandel_appearance[8] : cfg.render[4];
+    return mandelLightShadowVisibility(position, direction, limit, casts, penetrating, cone, cfg);
+}
+
+#if defined(FPT_MANDEL_AUX_POINT)
+static float3 mandelAuxPointContribution(float3 position, float3 normal,
+        Material material, constant FptRenderConfig &cfg) {
+    float3 sum = float3(0.0f);
+    float scale = max(cfg.set_values[0], 1.0f);
+    for (uint i = 0u; i < mandelAuxPointCount; ++i) {
+        constant MandelAuxPoint &light = mandelAuxPointLights[i];
+        float3 source = light.relative
+            ? cameraPos(cfg) + rotateCamera(light.position * scale, cameraYawPitch(cfg), cfg.camera_roll)
+            : light.position * scale;
+        float3 vector = source - position;
+        float limit = length(vector);
+        if (!(limit > 0.0f) || !isfinite(limit)) continue;
+        float3 direction = vector / limit;
+        float native_distance = limit / scale;
+        float attenuation = native_distance;
+        if (light.decay >= 2u) attenuation *= native_distance;
+        if (light.decay >= 3u) attenuation *= native_distance;
+        float intensity = (100.0f / 6.0f) * light.intensity / max(attenuation, 1.0e-30f);
+        float shading = cfg.mandel_appearance[5];
+        float diffuse = 1.0f - shading + max(dot(normal, direction), 0.0f) * shading;
+        float shade = min(intensity * diffuse, 500.0f);
+        if (shade <= 0.001f) continue;
+        float visibility = mandelLightShadowVisibility(position, direction, limit,
+            light.casts, light.penetrating, light.cone, cfg);
+        sum += visibility * shade * (1.0f - material.translucency) * light.color;
+    }
+    return sum;
+}
+#endif
+
+#if defined(FPT_MANDEL_FAKE_LIGHTS)
+static float3 mandelFakeLightContribution(float3 position, float3 normal,
+        constant FptRenderConfig &cfg) {
+    float delta = mandelbulberMarchThreshold(position,cfg) * cfg.vset_values[114];
+    float3 center = mandelbulberGlobalPoint(position,cfg);
+    float3 values = mandelFakeOrbit(center,mandelFakeTrap,int(mandelFakeFirst),int(mandelFakeLast),mandelFakeChannels,mandelFakeRelative,cfg);
+    float3 inverse = 1.0f / (values + 1.0e-30f);
+    float3 result = float3(0.0f);
+    float3 dx = inverse - 1.0f / (mandelFakeOrbit(mandelbulberGlobalPoint(position+float3(delta,0,0),cfg),mandelFakeTrap,int(mandelFakeFirst),int(mandelFakeLast),mandelFakeChannels,mandelFakeRelative,cfg)+1.0e-30f);
+    float3 dy = inverse - 1.0f / (mandelFakeOrbit(mandelbulberGlobalPoint(position+float3(0,delta,0),cfg),mandelFakeTrap,int(mandelFakeFirst),int(mandelFakeLast),mandelFakeChannels,mandelFakeRelative,cfg)+1.0e-30f);
+    float3 dz = inverse - 1.0f / (mandelFakeOrbit(mandelbulberGlobalPoint(position+float3(0,0,delta),cfg),mandelFakeTrap,int(mandelFakeFirst),int(mandelFakeLast),mandelFakeChannels,mandelFakeRelative,cfg)+1.0e-30f);
+    for (uint i=0u;i<mandelFakeChannels;++i) {
+        float3 direction=float3(dx[i],dy[i],dz[i]);
+        float magnitude=max(abs(direction.x),max(abs(direction.y),abs(direction.z)));
+        if (!(magnitude>0.0f) || !isfinite(magnitude) || !isfinite(values[i])) continue;
+        direction=normalize(direction/magnitude);
+        result += max(dot(normal,direction),0.0f)*mandelFakeIntensity*values[i]*mandelFakeColors[i];
+    }
+    return result;
+}
+#endif
+
+static float mandelMainShadowVisibility(float3 position, float3 direction,
+                                        constant FptRenderConfig &cfg) {
+    return mandelDirectionalShadowVisibility(position, direction,
+        cfg.mandel_appearance[7] != 0.0f, cfg.mandel_appearance[6] != 0.0f, cfg.sun[4], cfg);
+}
+
+#if defined(FPT_MANDEL_AUX_DIRECTIONAL)
+static float3 mandelAuxDirectionalContribution(float3 position, float3 normal,
+        Material material, constant FptRenderConfig &cfg) {
+    float3 sum = float3(0.0f);
+    for (uint i = 0u; i < mandelAuxDirectionalCount; ++i) {
+        constant MandelAuxDirectional &light = mandelAuxDirectionalLights[i];
+        float3 direction = rotateCamera(light.direction, cameraYawPitch(cfg), cfg.camera_roll);
+        float shading = cfg.mandel_appearance[5];
+        float diffuse = 1.0f - shading + max(dot(normal, direction), 0.0f) * shading;
+        float shade = min(light.intensity * diffuse, 500.0f);
+        if (light.casts && shade <= 0.001f) continue;
+        float visibility = mandelDirectionalShadowVisibility(position, direction,
+            light.casts, light.penetrating, light.cone, cfg);
+        sum += visibility * shade * (1.0f - material.translucency) * light.color;
+    }
+    return sum;
+}
+#endif
+
 static float3 sunContributionWithSurface(float3 rp, float2 xy, float seed, Material mat, float3 n, constant FptRenderConfig &cfg) {
+    if (cfg.sdf_id == SDF_MANDELBULBER && cfg.mandel_appearance_mode == 2u) {
+        float3 direction = rotateCamera(float3(0.0f, 0.0f, 1.0f),
+            float2(cfg.sun[1] * pi / 180.0f, cfg.sun[2] * pi / 180.0f));
+        float shading = cfg.mandel_appearance[5];
+        float diffuse = 1.0f - shading + max(dot(n, direction), 0.0f) * shading;
+        float visibility = mandelMainShadowVisibility(rp, direction, cfg);
+        return visibility * min(cfg.sun[3] * diffuse, 500.0f) * (1.0f - mat.translucency) *
+            float3(cfg.sun_color[0], cfg.sun_color[1], cfg.sun_color[2]);
+    }
     float p1 = mat.roughness;
     float p2 = 1.0f - mat.translucency;
     float3 light_dir = rotateCamera(float3(0.0f, 0.0f, 1.0f), float2(cfg.sun[1] * pi / 180.0f, cfg.sun[2] * pi / 180.0f));
@@ -6505,20 +6645,8 @@ static float3 sunContributionWithSurface(float3 rp, float2 xy, float seed, Mater
     float h2 = hash13(float3(xy, seed * 3.0f + 5.0f));
     float2 div = float2(cos(h1 * 2.0f * pi), sin(h1 * 2.0f * pi)) * sqrt(h2) * cfg.sun[4];
     light_dir = rotateCamera(light_dir, div);
-    if (cfg.sdf_id == SDF_MANDELBULBER && cfg.mandel_appearance_mode == 2u) {
-        // Start one surface threshold toward the light, as Mandel's shadow
-        // path does. A fixed world offset self-shadows or skips small blockers.
-        rp = rp0 + light_dir * mandelbulberMarchThreshold(rp0, cfg);
-    }
     rp = march(light_dir, rp, int(cfg.render[1]), cfg.render[3], 0.0002f, cfg);
     if (length(rp0 - rp) > cfg.render[4] * 0.99f) {
-        if (cfg.sdf_id == SDF_MANDELBULBER && cfg.mandel_appearance_mode == 2u) {
-            // Mandel's diffuse shading is independent of microfacet roughness.
-            float shading = cfg.mandel_appearance[5];
-            float diffuse = 1.0f - shading + max(dot(n, light_dir), 0.0f) * shading;
-            return min(cfg.sun[3] * diffuse, 500.0f) * p2 *
-                float3(cfg.sun_color[0], cfg.sun_color[1], cfg.sun_color[2]);
-        }
         return cfg.sun[3] * max(dot(n, light_dir), 0.0f) * p1 * p2 * float3(cfg.sun_color[0], cfg.sun_color[1], cfg.sun_color[2]);
     }
     return float3(0.0f);
@@ -6740,6 +6868,23 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
             const float3 direct = sunContributionWithSurface(rp, xy, frame, material, n, cfg);
             pixellight += authored_path ? pixelcolor * material.rgb * direct : direct;
         }
+#if defined(FPT_MANDEL_AUX_DIRECTIONAL)
+        if (authored_path) {
+            pixellight += pixelcolor * material.rgb * mandelAuxDirectionalContribution(rp, n, material, cfg);
+        }
+#endif
+#if defined(FPT_MANDEL_AUX_POINT)
+        if (authored_path) {
+            pixellight += pixelcolor * material.rgb * mandelAuxPointContribution(rp, n, material, cfg);
+        }
+#endif
+#if defined(FPT_MANDEL_FAKE_LIGHTS)
+        // Orbit lights are a compatibility shading effect, not physical emitters.
+        // Do not invent diffuse GI from them when it is disabled in the source.
+        if (authored_path && (i == 0 || mandelFakeIndirect)) {
+            pixellight += pixelcolor * material.rgb * mandelFakeLightContribution(rp,n,cfg);
+        }
+#endif
         float r1 = hash13(float3(xy, frame * 1.37f + float(i)));
         float r2 = hash13(float3(xy, frame * 7.91f + float(i)));
         if (r1 > material.translucency) {

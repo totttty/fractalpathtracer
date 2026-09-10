@@ -27,6 +27,7 @@ DEFAULT_NAADF = Path(
 )
 DEFAULT_MANDEL_ROOT = Path("/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2")
 RECORD_SIZES = {1: 24, 2: 28, 3: 28, 5: 32, 6: 36, 7: 32, 8: 32, 10: 32}
+STRUCTURAL_RECORD_SIZES = {2: 64, 3: 80}
 
 
 def parse_args() -> argparse.Namespace:
@@ -491,7 +492,7 @@ def render_fpt_geometry(args: argparse.Namespace, row: dict, output: Path) -> di
     manifest = Path(f"{structural}.json")
     if existing and structural.is_file() and manifest.is_file() and not args.force:
         metadata = json.loads(manifest.read_text())
-        if metadata.get("version") == 2 and metadata.get("record_bytes") == 64:
+        if metadata.get("version") in STRUCTURAL_RECORD_SIZES:
             return load_fpt_structural(existing[0], structural, args.image_size)
     command = [
         args.fpt.as_posix(), "diagnostic", row["source"],
@@ -522,13 +523,19 @@ def render_fpt_geometry(args: argparse.Namespace, row: dict, output: Path) -> di
 
 
 def load_fpt_structural(image: Path, structural: Path, image_size: int) -> dict:
+    metadata = json.loads(Path(f"{structural}.json").read_text())
+    record_bytes = STRUCTURAL_RECORD_SIZES.get(metadata.get("version"))
+    if (record_bytes is None or metadata.get("record_bytes") != record_bytes
+            or metadata.get("format") != "FptStructuralDiagnostic"
+            or metadata.get("byte_order") != "little-endian"
+            or metadata.get("row_order") != "top-to-bottom"
+            or metadata.get("width") != image_size or metadata.get("height") != image_size):
+        raise RuntimeError(f"unsupported or mismatched FPT structural manifest: {structural}")
+    expected_bytes = image_size * image_size * record_bytes
+    if structural.stat().st_size != expected_bytes:
+        raise RuntimeError(f"FPT structural dump must contain {expected_bytes} bytes: {structural}")
     values = np.fromfile(structural, dtype="<f4")
-    expected = image_size * image_size * 16
-    if values.size != expected:
-        raise RuntimeError(
-            f"FPT structural dump has {values.size} floats, expected {expected}: {structural}"
-        )
-    records = values.reshape(image_size, image_size, 16)
+    records = values.reshape(image_size, image_size, record_bytes // 4)
     return {
         "image": image,
         "position": records[:, :, 0:3],
