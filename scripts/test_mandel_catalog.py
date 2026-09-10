@@ -27,7 +27,7 @@ def fixture():
 class CatalogTests(unittest.TestCase):
     def test_status_does_not_promote_execution_or_extra_review(self):
         result = catalog.build_catalog(**fixture())
-        self.assertEqual([r['status'] for r in result['scenes']], ['reviewed','experimental','blocked'])
+        self.assertEqual([r['status'] for r in result['scenes']], ['experimental','experimental','blocked'])
         self.assertEqual(result['scenes'][1]['review'], 'additional-reference-review')
         self.assertFalse(result['scenes'][1]['gallery_published'])
         self.assertTrue(all(r['naadf_cvox_validation']=='not-established-by-this-catalogue' for r in result['scenes']))
@@ -97,7 +97,11 @@ class CatalogTests(unittest.TestCase):
         sources = catalog.source_index(data['scenes'])
         self.assertEqual(set(sources), set(range(1,747)))
         self.assertEqual(len({r['sha256'] for r in sources.values()}),746)
-        self.assertEqual(data['counts']['statuses'],dict(reviewed=48,experimental=675,blocked=23))
+        from collections import Counter
+        self.assertEqual(data['counts']['statuses'],dict(Counter(r['status'] for r in sources.values())))
+        for row in sources.values():
+            if row['status']=='reviewed':
+                self.assertIn(row['visual_decision']['decision'],('accepted','accepted-with-limitations'))
         for key in (46,48):
             self.assertEqual(sources[key]['status'],'blocked')
             self.assertTrue(sources[key]['gallery_published'])

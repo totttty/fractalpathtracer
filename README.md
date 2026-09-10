@@ -68,14 +68,32 @@ Catalogue inclusion is not a claim of full native appearance parity or
 NAADF/CVOX validation. Existing gallery captures and screening scores remain
 labelled with their original settings; they have not been rerendered here.
 
-### Latest Ranked-50 Gallery
+### Reviewed Showcase
+
+[Browse 83 visually accepted scenes](docs/mandel-showcase/README.md), with
+paginated native/FPT thumbnails and per-scene neutral/beauty comparisons.
+The first additional 50-scene review promoted **37** and held **13** for
+further work. Known dark/geometry failures are separated into a
+[needs-work audit](docs/mandel-showcase/needs-work.md), not featured as successes.
+
+[![Twelve featured native-left / FPT-right comparisons](docs/mandel-showcase/highlights.jpg)](docs/mandel-showcase/README.md)
+
+Reviews are bound to specific source and capture hashes. Twelve affected
+additional scenes were refreshed on the latest checkpoint; the other captures
+retain their labelled historical renderer version. FPT uses **300px max edge,
+32 SPP**, with authored aspect ratio and default bounces. Native sampling
+differs. Minor colour/material differences are accepted; this is neither exact
+Mandelbulber parity nor NAADF/CVOX certification. Higher-SPP checks remain deferred.
+
+### Historical Ranked-50 Gallery
 
 [View all 50 scenes and the five detailed comparison sheets](docs/mandel-gallery/README.md).
 The refreshed FPT captures include the surface-lighting fixes for scenes **07,
 08 and 40**, at **300 pixels on the longest edge, 32 SPP**, preserving each
 scene's aspect ratio and default bounce settings.
 
-[![Ranked-50 review: cached Mandelbulber reference on the left of each pair, current FPT Metal authored render on the right](docs/mandel-gallery/overview.png)](docs/mandel-gallery/README.md)
+The original [50-scene overview](docs/mandel-gallery/overview.png) remains
+unchanged as a historical comparison record, including known failures.
 
 This is a **continuous FPT Metal review gallery, not a NAADF voxel gallery or
 a complete visual-parity certificate**. Scene **48** still has a major deep-zoom

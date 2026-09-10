@@ -1,6 +1,6 @@
 # Experimental Mandel Scene Catalogue
 
-[All 746 scenes](scenes.md) | [Catalogue JSON](catalog.json) | [Ranked-50 images](../mandel-gallery/README.md) | [Investigation log](../mandel-remaining-scenes.md)
+[All 746 scenes](scenes.md) | [Catalogue JSON](catalog.json) | [Reviewed showcase](../mandel-showcase/README.md) | [Needs-work audit](../mandel-showcase/needs-work.md) | [Investigation log](../mandel-remaining-scenes.md)
 
 This catalogue makes the complete, deduplicated upstream example collection
 addressable by stable scene ID. It adds **metadata and reproducible loading**,
@@ -10,15 +10,27 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| Reviewed | 48 | Published ranked-gallery scenes, with documented limitations |
-| Experimental | 675 | Opt-in scenes; execution success is not visual acceptance |
-| Blocked | 23 | Two known ranked-gallery geometry failures and 21 historical screening failures requiring investigation/retest |
+| Reviewed | 83 | Explicit capture-specific visual acceptance, with limitations allowed |
+| Experimental | 625 | Opt-in scenes; execution success is not visual acceptance |
+| Blocked | 38 | 17 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
 
 The ranked gallery still contains all 50 rows for transparency, including
-blocked scenes **46 and 48**. Another 50 scenes have reference-backed review
-notes, but remain experimental rather than being automatically promoted.
+blocked scenes **32, 37, 46 and 48**. Of the additional 50, **37** are promoted
+and **13** have explicit needs-work decisions. Twelve affected scenes have
+fresh FPT captures; the other 38 reuse the reviewed historical 32-SPP captures.
+Every scene page labels the capture epoch and renderer identity. The historical
+gallery membership field is retained for provenance, not used for promotion.
 Colour differences alone are not a blocker. Geometry, missing assets and
-failed render contracts must remain visible.
+failed render contracts must remain visible. [Explicit decisions](reviews.json)
+are tied to the complete [capture evidence](review-evidence.json), including
+source hashes, images, settings and reference overrides. A source/capture/settings
+change invalidates the decision; it cannot silently inherit an acceptance.
+
+The additional-50 pass used visual comparison rather than MAE as the acceptance
+criterion. The original ranked-gallery acceptances were migrated for unchanged
+captures, except the four known failures above. This is not a fresh visual review
+or current-binary render of every original scene. All rows still leave
+NAADF/CVOX validation separate.
 
 The historical remaining-scene screen used **96px max edge, 1 SPP**, with
 675/696 scenes passing both FPT modes. Twenty scenes had automatic dark/flat
@@ -90,7 +102,8 @@ images remain unchanged; unreviewed screening thumbnails are not added to it.
 ## Regenerate Metadata
 
 The builder reads the existing two inventory manifests, ranked-gallery
-manifest, full historical screening report and additional review manifest.
+manifest, full historical screening report, additional review manifest and
+the checked-in explicit decisions/evidence.
 It checks scene identities and completeness and writes no renders:
 
 ```sh
@@ -107,3 +120,30 @@ do not require those reports. Source-level tests run with:
 ```sh
 python3 -m unittest discover -s scripts -p 'test_mandel_catalog.py'
 ```
+
+## Review And Publish Another Batch
+
+1. Run the support suite on a source-pinned batch at 300px/32 SPP and collect
+   matching native CPU references. Reuse references only after hash/dimension
+   checks; keep monoscopic or reduced-resolution controls explicitly labelled.
+2. Use `scripts/publish_mandel_review.py assemble` to validate all image/metadata
+   hashes and create portable evidence plus a local-only capture path map.
+   The current pass used the original ranked report, additional-50 report and
+   targeted refresh12 report. The `preview` subcommand builds refresh contact sheets.
+3. Inspect the images. Record `accepted`, `accepted-with-limitations` or
+   `needs-work`, separately assessing geometry and illumination. Every new scene
+   requires an explicit annotation. `assessment-2026-09-11.json` is the source
+   assessment for this pass, pinned to its evidence-file hash.
+4. The `record` subcommand binds annotations to each evidence-row digest.
+   Legacy acceptance migrates only when source and all capture hashes match.
+   Changed captures require a fresh review, not an automatic acceptance.
+5. Rebuild the catalogue, then publish to a fresh output directory using
+   `scripts/publish_mandel_review.py publish --evidence ... --reviews ... --assets ... --output ...`.
+   Accepted rows get paginated showcase pages; needs-work rows get separate
+   audit pages. Keep full RGB detail PNGs and compressed navigation thumbnails
+   distinct, and update the README highlights only from accepted rows.
+
+The public catalogue/evidence are portable. The path map and original reports
+remain under ignored `reports/`; publication checks the original image hashes
+before creating output. Tests reject stale decisions, incomplete evidence,
+failed geometry/lighting promotions and changed publication assets.

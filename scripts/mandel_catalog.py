@@ -86,7 +86,7 @@ def build_catalog(ranked, remaining, gallery, screening, additional):
                    for mode, r in execution.items() if r['status'] != 'ok']
         if key in (46, 48) and key in ranked_ids:
             blocked.append('Known production deep-zoom/precision geometry failure; see ranked-50 gallery.')
-        status = 'blocked' if blocked else 'reviewed' if key in ranked_ids else 'experimental'
+        status = 'blocked' if blocked else 'experimental'
         path = PurePosixPath(source['path'])
         row = dict(id=source['id'], path=source['path'], sha256=source['sha256'],
             aliases=source.get('aliases', []), name=path.stem,
@@ -103,7 +103,7 @@ def build_catalog(ranked, remaining, gallery, screening, additional):
         rows.append(row)
     return dict(version=1, scope='Continuous FPT Metal scene catalogue; not native visual parity or NAADF/CVOX certification.',
         upstream_revision=revision,
-        status_policy=dict(reviewed='Published ranked gallery, with documented limitations; not exact parity.',
+        status_policy=dict(reviewed='Requires an explicit capture-bound acceptance decision; publication alone is not approval.',
             experimental='Available for opt-in rendering; execution or additional review is not gallery approval.',
             blocked='Known gallery geometry failure or historical screening failure in at least one mode; explicit opt-in required.'),
         evidence_policy='Historical observations, not a fresh full-corpus run of the latest binary. Later targeted fixes do not automatically clear failures.',
@@ -124,7 +124,10 @@ def markdown(catalog):
         notes = row['blockers'] + [row['review_note']]
         notes += [f'{mode}: {", ".join(r["flags"])}' for mode,r in row['screening'].items() if r['flags']]
         safe = lambda s: s.replace('|', '\\|').replace('\n', ' ')
-        lines.append(f'| {row["id"]} | [{safe(row["name"])}]({row["source_url"]}) / {safe(row["collection"])} | {row["status"]} | {row["review"]} | {safe("; ".join(n for n in notes if n))} |')
+        review_link = f'[Comparison](../mandel-showcase/{row["id"]}.md)' if 'visual_decision' in row else row['review']
+        if 'review_evidence' in row:
+            notes.append(row['review_evidence']['epoch'])
+        lines.append(f'| {row["id"]} | [{safe(row["name"])}]({row["source_url"]}) / {safe(row["collection"])} | {row["status"]} | {review_link} | {safe("; ".join(n for n in notes if n))} |')
     return '\n'.join(lines) + '\n'
 
 
@@ -165,6 +168,8 @@ def main():
     build.add_argument('--gallery', type=Path, default=ROOT/'docs/mandel-gallery/manifest.json')
     build.add_argument('--screening', type=Path, required=True)
     build.add_argument('--additional', type=Path, required=True)
+    build.add_argument('--reviews', type=Path, default=ROOT/'docs/mandel-catalog/reviews.json')
+    build.add_argument('--review-evidence', type=Path, default=ROOT/'docs/mandel-catalog/review-evidence.json')
     build.add_argument('--check', action='store_true')
     listing = sub.add_parser('list')
     listing.add_argument('--status', choices=STATUSES)
@@ -186,6 +191,9 @@ def main():
         if args.command == 'build':
             files = {key:getattr(args, key) for key in ('ranked','remaining','gallery','screening','additional')}
             catalog = build_catalog(**{k:json.loads(p.read_text()) for k,p in files.items()})
+            from mandel_review import apply_reviews
+            catalog = apply_reviews(catalog,json.loads(args.reviews.read_text()),json.loads(args.review_evidence.read_text()))
+            files.update(reviews=args.reviews,review_evidence=args.review_evidence)
             catalog['evidence_sha256'] = {k:sha256(p) for k,p in files.items()}
             outputs = {args.catalog:json.dumps(catalog, indent=2)+'\n', args.catalog.with_name('scenes.md'):markdown(catalog)}
             for path, content in outputs.items():
