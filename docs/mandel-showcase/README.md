@@ -2,13 +2,13 @@
 
 [Back to FPT Metal](../../README.md) | [Experimental catalogue](../mandel-catalog/README.md) | [Needs-work audit](needs-work.md)
 
-**166 visually accepted captures; 69 reviewed cases held back.** Colours need not match exactly. Significant geometry and illumination failures are excluded.
+**194 visually accepted captures; 82 reviewed cases held back.** Colours need not match exactly. Significant geometry and illumination failures are excluded.
 
 Continuous FPT Metal only, not NAADF voxel output. Captures use 300px max edge and 32 FPT SPP; native sampling differs. Individual pages label historical versus refreshed captures, renderer identity and reduced/monoscopic references.
 
 ![Twelve featured native / FPT comparisons](highlights.jpg)
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md)
 
 ## Review Policy
 

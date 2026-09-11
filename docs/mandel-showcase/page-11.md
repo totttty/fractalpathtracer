@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 11
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [383: IFS 20](383.md)
+## [118: T_DIFS Helix 001](118.md)
 
-[![Native / FPT authored](images/383-thumb.webp)](383.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Broad rocky layout and framing align. Different focus, tan materials and sky response are visible; fine-depth fidelity is not claimed.
-
-## [387: IFS 25](387.md)
-
-[![Native / FPT authored](images/387-thumb.webp)](387.md)
+[![Native / FPT authored](images/118-thumb.webp)](118.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Oblique stepped block layout, main diagonal opening and camera match. Small surfaces have different highlight strength and colour balance.
+The tapered yellow helix, spacing between turns and silhouette align closely. FPT uses a brighter blue-white sky and flatter bright yellow faces; no obvious broad geometry loss.
 
-## [388: IFS 26](388.md)
+## [119: T_DIFS Helix 002](119.md)
 
-[![Native / FPT authored](images/388-thumb.webp)](388.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Lobed canopy, twisted supports, central sphere and waterline align. FPT sphere reflections are much darker and the water/sky balance is warmer; exact reflective appearance is not certified.
-
-## [391: IFS 29_2](391.md)
-
-[![Native / FPT authored](images/391-thumb.webp)](391.md)
+[![Native / FPT authored](images/119-thumb.webp)](119.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Foreground rock outline, top cavity and left background opening align. FPT is sharper and more orange, without native depth-of-field blur; fine surface/optical parity is not claimed.
+The tapered curled tube, two upper openings and repeated turns align in all three views. FPT replaces the plain orange native material with rainbow bands, but silhouette and openings remain clear. This accepts geometry/readability, not exact procedural colour.
 
-## [393: IFS 31](393.md)
+## [120: T_DIFS Helix 003](120.md)
 
-[![Native / FPT authored](images/393-thumb.webp)](393.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Dense lattice corridor, central support and converging floor align. FPT has stronger bright speckling at 32 SPP and a coloured rather than grey atmosphere; fine detail/noise parity is not certified.
-
-## [398: aboxmod15](398.md)
-
-[![Native / FPT authored](images/398-thumb.webp)](398.md)
+[![Native / FPT authored](images/120-thumb.webp)](120.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Dense central ridges, left foreground rise and right cliff outline align. FPT is sharper with stronger dark creases; native haze and fine-detail noise are not matched.
+The vertical green cylinder, orange helical fins and turn spacing align. FPT is brighter red/orange with a lighter background; the cropped framing is authored and shared by both captures.
 
-## [400: aexion01](400.md)
+## [121: T_DIFS Helix Menger 001](121.md)
 
-[![Native / FPT authored](images/400-thumb.webp)](400.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Tall central spire and sweeping stepped flanks align. FPT retains readable green surfaces but omits the native atmospheric sky; atmosphere is explicitly outside this acceptance.
-
-## [406: benesi03](406.md)
-
-[![Native / FPT authored](images/406-thumb.webp)](406.md)
+[![Native / FPT authored](images/121-thumb.webp)](121.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Sweeping foreground folds, large upper curl and right-hand branching cavity align closely. Yellow/orange lighting is somewhat stronger in FPT but preserves the same major surface relief.
+The block corridor, central square opening and major foreground cubes align closely. FPT has brighter gold reflections and visible sampling grain while keeping the block layout and gaps readable.
 
-## [410: bristorbrot01](410.md)
+## [122: T_DIFS SphereGrid IQ](122.md)
 
-[![Native / FPT authored](images/410-thumb.webp)](410.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Large receding rings and central spiral align. FPT is sharply defined and strongly gold/magenta rather than hazy grey/gold; depth of field, sky and reflective appearance are not certified.
-
-## [412: cayley2](412.md)
-
-[![Native / FPT authored](images/412-thumb.webp)](412.md)
+[![Native / FPT authored](images/122-thumb.webp)](122.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Central ring, inner motif and surrounding repeated tiles align. Green reflective patterns and glow differ considerably while keeping the main geometry readable.
+The spherical open wire lattice, outer lobes and central repeated loops align closely. FPT is brighter pale gold with weaker dark reflective contrast, but the thin connections and open gaps remain legible.
+
+## [123: T_DIFS Spring MixPinski](123.md)
+
+[![Native / FPT authored](images/123-thumb.webp)](123.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The thin spring/wire corridor, twin rounded door outlines and long crossing horizontal lines align. Both renders intentionally have a black field with yellow-green lines; FPT changes fine line intensity and reflective repetition, without an obvious loss of the main wire structure.
+
+## [124: T_DIFS Spring PolyFld](124.md)
+
+[![Native / FPT authored](images/124-thumb.webp)](124.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The spherical polygonal wire bands, central opening and three large lower arches align. FPT brightens and visually thickens some white highlights; the overall open lattice remains intact, without certifying subpixel line thickness.
+
+## [125: T_DIFS Torus4](125.md)
+
+[![Native / FPT authored](images/125-thumb.webp)](125.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The repeated rounded three-lobed pattern and open blue gaps align closely. Small edge shading and background saturation changes remain.
+
+## [126: T_DIFS Torus4_sphere](126.md)
+
+[![Native / FPT authored](images/126-thumb.webp)](126.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The three rounded lobes and surrounding cut ring align closely. Orange/green/cream regions match, while FPT removes the strong native glossy highlight and looks more matte.
+
+## [127: T_DIFS Tube _ Tube](127.md)
+
+[![Native / FPT authored](images/127-thumb.webp)](127.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The two split cylindrical shells, central connector and thin internal dividers align. Material regions and background correspond, with brighter yellow/green reflections and more sampling grain in FPT.

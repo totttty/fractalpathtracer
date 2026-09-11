@@ -58,6 +58,18 @@ The central stepped structure and horizontal supports broadly align, but the def
 
 The four broad lobes and central connections align, but the defining dense black-and-white checkerboard material pattern disappears into almost uniform white in FPT. This material demonstration is not validated by matching the silhouette alone.
 
+## [113: T-DifsTorusMenger_menger7](113.md)
+
+[![Native / FPT authored](images/113-thumb.webp)](113.md)
+
+The four curled lobes and central opening align in the neutral control, but authored FPT becomes almost uniformly red and loses the prominent yellow/green grid pattern and surface contrast visible in native. Hold the material/lighting interpretation.
+
+## [114: T_DIFS Chessboard hybrid color](114.md)
+
+[![Native / FPT authored](images/114-thumb.webp)](114.md)
+
+The rectangular slab and its camera framing align, but the native multicoloured fractal/checker appearance becomes a plain grey-yellow checkerboard in FPT. The defining procedural material is not reproduced.
+
 ## [372: IFS_001](372.md)
 
 [![Native / FPT authored](images/372-thumb.webp)](372.md)
@@ -213,6 +225,42 @@ Native fine nested cavern structures are replaced by large smooth rounded surfac
 [![Native / FPT authored](images/429-thumb.webp)](429.md)
 
 The concentric petal/ribbon arrangement and central round region broadly align, but the defining native white/orange central illumination is absent, replaced by a dark blue interior. The outer palette alone does not validate the missing light.
+
+## [434: hybrid21](434.md)
+
+[![Native / FPT authored](images/434-thumb.webp)](434.md)
+
+Neutral FPT retains the central angular cap and nested curved supports, but authored FPT clips a large central region to white and omits the visible pink light at upper left. The clipping obscures surface detail; not a palette-only difference.
+
+## [435: hybrid22 - foldigIntPow v 2](435.md)
+
+[![Native / FPT authored](images/435-thumb.webp)](435.md)
+
+The large rounded foreground body, upper connection and neighbouring structures align in the neutral control. Authored FPT loses the bright yellow environmental illumination and makes much of the upper/background structure very dark; defer the shared lighting/atmosphere behaviour.
+
+## [440: hybrid31](440.md)
+
+[![Native / FPT authored](images/440-thumb.webp)](440.md)
+
+Some large branches and right-hand rounded forms correspond, but native is heavily blurred/veiled while FPT exposes sharp blue/gold surfaces. The native optical effect obscures too much fine structure for confident complete comparison; defer optical/atmospheric behaviour rather than claiming a geometry match.
+
+## [444: hybrid38](444.md)
+
+[![Native / FPT authored](images/444-thumb.webp)](444.md)
+
+Large round surrounding forms broadly correspond, but native bright yellow central pointed forms are replaced by a dark red recess with many smaller visible cones in FPT. Material/transmission versus actual structural differences are unresolved; the central illumination/readability change is too large to accept.
+
+## [445: hybrid42](445.md)
+
+[![Native / FPT authored](images/445-thumb.webp)](445.md)
+
+The native central frame encloses a large bright sky opening; FPT instead fills that region with more nested structures, also visible in the neutral control. This is a significant opening/visibility mismatch, not merely the native blur or palette difference.
+
+## [446: hypercomplex 01](446.md)
+
+[![Native / FPT authored](images/446-thumb.webp)](446.md)
+
+The isolated upper loop and larger lower forms broadly correspond, but FPT loses the native blue illuminated environment and renders most surfaces almost black against dark green. Authored readability is insufficient for acceptance; reflective silhouette details remain uncertain.
 
 ## [567: IFS31_anim](567.md)
 
@@ -417,3 +465,33 @@ The slender central spire and flared base align, but FPT introduces a hard brigh
 [![Native / FPT authored](images/651-thumb.webp)](651.md)
 
 Native pale atmospheric/transmissive surfaces become near-black rainbow-highlighted folds in FPT. Some curved outlines correspond, but the extreme brightness change prevents a confident complete structural or authored appearance comparison.
+
+## [657: keyframe_anim_mandelbulb](657.md)
+
+[![Native / FPT authored](images/657-thumb.webp)](657.md)
+
+The water horizon and large right-hand rounded structure broadly correspond, but native gold-lit foreground forms become dark green/blue in FPT and the water/reflected appearance differs strongly. Obscured lower surfaces prevent confident complete structural comparison; defer rather than treating the dark authored image as a colour-only difference.
+
+## [658: light - projection](658.md)
+
+[![Native / FPT authored](images/658-thumb.webp)](658.md)
+
+Native is dominated by bright projected blue-white rays and hazy geometry, while FPT shows a dark cube and right-hand fractal without that illumination. The defining projected-light effect is absent and native obscuration prevents confident complete geometry comparison.
+
+## [660: lkmitch001](660.md)
+
+[![Native / FPT authored](images/660-thumb.webp)](660.md)
+
+Native layered pink/brown folds and a bright central light become large dark red/blue regions in authored FPT. Neutral FPT shows broad smooth planes across the centre/right rather than clearly corresponding fine folds; material versus structural causes need investigation before acceptance.
+
+## [666: mandelbox_menger_with_textures](666.md)
+
+[![Native / FPT authored](images/666-thumb.webp)](666.md)
+
+The corridor, central tapered forms and right-hand rectangular recesses align, but FPT washes much of the image to bright gold/white, clips foreground detail and fails to retain the native brick/ground material appearance. Hold exposure/material behaviour.
+
+## [670: mandelbulb002](670.md)
+
+[![Native / FPT authored](images/670-thumb.webp)](670.md)
+
+Native shows a heavily veiled landscape with a bright white light, while FPT exposes a large right-hand curl against a clear blue sky and omits the light. The visible silhouette/coverage differs substantially; optical obscuration versus actual geometry must be separated before acceptance.

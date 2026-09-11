@@ -1,6 +1,6 @@
 # Reviewed Scenes: Page 10
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
@@ -44,42 +44,42 @@ accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 The rounded perforated shell, large front opening, upper rim and repeated small windows align in native and both FPT controls. Authored FPT is brighter yellow with a brighter violet background; broad structure remains readable, without claiming exact shading or palette parity.
 
-## [375: Construct by Ectoplaz 2](375.md)
+## [111: T-DifsTorusMenger_T-DifsClipCustom_001](111.md)
 
-[![Native / FPT authored](images/375-thumb.webp)](375.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Main green structure and framing align and remain readable. Native blue atmospheric fill is absent; background contrast and materials differ.
-
-## [378: GeneralizedFoldBox01](378.md)
-
-[![Native / FPT authored](images/378-thumb.webp)](378.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Large central surfaces and framing align. FPT is sharper/orange and native blur differs; fine depth and material parity are not certified.
-
-## [379: GeneralizedFoldBox02](379.md)
-
-[![Native / FPT authored](images/379-thumb.webp)](379.md)
+[![Native / FPT authored](images/111-thumb.webp)](111.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Refreshed water surface and red sphere are restored; broad cavern framing matches. Reflections, saturation and sphere roughness still differ.
+The opposing perforated disks, narrow central connection and outer rims align. FPT has brighter red/yellow accents and a brighter blue background; the major openings and silhouette remain readable.
 
-## [380: GeneralizedFoldBox03_2](380.md)
+## [112: T-DifsTorusMenger_T-DifsPiriform](112.md)
 
-[![Native / FPT authored](images/380-thumb.webp)](380.md)
+[![Native / FPT authored](images/112-thumb.webp)](112.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Refreshed box/displacement path restores the cavern instead of the earlier incorrect close surfaces. Broad opening and rock placement now align; blue contrast, highlights and fine cave detail remain imperfect.
+The interleaved spiral ribbons, open gaps and circular silhouette align closely. FPT is brighter orange/yellow and less glossy than native; major material regions and structure remain clear.
 
-## [381: Hybrid 1](381.md)
+## [115: T_DIFS Chessboard](115.md)
 
-[![Native / FPT authored](images/381-thumb.webp)](381.md)
+[![Native / FPT authored](images/115-thumb.webp)](115.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Central ornament placement and surrounding forms broadly align. Native soft focus becomes sharper and more contrasty in FPT.
+The flat slab, black/white checker layout and camera framing match closely. Fine edge sampling and slight white/yellow shading differ.
+
+## [116: T_DIFS GridV3 001](116.md)
+
+[![Native / FPT authored](images/116-thumb.webp)](116.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The flat spiral bands, narrow gaps and upper stepped boundary align closely. Pink/green regions are retained with small contrast, background and sampling differences.
+
+## [117: T_DIFS GridV3 002](117.md)
+
+[![Native / FPT authored](images/117-thumb.webp)](117.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The stepped square spiral, side fins and central raised regions align. FPT has a brighter cyan background and slightly brighter gold faces, with no obvious broad framing or coverage change.

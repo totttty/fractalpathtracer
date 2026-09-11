@@ -1,53 +1,85 @@
 # Reviewed Scenes: Page 17
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [642: hybrid001](642.md)
+## [602: aexion_octopus_001](602.md)
 
-[![Native / FPT authored](images/642-thumb.webp)](642.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The large concentric curved sheets, central opening and smaller right-hand ring align. FPT replaces the native pink atmospheric veil with blue sky and darker gold surfaces; the broad structure is readable, but haze, thin-line brightness and exact reflective colour are not certified.
-
-## [647: hybrid007](647.md)
-
-[![Native / FPT authored](images/647-thumb.webp)](647.md)
+[![Native / FPT authored](images/602-thumb.webp)](602.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The converging field of repeated rounded clusters, central upright and its shadow align. FPT uses more matte violet surfaces and a darker background than the native glossy pink/brown appearance; the repeated structure remains readable.
+Refreshed water surface is restored and the central object's placement aligns. Wave detail, reflected lighting and shadows differ; 32-SPP water noise remains visible.
 
-## [648: hybrid008 - collatz](648.md)
+## [603: amazing surf mod1 001](603.md)
 
-[![Native / FPT authored](images/648-thumb.webp)](648.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The rounded foreground ridges and large curled background forms align. FPT is more orange/green and omits the native blue-grey haze, but the main surface relief remains visible; atmosphere and fine reflective appearance are not certified.
-
-## [652: iq_bulb_001](652.md)
-
-[![Native / FPT authored](images/652-thumb.webp)](652.md)
+[![Native / FPT authored](images/603-thumb.webp)](603.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The central branching ridges, side arches and major openings align. FPT is sharper and brown/white instead of the native blurred blue/silver appearance; depth of field, reflections and fine material behaviour remain approximate.
+Refreshed ridge and foreground surface framing align. Native haze and fine highlights differ from the sharper blue FPT terrain; fine structural parity is not certified.
 
-## [655: kaliset001](655.md)
+## [606: amazing_surf 002](606.md)
 
-[![Native / FPT authored](images/655-thumb.webp)](655.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The winding perforated bands, deep vertical walls and large foreground cavities align. FPT retains the vivid pink/yellow surface pattern with sharper edges and altered fine reflective streaks.
-
-## [656: keyframe_anim_mandelbox_boxes](656.md)
-
-[![Native / FPT authored](images/656-thumb.webp)](656.md)
+[![Native / FPT authored](images/606-thumb.webp)](606.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The large tilted slab and clustered upper-right cavities align. FPT is brighter yellow with sharper blue/pink markings than the subdued native material; fine reflectance and depth-of-field appearance are not certified.
+Foreground arches, central bowl, curling supports and distant repetition align. FPT is strongly orange and sharp rather than hazy with authored depth of field; atmosphere and optical effects are not certified.
+
+## [611: benesi pwr2 mandelbulbs 001](611.md)
+
+[![Native / FPT authored](images/611-thumb.webp)](611.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Radial cavity, surrounding ring and right-hand surface boundary align. FPT is sharper with red/blue rather than gold/purple optical shading; depth-of-field and reflective appearance are not certified.
+
+## [612: benesi_mag_transforms_001](612.md)
+
+[![Native / FPT authored](images/612-thumb.webp)](612.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Radial petal composition and center align in the geometry control. FPT reflective appearance is sharper and strongly magenta rather than brown/pink; exact material transport is not certified.
+
+## [617: box_fold_bulb_pow2_001](617.md)
+
+[![Native / FPT authored](images/617-thumb.webp)](617.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Central tiered spire, surrounding repeated spires and camera align. FPT is sharper with strongly patterned gold ground; native clouds and depth-of-field blur are not reproduced.
+
+## [626: diFS square grid](626.md)
+
+[![Native / FPT authored](images/626-thumb.webp)](626.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Curved perforated surface, surrounding grid and foreground reflective forms align. FPT has warmer highlights and stronger brightness on the right; the principal geometry remains readable.
+
+## [627: difs_tree](627.md)
+
+[![Native / FPT authored](images/627-thumb.webp)](627.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Tree canopy silhouette, trunk, rolling grass terrain and cast shadow align. FPT canopy shadows are darker and the trunk is browner, but the main forms remain visible.
+
+## [628: fabs_box_mod1_001](628.md)
+
+[![Native / FPT authored](images/628-thumb.webp)](628.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Central bright opening, layered folded surfaces and lower-right opening align. FPT is sharper and more red/purple, with differing reflections and depth of field; broad structural landmarks remain readable.
+
+## [629: flight_anim_menger sponge_3](629.md)
+
+[![Native / FPT authored](images/629-thumb.webp)](629.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Main square window, repeated perforations, inner chamber and light position align. FPT omits the strong grey atmospheric veil and uses darker colourful surfaces; fog and complete material parity are not certified.
