@@ -15,7 +15,7 @@ from run_release_canaries import sha256
 MODES = ('geometry', 'authored')
 
 
-def summarize(report, selection_count=50):
+def summarize(report, selection_count=50, excluded_ids=()):
     expected = report['identity']['manifest']['scenes']
     by_id = {row['id']:row for row in report['rows']}
     rows = []
@@ -35,7 +35,7 @@ def summarize(report, selection_count=50):
     # the alphabetically first author's collection. Dark/blank flags need triage.
     groups = defaultdict(deque)
     for row in rows:
-        if row['execution_passed'] and not any(row['review_flags'].values()):
+        if row['id'] not in excluded_ids and row['execution_passed'] and not any(row['review_flags'].values()):
             groups[row['collection']].append(row)
     selected = []
     while groups and len(selected) < selection_count:

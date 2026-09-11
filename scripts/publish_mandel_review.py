@@ -101,19 +101,28 @@ def validate_assets(evidence, assets):
     return local
 
 
-def record_assessment(assessment, evidence, legacy, evidence_hash):
+def record_assessment(assessment, evidence, legacy, evidence_hash, existing=None):
     if assessment['version'] != 1 or assessment['evidence_sha256'] != evidence_hash:
         raise ValueError('assessment was made against different capture evidence')
     annotated={r['id']:r for r in assessment['rows']}
     if len(annotated)!=len(assessment['rows']):
         raise ValueError('duplicate assessment')
-    previous={r['id']:r for r in legacy['rows']}
+    previous={r['id']:r for r in legacy['rows']} if legacy else {}
+    retained={r['id']:r for r in existing['rows']} if existing else {}
+    if existing and len(retained)!=len(existing['rows']):
+        raise ValueError('duplicate retained review')
     ids={r['id'] for r in evidence['rows']}
-    if not set(annotated)<=ids or not ids<=set(annotated)|set(previous):
+    if not set(annotated)<=ids or not ids<=set(annotated)|set(previous)|set(retained) or not set(retained)<=ids:
         raise ValueError('every new scene requires an explicit visual assessment')
     rows=[]
     for proof in evidence['rows']:
         review=annotated.get(proof['id'])
+        if review is None and proof['id'] in retained:
+            old=retained[proof['id']]
+            if old['source_sha256']!=proof['sha256'] or old['evidence_sha256']!=evidence_digest(proof):
+                raise ValueError('changed evidence requires a fresh assessment')
+            rows.append(old)
+            continue
         if review is None:
             old=previous[proof['id']]
             if (old['source_sha256']!=proof['sha256'] or old['source']!=proof['path']
@@ -127,6 +136,39 @@ def record_assessment(assessment, evidence, legacy, evidence_hash):
         rows.append(dict(review,source_sha256=proof['sha256'],evidence_sha256=evidence_digest(proof),
             reviewer=reviewer,reviewed_at=assessment['reviewed_at']))
     return dict(version=1,policy='Visual acceptance of specific captures; colours may differ. Not whole-corpus current-binary or NAADF/CVOX validation.',rows=rows)
+
+
+def append_batch(evidence, assets, batch, catalog, revision):
+    """Preserve accepted evidence verbatim and append only complete new triplets."""
+    validate_assets(evidence,assets)
+    from mandel_catalog import matching_rows
+    sources=source_index(catalog['scenes'])
+    expected=matching_rows(batch['identity']['manifest']['scenes'],sources)
+    observed=matching_rows(batch['rows'],sources)
+    if set(expected)!=set(observed) or any(set(MODES)-set(r['modes']) for r in batch['rows']):
+        raise ValueError('batch has not finished all requested modes')
+    if {r['id'] for r in evidence['rows']} & {r['id'] for r in batch['rows']}:
+        raise ValueError('batch overlaps previously reviewed evidence')
+    settings=batch['identity']['settings']
+    if settings['reference_backend']!='CPU' or set(settings['modes'])!=set(MODES) or settings['max_axis']!=300 or settings['samples']!=32:
+        raise ValueError('batch must include native CPU references and both FPT modes')
+    binaries=[digest for path,digest in batch['identity']['executables'].items() if Path(path).name=='fpt-metal']
+    if len(binaries)!=1:raise ValueError('expected one FPT binary')
+    complete=[r for r in batch['rows'] if all(r['modes'][m]['status']=='ok' for m in MODES)]
+    held=[dict(id=r['id'],path=r['path'],sha256=r['sha256'],
+        status={m:r['modes'][m]['status'] for m in MODES}) for r in batch['rows'] if r not in complete]
+    if not complete:raise ValueError('no complete reference-backed captures to review')
+    upstream={r['upstream_revision'] for r in evidence['rows']}
+    if len(upstream)!=1:raise ValueError('ambiguous upstream source revision')
+    manifest=dict(upstream_revision=next(iter(upstream)),renderer_revision=revision,
+        production_sha256=binaries[0],bounces=settings['bounces'],rows=[dict(id=r['id'],source=r['path'],source_sha256=r['sha256'],
+            native_reference_reduced=False,reference_overrides=r.get('reference_overrides',{}),
+            captures={m:r['modes'][m]['capture'] for m in MODES}) for r in complete])
+    refresh=dict(identity=dict(manifest=dict(scenes=complete),settings=settings,executables={'fpt-metal':binaries[0]}),rows=complete)
+    new_evidence,new_assets=assemble(dict(rows=[]),dict(rows=complete),refresh,catalog,dict(rows=[]),manifest,revision)
+    combined=dict(evidence,rows=evidence['rows']+new_evidence['rows'])
+    paths=dict(rows=assets['rows']+new_assets['rows'])
+    return combined,paths,dict(scope='Incomplete triplets remain unpromoted; failures are not hidden or counted as visually reviewed.',rows=held)
 
 
 def publish(catalog, reviews, evidence, assets, output):
@@ -234,9 +276,15 @@ def main():
     for key in ('evidence','assets','output'):
         preview.add_argument('--'+key,type=Path,required=True)
     record=sub.add_parser('record',help='Bind an explicit assessment to immutable capture evidence')
-    for key in ('assessment','evidence','legacy-gallery','output'):
+    for key in ('assessment','evidence','output'):
         record.add_argument('--'+key,type=Path,required=True)
-    for child in (a,p,preview,record):
+    record.add_argument('--legacy-gallery',type=Path)
+    record.add_argument('--existing-reviews',type=Path)
+    append=sub.add_parser('append-batch',help='Append finished batch evidence without changing previous decisions')
+    for key in ('evidence','assets','batch','output'):
+        append.add_argument('--'+key,type=Path,required=True)
+    append.add_argument('--revision',required=True)
+    for child in (a,p,preview,record,append):
         child.add_argument('--catalog',type=Path,default=ROOT/'docs/mandel-catalog/catalog.json')
     args=parser.parse_args()
     read=lambda p:json.loads(p.read_text())
@@ -245,9 +293,15 @@ def main():
         args.output.mkdir(parents=True,exist_ok=False)
         for name,result in (('evidence.json',evidence),('assets.json',assets)):
             (args.output/name).write_text(json.dumps(result,indent=2)+'\n')
+    elif args.command=='append-batch':
+        evidence,assets,held=append_batch(read(args.evidence),read(args.assets),read(args.batch),read(args.catalog),args.revision)
+        args.output.mkdir(parents=True,exist_ok=False)
+        for name,value in (('evidence.json',evidence),('assets.json',assets),('incomplete.json',held)):
+            (args.output/name).write_text(json.dumps(value,indent=2)+'\n')
     elif args.command=='record':
         evidence=read(args.evidence)
-        result=record_assessment(read(args.assessment),evidence,read(args.legacy_gallery),sha256(args.evidence))
+        result=record_assessment(read(args.assessment),evidence,read(args.legacy_gallery) if args.legacy_gallery else None,
+            sha256(args.evidence),read(args.existing_reviews) if args.existing_reviews else None)
         validate_reviews(result,evidence,source_index(read(args.catalog)['scenes']))
         with args.output.open('x') as stream:
             stream.write(json.dumps(result,indent=2)+'\n')

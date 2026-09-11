@@ -1,6 +1,6 @@
 # Reviewed Scenes: Page 6
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
@@ -36,50 +36,50 @@ accepted | refreshed-2026-09-11 | 32 SPP
 
 Refreshed rocket components, orientation, framing and broad colours align. Remaining differences are small shading changes.
 
-## [375: Construct by Ectoplaz 2](375.md)
+## [061: DIFS Cylinder tree](061.md)
 
-[![Native / FPT authored](images/375-thumb.webp)](375.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Main green structure and framing align and remain readable. Native blue atmospheric fill is absent; background contrast and materials differ.
-
-## [378: GeneralizedFoldBox01](378.md)
-
-[![Native / FPT authored](images/378-thumb.webp)](378.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Large central surfaces and framing align. FPT is sharper/orange and native blur differs; fine depth and material parity are not certified.
-
-## [379: GeneralizedFoldBox02](379.md)
-
-[![Native / FPT authored](images/379-thumb.webp)](379.md)
+[![Native / FPT authored](images/061-thumb.webp)](061.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Refreshed water surface and red sphere are restored; broad cavern framing matches. Reflections, saturation and sphere roughness still differ.
+Tree silhouette, trunk and branching align. Leaf shading and trunk saturation differ, but both remain readable.
 
-## [380: GeneralizedFoldBox03_2](380.md)
+## [062: DIFS GridV2 boxBulb](062.md)
 
-[![Native / FPT authored](images/380-thumb.webp)](380.md)
+[![Native / FPT authored](images/062-thumb.webp)](062.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Refreshed box/displacement path restores the cavern instead of the earlier incorrect close surfaces. Broad opening and rock placement now align; blue contrast, highlights and fine cave detail remain imperfect.
+Main divided cylindrical composition, opening and repeated spherical detail align. Palette and fine patterned shading differ considerably but the structure remains readable.
 
-## [381: Hybrid 1](381.md)
+## [063: DIFS Hextgrid2 sphInv](063.md)
 
-[![Native / FPT authored](images/381-thumb.webp)](381.md)
+[![Native / FPT authored](images/063-thumb.webp)](063.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Central ornament placement and surrounding forms broadly align. Native soft focus becomes sharper and more contrasty in FPT.
+Symmetric nested toroidal structure and central fine motif align. Pink authored metal becomes yellow in FPT; colour accuracy is explicitly outside this acceptance.
 
-## [383: IFS 20](383.md)
+## [064: DIFS Menger Ellipsoid](064.md)
 
-[![Native / FPT authored](images/383-thumb.webp)](383.md)
+[![Native / FPT authored](images/064-thumb.webp)](064.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Broad rocky layout and framing align. Different focus, tan materials and sky response are visible; fine-depth fidelity is not claimed.
+Tiered ellipsoid silhouette, levels and horizontal colour bands align closely. Fine highlights and shadows differ.
+
+## [065: DIFS Polyhedra_hexgrid](065.md)
+
+[![Native / FPT authored](images/065-thumb.webp)](065.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Polyhedral frame, spherical vertices and internal round structures align. FPT has darker, less glittering gold interiors but preserves their visible shape.
+
+## [066: DIFS Sphere MBulb a2](066.md)
+
+[![Native / FPT authored](images/066-thumb.webp)](066.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Rounded cage silhouette, repeated red lattice and gold interior align. FPT shows a brighter, more continuous interior and different reflective highlights.

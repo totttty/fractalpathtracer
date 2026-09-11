@@ -1,0 +1,25 @@
+{
+  "scope": "Incomplete triplets remain unpromoted; failures are not hidden or counted as visually reviewed.",
+  "rows": [
+    {
+      "id": "576",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-4D.fract",
+      "sha256": "7b9be188d2049d4bf5f5723dc7d8d563a29e4c0a001d50b5b597f0fd6f42093a",
+      "status": {
+        "mandel": "execution_failed",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "396",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/IFS 34.fract",
+      "sha256": "abdc3f26ca7ecd26421e0689c5e5685502c53b73fbf1585a07fbd777689dc9cc",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    }
+  ]
+}

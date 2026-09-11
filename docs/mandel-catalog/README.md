@@ -10,9 +10,9 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| Reviewed | 83 | Explicit capture-specific visual acceptance, with limitations allowed |
-| Experimental | 625 | Opt-in scenes; execution success is not visual acceptance |
-| Blocked | 38 | 17 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
+| Reviewed | 111 | Explicit capture-specific visual acceptance, with limitations allowed |
+| Experimental | 577 | Opt-in scenes; execution success is not visual acceptance |
+| Blocked | 58 | 37 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
 
 The ranked gallery still contains all 50 rows for transparency, including
 blocked scenes **32, 37, 46 and 48**. Of the additional 50, **37** are promoted
@@ -20,6 +20,10 @@ and **13** have explicit needs-work decisions. Twelve affected scenes have
 fresh FPT captures; the other 38 reuse the reviewed historical 32-SPP captures.
 Every scene page labels the capture epoch and renderer identity. The historical
 gallery membership field is retained for provenance, not used for promotion.
+The [second additional batch](review-batch02-2026-09-11.md) attempted another
+50 scenes: 48 complete native/FPT comparisons, **28** promoted, **20** held for
+visual issues, and two incomplete reference contracts left experimental.
+These are fresh 300px-max-edge, 32-SPP FPT captures; no higher-SPP gate was added.
 Colour differences alone are not a blocker. Geometry, missing assets and
 failed render contracts must remain visible. [Explicit decisions](reviews.json)
 are tied to the complete [capture evidence](review-evidence.json), including
@@ -123,21 +127,27 @@ python3 -m unittest discover -s scripts -p 'test_mandel_catalog.py'
 
 ## Review And Publish Another Batch
 
-1. Run the support suite on a source-pinned batch at 300px/32 SPP and collect
+1. Select another source-pinned, collection-balanced batch with
+   `python3 scripts/select_mandel_review_batch.py --screening reports/mandel-remaining696-screen96-20260910/summary.json --output reports/next-review/batch.json`.
+   This excludes previously decided/non-experimental scenes and historical
+   dark/blank warnings. Selection is not visual acceptance.
+2. Run the support suite on that batch at 300px/32 SPP and collect
    matching native CPU references. Reuse references only after hash/dimension
    checks; keep monoscopic or reduced-resolution controls explicitly labelled.
-2. Use `scripts/publish_mandel_review.py assemble` to validate all image/metadata
-   hashes and create portable evidence plus a local-only capture path map.
-   The current pass used the original ranked report, additional-50 report and
-   targeted refresh12 report. The `preview` subcommand builds refresh contact sheets.
-3. Inspect the images. Record `accepted`, `accepted-with-limitations` or
+3. Use `scripts/publish_mandel_review.py append-batch --evidence docs/mandel-catalog/review-evidence.json --assets <previous-local-assets.json> --batch <finished-summary.json> --revision <full-renderer-commit> --output <new-evidence-directory>`.
+   It validates the finished inventory, source identities and image/metadata
+   hashes. Complete triplets are appended; failed triplets go to `incomplete.json`
+   and remain unpromoted. The original `assemble` command supports the initial
+   ranked/additional/refresh migration; `preview` builds review contact sheets.
+4. Inspect the images. Record `accepted`, `accepted-with-limitations` or
    `needs-work`, separately assessing geometry and illumination. Every new scene
-   requires an explicit annotation. `assessment-2026-09-11.json` is the source
-   assessment for this pass, pinned to its evidence-file hash.
-4. The `record` subcommand binds annotations to each evidence-row digest.
+   requires an explicit annotation pinned to the new evidence-file hash.
+5. The `record` subcommand binds annotations to each evidence-row digest.
+   Use `--existing-reviews docs/mandel-catalog/reviews.json` to retain unchanged
+   decisions and annotate only the new rows.
    Legacy acceptance migrates only when source and all capture hashes match.
    Changed captures require a fresh review, not an automatic acceptance.
-5. Rebuild the catalogue, then publish to a fresh output directory using
+6. Rebuild the catalogue, then publish to a fresh output directory using
    `scripts/publish_mandel_review.py publish --evidence ... --reviews ... --assets ... --output ...`.
    Accepted rows get paginated showcase pages; needs-work rows get separate
    audit pages. Keep full RGB detail PNGs and compressed navigation thumbnails
