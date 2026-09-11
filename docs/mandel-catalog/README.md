@@ -144,8 +144,12 @@ weaken the visual acceptance gate merely to increase the reviewed count.
    Deferred incomplete scenes keep experimental status; selection is not
    visual acceptance.
 2. Run the support suite on that batch at 300px/32 SPP and collect
-   matching native CPU references. Reuse references only after hash/dimension
-   checks; keep monoscopic or reduced-resolution controls explicitly labelled.
+   matching native CPU references. Native screening now defaults to 120 seconds
+   per capture (`--native-timeout`); FPT retains its separate `--timeout 900`
+   budget. Pass `--reference-cache reports/mandel-native-reference-cache` to
+   reuse fully fingerprinted native references. `--overlap-native` is an
+   opt-in CPU/GPU overlap experiment, limited to one capture in each lane.
+   See [capture throughput](capture-throughput.md) for safeguards and limitations.
 3. Use `scripts/publish_mandel_review.py append-batch --evidence docs/mandel-catalog/review-evidence.json --assets <previous-local-assets.json> --batch <finished-summary.json> --revision <full-renderer-commit> --output <new-evidence-directory>`.
    It validates the finished inventory, source identities and image/metadata
    hashes. Complete triplets are appended; failed triplets go to `incomplete.json`

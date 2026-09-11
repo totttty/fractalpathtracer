@@ -8,14 +8,31 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageStat
 from run_release_canaries import (ROOT, difference, execute, image_result,
     lightmap_asset, mandel_reference_command, scene_dimensions, sha256,
     validate_manifest, verify_lightmap)
+from mandel_reference_cache import reference_contract, load_reference, store_reference
 
 MODES = ('geometry', 'authored', 'mandel')
+
+
+def run_modes(modes, render, record, overlap=False):
+    """Only the main thread records results; at most one CPU and one GPU job."""
+    if not overlap or 'mandel' not in modes:
+        for mode in modes:
+            record(mode, render(mode))
+        return
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        native = pool.submit(render, 'mandel')
+        for mode in modes:
+            if mode != 'mandel':
+                record(mode, render(mode))
+        record('mandel', native.result())
 
 
 def parameters(text):
@@ -30,6 +47,37 @@ def parameters(text):
             if parts:
                 values[parts[0]] = parts[1].strip() if len(parts) == 2 else ''
     return values
+
+
+def native_mc_settings(text, cap=None):
+    """Cap MC work without changing the authored integrator or enabling MC."""
+    values=parameters(text)
+    enabled=values.get('DOF_monte_carlo','false').lower() in ('true','1')
+    if cap is not None and cap < 1:
+        raise ValueError('native MC sample cap must be positive')
+    maximum=int(values.get('DOF_samples','100'))
+    minimum=int(values.get('DOF_min_samples','10'))
+    if enabled and (maximum < 1 or minimum < 0):
+        raise ValueError('invalid authored native MC sampling bounds')
+    overrides={}
+    effective=maximum
+    if enabled and cap is not None and cap < maximum:
+        effective=cap
+        overrides['DOF_samples']=effective
+        if minimum > effective:
+            overrides['DOF_min_samples']=effective
+    return dict(enabled=enabled,requested_cap=cap,authored_maximum=maximum,
+                authored_minimum=minimum,effective_maximum=effective,
+                effective_minimum=min(minimum,effective) if overrides else minimum,
+                overrides=overrides,
+                note='MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies.')
+
+
+def apply_native_sampling(command, sampling):
+    command=list(command)
+    for key,value in sampling['overrides'].items():
+        command[command.index('-O')+1]+=f'#{key}={value}'
+    return command
 
 
 def resolve_lightmap(scene, source_root, default):
@@ -94,7 +142,8 @@ def capture(command, folder, size, timeout, runner=execute):
         return result
     except Exception as error:
         stderr = (folder/'stderr.log').read_text(errors='replace') if (folder/'stderr.log').exists() else ''
-        result = dict(status=failure_kind(error, stderr), error=str(error), stderr_tail=stderr[-4000:])
+        result = dict(status=failure_kind(error, stderr), error=str(error), stderr_tail=stderr[-4000:],
+                      timeout_seconds=timeout)
         try:
             result['diagnostic_capture'] = image_result(folder, size)
         except (ValueError, OSError):
@@ -133,9 +182,17 @@ def save(summary, output):
     summary['counts'] = {mode: sum(r['modes'].get(mode, {}).get('status') == 'ok' for r in summary['rows']) for mode in MODES}
     summary['counts']['compilation_passed'] = sum(r.get('compilation') == 'passed' for r in summary['rows'])
     summary['counts']['completed_scenes'] = sum(all(m in r['modes'] for m in requested_modes) for r in summary['rows'])
+    summary['counts']['native_cache_hits'] = sum(r['modes'].get('mandel',{}).get('reference_cache',{}).get('status')=='hit' for r in summary['rows'])
+    summary['counts']['native_deferred'] = sum(r['modes'].get('mandel',{}).get('deferred',False) for r in summary['rows'])
     temp = output/'summary.tmp'
     temp.write_text(json.dumps(summary, indent=2))
     temp.replace(output/'summary.json')
+    (output/'deferred-native.json').write_text(json.dumps(dict(
+        scope='Incomplete references, not unsupported scenes; retry in the final outlier batch.',
+        rows=[dict(id=r['id'],path=r['path'],sha256=r['sha256'],
+                   reason=r['modes']['mandel']['status'],
+                   timeout_seconds=r['modes']['mandel'].get('timeout_seconds'))
+              for r in summary['rows'] if r['modes'].get('mandel',{}).get('deferred')]),indent=2))
     with (output/'support.csv').open('w', newline='') as stream:
         writer = csv.writer(stream)
         writer.writerow(['id','scene','dimensions','compilation','geometry_render','authored_render','reference_render','appearance_mae','geometry_fidelity','appearance_fidelity'])
@@ -148,6 +205,9 @@ def save(summary, output):
 def pages(summary, output, rows_per_page=10):
     maximum = summary['identity']['settings']['max_axis']
     columns = [('mandel','Mandelbulber CPU authored'),('geometry','FPT neutral geometry'),('authored','FPT authored path')]
+    cap=summary['identity']['settings'].get('native_mc_samples')
+    if cap is not None:
+        columns[0]=('mandel',f'Mandel CPU screening (MC cap {cap})')
     requested_modes = summary['identity']['settings'].get('modes', MODES)
     columns = [(mode, label) for mode, label in columns if mode in requested_modes]
     for start in range(0,len(summary['rows']),rows_per_page):
@@ -187,12 +247,22 @@ def main():
     parser.add_argument('--max-axis',type=int,default=300)
     parser.add_argument('--samples',type=int,default=32)
     parser.add_argument('--timeout',type=int,default=900)
+    parser.add_argument('--native-timeout',type=int,default=120,
+                        help='Native CPU screening budget; timeout means deferred, not unsupported.')
+    parser.add_argument('--native-mc-samples',type=int,
+                        help='Screening-only cap for already-enabled native MC; does not alter effects or FPT SPP.')
+    parser.add_argument('--reference-cache',type=Path,
+                        help='Reuse native references only with a complete matching content contract.')
+    parser.add_argument('--overlap-native',action='store_true',
+                        help='Experimental: one native CPU capture alongside one FPT GPU capture.')
     parser.add_argument('--resume',action='store_true')
     parser.add_argument('--scene-limit',type=int,help='Stop after this many total scenes; resume can extend the limit.')
     parser.add_argument('--pages-every',type=int,default=10)
     args=parser.parse_args()
-    if not 16<=args.max_axis<=2048 or not 1<=args.samples<=512 or args.timeout<=0:
+    if not 16<=args.max_axis<=2048 or not 1<=args.samples<=512 or min(args.timeout,args.native_timeout)<=0:
         parser.error('invalid dimensions/samples/timeout')
+    if args.native_mc_samples is not None and not 1<=args.native_mc_samples<=10000:
+        parser.error('native MC cap must be in 1..10000')
     if len(set(args.modes)) != len(args.modes) or args.pages_every < 1 or (args.scene_limit is not None and args.scene_limit < 1):
         parser.error('duplicate modes or invalid scene/page limit')
     if 'mandel' in args.modes and args.mandelbulber_bin is None:
@@ -207,8 +277,11 @@ def main():
         try: assets[row['id']]=resolve_lightmap(args.scene_root/row['path'],args.mandelbulber_root,default_map)
         except ValueError as error: assets[row['id']]=dict(error=str(error))
     binaries = [args.fpt] + ([args.mandelbulber_bin] if 'mandel' in args.modes else [])
-    identity=dict(manifest=manifest,harnesses={p.name:sha256(p) for p in (Path(__file__),ROOT/'scripts/run_release_canaries.py')},executables={str(p.resolve()):sha256(p) for p in binaries},
+    identity=dict(manifest=manifest,harnesses={p.name:sha256(p) for p in (Path(__file__),ROOT/'scripts/run_release_canaries.py',ROOT/'scripts/mandel_reference_cache.py')},executables={str(p.resolve()):sha256(p) for p in binaries},
         settings=dict(max_axis=args.max_axis,samples=args.samples,aspect='authored',chunk_samples=1,timeout=args.timeout,
+                      native_timeout=args.native_timeout,overlap_native=args.overlap_native,
+                      native_mc_samples=args.native_mc_samples,
+                      reference_cache=str(args.reference_cache.resolve()) if args.reference_cache else None,
                       modes=args.modes,orientation='native; no postprocessing flips/crops',reference_backend='CPU' if 'mandel' in args.modes else 'not_requested',
                       bounces='FPT scene/config default; metadata records effective configuration'),
         environment={k:v for k,v in os.environ.items() if k.startswith('FPT_')},lightmaps=assets)
@@ -219,9 +292,11 @@ def main():
         if any(output.iterdir()): parser.error('output must be empty without --resume')
         summary=dict(identity=identity,rows=[],visual_parity_certified=False,
             limitations=['MAE compares different authored integrators, not isolated geometry.',
-                         'Only AO maps are fingerprinted; other external textures remain untracked.',
+                         'General FPT audit fingerprints AO maps only; eligible native cache entries additionally bind native resources/preferences.',
                          'Timeouts do not prove a scene unsupported.',
                          'No renderer changes or performance claims in this support audit.'])
+    suite_start=time.monotonic()
+    prior_wall=summary.get('suite_wall_seconds',0)
     for scene in manifest['scenes'][:args.scene_limit]:
         row=next((r for r in summary['rows'] if r['id']==scene['id']),None)
         if row is None:
@@ -229,12 +304,13 @@ def main():
             summary['rows'].append(row)
         path=(args.scene_root/scene['path']).resolve()
         row['size']=scene_dimensions(path.read_text(),args.max_axis)
+        row['native_sampling']=native_mc_settings(path.read_text(),args.native_mc_samples)
+        row['reference_overrides']=row['native_sampling']['overrides']
         row['authored_effect_flags']={k:v for k,v in parameters(path.read_text()).items()
             if (any(s in k for s in ('fog','cloud','texture','dof','ambient_occlusion')) and v not in ('false','0'))}
         classify(row,args.modes)
         save(summary,output)
-        for mode in args.modes:
-            if mode in row['modes']: continue
+        def render(mode):
             if min(shutil.disk_usage(output).free, shutil.disk_usage(tempfile.gettempdir()).free) < 1024**3:
                 raise RuntimeError('less than 1 GiB free on output or temporary volume; resume after restoring disk headroom')
             if sha256(path)!=scene['sha256']: raise ValueError('scene mutated: '+str(path))
@@ -248,27 +324,55 @@ def main():
             print(scene['id'],mode,'starting',flush=True)
             asset=assets[scene['id']]
             if mode=='mandel' and 'error' in asset:
-                row['modes'][mode]=dict(status='missing_asset',error=asset['error'])
+                return dict(status='missing_asset',error=asset['error'])
             else:
                 if 'error' not in asset: verify_lightmap(asset)
                 if mode=='mandel':
                     command=mandel_reference_command(args.mandelbulber_bin,path,row['size'],folder/'scene.png',Path(asset['path']))
+                    command=apply_native_sampling(command,row['native_sampling'])
                 else:
                     command=[str(args.fpt.resolve()),'render',str(path),'--mandelbulber-root',str(args.mandelbulber_root.resolve()),
                         '--width',str(row['size'][0]),'--height',str(row['size'][1]),'--samples',str(args.samples),
                         '--sdf-accumulation','chunked','--sdf-chunk-samples','1',
                         '--mandel-appearance','geometry' if mode=='geometry' else 'authored-path','--out',str(folder)]
-                result=capture(command,folder,tuple(row['size']),args.timeout)
+                contract=None
+                cache_reason=None
+                if mode=='mandel' and args.reference_cache:
+                    contract,cache_reason=reference_contract(command,path,row['size'],asset,args.mandelbulber_root)
+                    if contract:
+                        cached=load_reference(args.reference_cache,contract,folder)
+                        if cached:
+                            return cached
+                result=capture(command,folder,tuple(row['size']),
+                               args.native_timeout if mode=='mandel' else args.timeout)
                 if 'error' not in asset: verify_lightmap(asset)
                 if mode=='mandel' and (folder/'stdout.log').exists() and 'OpenCl - rendering' in (folder/'stdout.log').read_text():
                     result=dict(status='invalid_reference_backend',error='OpenCL used despite CPU override')
                 if sha256(path)!=scene['sha256']: raise ValueError('scene changed while rendering')
-                row['modes'][mode]=result
+                if mode=='mandel':
+                    result['deferred']=result['status']=='timeout'
+                    if contract:
+                        after,_=reference_contract(command,path,row['size'],asset,args.mandelbulber_root)
+                        if after!=contract: raise ValueError('native reference inputs changed during capture')
+                        try:
+                            store_reference(args.reference_cache,contract,folder,result)
+                            result['reference_cache']=dict(status='miss')
+                        except ValueError as error:
+                            result['reference_cache']=dict(status='ineligible',reason=str(error))
+                    elif cache_reason:
+                        result['reference_cache']=dict(status='ineligible',reason=cache_reason)
+                return result
+
+        def record(mode,result):
+            row['modes'][mode]=result
             classify(row,args.modes)
+            summary['suite_wall_seconds']=prior_wall+time.monotonic()-suite_start
             save(summary,output)
             print(scene['id'],mode,row['modes'][mode]['status'],row['modes'][mode].get('capture',{}).get('wall_seconds',''),flush=True)
+        run_modes([m for m in args.modes if m not in row['modes']],render,record,args.overlap_native)
         if len(summary['rows']) % args.pages_every == 0:
             pages(summary,output)
+    summary['suite_wall_seconds']=prior_wall+time.monotonic()-suite_start
     save(summary,output)
     pages(summary,output)
     print(json.dumps(summary['counts']),flush=True)

@@ -150,6 +150,10 @@ def append_batch(evidence, assets, batch, catalog, revision):
     if {r['id'] for r in evidence['rows']} & {r['id'] for r in batch['rows']}:
         raise ValueError('batch overlaps previously reviewed evidence')
     settings=batch['identity']['settings']
+    if settings.get('native_mc_samples') is not None or any(
+            set(r.get('reference_overrides',{})) & {'DOF_samples','DOF_min_samples'}
+            for r in batch['rows']):
+        raise ValueError('reduced native sampling is screening-only, not authored gallery evidence')
     if settings['reference_backend']!='CPU' or set(settings['modes'])!=set(MODES) or settings['max_axis']!=300 or settings['samples']!=32:
         raise ValueError('batch must include native CPU references and both FPT modes')
     binaries=[digest for path,digest in batch['identity']['executables'].items() if Path(path).name=='fpt-metal']

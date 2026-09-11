@@ -2,13 +2,84 @@ import json
 import subprocess
 import tempfile
 import unittest
+import threading
 from pathlib import Path
 from PIL import Image
-from run_mandel_support_suite import capture, classify, failure_kind, parameters, resolve_lightmap, validate_resume, save, pages
+from run_mandel_support_suite import capture, classify, failure_kind, parameters, resolve_lightmap, validate_resume, save, pages, run_modes, native_mc_settings, apply_native_sampling
 from run_release_canaries import image_result
 
 
 class SupportSuiteTests(unittest.TestCase):
+    def test_mc_cap_preserves_integrator_and_never_increases_authored_work(self):
+        for cap in (16,32):
+            settings=native_mc_settings('[main_parameters]\nDOF_monte_carlo true;\nDOF_MC_global_illumination true;\n',cap)
+            self.assertEqual(settings['authored_maximum'],100)
+            self.assertEqual(settings['overrides'],{'DOF_samples':cap})
+            command=['native','-O','opencl_enabled=0#file_lightmap=/map.jpg']
+            actual=apply_native_sampling(command,settings)
+            self.assertEqual(actual[2],command[2]+f'#DOF_samples={cap}')
+            self.assertNotIn('DOF_MC_global_illumination',actual[2])
+            self.assertNotIn('DOF_monte_carlo',actual[2])
+        for text in ('[main_parameters]\n',
+                     '[main_parameters]\nDOF_monte_carlo true;\nDOF_samples 8;\n'):
+            self.assertEqual(native_mc_settings(text,16)['overrides'],{})
+
+    def test_mc_cap_clamps_minimum_only_if_required(self):
+        text='[main_parameters]\nDOF_monte_carlo true;\nDOF_samples 500;\nDOF_min_samples 64;\n'
+        self.assertEqual(native_mc_settings(text,16)['overrides'],{'DOF_samples':16,'DOF_min_samples':16})
+        self.assertEqual(native_mc_settings(text)['overrides'],{})
+        with self.assertRaises(ValueError):native_mc_settings(text,0)
+
+    def test_unused_zero_sampling_values_do_not_block_non_mc_scenes(self):
+        text='[main_parameters]\nDOF_samples 0;\nDOF_min_samples 0;\n'
+        self.assertEqual(native_mc_settings(text,32)['overrides'],{})
+        text='[main_parameters]\nDOF_monte_carlo true;\nDOF_min_samples 0;\n'
+        settings=native_mc_settings(text,16)
+        self.assertEqual(settings['overrides'],{'DOF_samples':16})
+        self.assertEqual(settings['effective_minimum'],0)
+
+    def test_overlap_is_bounded_and_records_on_main_thread(self):
+        native_started=threading.Event()
+        gpu_finished=threading.Event()
+        main=threading.get_ident()
+        calls=[]
+        def render(mode):
+            calls.append(mode)
+            if mode=='mandel':
+                native_started.set()
+                self.assertTrue(gpu_finished.wait(2))
+            else:
+                self.assertEqual(threading.get_ident(),main)
+                self.assertTrue(native_started.wait(2))
+                if mode=='authored':gpu_finished.set()
+            return dict(status='ok')
+        recorded=[]
+        def record(mode,result):
+            self.assertEqual(threading.get_ident(),main)
+            recorded.append(mode)
+        run_modes(['geometry','authored','mandel'],render,record,True)
+        self.assertEqual(sorted(calls),['authored','geometry','mandel'])
+        self.assertEqual(recorded,['geometry','authored','mandel'])
+
+    def test_serial_and_resume_pending_modes_only(self):
+        calls=[]
+        run_modes(['authored'],lambda m:calls.append(m),lambda m,r:None,True)
+        self.assertEqual(calls,['authored'])
+        calls=[]
+        run_modes(['geometry','authored','mandel'],lambda m:calls.append(m),lambda m,r:None)
+        self.assertEqual(calls,['geometry','authored','mandel'])
+
+    def test_deferred_inventory_does_not_promote_timeout(self):
+        row=dict(id='001',path='scene.fract',sha256='source',size=(16,12),
+                 modes=dict(mandel=dict(status='timeout',deferred=True,timeout_seconds=120)))
+        classify(row)
+        summary=dict(identity=dict(settings=dict(modes=['mandel'])),rows=[row])
+        with tempfile.TemporaryDirectory() as temp:
+            save(summary,Path(temp))
+            self.assertEqual(summary['counts']['native_deferred'],1)
+            self.assertEqual(summary['counts']['mandel'],0)
+            self.assertEqual(json.loads((Path(temp)/'deferred-native.json').read_text())['rows'][0]['timeout_seconds'],120)
+
     def test_empty_and_tab_separated_parameters(self):
         self.assertEqual(parameters('[main_parameters]\nfile_background ;\nformula_1\t42;\n;\n'),
             {'file_background':'','formula_1':'42'})

@@ -115,6 +115,14 @@ class VisualReviewTests(unittest.TestCase):
             self.assertEqual(combined['rows'][0],evidence['rows'][0])
             self.assertEqual(combined['rows'][1]['id'],'052')
             self.assertEqual(held['rows'],[])
+            report['identity']['settings']['native_mc_samples']=16
+            with self.assertRaisesRegex(ValueError,'screening-only'):
+                append_batch(evidence,assets,report,cat,'c'*40)
+            report['identity']['settings'].pop('native_mc_samples')
+            row['reference_overrides']={'DOF_samples':16}
+            with self.assertRaisesRegex(ValueError,'screening-only'):
+                append_batch(evidence,assets,report,cat,'c'*40)
+            row.pop('reference_overrides')
             failed=dict(row,id='053',path='failed.fract',sha256='e'*64,
                 modes={m:dict(status='timeout') for m in modes})
             cat['scenes'].append(dict(cat['scenes'][0],id='053',path='failed.fract',sha256='e'*64))
