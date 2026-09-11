@@ -1,6 +1,6 @@
 # Reviewed Scenes: Page 7
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
@@ -52,34 +52,34 @@ accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 Symmetric curled lobes, central bright motif and crossed lower stems align closely. Reflective colours and fine highlights differ, without obvious large structural loss.
 
-## [375: Construct by Ectoplaz 2](375.md)
+## [075: Jos Leys Kleinian v3](075.md)
 
-[![Native / FPT authored](images/375-thumb.webp)](375.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Main green structure and framing align and remain readable. Native blue atmospheric fill is absent; background contrast and materials differ.
-
-## [378: GeneralizedFoldBox01](378.md)
-
-[![Native / FPT authored](images/378-thumb.webp)](378.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Large central surfaces and framing align. FPT is sharper/orange and native blur differs; fine depth and material parity are not certified.
-
-## [379: GeneralizedFoldBox02](379.md)
-
-[![Native / FPT authored](images/379-thumb.webp)](379.md)
+[![Native / FPT authored](images/075-thumb.webp)](075.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Refreshed water surface and red sphere are restored; broad cavern framing matches. Reflections, saturation and sphere roughness still differ.
+Elongated central body, paired curled lobes and bead-like surface pattern align. Red/gold highlights and dark background tone differ slightly; fine reflective parity is not certified.
 
-## [380: GeneralizedFoldBox03_2](380.md)
+## [077: KochV4](077.md)
 
-[![Native / FPT authored](images/380-thumb.webp)](380.md)
+[![Native / FPT authored](images/077-thumb.webp)](077.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Refreshed box/displacement path restores the cavern instead of the earlier incorrect close surfaces. Broad opening and rock placement now align; blue contrast, highlights and fine cave detail remain imperfect.
+Stepped tower silhouette, central arch and repeated upper features align. FPT replaces multicoloured contour bands with mostly red material and shaded surfaces; colour/texture interpretation remains approximate.
+
+## [078: KochV5 01](078.md)
+
+[![Native / FPT authored](images/078-thumb.webp)](078.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Central floating rounded forms, surrounding platforms and square openings align. Gold reflection/transparency and noise differ, but the principal structure remains readable.
+
+## [079: KochV5](079.md)
+
+[![Native / FPT authored](images/079-thumb.webp)](079.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Symmetric tiered structure, upper arch and rectangular base align. FPT's stronger gold illumination and softer internal contrast change the material appearance, not the broad layout.

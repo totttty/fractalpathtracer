@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 8
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [381: Hybrid 1](381.md)
+## [080: KochV5_001](080.md)
 
-[![Native / FPT authored](images/381-thumb.webp)](381.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Central ornament placement and surrounding forms broadly align. Native soft focus becomes sharper and more contrasty in FPT.
-
-## [383: IFS 20](383.md)
-
-[![Native / FPT authored](images/383-thumb.webp)](383.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Broad rocky layout and framing align. Different focus, tan materials and sky response are visible; fine-depth fidelity is not claimed.
-
-## [387: IFS 25](387.md)
-
-[![Native / FPT authored](images/387-thumb.webp)](387.md)
+[![Native / FPT authored](images/080-thumb.webp)](080.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Oblique stepped block layout, main diagonal opening and camera match. Small surfaces have different highlight strength and colour balance.
+Oblique tiered structure, slabs, small openings and underside silhouette align. Yellow/orange highlights and fine underside shading differ slightly.
 
-## [388: IFS 26](388.md)
+## [081: KochV5_KochV5](081.md)
 
-[![Native / FPT authored](images/388-thumb.webp)](388.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Lobed canopy, twisted supports, central sphere and waterline align. FPT sphere reflections are much darker and the water/sky balance is warmer; exact reflective appearance is not certified.
-
-## [391: IFS 29_2](391.md)
-
-[![Native / FPT authored](images/391-thumb.webp)](391.md)
+[![Native / FPT authored](images/081-thumb.webp)](081.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Foreground rock outline, top cavity and left background opening align. FPT is sharper and more orange, without native depth-of-field blur; fine surface/optical parity is not claimed.
+Frontal nested square opening, foreground platform and side structures align. FPT gold reflections/transparency brighten the scene substantially, but the repeated openings and principal layout remain readable.
 
-## [393: IFS 31](393.md)
+## [082: KochV5_absAddConst](082.md)
 
-[![Native / FPT authored](images/393-thumb.webp)](393.md)
+[![Native / FPT authored](images/082-thumb.webp)](082.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Dense lattice corridor, central support and converging floor align. FPT has stronger bright speckling at 32 SPP and a coloured rather than grey atmosphere; fine detail/noise parity is not certified.
+Large foreground blocks, architectural grid and repeated fine cavities align closely. FPT has softer greyscale shading and some additional sampling noise; broad visibility remains consistent.
 
-## [563: Makin3D-Julia_001](563.md)
+## [083: KochV5_polyFld_sphereFld](083.md)
 
-[![Native / FPT authored](images/563-thumb.webp)](563.md)
+[![Native / FPT authored](images/083-thumb.webp)](083.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Curved foreground forms remain clear and similarly placed. Pink/yellow native environment becomes dark blue with chrome surfaces; accepted with strong material/environment caveats.
+Rounded lattice silhouette, top/bottom projections and embedded green forms align. FPT is redder and less sparkling than the gold native capture; fine detail is not certified at this resolution.
 
-## [564: Abox4D8K](564.md)
+## [084: Koch_Ifs aaa1](084.md)
 
-[![Native / FPT authored](images/564-thumb.webp)](564.md)
+[![Native / FPT authored](images/084-thumb.webp)](084.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Rounded corridor features and camera framing align. FPT replaces olive highlights with reddish lower-contrast shading.
+Symmetric outer ornaments, central rounded motif and rectangular support align. FPT is more green/gold with broader highlights and less sparkle; fine internal transparency is not certified.
 
-## [565: Caves-PseudoKleinianMod2](565.md)
+## [085: Koch_Ifs aaa3](085.md)
 
-[![Native / FPT authored](images/565-thumb.webp)](565.md)
+[![Native / FPT authored](images/085-thumb.webp)](085.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Cave pillars, water/floor extent and framing broadly align. Native reflective highlights and floor response differ.
+Folded ribbon structure, central slit and open side gaps align closely. Blue/orange bands match broadly; reflective noise and fine edge brightness differ.
 
-## [566: Caves2-PseudoKleinianMod2](566.md)
+## [086: Koch_Ifs aaa4](086.md)
 
-[![Native / FPT authored](images/566-thumb.webp)](566.md)
+[![Native / FPT authored](images/086-thumb.webp)](086.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Cave walls and pillar positions align, with the structure clearly readable. Patterned green FPT materials differ from native highlights.
+Scattered radial block clusters, surrounding round forms and camera framing align. Blue/gold colours are broadly similar; FPT has softer contrast and altered reflection/transparency.
+
+## [087: MbulbAbsPow2_001](087.md)
+
+[![Native / FPT authored](images/087-thumb.webp)](087.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Open spherical lattice, floral loops and central gaps align closely. Blue/gold reflections and fine edge highlights differ slightly.
+
+## [089: Menger 4D Mod1](089.md)
+
+[![Native / FPT authored](images/089-thumb.webp)](089.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Curved blue columns, pink foreground arch and circular cavity align closely. FPT changes reflective brightness and transparency, but the colourful surfaces and large openings remain readable.
+
+## [090: MengerMid_RotVary_SphOffsetVCL](090.md)
+
+[![Native / FPT authored](images/090-thumb.webp)](090.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Rounded red/gold lobes, center opening and foreground silhouette align. The ground material differs substantially, becoming concentric bands rather than a mottled texture; acceptance is limited to readable object geometry, not background material parity.

@@ -12,6 +12,20 @@ def fixture():
 
 
 class SelectionTests(unittest.TestCase):
+    def test_deferred_references_are_excluded_without_changing_catalog_status(self):
+        cat,report=fixture()
+        original=copy.deepcopy(cat)
+        deferred=dict(rows=[cat['scenes'][0]])
+        result=select(cat,report,3,[deferred])
+        self.assertEqual([r['id'] for r in result['scenes']],['002','004','003'])
+        self.assertEqual(result['deferred_ids'],['001'])
+        self.assertEqual(cat,original)
+        for mutation in ('id','sha256'):
+            bad=copy.deepcopy(deferred)
+            bad['rows'][0][mutation]='999' if mutation=='id' else 'f'*64
+            with self.subTest(mutation=mutation),self.assertRaises(ValueError):
+                select(cat,report,3,[bad])
+
     def test_balanced_exclusion_and_determinism(self):
         cat,report=fixture()
         cat['scenes'][0]['status']='reviewed'

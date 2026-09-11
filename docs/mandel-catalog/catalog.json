@@ -29,14 +29,14 @@
   "counts": {
     "total": 746,
     "statuses": {
-      "reviewed": 111,
-      "blocked": 58,
-      "experimental": 577
+      "reviewed": 138,
+      "blocked": 76,
+      "experimental": 532
     },
     "gallery_published": 50,
     "additional_reference_reviewed": 50,
     "historical_both_modes_passed": 675,
-    "explicit_visual_decisions": 148
+    "explicit_visual_decisions": 193
   },
   "scenes": [
     {
@@ -5906,7 +5906,7 @@
       "name": "Jos Leys Kleinian v3",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Jos%20Leys%20Kleinian%20v3.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -5920,10 +5920,71 @@
           "capture_sha256": "12656c6091e1ff8320fe12be058e667c35d06fc9a86940ee92388f7033e50058"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Elongated central body, paired curled lobes and bead-like surface pattern align. Red/gold highlights and dark background tone differ slightly; fine reflective parity is not certified.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "075",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Elongated central body, paired curled lobes and bead-like surface pattern align. Red/gold highlights and dark background tone differ slightly; fine reflective parity is not certified.",
+        "source_sha256": "5c2d866f47b53820189f4781a5760bd0451a2cea810f97a5a8ab7a0bfce3a690",
+        "evidence_sha256": "c0e178895229e49efd9aa35799eaee1a666c6016a316ebfd6d76d4c70febbe75",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "075",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Jos Leys Kleinian v3.fract",
+        "sha256": "5c2d866f47b53820189f4781a5760bd0451a2cea810f97a5a8ab7a0bfce3a690",
+        "dimensions": [
+          300,
+          200
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "68130925c52eccf8841861a5e0c5589dbb76c3b69be6771e7fb9c5fb67ef9d9e",
+            "dimensions": [
+              300,
+              200
+            ]
+          },
+          "geometry": {
+            "sha256": "a1aa90aa97cb8a715ac715d4dfd7316d23d9e3a24520b27432a58af57535b2bc",
+            "dimensions": [
+              300,
+              200
+            ],
+            "metadata_sha256": "57aa8984af9a78ea4486884eccc6ec91f01e54ed225cb7bd2e33529a4ae00973"
+          },
+          "authored": {
+            "sha256": "ce7b17dc258c40f88811fd6f21cdea8492465f5815cfe229bfcea916e5c62a72",
+            "dimensions": [
+              300,
+              200
+            ],
+            "metadata_sha256": "91b7e47b7eea5b146a19553e7d1fe86bf0cc307f96381d9fe2bfcba45def4308"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "68130925c52eccf8841861a5e0c5589dbb76c3b69be6771e7fb9c5fb67ef9d9e",
+        "geometry": "a1aa90aa97cb8a715ac715d4dfd7316d23d9e3a24520b27432a58af57535b2bc",
+        "authored": "ce7b17dc258c40f88811fd6f21cdea8492465f5815cfe229bfcea916e5c62a72"
+      }
     },
     {
       "id": "076",
@@ -5933,8 +5994,10 @@
       "name": "KIFS_mandelbulb_trapLights",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/KIFS_mandelbulb_trapLights.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "The spherical arrangement aligns, but the native red trap-light line network disappears entirely and the spheres change to dim green. The defining authored lighting feature is missing."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -5947,10 +6010,71 @@
           "capture_sha256": "795bb44bf2af7355a53e3fc58527cbe0abe66df9aa5b6cb6c03294e60e5e580f"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The spherical arrangement aligns, but the native red trap-light line network disappears entirely and the spheres change to dim green. The defining authored lighting feature is missing.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "076",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "The spherical arrangement aligns, but the native red trap-light line network disappears entirely and the spheres change to dim green. The defining authored lighting feature is missing.",
+        "source_sha256": "72026bee585617e162a47f5c9961777c0890bcb56919d14401784846a7b2f933",
+        "evidence_sha256": "9a815eeb790976167af0455fc37823df70f59a05b8cbc36f6f1e52f02812af4f",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "076",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/KIFS_mandelbulb_trapLights.fract",
+        "sha256": "72026bee585617e162a47f5c9961777c0890bcb56919d14401784846a7b2f933",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "905dc170b000610c57b612cd1f0331655178d4099052ec173cabac68fd7f8369",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "5058ea643cf1e7633e78e5c266c6c9de265271ec67361bc09f08a0ef62a25bf7",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "667a564c86c59e05db99f599fe7800f036b1b6668c7464c6bbc2aeb9301ebec5"
+          },
+          "authored": {
+            "sha256": "1d5b876609966beb6488a8420afd757670a67ddef82fc43ecdbbfe414bf40fcd",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "fa34d99d3f132dffd83c0073af9b6fe2554036aef60109f64e3f4d4f2e73e805"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "905dc170b000610c57b612cd1f0331655178d4099052ec173cabac68fd7f8369",
+        "geometry": "5058ea643cf1e7633e78e5c266c6c9de265271ec67361bc09f08a0ef62a25bf7",
+        "authored": "1d5b876609966beb6488a8420afd757670a67ddef82fc43ecdbbfe414bf40fcd"
+      }
     },
     {
       "id": "077",
@@ -5960,7 +6084,7 @@
       "name": "KochV4",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/KochV4.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -5974,10 +6098,71 @@
           "capture_sha256": "7674760028a33bc31d6b7335e7dace0b53d96dab39cb20d2798a7dbfadf75c97"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Stepped tower silhouette, central arch and repeated upper features align. FPT replaces multicoloured contour bands with mostly red material and shaded surfaces; colour/texture interpretation remains approximate.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "077",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Stepped tower silhouette, central arch and repeated upper features align. FPT replaces multicoloured contour bands with mostly red material and shaded surfaces; colour/texture interpretation remains approximate.",
+        "source_sha256": "4ef07c495e47723feb6bf78be082ba054600f6cd2b29118df3a7d66c536a85bf",
+        "evidence_sha256": "6e73b7032e7b3a1fe79d1d36b7ce0b31de5d5b0b20811c130ee12c1872b4506f",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "077",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/KochV4.fract",
+        "sha256": "4ef07c495e47723feb6bf78be082ba054600f6cd2b29118df3a7d66c536a85bf",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "031088036f4b25905ef58eec402077b13c0ef01023a296954a9401f068bacf94",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "f97f985b2c804dde74470d061d7abba3c54bf03f304819325deae9bec1a3a372",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "545376030096ae68352cef71880049dcfab20633b29a03a45ce02fde28a3c195"
+          },
+          "authored": {
+            "sha256": "74885a3d4087353eda08a2ebb0a675dafe1f71cbb759a1eb19e0340ad837de09",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "c87cce074e455991c8efb90e6f2a22761c341a08ddc6ccd5df9c93aa3b7684aa"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "031088036f4b25905ef58eec402077b13c0ef01023a296954a9401f068bacf94",
+        "geometry": "f97f985b2c804dde74470d061d7abba3c54bf03f304819325deae9bec1a3a372",
+        "authored": "74885a3d4087353eda08a2ebb0a675dafe1f71cbb759a1eb19e0340ad837de09"
+      }
     },
     {
       "id": "078",
@@ -5987,7 +6172,7 @@
       "name": "KochV5 01",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/KochV5%2001.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6001,10 +6186,71 @@
           "capture_sha256": "d2690832759179e383fb3b7b7ebfb0e3cbcbc9f69f5797caa8e34ddfb429557a"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Central floating rounded forms, surrounding platforms and square openings align. Gold reflection/transparency and noise differ, but the principal structure remains readable.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "078",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Central floating rounded forms, surrounding platforms and square openings align. Gold reflection/transparency and noise differ, but the principal structure remains readable.",
+        "source_sha256": "d208471aab7f1c627301bea90d609db07194401e1364cfd292643000e1876147",
+        "evidence_sha256": "1c57a5cf4c62d843f6708e657310a3ec78283ae03aada668b2a83bd1105a4fbe",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "078",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/KochV5 01.fract",
+        "sha256": "d208471aab7f1c627301bea90d609db07194401e1364cfd292643000e1876147",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "c3738bb98d18ff9643a4d6d7d958483a4f436a8d3bc7dead353a63d534ca5d85",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "b80a92e8f44d08628729d309ecfd36caed5b0fd34e354a35435f3b636685e777",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "f15c140461aa025ea17100fa03c5528cc67369603fbc2ff09c9f4e23b3ab9581"
+          },
+          "authored": {
+            "sha256": "7bb6df6aa42ecf26b49e6913a5db239eb168400783afafd025cfbdfdd67d7432",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "5c1d9eab36084bab48a73b5476a3e3bd7382e62babb968c0273171a0ee66a989"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "c3738bb98d18ff9643a4d6d7d958483a4f436a8d3bc7dead353a63d534ca5d85",
+        "geometry": "b80a92e8f44d08628729d309ecfd36caed5b0fd34e354a35435f3b636685e777",
+        "authored": "7bb6df6aa42ecf26b49e6913a5db239eb168400783afafd025cfbdfdd67d7432"
+      }
     },
     {
       "id": "079",
@@ -6014,7 +6260,7 @@
       "name": "KochV5",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/KochV5.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6028,10 +6274,71 @@
           "capture_sha256": "b70cde5f706ae2b15dc9cc8c1563f81da9b5560e1d176a14c9c09e24a3cdf0c6"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Symmetric tiered structure, upper arch and rectangular base align. FPT's stronger gold illumination and softer internal contrast change the material appearance, not the broad layout.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "079",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Symmetric tiered structure, upper arch and rectangular base align. FPT's stronger gold illumination and softer internal contrast change the material appearance, not the broad layout.",
+        "source_sha256": "91102302602a8def5b2ae2ec0556dc0470d94926fdf0564363f663ea14799595",
+        "evidence_sha256": "828b9c754342cb9929580c6d3f6e6ca3314a87b4b4cb874c1cc795a35e6cccab",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "079",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/KochV5.fract",
+        "sha256": "91102302602a8def5b2ae2ec0556dc0470d94926fdf0564363f663ea14799595",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "dd0358d2c5eabfad89cd2ca56bf48c0574b09613750d58bf0007e0e0bf59c70a",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "d9b6a894892896f04e934cce53481b82254d2f14988ff7580ab2ca0c12e50971",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "fc61c23de8448334fe3bbe64b439798743324527b9841f777c4d98a402ebccbe"
+          },
+          "authored": {
+            "sha256": "30693b6e923eed0826849a04fea5bb5c38734a5216a9e80d7c3d2b5f5cb81a8b",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "e8c28c95ed909763a3f8ed471fbecff696bac5a419c317169e66023709ce7cd9"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "dd0358d2c5eabfad89cd2ca56bf48c0574b09613750d58bf0007e0e0bf59c70a",
+        "geometry": "d9b6a894892896f04e934cce53481b82254d2f14988ff7580ab2ca0c12e50971",
+        "authored": "30693b6e923eed0826849a04fea5bb5c38734a5216a9e80d7c3d2b5f5cb81a8b"
+      }
     },
     {
       "id": "080",
@@ -6041,7 +6348,7 @@
       "name": "KochV5_001",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/KochV5_001.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6055,10 +6362,71 @@
           "capture_sha256": "dda5e633f523a3f7b76c79f07f7bfe51bba655e139a57f7f3f2869464c7849a0"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Oblique tiered structure, slabs, small openings and underside silhouette align. Yellow/orange highlights and fine underside shading differ slightly.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "080",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Oblique tiered structure, slabs, small openings and underside silhouette align. Yellow/orange highlights and fine underside shading differ slightly.",
+        "source_sha256": "449ef62a226a3f36fca0d05d8e96d99061df36aac8ae13de2fc457add9041b74",
+        "evidence_sha256": "3d6d6a027ae066d43bedb1259a8f0b5584f1212919eca29e31f4904b020c6527",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "080",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/KochV5_001.fract",
+        "sha256": "449ef62a226a3f36fca0d05d8e96d99061df36aac8ae13de2fc457add9041b74",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "1613e1b6329171d06031a8da649d663bce32d1b8de85bee255d96012351f4f25",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "3f2aadedc7958458c50063a7f64d8e6b14b6577f0e275515c459ab82963fb230",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "86a1e0483372dd301734277f57cbfc776e6012dfd85479d1e6e4d77ef78d7cd4"
+          },
+          "authored": {
+            "sha256": "720e3f2f848caefb81b384aa4c355209458ac8528df6e30b4177130a32ad3c56",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "4c175f70efae5b82bc01f74aec72f9f5c90920fea4f8ebc92b59f3dbce606acc"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "1613e1b6329171d06031a8da649d663bce32d1b8de85bee255d96012351f4f25",
+        "geometry": "3f2aadedc7958458c50063a7f64d8e6b14b6577f0e275515c459ab82963fb230",
+        "authored": "720e3f2f848caefb81b384aa4c355209458ac8528df6e30b4177130a32ad3c56"
+      }
     },
     {
       "id": "081",
@@ -6068,7 +6436,7 @@
       "name": "KochV5_KochV5",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/KochV5_KochV5.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6082,10 +6450,71 @@
           "capture_sha256": "2d6f3cf74a377ce5d7b2c03da76c75b6fa64663ee0bba3e26c2a1a8b556582f5"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Frontal nested square opening, foreground platform and side structures align. FPT gold reflections/transparency brighten the scene substantially, but the repeated openings and principal layout remain readable.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "081",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Frontal nested square opening, foreground platform and side structures align. FPT gold reflections/transparency brighten the scene substantially, but the repeated openings and principal layout remain readable.",
+        "source_sha256": "3557e16f11a55869e375d95eb5ccd9b65925a4e9cb0fe1b4502fa687e3bf877f",
+        "evidence_sha256": "fa401ca08491298ea2d8372ce2431a539a918c18a81fc12c5d198928e62d3b4e",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "081",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/KochV5_KochV5.fract",
+        "sha256": "3557e16f11a55869e375d95eb5ccd9b65925a4e9cb0fe1b4502fa687e3bf877f",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "a30af93fd570f7f8bfc991beae7d4989f09fe346479c6edf07862ecf2e770146",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "e795b578599ac32074a23063ff0545cdcf7f9158b200ce2bf8a9acf357523733",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "ba0bf9d594e4662813ace039c64c3c224a9023caccd6b8870f19ace6e64ddb1f"
+          },
+          "authored": {
+            "sha256": "0241ba4e3dbc1229d8fdb70bef029ba42472db85ceb65aff4285a7436a3066e7",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "4fb4902b1980cdb6b7b49b6ecbee816c0305b8ebca6a7299e17b68894e863c92"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "a30af93fd570f7f8bfc991beae7d4989f09fe346479c6edf07862ecf2e770146",
+        "geometry": "e795b578599ac32074a23063ff0545cdcf7f9158b200ce2bf8a9acf357523733",
+        "authored": "0241ba4e3dbc1229d8fdb70bef029ba42472db85ceb65aff4285a7436a3066e7"
+      }
     },
     {
       "id": "082",
@@ -6095,7 +6524,7 @@
       "name": "KochV5_absAddConst",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/KochV5_absAddConst.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6109,10 +6538,71 @@
           "capture_sha256": "ab97ab2d81c644d53cc23425562162155aa9b07766cb8776c33c703e9868b9e3"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Large foreground blocks, architectural grid and repeated fine cavities align closely. FPT has softer greyscale shading and some additional sampling noise; broad visibility remains consistent.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "082",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Large foreground blocks, architectural grid and repeated fine cavities align closely. FPT has softer greyscale shading and some additional sampling noise; broad visibility remains consistent.",
+        "source_sha256": "d801af0e3efa46a30aaeeb100e986425b484827e5ee55a8e8c5a2f9ed031771d",
+        "evidence_sha256": "f7e123731502159f650b4bb1536973284664ca52b20c6a783c0efd2805c87804",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "082",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/KochV5_absAddConst.fract",
+        "sha256": "d801af0e3efa46a30aaeeb100e986425b484827e5ee55a8e8c5a2f9ed031771d",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "aa98e51dd046f0c57936243c902985fab31de9205116340cac2f5974ffcbe47b",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "d150942b5baa9e7bb43e31b2c61895739c8ebadb614bc177734804f064895399",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "446d6046c2298e0160e16bc8e59d302bebe87d63dcdba6cbfceec322869dadb3"
+          },
+          "authored": {
+            "sha256": "791e449cfaf567149096357920de8cab72cefa4613b34db0b48f25793a9ee054",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "1baa422c52165a3e52af15d2ffd585fe89b59bcfb89532e6014e5411714d47ad"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "aa98e51dd046f0c57936243c902985fab31de9205116340cac2f5974ffcbe47b",
+        "geometry": "d150942b5baa9e7bb43e31b2c61895739c8ebadb614bc177734804f064895399",
+        "authored": "791e449cfaf567149096357920de8cab72cefa4613b34db0b48f25793a9ee054"
+      }
     },
     {
       "id": "083",
@@ -6122,7 +6612,7 @@
       "name": "KochV5_polyFld_sphereFld",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/KochV5_polyFld_sphereFld.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6136,10 +6626,71 @@
           "capture_sha256": "129257deef881efd219f2f860240b0ed5f504f69f7100e5cb04f80697d7e9dd3"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Rounded lattice silhouette, top/bottom projections and embedded green forms align. FPT is redder and less sparkling than the gold native capture; fine detail is not certified at this resolution.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "083",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Rounded lattice silhouette, top/bottom projections and embedded green forms align. FPT is redder and less sparkling than the gold native capture; fine detail is not certified at this resolution.",
+        "source_sha256": "df061ba75b235bd7b665e66a57a71862f8adf0edcab1662366ed1a3cfec2c7cf",
+        "evidence_sha256": "b1954f101468b1bccf0942ff7d4b97227267ea415e20c614fbaf9dc12d599dfe",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "083",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/KochV5_polyFld_sphereFld.fract",
+        "sha256": "df061ba75b235bd7b665e66a57a71862f8adf0edcab1662366ed1a3cfec2c7cf",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "efc1fd7cf3d9700978f6f8dea9f0a645df84ed1a00ae46e07fa243ade14223ba",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "986cc73c6739c1a23771b30b168aedd8c4450df0aa10eef9d9cfec4b68bf2f89",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "b4803df2bc69410cfb7460ec1943a03eaa2f4965fb1a31679663ed59519fcba9"
+          },
+          "authored": {
+            "sha256": "7e72b53db1f789c32b010613f97be228658c5e654e93307a0711cd4c67fd630a",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "3e9b65983f2fb2655c531d2b9a917aaf9de9b9c888a74962636672b95d1e1e7c"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "efc1fd7cf3d9700978f6f8dea9f0a645df84ed1a00ae46e07fa243ade14223ba",
+        "geometry": "986cc73c6739c1a23771b30b168aedd8c4450df0aa10eef9d9cfec4b68bf2f89",
+        "authored": "7e72b53db1f789c32b010613f97be228658c5e654e93307a0711cd4c67fd630a"
+      }
     },
     {
       "id": "084",
@@ -6149,7 +6700,7 @@
       "name": "Koch_Ifs aaa1",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Koch_Ifs%20aaa1.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6163,10 +6714,71 @@
           "capture_sha256": "b4025ab1ae95e510af0d8bd5e1facdc701922e13792b5824ff63f06787b22251"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Symmetric outer ornaments, central rounded motif and rectangular support align. FPT is more green/gold with broader highlights and less sparkle; fine internal transparency is not certified.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "084",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Symmetric outer ornaments, central rounded motif and rectangular support align. FPT is more green/gold with broader highlights and less sparkle; fine internal transparency is not certified.",
+        "source_sha256": "0ac95acb49303a0a95260d0863fce353ab9e854a84aef7c463a51669007e5b62",
+        "evidence_sha256": "ed5cbcce009f8c2a800fae32016438a87d3483f9b50ead4041c1bb171c68d87d",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "084",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Koch_Ifs aaa1.fract",
+        "sha256": "0ac95acb49303a0a95260d0863fce353ab9e854a84aef7c463a51669007e5b62",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "64da7c20a309ccd7493343fa0086884d1d55463531ccdccbf71f1bd97b52919a",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "714c1cfd6dcbfd78d53a9a8548ac7b5e63a08b4cb52ec376c9de5b1507857bbf",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "f8a5760ee846aee0f8580bf5039e6ba11ee826a6734c9b439b1b1d56dcadf266"
+          },
+          "authored": {
+            "sha256": "d11483dab5a1ccd4ad1952ddd5e0bcd547778139ba4aed091204db1add0fd5e2",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "3f620b8b8565b4e4b1b1afc8cb4ef12dae200a8b865ceb91053da56d7b8c461b"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "64da7c20a309ccd7493343fa0086884d1d55463531ccdccbf71f1bd97b52919a",
+        "geometry": "714c1cfd6dcbfd78d53a9a8548ac7b5e63a08b4cb52ec376c9de5b1507857bbf",
+        "authored": "d11483dab5a1ccd4ad1952ddd5e0bcd547778139ba4aed091204db1add0fd5e2"
+      }
     },
     {
       "id": "085",
@@ -6176,7 +6788,7 @@
       "name": "Koch_Ifs aaa3",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Koch_Ifs%20aaa3.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6190,10 +6802,71 @@
           "capture_sha256": "9f34dd01b1cd0199d5d806150d98b698159004b90f5483fcebbffe9b2409cff1"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Folded ribbon structure, central slit and open side gaps align closely. Blue/orange bands match broadly; reflective noise and fine edge brightness differ.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "085",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Folded ribbon structure, central slit and open side gaps align closely. Blue/orange bands match broadly; reflective noise and fine edge brightness differ.",
+        "source_sha256": "3f1a3958ccd2a9d439be924c179314367653e177b61077fea4fd61917b93acd6",
+        "evidence_sha256": "4abf84ed74e655ae32844fe0c9cdd2598fd8dc31910d3eb336657edf685af6e3",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "085",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Koch_Ifs aaa3.fract",
+        "sha256": "3f1a3958ccd2a9d439be924c179314367653e177b61077fea4fd61917b93acd6",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "78c408a2259d92ff9163a67a1d979e1740827eaf810efdb3c5c5fce92fabb378",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "b07f7acf4f82106c0152cddb6b651b3e5ad7e7a282fa15fdb3003d7758aad39e",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "6ce57ed92edaf0d8f3d0c58e86b96846820dea3c4944589956583c0425982c4d"
+          },
+          "authored": {
+            "sha256": "f13e5900deed0554c313005b56e82639486f718cb3a503ba77dc5c6ea7306bc3",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "354656348283bcf17a4873c43ba99a2f52fec3220a72c60bf4c49a2f7290e6ad"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "78c408a2259d92ff9163a67a1d979e1740827eaf810efdb3c5c5fce92fabb378",
+        "geometry": "b07f7acf4f82106c0152cddb6b651b3e5ad7e7a282fa15fdb3003d7758aad39e",
+        "authored": "f13e5900deed0554c313005b56e82639486f718cb3a503ba77dc5c6ea7306bc3"
+      }
     },
     {
       "id": "086",
@@ -6203,7 +6876,7 @@
       "name": "Koch_Ifs aaa4",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Koch_Ifs%20aaa4.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6217,10 +6890,71 @@
           "capture_sha256": "0fea56e22ac7abe0278605d2630b47c00eb513561c99fe788333e3c748afbb9d"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Scattered radial block clusters, surrounding round forms and camera framing align. Blue/gold colours are broadly similar; FPT has softer contrast and altered reflection/transparency.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "086",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Scattered radial block clusters, surrounding round forms and camera framing align. Blue/gold colours are broadly similar; FPT has softer contrast and altered reflection/transparency.",
+        "source_sha256": "a1e9745494b71439f0ae42e76bbeb1697d9890d8872db434d77eaa20e4471563",
+        "evidence_sha256": "74b9ca72ff03e1ebfd7516484fe94157649d8425c45a0606791968fe6141d75b",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "086",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Koch_Ifs aaa4.fract",
+        "sha256": "a1e9745494b71439f0ae42e76bbeb1697d9890d8872db434d77eaa20e4471563",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "49a7e2cb718c930ded3ef85e25de1e6ecc156a22eeb566157eca99f37e720c91",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "d0fc5e0ac029357e11c77b2f88a59fd64947d7d389f459346bae64aa172ad193",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "84ea0697d4e0f7e4e07bd70f9f9a3464b14e5fbc9e9f3481e13c18731e00c63e"
+          },
+          "authored": {
+            "sha256": "65816f778b6435069bf4e03be9c13d89349ce2f032e1da5e62d051cda3e67a30",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "c5a1e4568fdeafcb57503a8335ae735bdb3ad4eb200e0761ce04b735f094570f"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "49a7e2cb718c930ded3ef85e25de1e6ecc156a22eeb566157eca99f37e720c91",
+        "geometry": "d0fc5e0ac029357e11c77b2f88a59fd64947d7d389f459346bae64aa172ad193",
+        "authored": "65816f778b6435069bf4e03be9c13d89349ce2f032e1da5e62d051cda3e67a30"
+      }
     },
     {
       "id": "087",
@@ -6230,7 +6964,7 @@
       "name": "MbulbAbsPow2_001",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/MbulbAbsPow2_001.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6244,10 +6978,71 @@
           "capture_sha256": "1dea61a9619ed05e31be12a7f52ed53a0bbf7c2f70a06d390b31a63c5adb8c92"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Open spherical lattice, floral loops and central gaps align closely. Blue/gold reflections and fine edge highlights differ slightly.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "087",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Open spherical lattice, floral loops and central gaps align closely. Blue/gold reflections and fine edge highlights differ slightly.",
+        "source_sha256": "09485d54387faaf499aae685fcce3781f2c169ce456ddee06dd474b1156a6ea2",
+        "evidence_sha256": "56be541e078d6cf541f5838080deb88b98866f01b5317f3912267d40fd02a3f2",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "087",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/MbulbAbsPow2_001.fract",
+        "sha256": "09485d54387faaf499aae685fcce3781f2c169ce456ddee06dd474b1156a6ea2",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "db5321e82547d10d23e327d5f4775adf1f5794706988a33f3525008472c0e252",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "f30fcad3e1e9852c765bd237704f2f8693d7f531d5304850b8b43cb71c067bbb",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "8b95826941bb5d92bbf18845e3c87faa6e8ef5f0fed898321af11a43314cf202"
+          },
+          "authored": {
+            "sha256": "a33b4d1f41198372e410c0d970748bb612503964b8fd633e2b5ab913d8ed07be",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "f80e09c7ffb6c370e789ffd0ed64ef41b9900c98ef7de33f46612f0cc4d6c1ae"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "db5321e82547d10d23e327d5f4775adf1f5794706988a33f3525008472c0e252",
+        "geometry": "f30fcad3e1e9852c765bd237704f2f8693d7f531d5304850b8b43cb71c067bbb",
+        "authored": "a33b4d1f41198372e410c0d970748bb612503964b8fd633e2b5ab913d8ed07be"
+      }
     },
     {
       "id": "088",
@@ -6285,7 +7080,7 @@
       "name": "Menger 4D Mod1",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/Menger%204D%20Mod1.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6299,10 +7094,71 @@
           "capture_sha256": "1f75040c15444fa2dc87153a9169753152baad9df792489a1a98e41b709dd3d9"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Curved blue columns, pink foreground arch and circular cavity align closely. FPT changes reflective brightness and transparency, but the colourful surfaces and large openings remain readable.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "089",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Curved blue columns, pink foreground arch and circular cavity align closely. FPT changes reflective brightness and transparency, but the colourful surfaces and large openings remain readable.",
+        "source_sha256": "d8058cbb85eb75797d9930dd35c15af383dbce0153f53490c7ea63a40075a8e3",
+        "evidence_sha256": "4fd8c7576368267cbf5c6677b4e574867d1e7f1649d2b1e909ee0612607a8d64",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "089",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Menger 4D Mod1.fract",
+        "sha256": "d8058cbb85eb75797d9930dd35c15af383dbce0153f53490c7ea63a40075a8e3",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "d0fae4b9adabf21df4ffa9bc906674431d92d76940f7b4cadc7047a1d8e23703",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "b6a354bd94bce0304d0feb4d7dcdb7d664f83d1130019dc2113b33278ebef177",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "87cc1f461313d17838aa7c01ef1ebf5fb486a4757485a514e7ed967716a32dee"
+          },
+          "authored": {
+            "sha256": "067acad112881c248a5d8bf08d02e6410de19db104504f4e77daff7f2079afe6",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "bc0bca48993b8bc6cbddf79cd657068a829efa3e9d8518730b0b90d9a71f26a0"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "d0fae4b9adabf21df4ffa9bc906674431d92d76940f7b4cadc7047a1d8e23703",
+        "geometry": "b6a354bd94bce0304d0feb4d7dcdb7d664f83d1130019dc2113b33278ebef177",
+        "authored": "067acad112881c248a5d8bf08d02e6410de19db104504f4e77daff7f2079afe6"
+      }
     },
     {
       "id": "090",
@@ -6312,7 +7168,7 @@
       "name": "MengerMid_RotVary_SphOffsetVCL",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/MengerMid_RotVary_SphOffsetVCL.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6326,10 +7182,71 @@
           "capture_sha256": "b42d741275defd267c8f39973f641a75bdcb0e5316549963aefd8aaf53279659"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Rounded red/gold lobes, center opening and foreground silhouette align. The ground material differs substantially, becoming concentric bands rather than a mottled texture; acceptance is limited to readable object geometry, not background material parity.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "090",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Rounded red/gold lobes, center opening and foreground silhouette align. The ground material differs substantially, becoming concentric bands rather than a mottled texture; acceptance is limited to readable object geometry, not background material parity.",
+        "source_sha256": "81849d18dc8f99364c1a48614e4f4e7e829fef6ce986868afc0ebb26d075d69e",
+        "evidence_sha256": "3f4674878ca6248af2ea25d935c3e04bd6629fcabb7e706672265f28c48849d9",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "090",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/MengerMid_RotVary_SphOffsetVCL.fract",
+        "sha256": "81849d18dc8f99364c1a48614e4f4e7e829fef6ce986868afc0ebb26d075d69e",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "c24174ae816e9a7ce7e981597c3decc1744bbaed7bb67048adca2fc10539f8c1",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "7c90a426e6f5a6e86dd21b6bacfb0f2f3c7a76d59cd37f467d0fbd125b402e2b",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "58177b05c9dd6d08515ec919d1a4096ccc1fbb6fcf38558938e7dda6d03b9031"
+          },
+          "authored": {
+            "sha256": "719f3b46d94254c669a2162fc699339e8d74728dc9e94b77d679570ded16e0fe",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "f4213e4b265be644bf4a4b41301ebd3fbaab3b2aa0761e01016b68b56311ce27"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "c24174ae816e9a7ce7e981597c3decc1744bbaed7bb67048adca2fc10539f8c1",
+        "geometry": "7c90a426e6f5a6e86dd21b6bacfb0f2f3c7a76d59cd37f467d0fbd125b402e2b",
+        "authored": "719f3b46d94254c669a2162fc699339e8d74728dc9e94b77d679570ded16e0fe"
+      }
     },
     {
       "id": "091",
@@ -6339,7 +7256,7 @@
       "name": "MengerV4",
       "collection": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Graeme%20McLaren%20%20collection%20-%20license%20Creative%20Commons%20%20%28CC-BY%204.0%29/MengerV4.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -6353,10 +7270,71 @@
           "capture_sha256": "4010b511205ffa5aed54aa58904a218e41178ea9c70e1af9e3a075eafabd8f82"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Spiral thin-sheet silhouette, large gaps and internal filaments align. FPT is brighter yellow with broader highlights, but no large structural omission is apparent.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "091",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Spiral thin-sheet silhouette, large gaps and internal filaments align. FPT is brighter yellow with broader highlights, but no large structural omission is apparent.",
+        "source_sha256": "f01b919d638ef1f362c8ce7703b79e7379564b89ad1d247d5542d8f26b201f4b",
+        "evidence_sha256": "2d32e75d2f55897b5b6112b700a0005e75121968b46826a72d6598af81c39393",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "091",
+        "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/MengerV4.fract",
+        "sha256": "f01b919d638ef1f362c8ce7703b79e7379564b89ad1d247d5542d8f26b201f4b",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "4f63684453a1d29b13ba45c9143948033a49f941c532dcb0b9c057f8659c2b70",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "dd784c80aa568f460a3152b52b6e17343d6a60377dd6a8a7c0248f494e7dcae8",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "665445fef80cd85c80e60505c41d6d7b15b03fd0fbfae067a7483496cc9dd450"
+          },
+          "authored": {
+            "sha256": "0cf9e17bf75cc9f59ba13104a6851be75e8e2d21b9f7e35b6b3f6ece41778643",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "889ef27b8ad3f089189f3b5e3003a87f668248c9da931b294c6fe4bd95689813"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "4f63684453a1d29b13ba45c9143948033a49f941c532dcb0b9c057f8659c2b70",
+        "geometry": "dd784c80aa568f460a3152b52b6e17343d6a60377dd6a8a7c0248f494e7dcae8",
+        "authored": "0cf9e17bf75cc9f59ba13104a6851be75e8e2d21b9f7e35b6b3f6ece41778643"
+      }
     },
     {
       "id": "092",
@@ -16066,7 +17044,7 @@
       "name": "aboxmod15",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/aboxmod15.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -16080,10 +17058,71 @@
           "capture_sha256": "4e129a117f72d8fed293bbef7883ad705b8f0a968c50959d7ddd6fafe5cf5ead"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Dense central ridges, left foreground rise and right cliff outline align. FPT is sharper with stronger dark creases; native haze and fine-detail noise are not matched.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "398",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Dense central ridges, left foreground rise and right cliff outline align. FPT is sharper with stronger dark creases; native haze and fine-detail noise are not matched.",
+        "source_sha256": "31ef8b128b63ecc00a71d90a64d6f7199a1c63b0f58e4ad5e2f901d5809c92ef",
+        "evidence_sha256": "10e80e237bcd7f44dfa58e2f506f3d5ab76aab43aade7e9daf2e62a099240d91",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "398",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/aboxmod15.fract",
+        "sha256": "31ef8b128b63ecc00a71d90a64d6f7199a1c63b0f58e4ad5e2f901d5809c92ef",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "9803ec4e301fe7d3424c3eb8948601f7618e10c3716e40840e60a652e90bf3e9",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "e27f4e0404e4443891c9124c5538927d93dece343b54239bfdeb93b591b1c026",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "d798fce8419964e7c1996e2883faca3903f7421a7d87bed6a34cd6d50438f091"
+          },
+          "authored": {
+            "sha256": "c62044fb9b4a8993a87fbf4d47b2205bb1ffe397e0ff8b37670db8910012e13e",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "f1a09fa3d781e4ba7d836bce1bbee52617584579b91eb7757ef4f607d4d10c3b"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "9803ec4e301fe7d3424c3eb8948601f7618e10c3716e40840e60a652e90bf3e9",
+        "geometry": "e27f4e0404e4443891c9124c5538927d93dece343b54239bfdeb93b591b1c026",
+        "authored": "c62044fb9b4a8993a87fbf4d47b2205bb1ffe397e0ff8b37670db8910012e13e"
+      }
     },
     {
       "id": "399",
@@ -16093,8 +17132,10 @@
       "name": "addcpixelinvert",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/addcpixelinvert.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Cavern opening, hanging strands and foreground plane align, but the native bright yellow environment and red/gold patterned floor become dark desaturated surfaces in FPT."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -16107,10 +17148,71 @@
           "capture_sha256": "b9b83f385a5f6602b51d2bd7f180e347f51e04cad1e1ff29fe704e590a4fb075"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Cavern opening, hanging strands and foreground plane align, but the native bright yellow environment and red/gold patterned floor become dark desaturated surfaces in FPT.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "399",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Cavern opening, hanging strands and foreground plane align, but the native bright yellow environment and red/gold patterned floor become dark desaturated surfaces in FPT.",
+        "source_sha256": "1c876f60b8ed5d655ea570fd0d1cdc6fbbbeb46859021a487e9f35a4f5fcede8",
+        "evidence_sha256": "6f9166d153d2ee4b4469d187c539ef26451476bada97a3565d4c734dac57b9fd",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "399",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/addcpixelinvert.fract",
+        "sha256": "1c876f60b8ed5d655ea570fd0d1cdc6fbbbeb46859021a487e9f35a4f5fcede8",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "acd4d9e5bb00856319ef433de05ae53da74d15da0585e33129f67005479be0f4",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "908853dd64d05ae404a2f900d120085807091129b24f2d30c0c4fc35434a4306",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "ad6ca304652003b051e82aa7eee487ca7ee5e01a046f946d214c9a18a2176795"
+          },
+          "authored": {
+            "sha256": "e776f181e48e74e9e2633918e55ac829294010d66a384817eb205cbd6b5edd78",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "8e604299518b889f2e7832e0c834448cf04f31297e4543e95073b709549b5c13"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "acd4d9e5bb00856319ef433de05ae53da74d15da0585e33129f67005479be0f4",
+        "geometry": "908853dd64d05ae404a2f900d120085807091129b24f2d30c0c4fc35434a4306",
+        "authored": "e776f181e48e74e9e2633918e55ac829294010d66a384817eb205cbd6b5edd78"
+      }
     },
     {
       "id": "400",
@@ -16120,7 +17222,7 @@
       "name": "aexion01",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/aexion01.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -16134,10 +17236,71 @@
           "capture_sha256": "c66bca12cd3a901016a2f66919c9f4a979be8879e0644608b080589c226ec47e"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Tall central spire and sweeping stepped flanks align. FPT retains readable green surfaces but omits the native atmospheric sky; atmosphere is explicitly outside this acceptance.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "400",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Tall central spire and sweeping stepped flanks align. FPT retains readable green surfaces but omits the native atmospheric sky; atmosphere is explicitly outside this acceptance.",
+        "source_sha256": "66c080816828156f3a75c3e73dcaa171fd2a22cdf01c4971cdc529092deff67c",
+        "evidence_sha256": "75e2b6a36c1bd823293ff646674e006de97802e7ae1a21c7f5e0737108ff6a74",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "400",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/aexion01.fract",
+        "sha256": "66c080816828156f3a75c3e73dcaa171fd2a22cdf01c4971cdc529092deff67c",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "e7984ca6d2cd11d9548a2ec76b8e5a66aa2cba07242e49ec6040a69608fc6b00",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "fd915143bb797e30eaa53b4761a4ed05a99c6023e2aafb675ab2d988bc13ddaf",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "26e73a27aa0b51837b58faaf92a818fcc7298015334d04c1a721425d361fe308"
+          },
+          "authored": {
+            "sha256": "5165a66458566075b326f148695b71494c018e21ec806bd9f2c1281d48b43681",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "6a1bd26165d57cca658a3f2111a6610333c7f9aff601a9c1bee372e2985ee2a3"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "e7984ca6d2cd11d9548a2ec76b8e5a66aa2cba07242e49ec6040a69608fc6b00",
+        "geometry": "fd915143bb797e30eaa53b4761a4ed05a99c6023e2aafb675ab2d988bc13ddaf",
+        "authored": "5165a66458566075b326f148695b71494c018e21ec806bd9f2c1281d48b43681"
+      }
     },
     {
       "id": "401",
@@ -16147,8 +17310,10 @@
       "name": "aexion02",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/aexion02.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Spire positions and stepped surfaces align, but FPT loses the illuminated horizon and much of the dark rear-spire separation. Thin features are harder to read in the authored result."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -16161,10 +17326,71 @@
           "capture_sha256": "0723b1035836727054a6770a9b29db27a8b5b5edd43525cb4a685fac8840af8a"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Spire positions and stepped surfaces align, but FPT loses the illuminated horizon and much of the dark rear-spire separation. Thin features are harder to read in the authored result.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "401",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Spire positions and stepped surfaces align, but FPT loses the illuminated horizon and much of the dark rear-spire separation. Thin features are harder to read in the authored result.",
+        "source_sha256": "8fd31851b61c27b73ded0bdfc6fedc5f2eef9e2b21562dcea74b19fe1271580b",
+        "evidence_sha256": "2a1c7c02a82d9c029661d9cc84ffd76be7b5f40f93c0252e728d269544d49e1b",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "401",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/aexion02.fract",
+        "sha256": "8fd31851b61c27b73ded0bdfc6fedc5f2eef9e2b21562dcea74b19fe1271580b",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "e61ceab3008a6c85f42f8be3215195a07ba689828d2a881b8306902e6078c783",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "af47236e3c81f1caecf158b01adceeb88466479ae3120ea20271d8173e132731",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "926edb988484ce0f349fa39b9b7abbdb447e1afbb6d7e6f5fdc9e8bd08c11110"
+          },
+          "authored": {
+            "sha256": "4f309ac9ca00707319d4ace728aa1ea9d3e97b3fa119fba5eac6c2e300d172cc",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "a90d964a2fe223edf78c2537c743816a806682e8cea8d8fda48019a29f24370a"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "e61ceab3008a6c85f42f8be3215195a07ba689828d2a881b8306902e6078c783",
+        "geometry": "af47236e3c81f1caecf158b01adceeb88466479ae3120ea20271d8173e132731",
+        "authored": "4f309ac9ca00707319d4ace728aa1ea9d3e97b3fa119fba5eac6c2e300d172cc"
+      }
     },
     {
       "id": "402",
@@ -16174,8 +17400,10 @@
       "name": "aexion04",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/aexion04.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Floating stepped formations align in the neutral control, but FPT loses the native luminous boundaries and renders most surfaces nearly black against blue sky."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -16188,10 +17416,71 @@
           "capture_sha256": "775bc300087a9603397dd302ff7ef1affd20a5896aede30b7b70dff0845754a0"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Floating stepped formations align in the neutral control, but FPT loses the native luminous boundaries and renders most surfaces nearly black against blue sky.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "402",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Floating stepped formations align in the neutral control, but FPT loses the native luminous boundaries and renders most surfaces nearly black against blue sky.",
+        "source_sha256": "cd50c742e1db24418c9620240f90662f3755153491d7da67a7a0486d7ddcd7cb",
+        "evidence_sha256": "842777f464fff4f56773936b92e357cd2745771c2f470db864be97a7579a10d0",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "402",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/aexion04.fract",
+        "sha256": "cd50c742e1db24418c9620240f90662f3755153491d7da67a7a0486d7ddcd7cb",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "91667c63f85a39666c31ca9d38a384fd47e9f8794b242b70fb2d6c97f2a1c4b5",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "7173a81dae4a762f9e58e4db7f5af4e5a46d540f1ba32d3180e1bf7ac45a1418",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "83f37bdc0a414c0376a13b428b4693bf6851304d8c54f1558022aa652aa426be"
+          },
+          "authored": {
+            "sha256": "3ff27c9abc7de3ba99dd6b31daf8d6af0ddba3681b9ec747b18025944b2785a6",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "b1df35b4bb37416a72d9aa47a120d07fa8d6bc516ef31b45bb1127fa1e8e2221"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "91667c63f85a39666c31ca9d38a384fd47e9f8794b242b70fb2d6c97f2a1c4b5",
+        "geometry": "7173a81dae4a762f9e58e4db7f5af4e5a46d540f1ba32d3180e1bf7ac45a1418",
+        "authored": "3ff27c9abc7de3ba99dd6b31daf8d6af0ddba3681b9ec747b18025944b2785a6"
+      }
     },
     {
       "id": "403",
@@ -16201,8 +17490,10 @@
       "name": "aexion05",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/aexion05.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Some foreground ridges correspond, but the native distant atmospheric formations become strongly contrasting folded surfaces in FPT. Background geometry/depth correspondence and authored illumination remain unresolved."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -16215,10 +17506,71 @@
           "capture_sha256": "d64341fa476e4312ce346da8f19555541faa5602289e737e01b56cb1a36c8063"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Some foreground ridges correspond, but the native distant atmospheric formations become strongly contrasting folded surfaces in FPT. Background geometry/depth correspondence and authored illumination remain unresolved.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "403",
+        "decision": "needs-work",
+        "geometry": "uncertain",
+        "illumination": "needs-work",
+        "note": "Some foreground ridges correspond, but the native distant atmospheric formations become strongly contrasting folded surfaces in FPT. Background geometry/depth correspondence and authored illumination remain unresolved.",
+        "source_sha256": "f146f6d374c1a91d82f492c05bcf2816bbb7ee2a5ad23fa686358cfc4c915f3e",
+        "evidence_sha256": "df0a161b249f7af81381f1f6eee9d10c6c3583f46d1f2c773679939ec30d285f",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "403",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/aexion05.fract",
+        "sha256": "f146f6d374c1a91d82f492c05bcf2816bbb7ee2a5ad23fa686358cfc4c915f3e",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "7caa9d5fb9507dccf107414ab7e8e8e4b250ec202ea4e1fb74fe5d50b8853a5f",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "f991e89837a6f962ef190250787d20ccf1fba779f0614df06f4a144f12a4c68f",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "7f2b738da838947ea05bf4ff9d086f25627a00cc1a4930067cc967b918908838"
+          },
+          "authored": {
+            "sha256": "cce47a6a98ca21cabf17b61dff7a3ef42de772a4def36bb1add05029027da7bf",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "911f41bc041200dd968d4f19d27ede15bc71772bee06b1ec72fe643c0ec4b9d5"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "7caa9d5fb9507dccf107414ab7e8e8e4b250ec202ea4e1fb74fe5d50b8853a5f",
+        "geometry": "f991e89837a6f962ef190250787d20ccf1fba779f0614df06f4a144f12a4c68f",
+        "authored": "cce47a6a98ca21cabf17b61dff7a3ef42de772a4def36bb1add05029027da7bf"
+      }
     },
     {
       "id": "404",
@@ -16282,7 +17634,7 @@
       "name": "benesi03",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/benesi03.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -16296,10 +17648,71 @@
           "capture_sha256": "f57dc7f2a62670eced4048c02ded9eed51b1a64c532f83addc52b5858e876f72"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Sweeping foreground folds, large upper curl and right-hand branching cavity align closely. Yellow/orange lighting is somewhat stronger in FPT but preserves the same major surface relief.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "406",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Sweeping foreground folds, large upper curl and right-hand branching cavity align closely. Yellow/orange lighting is somewhat stronger in FPT but preserves the same major surface relief.",
+        "source_sha256": "de27655c312cbfd2ab7ade376d91c9932b9d0852b8f70c91892c8269a574c87c",
+        "evidence_sha256": "04c4d53712563c1746ce11b5f6c1c2c9eb5cb2173a31f31ff8f2da1b59ff7245",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "406",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/benesi03.fract",
+        "sha256": "de27655c312cbfd2ab7ade376d91c9932b9d0852b8f70c91892c8269a574c87c",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "b52b1f8cc56da725ccaad09ec2336abf2b9b18391a14155e6cfb7658ec93947f",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "1be324dfa224bdf23a1a516faa68bf9de6502207adbdee39c5c675b32649bd4a",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "47d7b8fee1fdf0c835976e94fc46d6651a7c8b104230b0dcf095e56ed0b8a0ca"
+          },
+          "authored": {
+            "sha256": "fb989ade23d0da2aa5bdbdc47e066274433820b59a9bf55fe8a49a15ba910336",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "dcfc97a635b9d33e3ef2d332512ff2d8d7f6584284c16da984784501c8a6ff2c"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "b52b1f8cc56da725ccaad09ec2336abf2b9b18391a14155e6cfb7658ec93947f",
+        "geometry": "1be324dfa224bdf23a1a516faa68bf9de6502207adbdee39c5c675b32649bd4a",
+        "authored": "fb989ade23d0da2aa5bdbdc47e066274433820b59a9bf55fe8a49a15ba910336"
+      }
     },
     {
       "id": "407",
@@ -16365,8 +17778,10 @@
       "name": "box fold bulb v4",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/box%20fold%20bulb%20v4.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Curved wall grids and foreground curling structures align, but the native green-lit upper region becomes nearly black and large surfaces lose separation. Authored lighting remains an outlier."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -16379,10 +17794,71 @@
           "capture_sha256": "b69005489727ab22ec157c635f366075752618d5d6af910652f0224703d0859f"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Curved wall grids and foreground curling structures align, but the native green-lit upper region becomes nearly black and large surfaces lose separation. Authored lighting remains an outlier.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "409",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Curved wall grids and foreground curling structures align, but the native green-lit upper region becomes nearly black and large surfaces lose separation. Authored lighting remains an outlier.",
+        "source_sha256": "800ff0d9ece7f6aee0e3506a9ac1be768a18f3c535faa291a232687706e145cf",
+        "evidence_sha256": "27f85957ef867ae6642a1bc771997c42a9f777d5488514094f09e52ffc20b9ed",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "409",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/box fold bulb v4.fract",
+        "sha256": "800ff0d9ece7f6aee0e3506a9ac1be768a18f3c535faa291a232687706e145cf",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "95556aff249827516bcb22c15c71fbae59d479ffa015ea60bf7b9fffc1492992",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "cea4d892f1f3305ab0b98701a38218b736eb5e640868cd9c82759f7bc35e8d62",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "5319e1d5776d94b243df99d25743eacae3ec1069d454fefa412b3099661ec559"
+          },
+          "authored": {
+            "sha256": "1de560cc559902cbf7b2cba49c32b8cd668eee23691f8a8fb8eb327ae5a88e94",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "855411025091a20640216b620afae1f0ac848603d7424b8ed24b811c596b71b5"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "95556aff249827516bcb22c15c71fbae59d479ffa015ea60bf7b9fffc1492992",
+        "geometry": "cea4d892f1f3305ab0b98701a38218b736eb5e640868cd9c82759f7bc35e8d62",
+        "authored": "1de560cc559902cbf7b2cba49c32b8cd668eee23691f8a8fb8eb327ae5a88e94"
+      }
     },
     {
       "id": "410",
@@ -16392,7 +17868,7 @@
       "name": "bristorbrot01",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/bristorbrot01.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -16406,10 +17882,71 @@
           "capture_sha256": "119d1307bc245704896876a39779330d04b817706deda7edcd9b6c75462e185b"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Large receding rings and central spiral align. FPT is sharply defined and strongly gold/magenta rather than hazy grey/gold; depth of field, sky and reflective appearance are not certified.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "410",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Large receding rings and central spiral align. FPT is sharply defined and strongly gold/magenta rather than hazy grey/gold; depth of field, sky and reflective appearance are not certified.",
+        "source_sha256": "8ee44d274686fd1e3784656addda0c715ad98ba460ecdc587606bd59d5b08708",
+        "evidence_sha256": "08f45dec52b7da3d222020cc44f95e53a12eaa4103f61f54eadbc76673f5c753",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "410",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/bristorbrot01.fract",
+        "sha256": "8ee44d274686fd1e3784656addda0c715ad98ba460ecdc587606bd59d5b08708",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "2aaa0ee632ce6dace2a7b0ab738de6f4b8a8be9279f77229f60d734d085d55bf",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "182b1d1e21b9eb175b4519b005f1704395a106ea373205cf242ce176b508f2a1",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "593495f946f56989bb907e7fa7cc2069202de0871e4a6a8eba987cf137b68952"
+          },
+          "authored": {
+            "sha256": "47381b2f983af7a60fcd57a12b586acf9f448310312810860348fa88e6062c3a",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "b4fdd9de3771bc5d222a8e3a61afc91a04833de3b052b6d056d143acf45b92d5"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "2aaa0ee632ce6dace2a7b0ab738de6f4b8a8be9279f77229f60d734d085d55bf",
+        "geometry": "182b1d1e21b9eb175b4519b005f1704395a106ea373205cf242ce176b508f2a1",
+        "authored": "47381b2f983af7a60fcd57a12b586acf9f448310312810860348fa88e6062c3a"
+      }
     },
     {
       "id": "411",
@@ -16419,8 +17956,10 @@
       "name": "bug",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/bug.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Central ridged form and surrounding spikes align, but native iridescent highlights largely disappear and FPT darkens the main body enough to obscure surface relief."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -16433,10 +17972,71 @@
           "capture_sha256": "3db8bf1f637fb5ff2f8cb8ba4e4b953aa84f8f3e6c564c8e0254547979121cf4"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Central ridged form and surrounding spikes align, but native iridescent highlights largely disappear and FPT darkens the main body enough to obscure surface relief.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "411",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Central ridged form and surrounding spikes align, but native iridescent highlights largely disappear and FPT darkens the main body enough to obscure surface relief.",
+        "source_sha256": "ed9f3d711b78aefddb6c164f829ce63be2c518e8b1b4ddec47a470de508c6883",
+        "evidence_sha256": "7dc51f221547403543278adff3802e0a4548ef7f6cf51a311b758226e613a37f",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "411",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/bug.fract",
+        "sha256": "ed9f3d711b78aefddb6c164f829ce63be2c518e8b1b4ddec47a470de508c6883",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "1c925f13cb40845c9892fed6911ce5b027c933703e1477447f2774f97235dc47",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "2950b059764559013d3661b878e4a09df68f41f4070d79b3c038679dbc8696c8",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "2853fcaa68d8f811d1dc2ac081df4ee3ff3e18653f29c8698544f1b88512d73b"
+          },
+          "authored": {
+            "sha256": "0ad6a2eb4757cba2d3bae1e68a9c058d46822a79ca4f9caa72fe8bc1fdbf9804",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "34c1962f247722ad5bc66f22eefb292f7eab806d025081e65e148d8dffda1b7d"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "1c925f13cb40845c9892fed6911ce5b027c933703e1477447f2774f97235dc47",
+        "geometry": "2950b059764559013d3661b878e4a09df68f41f4070d79b3c038679dbc8696c8",
+        "authored": "0ad6a2eb4757cba2d3bae1e68a9c058d46822a79ca4f9caa72fe8bc1fdbf9804"
+      }
     },
     {
       "id": "412",
@@ -16446,7 +18046,7 @@
       "name": "cayley2",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/cayley2.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -16460,10 +18060,71 @@
           "capture_sha256": "d6d5a6b8d0900d119fb933a6658f046583b781386aa910f80f57f33af0becb24"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Central ring, inner motif and surrounding repeated tiles align. Green reflective patterns and glow differ considerably while keeping the main geometry readable.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "412",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Central ring, inner motif and surrounding repeated tiles align. Green reflective patterns and glow differ considerably while keeping the main geometry readable.",
+        "source_sha256": "88a9ede6409a61cf355033734ab18787d9205ae28ab4d18a01cbae0fe26435ae",
+        "evidence_sha256": "1520a4d23c4ad53e6f3b744a57d4600454f4b4c686ef83133ded611852b21d94",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "412",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/cayley2.fract",
+        "sha256": "88a9ede6409a61cf355033734ab18787d9205ae28ab4d18a01cbae0fe26435ae",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "6237871b0b04abbdb7787e5e28ca057d7e9078db036687a3130d8fdeb6c3f6fc",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "0238b4449772f604307a06394c490a8114a6e203e3976018c4129c2d777c6450",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "7ff1665048755f6b94185ea7f4ee16cc9b7d27e677199aab24e548b5b0778837"
+          },
+          "authored": {
+            "sha256": "ca5ea81f38cd800108df046a3dd330e68eac6a491f268d68ad8f8b3ceaf6d0e2",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "e1dfdc414ac6f9799ea8a35309bdacdfd95febf6fd16ae9b89b652bdbc950cf5"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "6237871b0b04abbdb7787e5e28ca057d7e9078db036687a3130d8fdeb6c3f6fc",
+        "geometry": "0238b4449772f604307a06394c490a8114a6e203e3976018c4129c2d777c6450",
+        "authored": "ca5ea81f38cd800108df046a3dd330e68eac6a491f268d68ad8f8b3ceaf6d0e2"
+      }
     },
     {
       "id": "413",
@@ -16473,8 +18134,10 @@
       "name": "clouds 006",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/clouds%20006.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Native red cloud-filled composition becomes exposed gold structure with a dark central region in FPT. Unsupported volumes and major appearance differences prevent a complete structural/beauty assessment."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -16487,10 +18150,71 @@
           "capture_sha256": "3c561daa909d6f098bdc459af04f26517575fa7e7bc19d53ed64fd9de4c0eb04"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Native red cloud-filled composition becomes exposed gold structure with a dark central region in FPT. Unsupported volumes and major appearance differences prevent a complete structural/beauty assessment.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "413",
+        "decision": "needs-work",
+        "geometry": "uncertain",
+        "illumination": "needs-work",
+        "note": "Native red cloud-filled composition becomes exposed gold structure with a dark central region in FPT. Unsupported volumes and major appearance differences prevent a complete structural/beauty assessment.",
+        "source_sha256": "0208707e4106a3e0bf14214a34218b0c4102f7f1fe34e818c2724e1388553319",
+        "evidence_sha256": "f80ab1949eb170b53f47763a73e4c6b83e355c6217ab121344e66fd4abd85a1e",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "413",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/clouds 006.fract",
+        "sha256": "0208707e4106a3e0bf14214a34218b0c4102f7f1fe34e818c2724e1388553319",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "0556934d51cf2bf94216d216f0014332ffdcf0c88e793f5c2823c2009bd4720e",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "220d34a4869c4150e4f0daff281241d7127bcbcf7cf78e95b0c1b8418c199325",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "4c3c9fc10f4f2ec0ba81c0f33da21ccdd50a16fa7e2295794a2e567ed6f5637f"
+          },
+          "authored": {
+            "sha256": "5b5d539acfb58b06d57a1c4ae28b0f3dc0702b72c0aed888df6c0bc7ecee2efc",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "05427f3465645e18e74a524bff5cb5a94cb370291e33c40938c15b05ae1500e5"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "0556934d51cf2bf94216d216f0014332ffdcf0c88e793f5c2823c2009bd4720e",
+        "geometry": "220d34a4869c4150e4f0daff281241d7127bcbcf7cf78e95b0c1b8418c199325",
+        "authored": "5b5d539acfb58b06d57a1c4ae28b0f3dc0702b72c0aed888df6c0bc7ecee2efc"
+      }
     },
     {
       "id": "414",
@@ -22493,7 +24217,7 @@
       "name": "neuron",
       "collection": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Robert%20Pancoast%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/neuron.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -22507,10 +24231,71 @@
           "capture_sha256": "704a1f6454ab4fb5d0e6333ad343aacb97724d05098bbade39fbfb5cb55f817c"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Central polyhedral hub and radiating struts align. FPT uses darker green/gold shading and reduces background highlight density; the principal structural connections remain readable.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "587",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Central polyhedral hub and radiating struts align. FPT uses darker green/gold shading and reduces background highlight density; the principal structural connections remain readable.",
+        "source_sha256": "ef9dc5541c4a39d2db930359d4e309fc7d6e853e2d47b1a4a7e917ca36458996",
+        "evidence_sha256": "1405dceb761a9eba128fb100aad6bbd8319614fb43f0c530d30be3ab2301a639",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "587",
+        "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/neuron.fract",
+        "sha256": "ef9dc5541c4a39d2db930359d4e309fc7d6e853e2d47b1a4a7e917ca36458996",
+        "dimensions": [
+          300,
+          150
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "8d39661df0f6efb25825fe5ba5b3f2b9119c21dde7b0091bd6727c9e5f468f4c",
+            "dimensions": [
+              300,
+              150
+            ]
+          },
+          "geometry": {
+            "sha256": "0583bd02c5ab0d3660f3af357f9668a0d3fea2a3ae988d3375d8b5c1ea80e451",
+            "dimensions": [
+              300,
+              150
+            ],
+            "metadata_sha256": "96d8921fb39c03aa37d25e8c90d2aaa00f78a84bbb22dacd53641c94452fd75f"
+          },
+          "authored": {
+            "sha256": "a21eabb06acce321f4569b1ce4985c354db54adb49fba9bc08bb8c8233054026",
+            "dimensions": [
+              300,
+              150
+            ],
+            "metadata_sha256": "3bae4da864aaaa4aca57a77676dc662f06bff64038a50be5cf7fcba77b205bf0"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "8d39661df0f6efb25825fe5ba5b3f2b9119c21dde7b0091bd6727c9e5f468f4c",
+        "geometry": "0583bd02c5ab0d3660f3af357f9668a0d3fea2a3ae988d3375d8b5c1ea80e451",
+        "authored": "a21eabb06acce321f4569b1ce4985c354db54adb49fba9bc08bb8c8233054026"
+      }
     },
     {
       "id": "588",
@@ -22520,7 +24305,7 @@
       "name": "pine-Bulb",
       "collection": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Robert%20Pancoast%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/pine-Bulb.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -22534,10 +24319,71 @@
           "capture_sha256": "f9f2319a5b6f412cacbc9f1797a41dd667a4aab81199a29187eeeedeffa13db7"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Layered disks, rounded beads and large silhouette gaps align closely. Green material reflections and highlight intensity differ without obscuring the forms.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "588",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Layered disks, rounded beads and large silhouette gaps align closely. Green material reflections and highlight intensity differ without obscuring the forms.",
+        "source_sha256": "c325d37156e4ba90525c815f4cd10bc511bacc55f9af0e480a93e398bc70482d",
+        "evidence_sha256": "c7577d6b1c3a0204cc3d80435c8767bb60688ac0032992107d09efbd3fd9adbf",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "588",
+        "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/pine-Bulb.fract",
+        "sha256": "c325d37156e4ba90525c815f4cd10bc511bacc55f9af0e480a93e398bc70482d",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "491431ebc5359660d9b761bbed98f29f967ace7a13b6c5ba7d46ffe7660ede16",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "bdf5f0d30c478deef99a694df56419f80ad77fac511a04b8269e74367607b6f8",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "45584d2e4138b04b1af4be7fb0adcd2c85e29a8608dfec7e2a5b7390ed255491"
+          },
+          "authored": {
+            "sha256": "0f2a6700ebde7a9373c6170c93c0ec7adc4e7f342a8d53578ffbe0060f799486",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "c9fd8335b15e80df4cb884d14fc8dd16e5a01c70efdf2efc961d4bef9d93904e"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "491431ebc5359660d9b761bbed98f29f967ace7a13b6c5ba7d46ffe7660ede16",
+        "geometry": "bdf5f0d30c478deef99a694df56419f80ad77fac511a04b8269e74367607b6f8",
+        "authored": "0f2a6700ebde7a9373c6170c93c0ec7adc4e7f342a8d53578ffbe0060f799486"
+      }
     },
     {
       "id": "589",
@@ -22575,7 +24421,7 @@
       "name": "toastn_stonemen_anim",
       "collection": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Robert%20Pancoast%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/toastn_stonemen_anim.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -22589,10 +24435,71 @@
           "capture_sha256": "3f1fd67a47d5b1c4e16a9c5a2f67cfe8e6862e340d3461ecd3efc68c3857b940"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Rounded mound, side cavities and base silhouette align. FPT is much less reflective and more orange/brown than the bright gold reference, but major surface relief remains visible; sky-light detail differs.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "590",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Rounded mound, side cavities and base silhouette align. FPT is much less reflective and more orange/brown than the bright gold reference, but major surface relief remains visible; sky-light detail differs.",
+        "source_sha256": "f8dab1017582d72010afcd34f275ac5c753965ec6e3d2a81619f65d4c8592e61",
+        "evidence_sha256": "956c85b45cb1a4c69ed61c525d34d37b747c9572deb42f9c0ca8a239c009cbb3",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "590",
+        "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/toastn_stonemen_anim.fract",
+        "sha256": "f8dab1017582d72010afcd34f275ac5c753965ec6e3d2a81619f65d4c8592e61",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "1e317e55f3abaee248732d42711d1cd97f0e838cb46633e2c40b00cdf1fcde64",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "7bcdc00d543955b48b526056c57719f0d246fbde90c1acb9ef1d5cc52bc7aecc",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "2c9b6eb537ebacb6a83e6a5bf59be0e605da2d6eb94a3a73ac23a386c44adf91"
+          },
+          "authored": {
+            "sha256": "0ad54f753195cfad8d49bc7d796068a8f148ff4378ef32fdf5749b9d90836162",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "55db4c95a76a441ce2a4b6562a7f216692d0c29033d056bdcd1b12057bf85265"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "1e317e55f3abaee248732d42711d1cd97f0e838cb46633e2c40b00cdf1fcde64",
+        "geometry": "7bcdc00d543955b48b526056c57719f0d246fbde90c1acb9ef1d5cc52bc7aecc",
+        "authored": "0ad54f753195cfad8d49bc7d796068a8f148ff4378ef32fdf5749b9d90836162"
+      }
     },
     {
       "id": "591",
@@ -24886,8 +26793,10 @@
       "name": "bristorbrot001",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/bristorbrot001.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "FPT shows a large empty sky region at the left where the native reference has an enclosing patterned environment, and omits prominent bright sources. Correspondence beyond the central ring is not established."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -24900,10 +26809,71 @@
           "capture_sha256": "dd5494ea1baf2dc9f8ea910da1ef6cbaf9d3086132bf91f5b703e0c33ce9ca78"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "FPT shows a large empty sky region at the left where the native reference has an enclosing patterned environment, and omits prominent bright sources. Correspondence beyond the central ring is not established.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "618",
+        "decision": "needs-work",
+        "geometry": "uncertain",
+        "illumination": "needs-work",
+        "note": "FPT shows a large empty sky region at the left where the native reference has an enclosing patterned environment, and omits prominent bright sources. Correspondence beyond the central ring is not established.",
+        "source_sha256": "1df5ce32481800e889e67792737c6ba4fb17dbcfd0b204af1bae41bd98ccbc95",
+        "evidence_sha256": "69cb03cedf900ca367d06d7512152cb5f5ad8aa82d4e9191494870b6995d0bf8",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "618",
+        "path": "bristorbrot001.fract",
+        "sha256": "1df5ce32481800e889e67792737c6ba4fb17dbcfd0b204af1bae41bd98ccbc95",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "38dac1b9c5db9dd7f7abf3631ab6298eb6e06a905dc099c9e14b58d13c2d62d3",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "6d9d1d5ebe0a172ed724ce14db3639ca7a86155bc5f7da41a02fd16b80c6ce7c",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "1a25a64c1de1cb8f4aaa70e611fb162719171bdf72ef768ab6e03d31b64cf9b0"
+          },
+          "authored": {
+            "sha256": "05fed1fc92aaaf07415ad7cc21e59a97fa49706fae100e2bb2c4e3441406b5c8",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "b73cab4fcb39b463577a411f9a1c602a254f12662c2de5643ae4b5a605a0d91c"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "38dac1b9c5db9dd7f7abf3631ab6298eb6e06a905dc099c9e14b58d13c2d62d3",
+        "geometry": "6d9d1d5ebe0a172ed724ce14db3639ca7a86155bc5f7da41a02fd16b80c6ce7c",
+        "authored": "05fed1fc92aaaf07415ad7cc21e59a97fa49706fae100e2bb2c4e3441406b5c8"
+      }
     },
     {
       "id": "619",
@@ -24913,8 +26883,10 @@
       "name": "buffalo003_2",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/buffalo003_2.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Main curving icy formations align, but FPT clips broad surfaces to white and turns the blue native surroundings nearly black, losing face contrast."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -24927,10 +26899,71 @@
           "capture_sha256": "f3bd2e402d642582c31667bea2c43d48f6f40d4b3e2997b29e9809ee7e1b6067"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Main curving icy formations align, but FPT clips broad surfaces to white and turns the blue native surroundings nearly black, losing face contrast.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "619",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Main curving icy formations align, but FPT clips broad surfaces to white and turns the blue native surroundings nearly black, losing face contrast.",
+        "source_sha256": "2f6eb4243dacf30c0b55274d05ae99089aa9f7ffdf7fd7aad74387cbca3724cb",
+        "evidence_sha256": "b9d96ecb635a87002217f386db0e944f815d66bafac12f3d277dcbe5df245a21",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "619",
+        "path": "buffalo003_2.fract",
+        "sha256": "2f6eb4243dacf30c0b55274d05ae99089aa9f7ffdf7fd7aad74387cbca3724cb",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "cf9699e007c378b481a39cd695b2ea98685f01bf92ad15762d3ad979d80e04a9",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "49c8682627b9a97a585732cadd3979849ce16cb355577e8b6092358ee0d6e4fc",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "76a0286d48dea39bda326323d3bb76e5ab63ea7d588b56a059a601d431a82891"
+          },
+          "authored": {
+            "sha256": "fff37778a445e3a89e9d413aacc9276dcd4d6a636d440c0d45b6161506053d3b",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "b8cbd8e62d55264b74146b8aa147cbfb902d974b9d534803d6b2752426885343"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "cf9699e007c378b481a39cd695b2ea98685f01bf92ad15762d3ad979d80e04a9",
+        "geometry": "49c8682627b9a97a585732cadd3979849ce16cb355577e8b6092358ee0d6e4fc",
+        "authored": "fff37778a445e3a89e9d413aacc9276dcd4d6a636d440c0d45b6161506053d3b"
+      }
     },
     {
       "id": "620",
@@ -24967,8 +27000,10 @@
       "name": "clouds 001",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/clouds%20001.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Native clouds obscure much of the cube, while FPT renders an exposed orange perforated cube against flat yellow sky. The defining cloud appearance is unsupported and hidden native geometry cannot be certified."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -24981,10 +27016,71 @@
           "capture_sha256": "ec25d11b4b813dcb480fb4bb71f46c5d4ec6c5713f9343c8df4edc0b87689083"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Native clouds obscure much of the cube, while FPT renders an exposed orange perforated cube against flat yellow sky. The defining cloud appearance is unsupported and hidden native geometry cannot be certified.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "621",
+        "decision": "needs-work",
+        "geometry": "uncertain",
+        "illumination": "needs-work",
+        "note": "Native clouds obscure much of the cube, while FPT renders an exposed orange perforated cube against flat yellow sky. The defining cloud appearance is unsupported and hidden native geometry cannot be certified.",
+        "source_sha256": "14f182744cf08cc7af1718912532eb74c0cce62360cda318182d5aa64f4429e1",
+        "evidence_sha256": "0a1a3a86ee329ac334d39e673ffabf7b725834388d94694a102fb1240bf981a5",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "621",
+        "path": "clouds 001.fract",
+        "sha256": "14f182744cf08cc7af1718912532eb74c0cce62360cda318182d5aa64f4429e1",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "09351da42b447cc5a3830a0dbe03757521833ba19a1a09a5dc436c125e942fa4",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "40b1d7a7de704d6181e86cf42d8b56015fa0ac7b1f363e472a8ba9f45b6ab51c",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "71f4811c83672e39bab0b68cf16161ee739a399ad63abcd529fa623e4af33c94"
+          },
+          "authored": {
+            "sha256": "e0dccef16dc9dafeb1c11c92a17bdb124c83361f6ed9edaf948d7fefe1080176",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "dbdb161505f5f2b77f12af43b5cf9e720206da800720363b5d51fe9bcd7ab162"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "09351da42b447cc5a3830a0dbe03757521833ba19a1a09a5dc436c125e942fa4",
+        "geometry": "40b1d7a7de704d6181e86cf42d8b56015fa0ac7b1f363e472a8ba9f45b6ab51c",
+        "authored": "e0dccef16dc9dafeb1c11c92a17bdb124c83361f6ed9edaf948d7fefe1080176"
+      }
     },
     {
       "id": "622",
@@ -24994,8 +27090,10 @@
       "name": "clouds 002",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/clouds%20002.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "The native rounded cloud-covered form becomes an exposed sharply folded orange object. Cyan/yellow clipping and unsupported clouds prevent a fair authored or complete geometry acceptance."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -25008,10 +27106,71 @@
           "capture_sha256": "4f234cbe30473042bc30aec75c4b92bb5d8583043377bf4c55e56172c3a1e44a"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The native rounded cloud-covered form becomes an exposed sharply folded orange object. Cyan/yellow clipping and unsupported clouds prevent a fair authored or complete geometry acceptance.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "622",
+        "decision": "needs-work",
+        "geometry": "uncertain",
+        "illumination": "needs-work",
+        "note": "The native rounded cloud-covered form becomes an exposed sharply folded orange object. Cyan/yellow clipping and unsupported clouds prevent a fair authored or complete geometry acceptance.",
+        "source_sha256": "11c0c094636ce21d88f8f6ea965b032bd7b147caceb2f977b292f9c55ff107bf",
+        "evidence_sha256": "0d6a9602340c2134e247b579afc829071866b8249844e7909fb5f8025dcef541",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "622",
+        "path": "clouds 002.fract",
+        "sha256": "11c0c094636ce21d88f8f6ea965b032bd7b147caceb2f977b292f9c55ff107bf",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "8b02d74535ca5f948d3b8e0257e9d0857575004b0291ced5922ad20c2bd40afa",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "07f74196a1e45cbe19b1eb57ec501e2ab783a0781fdd7cd8acf8d0683379cf09",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "d2f6d88944eabbaea0052bd25546d655f88349e595c22784750138af1ec20e3a"
+          },
+          "authored": {
+            "sha256": "67eec3cd697f97b977af0d745a3aa86b63d701673151bba24596247f2f58a891",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "aef562a22ab5a0c2c4e0c1d0f4ec6efdab0a68b4fed40ff9977275b6533f45fe"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "8b02d74535ca5f948d3b8e0257e9d0857575004b0291ced5922ad20c2bd40afa",
+        "geometry": "07f74196a1e45cbe19b1eb57ec501e2ab783a0781fdd7cd8acf8d0683379cf09",
+        "authored": "67eec3cd697f97b977af0d745a3aa86b63d701673151bba24596247f2f58a891"
+      }
     },
     {
       "id": "623",
@@ -25021,8 +27180,10 @@
       "name": "clouds 003",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/clouds%20003.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Cube placement and light position align, but the cloud-shaped native light becomes a smooth white/yellow blob. Volumetric appearance and cube illumination differ substantially."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -25035,10 +27196,71 @@
           "capture_sha256": "19cc1ecd6a739af6b865776d8ca3fcf5c9d649dd50b7a95e6e2e956b3ee8d0b4"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Cube placement and light position align, but the cloud-shaped native light becomes a smooth white/yellow blob. Volumetric appearance and cube illumination differ substantially.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "623",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Cube placement and light position align, but the cloud-shaped native light becomes a smooth white/yellow blob. Volumetric appearance and cube illumination differ substantially.",
+        "source_sha256": "fbcb9a4d37707c2d2a0e4a47b3e0c25201619235a2752d3a9fac6899dc4026b5",
+        "evidence_sha256": "6bedac606b6c38984a1b337174e0fad3fcf7834ae2cb97b5fa5d5f138cab88b7",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "623",
+        "path": "clouds 003.fract",
+        "sha256": "fbcb9a4d37707c2d2a0e4a47b3e0c25201619235a2752d3a9fac6899dc4026b5",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "a9a3f48dfeee2fb3d822338a92df19a007eae342fb0ca00808172d1d2bb8714b",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "6ced7268030cca4610c6ecc8aaa3bf8ed09ecd782405b0206cc06563ae7c025f",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "846dacd9e785dbec9bdecf04586e8cb0f7250cc6229b51ab717a5aed8c44f50c"
+          },
+          "authored": {
+            "sha256": "50ba862bec51ad0deb88635f8a08f7b0dc60e9f1665650abe0802aa010f9c99c",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "e10b0bfb214429eb6a068e2f3f3dfd06ae983410bae9f5baf8081d9797b87b51"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "a9a3f48dfeee2fb3d822338a92df19a007eae342fb0ca00808172d1d2bb8714b",
+        "geometry": "6ced7268030cca4610c6ecc8aaa3bf8ed09ecd782405b0206cc06563ae7c025f",
+        "authored": "50ba862bec51ad0deb88635f8a08f7b0dc60e9f1665650abe0802aa010f9c99c"
+      }
     },
     {
       "id": "624",
@@ -25048,8 +27270,10 @@
       "name": "clouds 005",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/clouds%20005.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Perforated cube placement aligns, but FPT omits the defining blue cloud and luminous line network, leaving a dim red cube. Deferred volume/trap-light behaviour is not supported by this capture."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -25062,10 +27286,71 @@
           "capture_sha256": "82c27156c41570a4692e7f168a5f0fc85f298665ae62821472378373e14124a5"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Perforated cube placement aligns, but FPT omits the defining blue cloud and luminous line network, leaving a dim red cube. Deferred volume/trap-light behaviour is not supported by this capture.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "624",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Perforated cube placement aligns, but FPT omits the defining blue cloud and luminous line network, leaving a dim red cube. Deferred volume/trap-light behaviour is not supported by this capture.",
+        "source_sha256": "2e74adf571e11ceb4ca094c2886554f5b1c0fb1196266046d004fb1a2f28a9b0",
+        "evidence_sha256": "2b0d1783271cb90f21e431153771b7f4e289ba298d90577f95a502da34c77bec",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "624",
+        "path": "clouds 005.fract",
+        "sha256": "2e74adf571e11ceb4ca094c2886554f5b1c0fb1196266046d004fb1a2f28a9b0",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "82ae9bda314eec2f426d9ff3c1ea7ccb9ef96beaa57b2dfd662e6a6449be83d8",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "0c467d926cc98613f49152993cd279fa51e0be0cfeced993f53e409e41de3762",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "fe2ced7b6b73bab43788a08473c7eaa7e5e66dc8fcde1d10348a2070fd86f4da"
+          },
+          "authored": {
+            "sha256": "3b37e92d6f50cfd6766eef55e157597e265eba19c9c46c7ee23a63ed9ec7084a",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "cf601e64ab1b522f81afdefad7e0f0e1cd57cd414dda1aaa700d789ba7b94639"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "82ae9bda314eec2f426d9ff3c1ea7ccb9ef96beaa57b2dfd662e6a6449be83d8",
+        "geometry": "0c467d926cc98613f49152993cd279fa51e0be0cfeced993f53e409e41de3762",
+        "authored": "3b37e92d6f50cfd6766eef55e157597e265eba19c9c46c7ee23a63ed9ec7084a"
+      }
     },
     {
       "id": "625",
@@ -25075,8 +27360,10 @@
       "name": "clouds 006",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/clouds%20006.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Perforated slab, tilt and grass plane align. FPT omits the clouds and clips the slab/grass to bright yellow against cyan sky, losing the native shaded appearance."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -25089,10 +27376,71 @@
           "capture_sha256": "4c1f3776dd01c0ba52e9100c0cb8d41ae97a2983ce9ab2641a333b0377961583"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Perforated slab, tilt and grass plane align. FPT omits the clouds and clips the slab/grass to bright yellow against cyan sky, losing the native shaded appearance.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "625",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Perforated slab, tilt and grass plane align. FPT omits the clouds and clips the slab/grass to bright yellow against cyan sky, losing the native shaded appearance.",
+        "source_sha256": "454799bba0070cbdbb5b318a19bed9dbaec7026cedb0945450012900fa9b1f94",
+        "evidence_sha256": "382be7b98a6ab7d20d1b713434205c15235db7e176b3e55ab09c7d608640188d",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "625",
+        "path": "clouds 006.fract",
+        "sha256": "454799bba0070cbdbb5b318a19bed9dbaec7026cedb0945450012900fa9b1f94",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "01e54193a8f01b12bb47f6b05af1cc3314f3b22ccb061d8eda1133e177e13afb",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "37875e05674b022e8c6b2dd23cdd481520f269ad687bc86b8ff6ac21e78a7ff9",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "f5ca23b86306d5a6f8e48e9c7c67039fffeae8542d18ff10a145987cac8a51da"
+          },
+          "authored": {
+            "sha256": "08be713b53fb1b8bd11afdb4c946d10b122308b793eaa28600ef06d6c508e2c8",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "e592d36f619157cfaae9045635d519f558f72178d7e749728e15c23706e574c9"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "01e54193a8f01b12bb47f6b05af1cc3314f3b22ccb061d8eda1133e177e13afb",
+        "geometry": "37875e05674b022e8c6b2dd23cdd481520f269ad687bc86b8ff6ac21e78a7ff9",
+        "authored": "08be713b53fb1b8bd11afdb4c946d10b122308b793eaa28600ef06d6c508e2c8"
+      }
     },
     {
       "id": "626",
@@ -25102,7 +27450,7 @@
       "name": "diFS square grid",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/diFS%20square%20grid.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -25116,10 +27464,71 @@
           "capture_sha256": "9cc6cebcb0b98dace39650210a72bbe1354f2957088ad5e16b3fefc277e9589a"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Curved perforated surface, surrounding grid and foreground reflective forms align. FPT has warmer highlights and stronger brightness on the right; the principal geometry remains readable.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "626",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Curved perforated surface, surrounding grid and foreground reflective forms align. FPT has warmer highlights and stronger brightness on the right; the principal geometry remains readable.",
+        "source_sha256": "1d6d9e1f1dffd36dda4451fd0e43d7ac1e1a2b4eeba07b0e62788e2d58853ea7",
+        "evidence_sha256": "ed908ed8e8d881f756aeefd481a08c779273c65d671b7772e0cd373db36f9414",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "626",
+        "path": "diFS square grid.fract",
+        "sha256": "1d6d9e1f1dffd36dda4451fd0e43d7ac1e1a2b4eeba07b0e62788e2d58853ea7",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "97b43845d116cada08b29228ff45475aca62495fb8637113247a35e6e8b5c861",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "d69b3fa7546c69dae8a30c8cb1d76be28c819a85ed858ae1b3f20af73e2cc6c4",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "ee91a862dfef8e828bc3ae359323c569d1fea587c662515c4524f2209089dc3d"
+          },
+          "authored": {
+            "sha256": "5a3dc2cdfad956501af7576146551fa8847741e1bee19a57b5c96f03f5c4eeaf",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "1638012f53e5bf18895abe1b5a633b1e4f8f255a7a20d3fcf52cfe31d278420f"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "97b43845d116cada08b29228ff45475aca62495fb8637113247a35e6e8b5c861",
+        "geometry": "d69b3fa7546c69dae8a30c8cb1d76be28c819a85ed858ae1b3f20af73e2cc6c4",
+        "authored": "5a3dc2cdfad956501af7576146551fa8847741e1bee19a57b5c96f03f5c4eeaf"
+      }
     },
     {
       "id": "627",
@@ -25129,7 +27538,7 @@
       "name": "difs_tree",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/difs_tree.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -25143,10 +27552,71 @@
           "capture_sha256": "e65de14e0684dc466ed33fd8b6798457e37c902ea3d94f171902a3d7b98e91ed"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Tree canopy silhouette, trunk, rolling grass terrain and cast shadow align. FPT canopy shadows are darker and the trunk is browner, but the main forms remain visible.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "627",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Tree canopy silhouette, trunk, rolling grass terrain and cast shadow align. FPT canopy shadows are darker and the trunk is browner, but the main forms remain visible.",
+        "source_sha256": "cfabe02513ba181611cf79f518986fa0874afecbe1198c5647aadc373cd290be",
+        "evidence_sha256": "bbc3f5b7e17829491da2bdbb9eb37bb392b27dd539c98cc6fd317bbfa705e3f0",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "627",
+        "path": "difs_tree.fract",
+        "sha256": "cfabe02513ba181611cf79f518986fa0874afecbe1198c5647aadc373cd290be",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "b676f22d91e8349ef8559528f1dd155239d30024d855b771110a457fda6ab4b6",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "824d94c5d148cafe99efa3fb4760a0581bd58fad22f5ac9a011a4de4d2aef8a1",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "98ae66d078bb4180281397c97f14659184274a59c6b3414c29b747c611d0f61b"
+          },
+          "authored": {
+            "sha256": "4b7bb61b6eaace976bd6fbfbadefa83a2dcb8476a0729444cfa5c2c9fc94383a",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "a0d943c83458465f156c32588dc40a906489b17aa96cba6181787aa765e3d7bf"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "b676f22d91e8349ef8559528f1dd155239d30024d855b771110a457fda6ab4b6",
+        "geometry": "824d94c5d148cafe99efa3fb4760a0581bd58fad22f5ac9a011a4de4d2aef8a1",
+        "authored": "4b7bb61b6eaace976bd6fbfbadefa83a2dcb8476a0729444cfa5c2c9fc94383a"
+      }
     },
     {
       "id": "628",
@@ -25156,7 +27626,7 @@
       "name": "fabs_box_mod1_001",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/fabs_box_mod1_001.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -25170,10 +27640,71 @@
           "capture_sha256": "e7cf1bd81109cb05292d7f42c2d6fa69cfe5d46546a52de69f2896365dee6169"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Central bright opening, layered folded surfaces and lower-right opening align. FPT is sharper and more red/purple, with differing reflections and depth of field; broad structural landmarks remain readable.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "628",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Central bright opening, layered folded surfaces and lower-right opening align. FPT is sharper and more red/purple, with differing reflections and depth of field; broad structural landmarks remain readable.",
+        "source_sha256": "4fb5e7981df9e5370b8388a2021e625c9ed20cb89d681babe5489379d880a711",
+        "evidence_sha256": "5833f0b43b3f669ecfb635bcdc3123c68ec600d19c68d17fd47f3eecbb53d4e9",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "628",
+        "path": "fabs_box_mod1_001.fract",
+        "sha256": "4fb5e7981df9e5370b8388a2021e625c9ed20cb89d681babe5489379d880a711",
+        "dimensions": [
+          300,
+          150
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "c0b5e944d68f24d0e73a2ad42ba5aad77f3f52ffd0bd0b301ffdb12c799759d0",
+            "dimensions": [
+              300,
+              150
+            ]
+          },
+          "geometry": {
+            "sha256": "5fc2349fb22e1e2683c97f9ff1e750a6a93c787ff3fef51ac0e7fed0d557afbb",
+            "dimensions": [
+              300,
+              150
+            ],
+            "metadata_sha256": "36a95b08da22c5e54d8cdda51c09a8c971f6da7958003c098a3804b140624688"
+          },
+          "authored": {
+            "sha256": "f4377905cbe214282f797d8dff8e6c1e50b9cf14494f4d5159ffb522a9cedbbf",
+            "dimensions": [
+              300,
+              150
+            ],
+            "metadata_sha256": "cebf2088518f533efc2fdfb7a7feae602e2e2af0c845e113ac5c64c5ffdbaeb1"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "c0b5e944d68f24d0e73a2ad42ba5aad77f3f52ffd0bd0b301ffdb12c799759d0",
+        "geometry": "5fc2349fb22e1e2683c97f9ff1e750a6a93c787ff3fef51ac0e7fed0d557afbb",
+        "authored": "f4377905cbe214282f797d8dff8e6c1e50b9cf14494f4d5159ffb522a9cedbbf"
+      }
     },
     {
       "id": "629",
@@ -25183,7 +27714,7 @@
       "name": "flight_anim_menger sponge_3",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/flight_anim_menger%20sponge_3.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -25197,10 +27728,71 @@
           "capture_sha256": "265837f2f959782ea130878fc323be11757e5f3afd8e2abc0f36feb40fcd2c07"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Main square window, repeated perforations, inner chamber and light position align. FPT omits the strong grey atmospheric veil and uses darker colourful surfaces; fog and complete material parity are not certified.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "629",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "Main square window, repeated perforations, inner chamber and light position align. FPT omits the strong grey atmospheric veil and uses darker colourful surfaces; fog and complete material parity are not certified.",
+        "source_sha256": "5878c4e6aded4ce261aff8139e28035a19539e90dd13113e3dab8dfae12f57f1",
+        "evidence_sha256": "127cfc0aa11ff5ffd3d3ad1df9ca13a8f78d3dd78df9af28466c43fe168cb5ea",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "629",
+        "path": "flight_anim_menger sponge_3.fract",
+        "sha256": "5878c4e6aded4ce261aff8139e28035a19539e90dd13113e3dab8dfae12f57f1",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "050ebfe2ef8a76325e885cf2459dcd652e70547d4757c59142a9648ba86db8b4",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "36b27df22305bd5df79cb5e29c37a1a5c53fccc274f832317be52a9349aa8346",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "176f8cadb9fbf8ac7c0edbea16cf7232bbee137e8f3a59ee84f282c3dc0ec747"
+          },
+          "authored": {
+            "sha256": "094a269c5f3275ac1d3687f97ef2e95339794a4b47ad4fe783291ed6e957ee10",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "429105f2ee474549ca193be8be48bff07e20d9680445334154e51f8301d19fd7"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "050ebfe2ef8a76325e885cf2459dcd652e70547d4757c59142a9648ba86db8b4",
+        "geometry": "36b27df22305bd5df79cb5e29c37a1a5c53fccc274f832317be52a9349aa8346",
+        "authored": "094a269c5f3275ac1d3687f97ef2e95339794a4b47ad4fe783291ed6e957ee10"
+      }
     },
     {
       "id": "630",
@@ -25828,8 +28420,10 @@
       "name": "glow",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/glow.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Thin filament arrangement is present in the geometry control, but FPT omits the defining orange glow and renders the authored image almost black."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -25842,10 +28436,71 @@
           "capture_sha256": "531d90e04bc3324b80190bf6730b7ad1c1f090f631983cfbb591908441008c6e"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Thin filament arrangement is present in the geometry control, but FPT omits the defining orange glow and renders the authored image almost black.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "637",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Thin filament arrangement is present in the geometry control, but FPT omits the defining orange glow and renders the authored image almost black.",
+        "source_sha256": "4c51b0094aef2eebc19926a55c0ffdd669bec6c35f8935169d71fc15c1e8de2f",
+        "evidence_sha256": "63ce9282ea798c0d788467327436b47af20f4aa8903a8a37ac819e171b414509",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "637",
+        "path": "glow.fract",
+        "sha256": "4c51b0094aef2eebc19926a55c0ffdd669bec6c35f8935169d71fc15c1e8de2f",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "201c6fbd432799724fa002ece87025c9d1d84b4aeba1c014c64578957b423502",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "28c4d7f9727551551fd8b6c585ef620482bee72fade81f4372c65109949480a2",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "55875edbde6b3e104f591039ceb7dd92f4c1665896b1379c3c741acd3cb9e657"
+          },
+          "authored": {
+            "sha256": "b5c8c42b724c6f0da501541151bcb17c91983950d2b13f6d550523dae9947c74",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "0daaad99f8bbe38c7138e86fcba8c7eaee7d02a8d2a8005fa8b0915867602080"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "201c6fbd432799724fa002ece87025c9d1d84b4aeba1c014c64578957b423502",
+        "geometry": "28c4d7f9727551551fd8b6c585ef620482bee72fade81f4372c65109949480a2",
+        "authored": "b5c8c42b724c6f0da501541151bcb17c91983950d2b13f6d550523dae9947c74"
+      }
     },
     {
       "id": "638",
@@ -25855,8 +28510,10 @@
       "name": "gradients - reflectance and transparency",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/gradients%20-%20reflectance%20and%20transparency.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Rounded cone and support plane align, but the defining multicoloured reflectance/transparency gradients become a mostly dull opaque surface. This material demonstration is not visually validated."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -25869,10 +28526,71 @@
           "capture_sha256": "f70c87eb2558621ad542dfaa79378a2b85e3dedbdb6172d6d2165a223db41b50"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Rounded cone and support plane align, but the defining multicoloured reflectance/transparency gradients become a mostly dull opaque surface. This material demonstration is not visually validated.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "638",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Rounded cone and support plane align, but the defining multicoloured reflectance/transparency gradients become a mostly dull opaque surface. This material demonstration is not visually validated.",
+        "source_sha256": "71937ee851292b93d3deb8b1ba264419dec4605a43fa5d9ae5ea215ff629087c",
+        "evidence_sha256": "f668ce4076afa333709d01ecd1a7806a49446184741807131ffaaaab6bb95974",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "638",
+        "path": "gradients - reflectance and transparency.fract",
+        "sha256": "71937ee851292b93d3deb8b1ba264419dec4605a43fa5d9ae5ea215ff629087c",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "7756a1e0fe601cc3f379bb5e4d574e052ab7fe2dfa7a973ace389f0352009b0f",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "189d81a69bf95b492ac3a887ef99d753025810eb906f21a712953256720e1499",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "4193f5f0c170a066e7988cccdb33dcbe292e7ad7c2aa967a380b9ed3d47ade10"
+          },
+          "authored": {
+            "sha256": "485674a188e956a34d7f38609131e4907977e32888c028a9a457fa5db83a7417",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "5e7809d16be7112455a09f1666a184a68aa00b58e0137111f0e6f7e020e82aa1"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "7756a1e0fe601cc3f379bb5e4d574e052ab7fe2dfa7a973ace389f0352009b0f",
+        "geometry": "189d81a69bf95b492ac3a887ef99d753025810eb906f21a712953256720e1499",
+        "authored": "485674a188e956a34d7f38609131e4907977e32888c028a9a457fa5db83a7417"
+      }
     },
     {
       "id": "639",
@@ -25882,8 +28600,10 @@
       "name": "gradients - specular highlights",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/gradients%20-%20specular%20highlights.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "Rounded perforated block and cavity layout align, but the authored gold specular highlights disappear into a dull dark surface. The defining material/lighting behaviour remains unvalidated."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -25896,10 +28616,71 @@
           "capture_sha256": "95d6a4be1fb0bbd04cdbefb171a66fa56bce9f397fb649442aa647009f6cbddf"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "Rounded perforated block and cavity layout align, but the authored gold specular highlights disappear into a dull dark surface. The defining material/lighting behaviour remains unvalidated.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "639",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "Rounded perforated block and cavity layout align, but the authored gold specular highlights disappear into a dull dark surface. The defining material/lighting behaviour remains unvalidated.",
+        "source_sha256": "6790a6baf02dac814d6ef55bbfc95aa04bc2839b93a6c46e88e9bfd1fa8ae441",
+        "evidence_sha256": "00fc3dfaf8ed6641944a768b5d67c9b3f2f239d0d2bf72aa369550189f3c4784",
+        "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-11"
+      },
+      "review_evidence": {
+        "id": "639",
+        "path": "gradients - specular highlights.fract",
+        "sha256": "6790a6baf02dac814d6ef55bbfc95aa04bc2839b93a6c46e88e9bfd1fa8ae441",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "e8dc68936c6bcfbe7298cc8226b8bc01d27fa806",
+        "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+        "epoch": "refreshed-2026-09-11",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "aaf8865df2c13c53c356c34f17b4823cbcb5203ac3b29ace2a143d2d36a1d791",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "4127b48c181c116960da2f7d59aba9ba22ba76c8c7e1fb23c76e9a88657e751d",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "638525c7ac05ac35faadbfc98ab3f9bcc4bb28a051dc363a1415234d418f9ffa"
+          },
+          "authored": {
+            "sha256": "0cdb1fc2731f0b076dea035741ab9dfcf4d5e28b6d13a63d7c063afd381770ce",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "a4c782c462c9473de07dba18f6b9ec808568bf2038dc32950be09e0757c6be2e"
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "aaf8865df2c13c53c356c34f17b4823cbcb5203ac3b29ace2a143d2d36a1d791",
+        "geometry": "4127b48c181c116960da2f7d59aba9ba22ba76c8c7e1fb23c76e9a88657e751d",
+        "authored": "0cdb1fc2731f0b076dea035741ab9dfcf4d5e28b6d13a63d7c063afd381770ce"
+      }
     },
     {
       "id": "640",
@@ -28813,7 +31594,7 @@
     "gallery": "0fa2686556f6970a297126213949e28dd5043323296dad29da8363d83f5f1d8b",
     "screening": "d8e7e987afe20d3ac83bcef1512946c6a21cd2f9e8e0b88fc245ad3b238c5f48",
     "additional": "6e683a94ec5cd0fc23edb4ec00c1227b975aef7f0d7626284f907ad0c05023a3",
-    "reviews": "0fb7a358a4fbf15d1dc821fc8665c098b366cf3038dbc91c9736078e4b792969",
-    "review_evidence": "b2c28f99f48a0ae8977f17ef93a53070b6c71ce66fda3f65c281aea3b284392a"
+    "reviews": "4acbdcb2c594ffde7673c1cb34191dbf261d1710fc524bd345173e16b4c00270",
+    "review_evidence": "c16c56987bb20be1a258bde4fdcb73d9bfad9cccf9de6395e625d58d33ec450f"
   }
 }

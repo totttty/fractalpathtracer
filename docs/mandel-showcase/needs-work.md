@@ -40,6 +40,12 @@ Refreshed authored image is still dark red/black where native objects are clearl
 
 Repeated rows and floating torus align, but the reference's bright reflective structures become dim brown in FPT and lose their intended separation from the black background.
 
+## [076: KIFS_mandelbulb_trapLights](076.md)
+
+[![Native / FPT authored](images/076-thumb.webp)](076.md)
+
+The spherical arrangement aligns, but the native red trap-light line network disappears entirely and the spheres change to dim green. The defining authored lighting feature is missing.
+
 ## [372: IFS_001](372.md)
 
 [![Native / FPT authored](images/372-thumb.webp)](372.md)
@@ -117,6 +123,48 @@ Nested square frames and diagonal beams align, but authored FPT is dark grey/bla
 [![Native / FPT authored](images/395-thumb.webp)](395.md)
 
 Architectural frame layout aligns, but FPT turns softly lit native surfaces into cyan edge highlights against nearly black interiors, losing surface separation.
+
+## [399: addcpixelinvert](399.md)
+
+[![Native / FPT authored](images/399-thumb.webp)](399.md)
+
+Cavern opening, hanging strands and foreground plane align, but the native bright yellow environment and red/gold patterned floor become dark desaturated surfaces in FPT.
+
+## [401: aexion02](401.md)
+
+[![Native / FPT authored](images/401-thumb.webp)](401.md)
+
+Spire positions and stepped surfaces align, but FPT loses the illuminated horizon and much of the dark rear-spire separation. Thin features are harder to read in the authored result.
+
+## [402: aexion04](402.md)
+
+[![Native / FPT authored](images/402-thumb.webp)](402.md)
+
+Floating stepped formations align in the neutral control, but FPT loses the native luminous boundaries and renders most surfaces nearly black against blue sky.
+
+## [403: aexion05](403.md)
+
+[![Native / FPT authored](images/403-thumb.webp)](403.md)
+
+Some foreground ridges correspond, but the native distant atmospheric formations become strongly contrasting folded surfaces in FPT. Background geometry/depth correspondence and authored illumination remain unresolved.
+
+## [409: box fold bulb v4](409.md)
+
+[![Native / FPT authored](images/409-thumb.webp)](409.md)
+
+Curved wall grids and foreground curling structures align, but the native green-lit upper region becomes nearly black and large surfaces lose separation. Authored lighting remains an outlier.
+
+## [411: bug](411.md)
+
+[![Native / FPT authored](images/411-thumb.webp)](411.md)
+
+Central ridged form and surrounding spikes align, but native iridescent highlights largely disappear and FPT darkens the main body enough to obscure surface relief.
+
+## [413: clouds 006](413.md)
+
+[![Native / FPT authored](images/413-thumb.webp)](413.md)
+
+Native red cloud-filled composition becomes exposed gold structure with a dark central region in FPT. Unsupported volumes and major appearance differences prevent a complete structural/beauty assessment.
 
 ## [567: IFS31_anim](567.md)
 
@@ -225,3 +273,63 @@ The native boolean scene shows open square cavities across the foreground. FPT's
 [![Native / FPT authored](images/616-thumb.webp)](616.md)
 
 Large cube framing aligns, but the central face partitions and boolean openings do not clearly correspond: the neutral FPT view shows broader continuous perforated plates. Confirm boolean geometry before promotion; green lighting remains readable.
+
+## [618: bristorbrot001](618.md)
+
+[![Native / FPT authored](images/618-thumb.webp)](618.md)
+
+FPT shows a large empty sky region at the left where the native reference has an enclosing patterned environment, and omits prominent bright sources. Correspondence beyond the central ring is not established.
+
+## [619: buffalo003_2](619.md)
+
+[![Native / FPT authored](images/619-thumb.webp)](619.md)
+
+Main curving icy formations align, but FPT clips broad surfaces to white and turns the blue native surroundings nearly black, losing face contrast.
+
+## [621: clouds 001](621.md)
+
+[![Native / FPT authored](images/621-thumb.webp)](621.md)
+
+Native clouds obscure much of the cube, while FPT renders an exposed orange perforated cube against flat yellow sky. The defining cloud appearance is unsupported and hidden native geometry cannot be certified.
+
+## [622: clouds 002](622.md)
+
+[![Native / FPT authored](images/622-thumb.webp)](622.md)
+
+The native rounded cloud-covered form becomes an exposed sharply folded orange object. Cyan/yellow clipping and unsupported clouds prevent a fair authored or complete geometry acceptance.
+
+## [623: clouds 003](623.md)
+
+[![Native / FPT authored](images/623-thumb.webp)](623.md)
+
+Cube placement and light position align, but the cloud-shaped native light becomes a smooth white/yellow blob. Volumetric appearance and cube illumination differ substantially.
+
+## [624: clouds 005](624.md)
+
+[![Native / FPT authored](images/624-thumb.webp)](624.md)
+
+Perforated cube placement aligns, but FPT omits the defining blue cloud and luminous line network, leaving a dim red cube. Deferred volume/trap-light behaviour is not supported by this capture.
+
+## [625: clouds 006](625.md)
+
+[![Native / FPT authored](images/625-thumb.webp)](625.md)
+
+Perforated slab, tilt and grass plane align. FPT omits the clouds and clips the slab/grass to bright yellow against cyan sky, losing the native shaded appearance.
+
+## [637: glow](637.md)
+
+[![Native / FPT authored](images/637-thumb.webp)](637.md)
+
+Thin filament arrangement is present in the geometry control, but FPT omits the defining orange glow and renders the authored image almost black.
+
+## [638: gradients - reflectance and transparency](638.md)
+
+[![Native / FPT authored](images/638-thumb.webp)](638.md)
+
+Rounded cone and support plane align, but the defining multicoloured reflectance/transparency gradients become a mostly dull opaque surface. This material demonstration is not visually validated.
+
+## [639: gradients - specular highlights](639.md)
+
+[![Native / FPT authored](images/639-thumb.webp)](639.md)
+
+Rounded perforated block and cavity layout align, but the authored gold specular highlights disappear into a dull dark surface. The defining material/lighting behaviour remains unvalidated.

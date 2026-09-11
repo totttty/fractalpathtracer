@@ -70,19 +70,22 @@ labelled with their original settings; they have not been rerendered here.
 
 ### Reviewed Showcase
 
-[Browse 111 visually accepted scenes](docs/mandel-showcase/README.md), with
+[Browse 138 visually accepted scenes](docs/mandel-showcase/README.md), with
 paginated native/FPT thumbnails and per-scene neutral/beauty comparisons.
 The first additional 50-scene review promoted **37** and held **13** for
 further work. The [next 50-scene batch](docs/mandel-catalog/review-batch02-2026-09-11.md)
 promoted **28**, held **20**, and left two incomplete native-reference cases
-unpromoted. Known dark/geometry failures are separated into a
+unpromoted. The [third additional batch](docs/mandel-catalog/review-batch03-2026-09-11.md)
+adds **27** accepted comparisons, **18** visual holds and five deferred native
+timeouts. Coverage expansion takes priority; outlier fixes are deferred to a
+consolidated pass. Known dark/geometry failures are separated into a
 [needs-work audit](docs/mandel-showcase/needs-work.md), not featured as successes.
 
 [![Twelve featured native-left / FPT-right comparisons](docs/mandel-showcase/highlights.jpg)](docs/mandel-showcase/README.md)
 
 Reviews are bound to specific source and capture hashes. Twelve affected
-first-batch scenes were refreshed, and the second batch has fresh FPT captures
-at checkpoint `88e7081`. Older captures retain their labelled historical
+first-batch scenes were refreshed, and the second/third batches have fresh FPT
+captures at checkpoints `88e7081` / `e8dc689`. Older captures retain their labelled historical
 renderer version. FPT uses **300px max edge,
 32 SPP**, with authored aspect ratio and default bounces. Native sampling
 differs. Minor colour/material differences are accepted; this is neither exact

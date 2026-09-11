@@ -10,9 +10,9 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| Reviewed | 111 | Explicit capture-specific visual acceptance, with limitations allowed |
-| Experimental | 577 | Opt-in scenes; execution success is not visual acceptance |
-| Blocked | 58 | 37 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
+| Reviewed | 138 | Explicit capture-specific visual acceptance, with limitations allowed |
+| Experimental | 532 | Opt-in scenes; execution success is not visual acceptance |
+| Blocked | 76 | 55 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
 
 The ranked gallery still contains all 50 rows for transparency, including
 blocked scenes **32, 37, 46 and 48**. Of the additional 50, **37** are promoted
@@ -24,6 +24,10 @@ The [second additional batch](review-batch02-2026-09-11.md) attempted another
 50 scenes: 48 complete native/FPT comparisons, **28** promoted, **20** held for
 visual issues, and two incomplete reference contracts left experimental.
 These are fresh 300px-max-edge, 32-SPP FPT captures; no higher-SPP gate was added.
+The [third additional batch](review-batch03-2026-09-11.md) adds **27** accepted
+comparisons and **18** visual holds. Five native references timed out and remain
+experimental. Known outliers and both earlier incomplete references were not
+retried; coverage expansion takes priority over fixes.
 Colour differences alone are not a blocker. Geometry, missing assets and
 failed render contracts must remain visible. [Explicit decisions](reviews.json)
 are tied to the complete [capture evidence](review-evidence.json), including
@@ -127,10 +131,18 @@ python3 -m unittest discover -s scripts -p 'test_mandel_catalog.py'
 
 ## Review And Publish Another Batch
 
+Current priority: expand reviewed gallery coverage first. Keep geometry,
+lighting and incomplete-reference outliers in their recorded audit inventories
+for a consolidated cleanup pass after broader coverage. Do not retry them or
+weaken the visual acceptance gate merely to increase the reviewed count.
+
 1. Select another source-pinned, collection-balanced batch with
    `python3 scripts/select_mandel_review_batch.py --screening reports/mandel-remaining696-screen96-20260910/summary.json --output reports/next-review/batch.json`.
-   This excludes previously decided/non-experimental scenes and historical
-   dark/blank warnings. Selection is not visual acceptance.
+   This excludes previously decided/non-experimental scenes, historical
+   dark/blank warnings, and checked-in `incomplete-batch*.json` inventories.
+   Add other source-bound deferrals with repeatable `--deferred` arguments.
+   Deferred incomplete scenes keep experimental status; selection is not
+   visual acceptance.
 2. Run the support suite on that batch at 300px/32 SPP and collect
    matching native CPU references. Reuse references only after hash/dimension
    checks; keep monoscopic or reduced-resolution controls explicitly labelled.

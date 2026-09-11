@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 9
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [569: coastalbrot_bear](569.md)
+## [091: MengerV4](091.md)
 
-[![Native / FPT authored](images/569-thumb.webp)](569.md)
+[![Native / FPT authored](images/091-thumb.webp)](091.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Spiral thin-sheet silhouette, large gaps and internal filaments align. FPT is brighter yellow with broader highlights, but no large structural omission is apparent.
+
+## [375: Construct by Ectoplaz 2](375.md)
+
+[![Native / FPT authored](images/375-thumb.webp)](375.md)
 
 accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-Broad silhouette, placement and main surface forms align. FPT green is darker and more saturated than the native chrome response.
+Main green structure and framing align and remain readable. Native blue atmospheric fill is absent; background contrast and materials differ.
 
-## [570: coastalbrot_smilin](570.md)
+## [378: GeneralizedFoldBox01](378.md)
 
-[![Native / FPT authored](images/570-thumb.webp)](570.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Bowl-like structure, large openings and framing align. Reflections, brightness and fine edge detail differ.
-
-## [571: continuum](571.md)
-
-[![Native / FPT authored](images/571-thumb.webp)](571.md)
+[![Native / FPT authored](images/378-thumb.webp)](378.md)
 
 accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-Broad geometry and framing closely align. Gold is darker and less glossy in FPT, without hiding the repeated forms.
+Large central surfaces and framing align. FPT is sharper/orange and native blur differs; fine depth and material parity are not certified.
 
-## [572: hybrid77-stereo](572.md)
+## [379: GeneralizedFoldBox02](379.md)
 
-[![Native / FPT authored](images/572-thumb.webp)](572.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Refreshed monoscopic image closely aligns the central disks and surrounding objects. Fine ring lighting differs. Native stereo is explicitly disabled for this reference; stereo support is not certified.
-
-## [574: icoastahedron](574.md)
-
-[![Native / FPT authored](images/574-thumb.webp)](574.md)
+[![Native / FPT authored](images/379-thumb.webp)](379.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Arched silhouette and triangular cavities align. Strong green/yellow material and reflection differences remain; exact glass transport is not certified.
+Refreshed water surface and red sphere are restored; broad cavern framing matches. Reflections, saturation and sphere roughness still differ.
 
-## [575: mandelbox22_anim](575.md)
+## [380: GeneralizedFoldBox03_2](380.md)
 
-[![Native / FPT authored](images/575-thumb.webp)](575.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Tilted cube silhouette, framing and large cutouts align. FPT sky is lighter and cube highlights/material tones differ.
-
-## [577: menger-BoxFold4D](577.md)
-
-[![Native / FPT authored](images/577-thumb.webp)](577.md)
+[![Native / FPT authored](images/380-thumb.webp)](380.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Central raised cube and nested square cavity align. FPT adds softer indirect shading and changes fine edge contrast, without an obvious large structural omission.
+Refreshed box/displacement path restores the cavern instead of the earlier incorrect close surfaces. Broad opening and rock placement now align; blue contrast, highlights and fine cave detail remain imperfect.
 
-## [579: menger-Rotation4D](579.md)
+## [381: Hybrid 1](381.md)
 
-[![Native / FPT authored](images/579-thumb.webp)](579.md)
+[![Native / FPT authored](images/381-thumb.webp)](381.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Central ornament placement and surrounding forms broadly align. Native soft focus becomes sharper and more contrasty in FPT.
+
+## [383: IFS 20](383.md)
+
+[![Native / FPT authored](images/383-thumb.webp)](383.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Broad rocky layout and framing align. Different focus, tan materials and sky response are visible; fine-depth fidelity is not claimed.
+
+## [387: IFS 25](387.md)
+
+[![Native / FPT authored](images/387-thumb.webp)](387.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Open rotated fractal lattice, silhouette and internal gaps align. Gold highlight intensity and background gradient differ.
+Oblique stepped block layout, main diagonal opening and camera match. Small surfaces have different highlight strength and colour balance.
 
-## [580: menger-Scale4D](580.md)
+## [388: IFS 26](388.md)
 
-[![Native / FPT authored](images/580-thumb.webp)](580.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Nine-panel perforated slab, central opening and repeated smaller holes align. FPT changes interior reflection tones and softens edge highlights.
-
-## [581: menger-SphericalFold4Dtransform](581.md)
-
-[![Native / FPT authored](images/581-thumb.webp)](581.md)
+[![Native / FPT authored](images/388-thumb.webp)](388.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Perforated slab, central cavity and nested hole layout align. Pink material and interior highlights differ without obvious large missing regions.
+Lobed canopy, twisted supports, central sphere and waterline align. FPT sphere reflections are much darker and the water/sky balance is warmer; exact reflective appearance is not certified.
+
+## [391: IFS 29_2](391.md)
+
+[![Native / FPT authored](images/391-thumb.webp)](391.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Foreground rock outline, top cavity and left background opening align. FPT is sharper and more orange, without native depth-of-field blur; fine surface/optical parity is not claimed.

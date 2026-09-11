@@ -1,0 +1,55 @@
+{
+  "scope": "Incomplete triplets remain unpromoted; failures are not hidden or counted as visually reviewed.",
+  "rows": [
+    {
+      "id": "397",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/Riemann Sphere Msltoe 003.fract",
+      "sha256": "79499ae14e5965bc5f56e10dd50b716240fa77d5acd8cf76aca63ca9491effed",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "620",
+      "path": "chromatic_aberration.fract",
+      "sha256": "094a1b2deeb0c40e09b432ddc713806b9bde9872ca4dfc178ad439a87e8f1b2a",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "404",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/aexion06.fract",
+      "sha256": "e3e016442f0c38c15567aa159e01c279cfeb2cdf8965d7af72c6e302cb586e8e",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "405",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/benesi t1 pine tree.fract",
+      "sha256": "df55932878ea8f2022a2ec79f975db2bf06889dda30bf4cf76fa24c744e06087",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "407",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/blockify 2.fract",
+      "sha256": "0ec9ebe96a4a9feaac7ef0a832be50c41c7bc6ccf4266f1b6f3a91adfd7f6a1d",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    }
+  ]
+}
