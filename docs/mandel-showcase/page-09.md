@@ -1,6 +1,6 @@
 # Reviewed Scenes: Page 9
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
@@ -12,74 +12,74 @@ accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 Spiral thin-sheet silhouette, large gaps and internal filaments align. FPT is brighter yellow with broader highlights, but no large structural omission is apparent.
 
-## [375: Construct by Ectoplaz 2](375.md)
+## [092: MengerV5](092.md)
 
-[![Native / FPT authored](images/375-thumb.webp)](375.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Main green structure and framing align and remain readable. Native blue atmospheric fill is absent; background contrast and materials differ.
-
-## [378: GeneralizedFoldBox01](378.md)
-
-[![Native / FPT authored](images/378-thumb.webp)](378.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Large central surfaces and framing align. FPT is sharper/orange and native blur differs; fine depth and material parity are not certified.
-
-## [379: GeneralizedFoldBox02](379.md)
-
-[![Native / FPT authored](images/379-thumb.webp)](379.md)
+[![Native / FPT authored](images/092-thumb.webp)](092.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Refreshed water surface and red sphere are restored; broad cavern framing matches. Reflections, saturation and sphere roughness still differ.
+The square slab, central through-opening and repeated cavity grid align. FPT loses bright metallic highlights and is darker/more matte, but the main openings and surface pattern remain readable.
 
-## [380: GeneralizedFoldBox03_2](380.md)
+## [094: RiemannSphereMsltoeV2](094.md)
 
-[![Native / FPT authored](images/380-thumb.webp)](380.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Refreshed box/displacement path restores the cavern instead of the earlier incorrect close surfaces. Broad opening and rock placement now align; blue contrast, highlights and fine cave detail remain imperfect.
-
-## [381: Hybrid 1](381.md)
-
-[![Native / FPT authored](images/381-thumb.webp)](381.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Central ornament placement and surrounding forms broadly align. Native soft focus becomes sharper and more contrasty in FPT.
-
-## [383: IFS 20](383.md)
-
-[![Native / FPT authored](images/383-thumb.webp)](383.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Broad rocky layout and framing align. Different focus, tan materials and sky response are visible; fine-depth fidelity is not claimed.
-
-## [387: IFS 25](387.md)
-
-[![Native / FPT authored](images/387-thumb.webp)](387.md)
+[![Native / FPT authored](images/094-thumb.webp)](094.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Oblique stepped block layout, main diagonal opening and camera match. Small surfaces have different highlight strength and colour balance.
+The radial lobes, central faceted recess and silhouette match. FPT retains the rainbow/gold material and blue sky, with smoother highlights, less native noise and altered small reflection detail.
 
-## [388: IFS 26](388.md)
+## [096: Sierpinski 4D](096.md)
 
-[![Native / FPT authored](images/388-thumb.webp)](388.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Lobed canopy, twisted supports, central sphere and waterline align. FPT sphere reflections are much darker and the water/sky balance is warmer; exact reflective appearance is not certified.
-
-## [391: IFS 29_2](391.md)
-
-[![Native / FPT authored](images/391-thumb.webp)](391.md)
+[![Native / FPT authored](images/096-thumb.webp)](096.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Foreground rock outline, top cavity and left background opening align. FPT is sharper and more orange, without native depth-of-field blur; fine surface/optical parity is not claimed.
+The symmetric stepped silhouette, central diamond and repeated square details align. FPT retains the blue/gold palette with flatter and broader colour patches instead of the native high-contrast reflective sparkle.
+
+## [098: T-DifsBxFrame_T-DifsCayley2](098.md)
+
+[![Native / FPT authored](images/098-thumb.webp)](098.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The thin rectangular frame, top loops and central rounded solid align. FPT is substantially brighter yellow/red and changes face shading, but the component layout and empty frame gaps remain clear.
+
+## [099: T-DifsCayley2](099.md)
+
+[![Native / FPT authored](images/099-thumb.webp)](099.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The large pointed arch, repeated central rounded pairs and flanking curved surfaces align. FPT is more matte and subdued green instead of bright glossy yellow-green, while the openings and forms remain readable.
+
+## [101: T-DifsChessboard_T-DifsSphereGrid](101.md)
+
+[![Native / FPT authored](images/101-thumb.webp)](101.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The circular relief, radial grooves, central star pattern and black/white surface bands align closely. FPT shifts some bands toward pale yellow and changes highlight strength, without an obvious large geometry difference.
+
+## [103: T-DifsHelixMenger](103.md)
+
+[![Native / FPT authored](images/103-thumb.webp)](103.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The stacked perforated cylindrical sections, central openings and red top-face pattern align closely. FPT changes some highlight and inner-hole colours without altering the broad construction.
+
+## [104: T-DifsHelixMenger_001](104.md)
+
+[![Native / FPT authored](images/104-thumb.webp)](104.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The radial panel layout, outer silhouette and central aperture align broadly. FPT changes the copper material to a rainbow reflective appearance, including different inner-rim reflections; this acceptance is for readable structure, not material parity.
+
+## [105: T-DifsHelixMenger_002](105.md)
+
+[![Native / FPT authored](images/105-thumb.webp)](105.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The repeating twisted ribbed form and narrow central connections align. Both images have very bright white faces; FPT changes fine highlight and crease contrast without an obvious broad shape difference.

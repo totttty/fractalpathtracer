@@ -46,6 +46,18 @@ Repeated rows and floating torus align, but the reference's bright reflective st
 
 The spherical arrangement aligns, but the native red trap-light line network disappears entirely and the spheres change to dim green. The defining authored lighting feature is missing.
 
+## [093: OctahedronMandalayMenger](093.md)
+
+[![Native / FPT authored](images/093-thumb.webp)](093.md)
+
+The central stepped structure and horizontal supports broadly align, but the defining bright red surrounding light pattern and glow are absent in FPT, leaving the structure against black.
+
+## [100: T-DifsCayley2_coloredByChessboard](100.md)
+
+[![Native / FPT authored](images/100-thumb.webp)](100.md)
+
+The four broad lobes and central connections align, but the defining dense black-and-white checkerboard material pattern disappears into almost uniform white in FPT. This material demonstration is not validated by matching the silhouette alone.
+
 ## [372: IFS_001](372.md)
 
 [![Native / FPT authored](images/372-thumb.webp)](372.md)
@@ -165,6 +177,42 @@ Central ridged form and surrounding spikes align, but native iridescent highligh
 [![Native / FPT authored](images/413-thumb.webp)](413.md)
 
 Native red cloud-filled composition becomes exposed gold structure with a dark central region in FPT. Unsupported volumes and major appearance differences prevent a complete structural/beauty assessment.
+
+## [414: clouds 007](414.md)
+
+[![Native / FPT authored](images/414-thumb.webp)](414.md)
+
+Native clouds and golden haze dominate the islands and horizon; FPT exposes coloured smooth islands under a cyan sky without those volumes. The hidden native surface cannot be fully compared, and authored atmosphere/lighting is substantially missing.
+
+## [415: clouds 2_v2](415.md)
+
+[![Native / FPT authored](images/415-thumb.webp)](415.md)
+
+The broad islands and water are present, but native storm clouds and dark atmospheric occlusion are replaced by clear cyan sky and exposed multicoloured surfaces. Native obscured regions cannot be certified and the defining authored atmosphere is absent.
+
+## [423: fish eye](423.md)
+
+[![Native / FPT authored](images/423-thumb.webp)](423.md)
+
+The fisheye corridor walls and openings align, but native yellow illumination in the left opening and rear chamber is missing. FPT darkens the interior and floor substantially, reducing readable surface detail.
+
+## [427: hybrid animacja - background](427.md)
+
+[![Native / FPT authored](images/427-thumb.webp)](427.md)
+
+The panoramic repeated frames and central chamber align, but FPT omits the bright white/green illumination panels visible in native and substantially darkens the main room.
+
+## [428: hybrid14](428.md)
+
+[![Native / FPT authored](images/428-thumb.webp)](428.md)
+
+Native fine nested cavern structures are replaced by large smooth rounded surfaces in the neutral control, and the authored result is nearly black. This is a structural outlier as well as a lighting failure.
+
+## [429: hybrid15](429.md)
+
+[![Native / FPT authored](images/429-thumb.webp)](429.md)
+
+The concentric petal/ribbon arrangement and central round region broadly align, but the defining native white/orange central illumination is absent, replaced by a dark blue interior. The outer palette alone does not validate the missing light.
 
 ## [567: IFS31_anim](567.md)
 
@@ -333,3 +381,39 @@ Rounded cone and support plane align, but the defining multicoloured reflectance
 [![Native / FPT authored](images/639-thumb.webp)](639.md)
 
 Rounded perforated block and cavity layout align, but the authored gold specular highlights disappear into a dull dark surface. The defining material/lighting behaviour remains unvalidated.
+
+## [643: hybrid002](643.md)
+
+[![Native / FPT authored](images/643-thumb.webp)](643.md)
+
+The wall grids and receding square corridor are present, but the native bright white illumination/atmospheric opening becomes a nearly black interior in FPT. Full interior correspondence is not established through the native overbright region.
+
+## [644: hybrid003](644.md)
+
+[![Native / FPT authored](images/644-thumb.webp)](644.md)
+
+The left bright source and broad surrounding frame are recognisable, but the large luminous native opening and yellow environment disappear into an almost black/red interior. Interior structure cannot be confidently matched through this appearance difference.
+
+## [645: hybrid004](645.md)
+
+[![Native / FPT authored](images/645-thumb.webp)](645.md)
+
+The neutral control shows a receding structured chamber, but the authored FPT image clips almost entirely to white/cyan where the native image has readable blue/orange walls. Detailed authored correspondence cannot be established through this clipping.
+
+## [649: hypercomplex001](649.md)
+
+[![Native / FPT authored](images/649-thumb.webp)](649.md)
+
+The large curved mass and suspended ring align, but the native bright gold illumination and surrounding glow become dark olive surfaces and a flat sky. Major surface highlights and relief separation are lost.
+
+## [650: ides1_001](650.md)
+
+[![Native / FPT authored](images/650-thumb.webp)](650.md)
+
+The slender central spire and flared base align, but FPT introduces a hard bright angular horizon strip above a near-black floor where the native background is a smooth gradient. The environment/ground appearance needs investigation.
+
+## [651: ides2_001](651.md)
+
+[![Native / FPT authored](images/651-thumb.webp)](651.md)
+
+Native pale atmospheric/transmissive surfaces become near-black rainbow-highlighted folds in FPT. Some curved outlines correspond, but the extreme brightness change prevents a confident complete structural or authored appearance comparison.

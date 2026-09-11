@@ -8302,6 +8302,1812 @@
           "metadata_sha256": "05427f3465645e18e74a524bff5cb5a94cb370291e33c40938c15b05ae1500e5"
         }
       }
+    },
+    {
+      "id": "092",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/MengerV5.fract",
+      "sha256": "738a0d965deb2f7174f2f6bc00c471a2e7220c0971069b4f656be113f549761b",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "faad25a54bb23f023e87528fbed089b5848735034d97500ca6a7bde699c1eea0",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "bb56352e062a432c69044235ae5c8d53516f451597107935af0b6c135d41a262",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "9131b3b38d3b2b62e48d2f05cd15d9ff9fbad8542e0f12c7782a02d14ca8ac66"
+        },
+        "authored": {
+          "sha256": "d3ef5f01281ffd2154ffd63fab2c0bdb19e761221398ea791f51d1ff2fe501aa",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "a82b70edf12a915a41181ce27a4ba95f057307f7987784f31cbff56e76abb63a"
+        }
+      }
+    },
+    {
+      "id": "414",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/clouds 007.fract",
+      "sha256": "5598ab45d705dfef60e0dba67abb77fda6b00812ae12bbab65e427d396355f35",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "671491719aafe754f6f13491e8b6056825aa670c59609b928f6dad1f13e91590",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "c57a67ed47bc96823717e14032e5b0ff3ed809d7ca789e6e7d75760f632ccd06",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "40814ade531f2c5f9c491c0b1278cc28b67f042619c60d2e59c2a3e2bed00bf5"
+        },
+        "authored": {
+          "sha256": "8d4352bab46c3d8288bcbf5ab77bdd51cb44b78004345f1d8970379f33bd5723",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "c02867aef04b0c2399ff2c1e359a6bd4f3e76538d59979e0daf328a7b9042bbb"
+        }
+      }
+    },
+    {
+      "id": "640",
+      "path": "hex grid 001.fract",
+      "sha256": "90af735665a0b1a8d299dc05156f4a5b950d5f64e7d0974abe920f1bfb932b48",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "87a6475b36c7a01988b74523e605c306305455635fba4f2038864ac436f65743",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "fe85204e0c62133991474775e4a3cfb88e92372c81e6b8f04c7c2bfaefaac755",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "c656dba7e2f637ebb48b890c979f9a7dc7e37cfd6aac24b455a5904a75a03fe5"
+        },
+        "authored": {
+          "sha256": "d88708f3743e48ee80683c392544974be0aa4fb9effcfa221e4ab43d7ad3294c",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "711fe121d5a88cc0aca5ca99ce6b2151b5437d3fa0624d7debaeca6b302ea87c"
+        }
+      }
+    },
+    {
+      "id": "093",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/OctahedronMandalayMenger.fract",
+      "sha256": "b29103ecaf8a881e0a16cd2bd24236c9010423fdb2e09521fb896358eb161b71",
+      "dimensions": [
+        300,
+        200
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "54ad895b0faf87c8e58792e25ada8fb0a376623389dc8f2992a547ff3086e729",
+          "dimensions": [
+            300,
+            200
+          ]
+        },
+        "geometry": {
+          "sha256": "9ba3770393ddd929fb0d1f71e85d89b7b321f3b6707722eba5dcfa8413a710e0",
+          "dimensions": [
+            300,
+            200
+          ],
+          "metadata_sha256": "bd6aa44e11b3ea7af65f95669bd36ba1dc71669f42a59dfec7301b52bd782fd6"
+        },
+        "authored": {
+          "sha256": "ed408688d5dab270c39b6576b4f9a9f1b08de4ca4beac855c1fbdc155b5e1b3c",
+          "dimensions": [
+            300,
+            200
+          ],
+          "metadata_sha256": "6efb52a5ed61e741254086adf3a624a5e63a75f74d961cd0f47eaa294e2ae291"
+        }
+      }
+    },
+    {
+      "id": "415",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/clouds 2_v2.fract",
+      "sha256": "7acc10bec7963898d581274b33b5787fb2bc3287c17631b0e16d609c594eddb7",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "b25e3c423ccc46f64bbc27df6aced5044c0317f1aa0db1f166127f8e4bf4d6aa",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "c57a67ed47bc96823717e14032e5b0ff3ed809d7ca789e6e7d75760f632ccd06",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "7a5ad200c7e457334b74f58afcb06dbdd8e13b12d8b85f706070697d29dcd891"
+        },
+        "authored": {
+          "sha256": "aa3bb0fa977e3d430bed58d44195d3c5c68c88fc5e9cc91aae48f547f12ee6fa",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "f5470666d8e39cf9f639a433f41a8977be84ad3290269c6f30a239e2a95840ac"
+        }
+      }
+    },
+    {
+      "id": "094",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/RiemannSphereMsltoeV2.fract",
+      "sha256": "cf191006d5abf878589034f88363620ea36215ffd9ecbee96d96bfce5e8997f7",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "8cbceca8c8d5a6c13b32b701c9586acc363a803f6621b5caf2453232b065bfca",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "911934b14c9d0da7255f124dcdcbe5f6f4e5f8803b2d7ba4cc8642dded429ea4",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "c6cd52d3e672fa4ca5494d4d5858eb599d9487c34e33c585cb701fd9886857f3"
+        },
+        "authored": {
+          "sha256": "99510270aefe603fe37e7981e06ff0a4bb3bff4c2280b07158fb9bc62233a02d",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "326c73dfd266244859c6a12dbf584465a51492ba5be151219f982e14a0cbfbe3"
+        }
+      }
+    },
+    {
+      "id": "642",
+      "path": "hybrid001.fract",
+      "sha256": "b9236c85374cc00782cc8a2e418a3a5aa7af67c82d15ea0c8924152b36638cfb",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "fd0b13fece2ada3aab3afc4fa6fee87a59d8746158bc24759b2a2443490a148f",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "517ae8843cad2df873edfa1b22923e5f6bbab7844f826046e078a1ad6939641f",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "d5248416af14b199129462be854a91457dcdefafbe4f7fb49750f6d70ec7be23"
+        },
+        "authored": {
+          "sha256": "172d6c079404b2849ea2461dffde2136e6f1d58ca5649fb49dce5e8486615991",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "3101597409a7d26b85ee0ed509ceb6a481a845adfa0e06df0f35046f77c5ef79"
+        }
+      }
+    },
+    {
+      "id": "096",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/Sierpinski 4D.fract",
+      "sha256": "320966913215facfa0a29140bc8c92f52ff3e279aaf784a55218aaf3daaf4278",
+      "dimensions": [
+        300,
+        225
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "3fa9af6c43ab9271b8899084e4c6531a1c0b6632c4b91e64571bba78c1b6ff69",
+          "dimensions": [
+            300,
+            225
+          ]
+        },
+        "geometry": {
+          "sha256": "3397d9d6da91558e971484459c3f53f8a522b5f74fc312dd1c81f471c98e9c5e",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "e1dfa8684d337019178d3b18980fbdd8a4ca595b7274494d3ef523c79cd049f2"
+        },
+        "authored": {
+          "sha256": "abe67e7fac84ee45328d58c4b8e05472dfa308474ea41b7faf4c81a5ec5a3045",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "0343970554d6c3f08a8307f3c6c4a47952650ec9c9233bffbcf954ee9be5af25"
+        }
+      }
+    },
+    {
+      "id": "643",
+      "path": "hybrid002.fract",
+      "sha256": "c1360b229a178a8da9fe628a296cfd989fb52e0eb7683d4059e29ef1dd953ede",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "442562cbc2156d0065827727e3925e49a57d7c5a780eb4ca5617e5c835bb8a1b",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "1e6add96c4cd3a45bac29f939c75c0db78c023f939917302bf13411eee7903ed",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "cffd6654a98b44504d7d493b70b1317ac147401e7d47e1e80fe049f6688b8711"
+        },
+        "authored": {
+          "sha256": "437e2c4100e5775750709b31fbc30304de0d7f0ed6913e7af0110d287be0a3e4",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "34b56993247961f47b66988afea53899630a8ba2a2fb0921f26625cbeb5a0b2c"
+        }
+      }
+    },
+    {
+      "id": "418",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/constant factor 2.0  - mandelbox scale 2.0.fract",
+      "sha256": "0527cc1ae29bc889fba405175590d803020b5f31638adfdbec8cc8b740426b6f",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "1030321c7a9999bcf96c558d1ed416d46d295b4d2421f4ba35568939f183ecf8",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "73d369c011cd26d3d5346153b02172ea3d3ac0663e5fc3e0c7c4d33542b1d644",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "b5e11662f7f86f5e04bbc352b88786e040e976dfb0acd96c17452b1409851618"
+        },
+        "authored": {
+          "sha256": "24fb72f158d9d85c35ca9b3c857d9d2933286048c3686a3da0131585a3363a5c",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "448bd68b7a46bf41a7fa46ac36a0671f0b05124c0d4a96e781060a71515bf556"
+        }
+      }
+    },
+    {
+      "id": "644",
+      "path": "hybrid003.fract",
+      "sha256": "b3222068e2fc1908ee2e9e002b2c0dcb7ac7ee6aed7b0015efe1309c17246e14",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "6a37963ad55315a4707c081f31c6b365cd28ea0a405e5f24fef52cd20a62a7d5",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "748b8fb81ebdec7a4935eac67c1fbec4fc2aa420a5a40d7566aa3bb5641cc632",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "9d03fdff292ec1e6e6ed18ee152a5b7f65c75c290433805484310af14f8d8832"
+        },
+        "authored": {
+          "sha256": "2f791e7237b5b01789434099d8247a7a6f734750519650440b98849ec466f437",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "a2dce409d20c641aec073e8e61677ca5955498b08a8619fdf9c93fa455a47f1f"
+        }
+      }
+    },
+    {
+      "id": "098",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsBxFrame_T-DifsCayley2.fract",
+      "sha256": "12e8e0f22a39588cdbb83ce0b94f582b934912830c52d3f1ae6daaf9778a08ba",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "dcdc09458709500c3d49d696dc6024e6463a6e3d4c849a5e4efaccb622311fce",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "e0d941842b986b675a4843b348b9cc8181149f147dc39743e65f6e5156332987",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "4b781745257131c063964bc8301f1d0096c2e2b05cd6a237f1fe9326318e2c82"
+        },
+        "authored": {
+          "sha256": "6ec9290a7421fda151fb0e409fef14b041e51c88e4977c30438fc71644e922fe",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "25fcd7b8e1c38f2ebdba5ab9890d29667f770dac7d95329c33a3d2a26160ac51"
+        }
+      }
+    },
+    {
+      "id": "645",
+      "path": "hybrid004.fract",
+      "sha256": "348d3a5945aca292a42e1c0c3d5873565a25efe6e22a4d7d0cd3e954199ffdf3",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "60bdb9317541402165d913a03c6b5b36a8a052720b3c0b09c4be5cbdff742f1e",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "be8b0b2ee86b6f3265f938f9ad698ae168b61c6613439a37f1018fc207f8962e",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "19303175ef460e1c91404cfd6507d80ba2af7e63ac466b9e43b843330b469a54"
+        },
+        "authored": {
+          "sha256": "b1bac492d109caabd57492c69d4bae89838b1ed13d871c542475f4744e225fa4",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "70b559297797408c377b2087607546743f7651235c94caecd464cb53e51c4beb"
+        }
+      }
+    },
+    {
+      "id": "099",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsCayley2.fract",
+      "sha256": "13384a39d732465b9897112b388b9bb1a54432fc4496f737d615a896d070b7ba",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "5a9d6b5f60e992c0c66834ca61d56acb34359a0e182f6b3dedd24821713da68a",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "9c4249621cf1633aba028d60426e4530e40d1230fdd754095d23ca9329ea4adf",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "45e9930722aaf0dbe5c0ae9e98b0e1ec3e88c6b4ef1627e416272b329f615cb5"
+        },
+        "authored": {
+          "sha256": "a5e8083116ee8ca2492a7d8134cf850cf5f00386428e64aecf83f03baf1eddfc",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "e8e12bc9ad42bcf291a9bb598646187c255b99d51f447ffee91c946249d43942"
+        }
+      }
+    },
+    {
+      "id": "420",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/dune.fract",
+      "sha256": "a4b8e8a92ae0c54b1e5b032f0baecdcfc931ee811c0887e766371b147d1efc35",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "17bff39dc62b488a8bfe0bc8b0daa7ad152a63b7c3410e67638ed5d25b809ee8",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "a3f9b5eb7ca06ce5aeddffe018fe67e98fc22d69c3166470d66962285eb9cdca",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "443991b5d638cbbf4e81fb85f4095c0f95481a7a4bb1a66d9fad68e7cf00e4e0"
+        },
+        "authored": {
+          "sha256": "3d0189d485a2d45f3e4c16f97225c8fed4a5c54d6f5301568c54de8ccb320591",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "3802837196f914985fb52aad83c7eaa3b5782841efbda98ea6dbc864baed14c4"
+        }
+      }
+    },
+    {
+      "id": "100",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsCayley2_coloredByChessboard.fract",
+      "sha256": "01ff35d72be02456749fd33be8c4d6e2a682fbb383945f486607fe3edae97f87",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "6d2aa5398f274bd231328f304d7b7af156251f276cac2d12522833a7e66fbe79",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "a327d37ce32146c1e7b40d8a42af59c048f77b951ee3dc76ef662dd2581eb107",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "bb78ecb15ac815ed119a20579690401dccd9f5f492d27d510e5cb5fbceea77a6"
+        },
+        "authored": {
+          "sha256": "3243fd0fb7f6a8e46362e688234c53cb824509183d64581724e56684d44953f7",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "36daf067b91a2d7d79b0c983bbeb83f5b42585d7cab2fe7f6411a38b259e5e74"
+        }
+      }
+    },
+    {
+      "id": "421",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/equirectangular mandelbox.fract",
+      "sha256": "73f80dcfe6b49ea36234599a6beef864419592cabbf74eb5e7c637f64d32b4a4",
+      "dimensions": [
+        300,
+        150
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "de2d969fe36a75949b0259526c2ca28f19907cb1f33f0fdcfdd85f3ff68ebbc1",
+          "dimensions": [
+            300,
+            150
+          ]
+        },
+        "geometry": {
+          "sha256": "57be5670870ce6c898fde25bebf7a5904c5507c32785b818c903c220100fc6dc",
+          "dimensions": [
+            300,
+            150
+          ],
+          "metadata_sha256": "63beb5c751eb70edc793418a2894afbbd0771ca57f892e5293f01b685e820c21"
+        },
+        "authored": {
+          "sha256": "fad7704b58acdf0359dabfcf0b56283a34e74bfbbbd8593bf57e7bea2d5620e2",
+          "dimensions": [
+            300,
+            150
+          ],
+          "metadata_sha256": "5db57bd574fd597964ba7b1070a108c4dcfd47cae3b676e0cca6457ad5386f05"
+        }
+      }
+    },
+    {
+      "id": "647",
+      "path": "hybrid007.fract",
+      "sha256": "fc3546bb78e1d011b30784a83733a1694893093c5c4900e15edfe8b97db15052",
+      "dimensions": [
+        300,
+        225
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "e1b1637f304779096d310e3bee606b6c22de221ef2a91ab238b899a27d1c684e",
+          "dimensions": [
+            300,
+            225
+          ]
+        },
+        "geometry": {
+          "sha256": "47414943f81183edb697ffc267dba1a32dd684316814bd66abfe86a0ed387110",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "4bbc2e008776f9c157c13d48d2c4875a443ef8948aad60a7b9dd9c995f5321af"
+        },
+        "authored": {
+          "sha256": "70a48da5e390a38e7b375350f74795afcc32fb2611b3817cd5d33adc02afd64d",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "1aa477f9e1e36dd2d5e73e2ed56f93652d4fdbb1588852719ec822c143cc252f"
+        }
+      }
+    },
+    {
+      "id": "101",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsChessboard_T-DifsSphereGrid.fract",
+      "sha256": "a4ad2d8e948fc901fe831a4413d8b5688046d46d41b1dfa94ebe4cbcd7f9621f",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "ed78fd0df0f95206f5e988c32f37b711fa97b81a9cc0ad09dab0420809b508c3",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "3d7d652ae1c05f4649a75314da205c69f62107a4ff80a054a07a5f3e7a285c15",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "db3a7ae05e87daf9371384e172a21fd977bdf4b99b953260d729fb2a64866a63"
+        },
+        "authored": {
+          "sha256": "d1f94baae407a1d1ca0b76e20ee219520584f7fae6490d529fd6fcd6750235bd",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "006349961d8248249a7098cad3091d75ccab8489d3bd8d904437fc2b2c74999b"
+        }
+      }
+    },
+    {
+      "id": "422",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/equirectangular menger sponge.fract",
+      "sha256": "b1f651f65e4d5e8b7e434196013d911c8db354e51eaadaadf34fbc5ad89cb19a",
+      "dimensions": [
+        300,
+        150
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "dd30205a9e47392c647f28075cb95b9b0c3875052497f7273470f9093b6145e7",
+          "dimensions": [
+            300,
+            150
+          ]
+        },
+        "geometry": {
+          "sha256": "360bc16d48a1800834731c1057b845fe51f8ed8e3bb817f17b85d57ffa6ef82f",
+          "dimensions": [
+            300,
+            150
+          ],
+          "metadata_sha256": "e72974624353607cfdc5445cf8a8e5c4e1db22ee329735554a2641b82404c584"
+        },
+        "authored": {
+          "sha256": "481c38a8036e7d8356a925f0bbdebf2f57988a68f47dbf452273d49f398abc9b",
+          "dimensions": [
+            300,
+            150
+          ],
+          "metadata_sha256": "184b2fe4797c9c0b1b184a5825eed819eb2c301f19474a5e05e27aea8112e6a0"
+        }
+      }
+    },
+    {
+      "id": "648",
+      "path": "hybrid008 - collatz.fract",
+      "sha256": "0978b0a13f2deb623fa3798de057c007a66255bc04db2c2ccb62b183fbb31e6c",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "697cc4c815210eb852b47885ce66ab0b17467a53a9ca93df905d1bd7b1e399da",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "082833a8bb8491826dec4411900c2235a5437f8a4e6d9e5d0238fd2ba64ada38",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "a7dac07555e6899e7dbae893c862184e3557d92b2a6c31411c4224ed039082e8"
+        },
+        "authored": {
+          "sha256": "7830233be0f4916b634a8d44ce19753ff7f8bbfca9b817fb24a1de13a5573ce2",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "deb081827ab42d904cef9f1b01a944b14472db31d91dd27b61c80f71c27ec4bb"
+        }
+      }
+    },
+    {
+      "id": "103",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsHelixMenger.fract",
+      "sha256": "4ad4e5d64da5917f8387de8f66d301a17165a7a63077fe8d9e55968c31d05565",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "c7ac4e9a8b0a1e41adc96ca01282d11c6d7a41a0434a7db2c86c5b5962247103",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "8982ec5d78d6b27a2626b34530307bcafa43dc038376c180e1e04c6f03cdc0b9",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "b6c745c6c4933bfa714d2997900680f76579940cc300f83fc73d840e202e14a9"
+        },
+        "authored": {
+          "sha256": "c4da2d29938ae749adcfe60f920816515a0c1d4cb3d506aca047364705f90539",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "379ed371e4ca92e8a8563ccdbbaabb58ed831fffe2df6e2ac41a79c3c96509ea"
+        }
+      }
+    },
+    {
+      "id": "423",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/fish eye.fract",
+      "sha256": "5bad7c53d2685cab01a1af49381738e863e97f274a2fe9ddc4afccf2bbc8b0be",
+      "dimensions": [
+        300,
+        225
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "82fd1ce4457adef52f8c9059038e484198c2f0c27978e86528a71420b6847aa6",
+          "dimensions": [
+            300,
+            225
+          ]
+        },
+        "geometry": {
+          "sha256": "d84cdb485e3e4b4c7c47244adb804b70ae95e3e4104f7a9c371121371f198383",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "03516e76231ba14d8d78886f04ac65636207f14c74f60e6eceb7439d4e6a9bdd"
+        },
+        "authored": {
+          "sha256": "1f4a7695bd0db09444a7f7e07d269483b0f96b06a1a96b3f38c04092e6792e44",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "4c564abfa4e745bd0daccc2cffb3d018837eba35b479842a3e41ded170395374"
+        }
+      }
+    },
+    {
+      "id": "649",
+      "path": "hypercomplex001.fract",
+      "sha256": "664ce8e7c8d1d5ec9361448af8d583f2f933ee2c34eb2564f9007e585b0109cf",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "b39462d29aa35daf02cec97745cf450bab080f3bae5ad1745e0617a028a19edc",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "03b04e834e303e8bc69049acf8fc45b69e32670bc4f0202a3140a4731731267a",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "eaf17d12f5c9628d1fb2d03c385b0549083fc9f3225a62831b7274d6961fe4f6"
+        },
+        "authored": {
+          "sha256": "77ed55fa650f6befbf24818bc130cad4b7a5c1ba98ab032d6909703a65cdc04c",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "dabc23016b885b1aa8906f3eb8b5e5ea340c6946f93bff763ca3f9470d3fffc3"
+        }
+      }
+    },
+    {
+      "id": "104",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsHelixMenger_001.fract",
+      "sha256": "b724517e5c716acd0f5c4055a71818146d068872c7b98199f8d295e5d8df77e2",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "85b04461a5098491d3d23e6c6faa4bd068e97935a27ae79cca974aab8fcd4932",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "524b236b53e56434623fb790bbb46bd157e86a16a058f596f666c12b1c52eda8",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "f21cf3be562ab3642f96bb70b0559024c57df96168159be217873b008e36ef02"
+        },
+        "authored": {
+          "sha256": "846fc360d6707fe587ee150e039b9cf992724f3f225d5964033225f5a8585b7b",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "53c0366c737555440c259bdbe71f2dba409e1a7a2eb9a53437feec8a70545b40"
+        }
+      }
+    },
+    {
+      "id": "424",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/folded mender sponge.fract",
+      "sha256": "3b24b3b4c0d03239437d3ec316ec8bf60cd9f255088951cb22bf3189558f6d34",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "b102e59156022d48691fd9f2d9f2d8ff71f425949036cd447791ab99181113d8",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "43e437c7e2b38b0f616eb48ba0152224b73a0fee014cdc2060d4ef0f8857b412",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "eabadcd702a51be4e89311f73a31ae9751f5c722589a78d3347333fa2c53fd49"
+        },
+        "authored": {
+          "sha256": "13b26e1f60be44ffc4d5791345f1bee9b8755d4e09f7b5b97bd2bc60d7af4db6",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "7ede9dd27da3283a8401fefce63d2eaddcb34c1cbd389b10dc289339ebfc7f54"
+        }
+      }
+    },
+    {
+      "id": "650",
+      "path": "ides1_001.fract",
+      "sha256": "2c858c9b727bd3e33b29f5ca5cd435d2cfc50070bad704b288e002f1e4e1be1c",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "e318b19c18bbe70c7d91cb720e791de702f0eb798c255cd43f0245c538692b6c",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "c9fac031c595125b79da970781632aac03bba8b7e9206f3fa4abe5bd058ec96d",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "ab39f06b7c58c9d1b7068dc569d23ce17e5282383dd241e0b688ab863f776b33"
+        },
+        "authored": {
+          "sha256": "85e762f865e07bd50d252e53716435297cc9e3d538294bbdcd650fe6ff9e3341",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "313988d6ff80319d411b4907765e6f6d94285bf20acf5fa02bdcfbc3d2800e83"
+        }
+      }
+    },
+    {
+      "id": "105",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsHelixMenger_002.fract",
+      "sha256": "d56ee16769c9ccd78e67499ff4c1e61c7bcc94b61feab58691be230b1c82b7f3",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "681db08e9761279c0091694e6c141a964299d4814a17d6370a62d41a906d8315",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "a8940ac5b8cc3dd59b55c70135d581b3faa59fda767a7ba1100eb20ffaa3d8d2",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "96ea271698b58e5ec1fbb25218cdd010aacffd2b677df0c497b3990f862be611"
+        },
+        "authored": {
+          "sha256": "eb86f7a3d258620a92374458662b1030e5e20a6e65ff58628057e4750bf5c19a",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "0c919c633f35c55e59e34481e12480f4eaf3f1fb493b083b3b9b98951bbcfe45"
+        }
+      }
+    },
+    {
+      "id": "427",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid animacja - background.fract",
+      "sha256": "b8e6444799dc99c615550f48d874fdce396126652de11d57faa70fbeafc1beaa",
+      "dimensions": [
+        300,
+        150
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "aa08b85e560bf1fdb7f00ab5b26c366a1ff067c4dd56dd8fce142e6c0ec6f8b6",
+          "dimensions": [
+            300,
+            150
+          ]
+        },
+        "geometry": {
+          "sha256": "8eb2259bd6b7682d24c432d282594e84dd61a9bc6a9c0f20701a6990fe717412",
+          "dimensions": [
+            300,
+            150
+          ],
+          "metadata_sha256": "61a7c098b66cf568fe3383d314d0b6be8e1e267e7e45ba81ab7fef0cdfa11fb3"
+        },
+        "authored": {
+          "sha256": "2ec80ff74685579538a58d73aeb42c2150dbddaced9288c9c03317985843136c",
+          "dimensions": [
+            300,
+            150
+          ],
+          "metadata_sha256": "a5ab095fe935f8ca81673891dc0e118e006507f093ce5fa788ef5ab682d30d37"
+        }
+      }
+    },
+    {
+      "id": "651",
+      "path": "ides2_001.fract",
+      "sha256": "31a6027e38f46029d367f232f6ee426ed74db986d5fb71de65a4e2b17db62acf",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "a45740cb4061a4755aaf98b0d74030c545b166c725d8566756540955bd795d08",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "a5909588a599d3665fc2595b90d79a7033203421f5cf2b3c16141aab31ef29f7",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "b916660c1a2fc7db95a3ea7769b962c68af0f1bb2dffe5a537d07ac8911738e0"
+        },
+        "authored": {
+          "sha256": "748934a8afe8b7e38c35575fe054742ba4f996e976286f548fda1256ea61adf9",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "267258c75f8e6c8d553a96f6effebae49073b0b6f0dc703cc14587a793a33baf"
+        }
+      }
+    },
+    {
+      "id": "106",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsHelixV2.fract",
+      "sha256": "3e016d2c3ce82d163631a5f5aacfd13e5ebad09b758a9a65c125c2f0bf8dbd18",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "3c78a34b35d8001cc4316cddbd41153784a2197878075ba47f67a9524b4023b1",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "2132edcc48eb555472b73adecf9e2663d01e87e7eb7eb329a7bd0e081509a523",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "f5d6af52344eda72ad429dfe11d98d687223b90173b0712be541d49948a70d00"
+        },
+        "authored": {
+          "sha256": "c392269241ccdc4ecdd2f153a3fdfa485a2be901b51e815366b9e2c274b6b5ad",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "a33336e27f53fa4b3c7a239cd13e395086c10fd97b4a02de703482a6907dbfef"
+        }
+      }
+    },
+    {
+      "id": "428",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid14.fract",
+      "sha256": "90039d4a236d717194c39967609e446dadc58f09d819d5290094e6d6f021662a",
+      "dimensions": [
+        300,
+        225
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "bf96e137cdab8a5b77eb5b1b70831dabaa40822c9c79048c813586d8f1d80518",
+          "dimensions": [
+            300,
+            225
+          ]
+        },
+        "geometry": {
+          "sha256": "871b73b97e46cfdb8f0a4c007205d95d139305798493c4b558c912d50a7a296e",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "455c785154393278903b26cc9c737c1088556482c3671367fcea8fe0dbc857e7"
+        },
+        "authored": {
+          "sha256": "5030196368d3a86c9e4ea7f3753eaaa1411097ddb2362be7ff97bab898fad2b9",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "b0cd32a4d50d4dcbffb59d9c5774ca1fa6ec386c62d81cf00fd069ea3357e5cd"
+        }
+      }
+    },
+    {
+      "id": "652",
+      "path": "iq_bulb_001.fract",
+      "sha256": "d13573f2a98fe73015537e9bfbb5e372d609ff8db0b75d18e7e80d6db03fe546",
+      "dimensions": [
+        300,
+        225
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "b57ed42bef04c7f884ffca213d9e068496d526207e7184e1687c676c5185583b",
+          "dimensions": [
+            300,
+            225
+          ]
+        },
+        "geometry": {
+          "sha256": "3213dc493e172e93f57b8b90672f51ceed796e0ae83de1444495403a013ac276",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "e0b8b77771fedd2304df51bc4390a1042960a31da25ef04fccee3ac1a5239e68"
+        },
+        "authored": {
+          "sha256": "62fe032810555ea20cac3e9120ef076924e108421f44c22f8617a5579443c62a",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "63dc9bf0db5d748f9554f378f0b9ecb9db35abaaab47f3a65dda3f12468e9aa8"
+        }
+      }
+    },
+    {
+      "id": "107",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsHelixV2_001.fract",
+      "sha256": "f281d145ddc7c2ef1cded4e8e1e43ce81c6e933e45b34637998dd4eb6068e0f1",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "620adb4a536342dbbd07b1fa7f800472cffb02ecf6f475456e5edfdf4bab6606",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "1e88933bccb5432d74bbb3673b66463850784b62f5cb52010111ddfc402d4405",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "be6f6c25a74e6a36096b900e06726b890661187a36390604c698868b6c1bfc49"
+        },
+        "authored": {
+          "sha256": "dd0a66c95df98c36593b693369645a2c1f7e1ab73d81524117d7db7a290e94c9",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "37942df1229c7077d22353339e6852ea204f898e4d4687e3646b9b3a5ecd35e3"
+        }
+      }
+    },
+    {
+      "id": "429",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid15.fract",
+      "sha256": "b92932d8f1f29cacd4be9409b100ad9d5f133cb27445a67412a3309afd14e0af",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "50a40619d30fd25266534cd7d4c0f99558662075668b4b345b4f3d73d97c6be8",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "95269859dd262cf232baa36730689e422648c980ba20d713b90a28b7ed1e0f50",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "5989410eaa03446af929fd68ff174ecede8c34e11b49ddc8ae416cf9b498259b"
+        },
+        "authored": {
+          "sha256": "bac13176503633a24e724d93322813e952f2ed801b5030ec8e2651706cb4cc23",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "baf6129a245a2c800ca0cb22f01e8a91b68092696532d5f1f4cad964dc10f53a"
+        }
+      }
+    },
+    {
+      "id": "108",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsOctahedron2a.fract",
+      "sha256": "73220becc17b164d1906ed8febf8a9957539bd274760ac050da9e3dcebf8e484",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "450a6ee8b6a7163fe44f24100e668ecbad9431d686d839c575d4f3d380ea3966",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "8b07e4129e3bb072ac461c35130ea95c3f5e11e5afc08621abd02df4e6f51ac0",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "4a9ba867da070311a929f255a49484e1466fd3c55d9946c329a1fe78f2a10e2b"
+        },
+        "authored": {
+          "sha256": "1696a6abca1f376cc658ac56db5d39f3ccd1245f40d4e7d8f53ddec317975b5d",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "07fb77bc8897204b8d76086da199814de2ec01be5a009eb2875c3622f9349029"
+        }
+      }
+    },
+    {
+      "id": "430",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid17.fract",
+      "sha256": "5319fc9ac16d7a5d9317d0675575c7f5f06c02aeaf9908dee72ba97bef6fc946",
+      "dimensions": [
+        300,
+        225
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "db8538bd5519090e2f1b05b6a9c2d3a5816d5854efc2ed722fe17893d62b9482",
+          "dimensions": [
+            300,
+            225
+          ]
+        },
+        "geometry": {
+          "sha256": "c780e6e4a92dd61fa2ed7534af983b786cfd6ef9ca59361e09851fe728de09ac",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "968e28c5c4899081614f4b59923fe420f02f1767194ec5b77134fe1188beec30"
+        },
+        "authored": {
+          "sha256": "5d699b3dffc75e82ebdeb203052245a70898a5bec5d48922f116a113c160c6e4",
+          "dimensions": [
+            300,
+            225
+          ],
+          "metadata_sha256": "d69ef83c5e5aa5549aedb9c602f09c87948aeefff003c232a27e1d62ada0f5a0"
+        }
+      }
+    },
+    {
+      "id": "655",
+      "path": "kaliset001.fract",
+      "sha256": "3326c5978c76483bf2a5bd9d6e69cdb48ecc8e0f7631e4374e790449891a9f60",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "ac3f1ff74264f1cf2745517dd5639e6fabc087260debcf7355b77a1e7ab3b1b6",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "cf813e02269cea44c1271859f3c434c23a5a9a34beca8fc7246e6f33243c62c7",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "13d113ca7c434327a96cbfcf5cc00e60779c9bcf6206a7e893c9f410a0b43b5d"
+        },
+        "authored": {
+          "sha256": "04a1eb38b0b5e4650d98b7719ba340561f15aba5f8a9904f26312020c39a1eb1",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "22d63b55a7bdc3df714f879529ed57f622d44039ca2fc764f9ca4a387e66795e"
+        }
+      }
+    },
+    {
+      "id": "109",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsOctahedron2b.fract",
+      "sha256": "93eb2131be2b8bf04db50b96698b70f5b085023bd396b4b94b0f9dd57a406d22",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "250121258da7c97e2d5073dedcdeae2eff880fa8d6260a463502cd78c66bd745",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "96e9cccdea3443a6de7af63db0cacbba7ac1e8c3fc2f4d5863ab3cc8c008bf04",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "c9458092f161654efa8055da5729a4014afe0c89059d3451cb6bf836deab8e53"
+        },
+        "authored": {
+          "sha256": "d31e3b6a504ee85e48ab712252ca9a4985775a06142944bf9aa1fac37b544c7e",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "5f336f8d30cf3f5eb2ef96177d6c759f9350c0225c8e14887ea77913ee75afcb"
+        }
+      }
+    },
+    {
+      "id": "431",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid18_2.fract",
+      "sha256": "be14defbd83bd447911250316ada456af396ea93689b57809092a261b1c969e3",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "206c18443bfc570d37d927a40f69a610e979c0a69f649c1a0ddb5ea3445a9910",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "07f02f912beae9349c9cf236ced7fd96ec419c2f2112c347d4545828be6f1b8d",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "ff2e2eac3854a7b76e65b41ef2a8301b771af29d0d8477f5195ce3cad4122cfe"
+        },
+        "authored": {
+          "sha256": "9c4c189c36154b97a16408c884b0c3f9174b47a00cf0ed7ead65fedd2fd1adc2",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "5b77893794293d2403f7e81e1f26234ae12bd04de44a76bf54b4fff3f6c94475"
+        }
+      }
+    },
+    {
+      "id": "656",
+      "path": "keyframe_anim_mandelbox_boxes.fract",
+      "sha256": "19cddde53e3bbe5bf3a626d9592cec2746fe7a03967f28e756be2d4d0beb52c0",
+      "dimensions": [
+        300,
+        169
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "38408429e26ea43cdbc6aca5921e517b2d0a6d8c775e7d332e9be20cf58b59fd",
+          "dimensions": [
+            300,
+            169
+          ]
+        },
+        "geometry": {
+          "sha256": "47ceb0c7e0f92609f3487818d3587872dfb3b9e43326dff568a0cbe7380faecb",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "f24cdf71d0bfc2a929f55fe63c1f3cf73611bcf5a20ef37cc4f6ec99fe58a9fd"
+        },
+        "authored": {
+          "sha256": "1bd91c7c4e18d1ea374ac231f51e649c49ca7d840a0fc6fd19167b68b831217f",
+          "dimensions": [
+            300,
+            169
+          ],
+          "metadata_sha256": "a387f9ec93925470a4fe5b50ac29f195982ce8f2ce7e54e2e6a9c1ba20501200"
+        }
+      }
+    },
+    {
+      "id": "110",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/T-DifsTorusMenger_T-DifsClipCustom.fract",
+      "sha256": "5fa526ae7d6750b0e5ccd021545bb8ac911a4e590c4b27da88f0582c588c69ed",
+      "dimensions": [
+        300,
+        300
+      ],
+      "samples": 32,
+      "bounces": "FPT scene/config default; metadata records effective configuration",
+      "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+      "renderer_revision": "d328d97a7daa4b60fbb9572417e952356ced63d4",
+      "renderer_sha256": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1",
+      "epoch": "refreshed-2026-09-11",
+      "reference_overrides": {},
+      "native_reference_reduced": false,
+      "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+      "captures": {
+        "mandel": {
+          "sha256": "31db4cc40f80f00b7ad7893970545832681f8eea9992263ae8293d1d04dd439e",
+          "dimensions": [
+            300,
+            300
+          ]
+        },
+        "geometry": {
+          "sha256": "dccb8c0bbd31f24292ac0ef7fd53f953c01e9e844edea3d57f61520e4749c88f",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "8d9e5528726fc379c3987d9339bb9c8890bc2eda4c7bc8e0afd6694d9286e6ae"
+        },
+        "authored": {
+          "sha256": "29614990d928574dc8d4e26d1463d3bea26454af01088eddb4a6296b6e93e7cc",
+          "dimensions": [
+            300,
+            300
+          ],
+          "metadata_sha256": "09806fc5950ef321997c36953b553a43599602d02c8410442ff7efbe0b888859"
+        }
+      }
     }
   ]
 }
