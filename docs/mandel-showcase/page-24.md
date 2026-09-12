@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 24
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [675: mandelbulb_eye](675.md)
+## [635: newtonPow3-rotfold-delta-gnj-003d](635.md)
 
-[![Native / FPT authored](images/675-thumb.webp)](675.md)
+[![Native / FPT authored](images/635-thumb.webp)](635.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The faceted blue circular form, off-centre nested rings and silhouette align. FPT is darker and lacks the native bright upper highlight, but the principal facets remain readable. Exact shading is not certified.
+Newton coil placement and framing align clearly. Native gold becomes saturated orange/red; reflection and environment differences remain.
 
-## [682: menger cross mod1 001](682.md)
+## [636: newtonPow3-rotfold-delta-gnj-010g](636.md)
 
-[![Native / FPT authored](images/682-thumb.webp)](682.md)
+[![Native / FPT authored](images/636-thumb.webp)](636.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The nested spiral, repeated angular blocks and large foreground curl align closely. FPT has smoother pink/gold shading and fewer sparkling highlights; broad depth layering and framing remain readable.
+Newton coils and framing align. FPT interiors are smoother/darker orange and the environment gradient differs.
 
-## [688: menger smooth mod1](688.md)
+## [640: hex grid 001](640.md)
 
-[![Native / FPT authored](images/688-thumb.webp)](688.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The sweeping curved corridor, right-hand rounded slots and concentrated central illuminated feature align. Both are intentionally dark with green/gold highlights; FPT changes reflection and fine highlight distribution while keeping the structure readable.
-
-## [690: menger-mod1_001](690.md)
-
-[![Native / FPT authored](images/690-thumb.webp)](690.md)
+[![Native / FPT authored](images/640-thumb.webp)](640.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The large crossing beams, repeated angular recesses and red panels broadly align. FPT removes the pale native veil/blur and has stronger dark red contrast, but the foreground structural layout stays readable. Distant optical effects and fine reflective detail are not certified.
+The diagonal hexagonal floor, curled central structure and reflective foreground forms align. FPT has stronger dark reflections and less blue haze; large openings and surface layout remain readable, without certifying exact reflective or atmospheric appearance.
 
-## [691: monte carlo DOF 001](691.md)
+## [642: hybrid001](642.md)
 
-[![Native / FPT authored](images/691-thumb.webp)](691.md)
+[![Native / FPT authored](images/642-thumb.webp)](642.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The nested perforated frames, central bright opening and purple/pink surfaces align broadly. FPT is sharper and brighter while native strongly blurs the foreground, so depth-of-field and fine near-surface detail are not certified. The large-scale framing and structure remain readable.
+The large concentric curved sheets, central opening and smaller right-hand ring align. FPT replaces the native pink atmospheric veil with blue sky and darker gold surfaces; the broad structure is readable, but haze, thin-line brightness and exact reflective colour are not certified.
 
-## [702: msltoe_donut_001](702.md)
+## [647: hybrid007](647.md)
 
-[![Native / FPT authored](images/702-thumb.webp)](702.md)
+[![Native / FPT authored](images/647-thumb.webp)](647.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The clustered rounded forms and large crossing tubular arcs align broadly. Native haze and its large central light bloom are replaced by sharper, differently distributed FPT highlights. Foreground structure remains readable; bloom, atmosphere and fine reflective transport are not certified.
+The converging field of repeated rounded clusters, central upright and its shadow align. FPT uses more matte violet surfaces and a darker background than the native glossy pink/brown appearance; the repeated structure remains readable.
 
-## [703: msltoe_julia_bulb_eiffie_001](703.md)
+## [648: hybrid008 - collatz](648.md)
 
-[![Native / FPT authored](images/703-thumb.webp)](703.md)
+[![Native / FPT authored](images/648-thumb.webp)](648.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The prominent pink rounded cluster, lower-left diagonal branch and surrounding field of small forms align broadly. Native shallow-focus sparkling gold becomes sharper yellow/orange FPT surfaces. Broad placement survives; depth of field and tiny reflective details are not certified.
+The rounded foreground ridges and large curled background forms align. FPT is more orange/green and omits the native blue-grey haze, but the main surface relief remains visible; atmosphere and fine reflective appearance are not certified.
 
-## [704: msltoe_julia_bulb_mod2_001](704.md)
+## [652: iq_bulb_001](652.md)
 
-[![Native / FPT authored](images/704-thumb.webp)](704.md)
+[![Native / FPT authored](images/652-thumb.webp)](652.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The central decorated dome, upper bulbs and layered lower foreground align broadly. FPT is substantially brighter yellow/orange and less blurred than native, but the main contours and decorated central surface remain readable. Depth of field, bright peripheral highlights and exact material response are not certified.
+The central branching ridges, side arches and major openings align. FPT is sharper and brown/white instead of the native blurred blue/silver appearance; depth of field, reflections and fine material behaviour remain approximate.
 
-## [708: msltoesym2_mod_002](708.md)
+## [655: kaliset001](655.md)
 
-[![Native / FPT authored](images/708-thumb.webp)](708.md)
+[![Native / FPT authored](images/655-thumb.webp)](655.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The large central circular opening, crossing diagonal foreground bar and clustered surrounding forms align broadly. FPT changes the red/orange reflections and sharpens details blurred in native, but preserves readable major structure. Fine reflection and depth-of-field parity are not certified.
+The winding perforated bands, deep vertical walls and large foreground cavities align. FPT retains the vivid pink/yellow surface pattern with sharper edges and altered fine reflective streaks.
 
-## [709: msltoesym3_mod_001](709.md)
+## [656: keyframe_anim_mandelbox_boxes](656.md)
 
-[![Native / FPT authored](images/709-thumb.webp)](709.md)
+[![Native / FPT authored](images/656-thumb.webp)](656.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The upper angular layered form, lower diamond-like curved body and left sweeping background align. FPT replaces the native gold/brown environment response with strong rainbow reflections, but the principal geometry remains legible. Palette, reflective environment and fine optical parity are not certified.
+The large tilted slab and clustered upper-right cavities align. FPT is brighter yellow with sharper blue/pink markings than the subdued native material; fine reflectance and depth-of-field appearance are not certified.
+
+## [661: mandelbox001](661.md)
+
+[![Native / FPT authored](images/661-thumb.webp)](661.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The central ornament, four pointed surrounding surfaces and major open gaps align. FPT changes the red/lavender native palette to blue/cyan and differs in reflection contrast, but keeps the principal structure illuminated and readable. Exact reflectance is not certified.

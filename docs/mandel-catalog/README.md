@@ -10,9 +10,9 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| Reviewed | 240 | Explicit capture-specific visual acceptance, with limitations allowed |
-| Experimental | 374 | Opt-in scenes; execution success is not visual acceptance |
-| Blocked | 132 | 111 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
+| Reviewed | 263 | Explicit capture-specific visual acceptance, with limitations allowed |
+| Experimental | 333 | Opt-in scenes; execution success is not visual acceptance |
+| Blocked | 150 | 129 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
 
 The ranked gallery still contains all 50 rows for transparency, including
 blocked scenes **32, 37, 46 and 48**. Of the additional 50, **37** are promoted
@@ -45,6 +45,11 @@ comparisons and **11** visual holds. All 100 FPT captures succeeded; fourteen
 native references timed out. Capture time was 52.1 minutes, including two authored
 FPT captures taking 175 and 207 seconds. No renderer or reference-quality changes
 were made; incomplete comparisons remain deferred.
+The [eighth additional batch](review-batch08-2026-09-12.md) adds **23** accepted
+comparisons and **18** visual holds. Both FPT modes succeeded on 49 scenes;
+scene 712 rejected invalid scene bounds. Eight native timeouts and that FPT
+failure remain experimental. Capture time was 54.2 minutes at unchanged settings;
+scene 172 alone needed 515 seconds for its authored FPT capture.
 Colour differences alone are not a blocker. Geometry, missing assets and
 failed render contracts must remain visible. [Explicit decisions](reviews.json)
 are tied to the complete [capture evidence](review-evidence.json), including
