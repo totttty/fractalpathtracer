@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 19
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [468: mandelbox 22](468.md)
+## [213: bristorbrot v2](213.md)
 
-[![Native / FPT authored](images/468-thumb.webp)](468.md)
+[![Native / FPT authored](images/213-thumb.webp)](213.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The symmetric pointed body and red/gold pattern match closely in silhouette, framing and internal arrangement. Only modest surface contrast and highlight differences remain at this resolution.
+
+## [214: collatz mod hybrid1](214.md)
+
+[![Native / FPT authored](images/214-thumb.webp)](214.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+Interlocking curved forms, pointed central ridges and dark openings align. FPT is more saturated magenta and less smoothly reflective, but the main openings and ridged geometry remain clearly visible.
+
+## [215: difsGreek_kochV4_asurfKlein_CUT](215.md)
+
+[![Native / FPT authored](images/215-thumb.webp)](215.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+Symmetric central spindle, horizontal tubes and layered rectangular framework align closely. FPT removes some glossy highlights and is dimmer, but the framework and individual tube ends remain readable.
+
+## [217: foldbox sphereFoldParabolic ede6](217.md)
+
+[![Native / FPT authored](images/217-thumb.webp)](217.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+Large upper openings, central pointed feature and layered lower cavity align well. Native glossy gold becomes rougher muted gold; the major recesses and surface contours remain readable.
+
+## [218: ifs_gen menger](218.md)
+
+[![Native / FPT authored](images/218-thumb.webp)](218.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+Clustered angular lobes, triangular tips and rounded patterned centres match closely in shape and framing. FPT has small highlight and saturation differences without obvious structural loss.
+
+## [219: ifs_xy](219.md)
+
+[![Native / FPT authored](images/219-thumb.webp)](219.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+Paired open rounded lobes and repeated red-topped stalks preserve their silhouette and arrangement. FPT changes internal reflections and makes some surfaces more diffuse, but retains the distinctive open form.
+
+## [221: jos_kleinian_v4 sphInv](221.md)
+
+[![Native / FPT authored](images/221-thumb.webp)](221.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The branching central structure and repeated fine side branches retain their silhouette and placement. FPT lacks native sharp metallic glints and is more diffuse green, but the branches remain visible; subpixel twig and highlight parity is not certified.
+
+## [375: Construct by Ectoplaz 2](375.md)
+
+[![Native / FPT authored](images/375-thumb.webp)](375.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Main green structure and framing align and remain readable. Native blue atmospheric fill is absent; background contrast and materials differ.
+
+## [378: GeneralizedFoldBox01](378.md)
+
+[![Native / FPT authored](images/378-thumb.webp)](378.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Large central surfaces and framing align. FPT is sharper/orange and native blur differs; fine depth and material parity are not certified.
+
+## [379: GeneralizedFoldBox02](379.md)
+
+[![Native / FPT authored](images/379-thumb.webp)](379.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The curved orange lattice, repeated inset ornaments and central receding grid align closely. Fine reflective sparkle and surface brightness differ slightly.
-
-## [472: mandelbox15 - rotations](472.md)
-
-[![Native / FPT authored](images/472-thumb.webp)](472.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The large curved central arch, surrounding rounded forms and branching interior align broadly. FPT is much brighter orange/red with stronger highlights and less native haze, but the main arches and openings remain readable. Fine highlight detail, light effects and exact exposure are not certified.
-
-## [474: mandelbox18](474.md)
-
-[![Native / FPT authored](images/474-thumb.webp)](474.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The tall orange ridged cliff and stepped lower outcrops align. FPT removes the native brown atmospheric veil and uses stronger orange contrast, but the foreground structure remains readable. Distant haze is not certified.
-
-## [478: mandelbox23 rotations](478.md)
-
-[![Native / FPT authored](images/478-thumb.webp)](478.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The diagonal row of decorated rounded forms, central rectangular inset and curved surrounding walls align. FPT is more uniformly orange/brown and less metallic than native, but the major structures remain legible. Exact highlights and materials are not certified.
-
-## [486: mandelbox32 - spiral](486.md)
-
-[![Native / FPT authored](images/486-thumb.webp)](486.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The large curling spiral, central tip, repeated surface ribs and crop align. FPT brightens pink/orange surfaces and changes the background texture response, but the principal spiral remains clearly readable. Exact reflective colour is not certified.
-
-## [487: mandelbox33 - spiral](487.md)
-
-[![Native / FPT authored](images/487-thumb.webp)](487.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The two decorated spiral forms, surrounding layered walls and authored crop align closely. FPT changes small reflective highlights and fine surface contrast but preserves the major forms and balanced dark/gold appearance.
-
-## [493: mandelbox41_2](493.md)
-
-[![Native / FPT authored](images/493-thumb.webp)](493.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The crossing chains of rounded forms, upper-left layered cluster and broad enclosing surfaces align. FPT removes much of the native haze and changes reflective colour to pink/gold, but foreground structure remains readable. Atmosphere and distant reflective detail are not certified.
-
-## [494: mandelbox44_2](494.md)
-
-[![Native / FPT authored](images/494-thumb.webp)](494.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The repeated stacked bulb-like columns, right foreground column and camera placement align. Both authored views are dark; FPT reduces the native brown veil and strengthens purple contrast, with the main column contours still readable. Atmosphere and deep background illumination are not certified.
-
-## [500: mandelbox50 - hearts](500.md)
-
-[![Native / FPT authored](images/500-thumb.webp)](500.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The paired heart-shaped forms, overlapping placement and layered surface bands align. Both views are bright; FPT changes the background from hazy red to green and sharpens the patterned hearts, while the defining contours remain readable. Bloom and fine material response are not certified.
-
-## [507: mandelbox57](507.md)
-
-[![Native / FPT authored](images/507-thumb.webp)](507.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The curved foreground blade and repeated ribbed background align. FPT reduces the concentrated white specular highlight and reveals more purple/red background structure than the blurred native view. Main contours remain readable; depth of field and exact specular response are not certified.
+Refreshed water surface and red sphere are restored; broad cavern framing matches. Reflections, saturation and sphere roughness still differ.

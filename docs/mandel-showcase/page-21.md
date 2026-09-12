@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 21
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [577: menger-BoxFold4D](577.md)
+## [410: bristorbrot01](410.md)
 
-[![Native / FPT authored](images/577-thumb.webp)](577.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Central raised cube and nested square cavity align. FPT adds softer indirect shading and changes fine edge contrast, without an obvious large structural omission.
-
-## [579: menger-Rotation4D](579.md)
-
-[![Native / FPT authored](images/579-thumb.webp)](579.md)
+[![Native / FPT authored](images/410-thumb.webp)](410.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Open rotated fractal lattice, silhouette and internal gaps align. Gold highlight intensity and background gradient differ.
+Large receding rings and central spiral align. FPT is sharply defined and strongly gold/magenta rather than hazy grey/gold; depth of field, sky and reflective appearance are not certified.
 
-## [580: menger-Scale4D](580.md)
+## [412: cayley2](412.md)
 
-[![Native / FPT authored](images/580-thumb.webp)](580.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Nine-panel perforated slab, central opening and repeated smaller holes align. FPT changes interior reflection tones and softens edge highlights.
-
-## [581: menger-SphericalFold4Dtransform](581.md)
-
-[![Native / FPT authored](images/581-thumb.webp)](581.md)
+[![Native / FPT authored](images/412-thumb.webp)](412.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Perforated slab, central cavity and nested hole layout align. Pink material and interior highlights differ without obvious large missing regions.
+Central ring, inner motif and surrounding repeated tiles align. Green reflective patterns and glow differ considerably while keeping the main geometry readable.
 
-## [584: menger-mod1_001_8k](584.md)
+## [418: constant factor 2.0  - mandelbox scale 2.0](418.md)
 
-[![Native / FPT authored](images/584-thumb.webp)](584.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Panoramic curved block corridors and large openings align. FPT is gold rather than red/black with different sky and reflection colours, but the structure remains readable.
-
-## [585: mountains_and_valleys](585.md)
-
-[![Native / FPT authored](images/585-thumb.webp)](585.md)
+[![Native / FPT authored](images/418-thumb.webp)](418.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Rounded peaks, foreground cavities and silhouette align. Both authored captures use dark green material; FPT loses the sharp bright reflective flecks but retains the principal forms.
+The large foreground rounded machinery, repeated beads, stepped connections and base framing align. FPT preserves readable green/gold foreground detail but removes much of the native yellow haze and darkens the background strongly; acceptance does not certify background atmosphere or full lighting parity.
 
-## [587: neuron](587.md)
+## [420: dune](420.md)
 
-[![Native / FPT authored](images/587-thumb.webp)](587.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Central polyhedral hub and radiating struts align. FPT uses darker green/gold shading and reduces background highlight density; the principal structural connections remain readable.
-
-## [588: pine-Bulb](588.md)
-
-[![Native / FPT authored](images/588-thumb.webp)](588.md)
+[![Native / FPT authored](images/420-thumb.webp)](420.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Layered disks, rounded beads and large silhouette gaps align closely. Green material reflections and highlight intensity differ without obscuring the forms.
+The domed overhang, layered front slit, short base and tilted ground align. FPT is darker and more reflective and removes the native atmospheric veil/clouded sky, but the main object remains readable; atmosphere and exact material appearance are not certified.
 
-## [590: toastn_stonemen_anim](590.md)
+## [421: equirectangular mandelbox](421.md)
 
-[![Native / FPT authored](images/590-thumb.webp)](590.md)
+[![Native / FPT authored](images/421-thumb.webp)](421.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Rounded mound, side cavities and base silhouette align. FPT is much less reflective and more orange/brown than the bright gold reference, but major surface relief remains visible; sky-light detail differs.
+The wide equirectangular framing, central perforated form and large top/side openings align. FPT changes brown/purple reflections to cooler blue/purple and adds grain, without an obvious large structural omission.
 
-## [592: hybrid 01 - mandelbox sponge with sphere](592.md)
+## [422: equirectangular menger sponge](422.md)
 
-[![Native / FPT authored](images/592-thumb.webp)](592.md)
+[![Native / FPT authored](images/422-thumb.webp)](422.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Foreground structure and framing align and remain visible. Authored FPT is much brighter and more saturated; accepted with a strong palette/exposure caveat.
+The equirectangular chamber, central square recess and repeated wall/floor openings align closely. Brown/purple illumination and floor reflections differ slightly while retaining readable structure.
+
+## [424: folded mender sponge](424.md)
+
+[![Native / FPT authored](images/424-thumb.webp)](424.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The tilted nested square frames, perforated beams and central recess align. FPT is sharper, more yellow/blue and less blurred than native, while keeping the main connections and gaps readable.
+
+## [430: hybrid17](430.md)
+
+[![Native / FPT authored](images/430-thumb.webp)](430.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The nested tilted wall grids and major square recesses align. FPT retains the pink/green/yellow illumination but spreads it more softly and changes reflective contrast; fine edge and lighting parity are not certified.
+
+## [431: hybrid18_2](431.md)
+
+[![Native / FPT authored](images/431-thumb.webp)](431.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The tilted latticed walls, repeated foreground steps and larger square recesses align closely. Brown/pink illumination and fine sampling noise differ slightly.
+
+## [433: hybrid20](433.md)
+
+[![Native / FPT authored](images/433-thumb.webp)](433.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The large upper cylindrical opening, concentric rings and surrounding smaller cylinders align. Both native and FPT are noisy with bright neon highlights; FPT changes contrast and fine reflective detail without an obvious broad structure or framing loss.

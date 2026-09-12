@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 18
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [418: constant factor 2.0  - mandelbox scale 2.0](418.md)
+## [202: boolean_boxFoldBulb_quat](202.md)
 
-[![Native / FPT authored](images/418-thumb.webp)](418.md)
+[![Native / FPT authored](images/202-thumb.webp)](202.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The large foreground rounded machinery, repeated beads, stepped connections and base framing align. FPT preserves readable green/gold foreground detail but removes much of the native yellow haze and darkens the background strongly; acceptance does not certify background atmosphere or full lighting parity.
+The pointed floating centrepiece, broad equatorial ring and patterned enclosure retain their shapes and placement. Native pink/blue reflective haze becomes green solid shading; accepted for recognisable foreground structure, not background optics or material parity.
 
-## [420: dune](420.md)
+## [204: boxFoldBulb_v2 radDEcolor](204.md)
 
-[![Native / FPT authored](images/420-thumb.webp)](420.md)
+[![Native / FPT authored](images/204-thumb.webp)](204.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The domed overhang, layered front slit, short base and tilted ground align. FPT is darker and more reflective and removes the native atmospheric veil/clouded sky, but the main object remains readable; atmosphere and exact material appearance are not certified.
+Central patterned sphere, small supporting spheres and ornamented floor retain close framing and structure. FPT strengthens red illumination and reduces background reflectivity without hiding the defining forms.
 
-## [421: equirectangular mandelbox](421.md)
+## [205: boxFoldBulb_v2](205.md)
 
-[![Native / FPT authored](images/421-thumb.webp)](421.md)
+[![Native / FPT authored](images/205-thumb.webp)](205.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The wide equirectangular framing, central perforated form and large top/side openings align. FPT changes brown/purple reflections to cooler blue/purple and adds grain, without an obvious large structural omission.
+Segmented spindle shapes, connecting bead strings and upper/lower borders align clearly. FPT shifts reflective contrast and darkens distant surfaces slightly; the foreground structure remains intact and readable.
 
-## [422: equirectangular menger sponge](422.md)
+## [206: boxFoldBulb_v2_01](206.md)
 
-[![Native / FPT authored](images/422-thumb.webp)](422.md)
+[![Native / FPT authored](images/206-thumb.webp)](206.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The equirectangular chamber, central square recess and repeated wall/floor openings align closely. Brown/purple illumination and floor reflections differ slightly while retaining readable structure.
+Central paired pillars, repeated smaller pillars and ornate ceiling/floor retain their arrangement. Native haze becomes sharper bright background gaps and FPT increases colour contrast; accepted for the readable architecture, not atmospheric or background-light parity.
 
-## [424: folded mender sponge](424.md)
+## [207: boxFoldBulb_v2_twice](207.md)
 
-[![Native / FPT authored](images/424-thumb.webp)](424.md)
+[![Native / FPT authored](images/207-thumb.webp)](207.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The tilted nested square frames, perforated beams and central recess align. FPT is sharper, more yellow/blue and less blurred than native, while keeping the main connections and gaps readable.
+The large central disk, attached smaller ornaments, thin supports and upper bright source occupy matching positions. FPT has weaker metallic reflections and different transparency/colour layering, but the main geometry and illumination remain recognisable.
 
-## [430: hybrid17](430.md)
+## [208: boxFoldBulb_v3 iridescene](208.md)
 
-[![Native / FPT authored](images/430-thumb.webp)](430.md)
+[![Native / FPT authored](images/208-thumb.webp)](208.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The nested tilted wall grids and major square recesses align. FPT retains the pink/green/yellow illumination but spreads it more softly and changes reflective contrast; fine edge and lighting parity are not certified.
+The foreground sphere on curved supports and distant branching columns align. Both authored views are dim blue/green; FPT reduces native iridescent reflections and noise, but the main foreground forms remain readable. Fine background detail is not certified.
 
-## [431: hybrid18_2](431.md)
+## [209: boxFoldBulb_v3_001](209.md)
 
-[![Native / FPT authored](images/431-thumb.webp)](431.md)
+[![Native / FPT authored](images/209-thumb.webp)](209.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The tilted latticed walls, repeated foreground steps and larger square recesses align closely. Brown/pink illumination and fine sampling noise differ slightly.
+Concentric segmented arches and dense lower ornaments preserve close framing and shape. FPT changes metallic highlights and makes the tunnel warmer, while individual bands remain distinguishable.
 
-## [433: hybrid20](433.md)
+## [210: boxFoldBulb_v3_a01](210.md)
 
-[![Native / FPT authored](images/433-thumb.webp)](433.md)
+[![Native / FPT authored](images/210-thumb.webp)](210.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The large upper cylindrical opening, concentric rings and surrounding smaller cylinders align. Both native and FPT are noisy with bright neon highlights; FPT changes contrast and fine reflective detail without an obvious broad structure or framing loss.
+Tall fan of curved ribs, left arched motif and bright lower band match broadly. FPT reduces the native upper highlights and changes pattern contrast, but the foreground geometry and composition remain clear.
 
-## [438: hybrid25](438.md)
+## [211: boxFoldBulb_v3_benesiHybrid](211.md)
 
-[![Native / FPT authored](images/438-thumb.webp)](438.md)
+[![Native / FPT authored](images/211-thumb.webp)](211.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The hanging central sphere, surrounding repeated smaller spheres and broad canopy align. FPT replaces the gold atmospheric veil with darker, red-lit surfaces, but the foreground spheres and connections remain readable. Native haze, glow and distant fine detail are not certified.
+Symmetric flared panels, bead loops and central ornaments closely align. FPT lowers some metallic white highlights and changes green saturation, preserving the detailed layout and open side gaps.
 
-## [448: hypercomplex 03](448.md)
+## [212: boxWrap-bulb](212.md)
 
-[![Native / FPT authored](images/448-thumb.webp)](448.md)
+[![Native / FPT authored](images/212-thumb.webp)](212.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The sweeping layered curl, central ridge and left/right sky openings align. FPT removes the muted atmospheric veil and uses much stronger cyan/pink bands, while the main layered structure stays readable. Atmosphere and exact palette are not certified.
+The diagonal tapering sequence of open rings and decorated end form align well. Native dark background shadow/halo is absent and the FPT sky is brighter; accepted for the preserved object geometry, not environmental shadow appearance.

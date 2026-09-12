@@ -10,9 +10,9 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| Reviewed | 263 | Explicit capture-specific visual acceptance, with limitations allowed |
-| Experimental | 333 | Opt-in scenes; execution success is not visual acceptance |
-| Blocked | 150 | 129 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
+| Reviewed | 302 | Explicit capture-specific visual acceptance, with limitations allowed |
+| Experimental | 254 | Opt-in scenes; execution success is not visual acceptance |
+| Blocked | 190 | 169 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
 
 The ranked gallery still contains all 50 rows for transparency, including
 blocked scenes **32, 37, 46 and 48**. Of the additional 50, **37** are promoted
@@ -50,6 +50,13 @@ comparisons and **18** visual holds. Both FPT modes succeeded on 49 scenes;
 scene 712 rejected invalid scene bounds. Eight native timeouts and that FPT
 failure remain experimental. Capture time was 54.2 minutes at unchanged settings;
 scene 172 alone needed 515 seconds for its authored FPT capture.
+The [ninth additional batch](review-batch09-2026-09-12.md) increases the batch
+size to **100**: **39** accepted comparisons, **40** visual holds and **21**
+native timeouts. Both FPT modes succeeded on 99 scenes; scene 553 rejects
+unsupported primitive repetition. Capture time was 110.4 minutes with unchanged
+quality and bounded concurrency. Of the 254 experimental scenes, **157** remain
+eligible for routine review, **79** have deferred incomplete comparisons and
+**18** retain historical screening warnings. These groups are not silently promoted.
 Colour differences alone are not a blocker. Geometry, missing assets and
 failed render contracts must remain visible. [Explicit decisions](reviews.json)
 are tied to the complete [capture evidence](review-evidence.json), including
@@ -159,7 +166,9 @@ for a consolidated cleanup pass after broader coverage. Do not retry them or
 weaken the visual acceptance gate merely to increase the reviewed count.
 
 1. Select another source-pinned, collection-balanced batch with
-   `python3 scripts/select_mandel_review_batch.py --screening reports/mandel-remaining696-screen96-20260910/summary.json --output reports/next-review/batch.json`.
+   `python3 scripts/select_mandel_review_batch.py --screening reports/mandel-remaining696-screen96-20260910/summary.json --count 100 --output reports/next-review/batch.json`.
+   The selector accepts 1..100 scenes (default 50); use a smaller count for the
+   final partial batch. Increasing batch size does not increase capture concurrency.
    This excludes previously decided/non-experimental scenes, historical
    dark/blank warnings, and checked-in `incomplete-batch*.json` inventories.
    Add other source-bound deferrals with repeatable `--deferred` arguments.

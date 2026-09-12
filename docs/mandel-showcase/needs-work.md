@@ -100,6 +100,54 @@ Native contains an open branching structure with multiple curved openings. Both 
 
 The large bright native central curved body and surrounding openings do not read as the same dominant form in either FPT control. FPT instead emphasises diagonal blue/gold bands and differently visible surrounding detail. Geometry, occlusion and reflective transport cannot be separated confidently; this is not accepted as a colour-only difference.
 
+## [181: amazingIFS cyl](181.md)
+
+[![Native / FPT authored](images/181-thumb.webp)](181.md)
+
+Repeated rounded towers and detailed foreground bands align broadly, but authored FPT clips large white regions and loses the native shadow-defined relief. Neutral control preserves the forms; illumination needs correction.
+
+## [184: amazingIFS hexprsm2_a](184.md)
+
+[![Native / FPT authored](images/184-thumb.webp)](184.md)
+
+The repeated stacked geometric towers align in silhouette and depth. Native muted gold/blue surfaces become intensely yellow clipped reflections and a white background, losing substantial surface readability.
+
+## [189: amazing_surf_mod2_mandelbulb](189.md)
+
+[![Native / FPT authored](images/189-thumb.webp)](189.md)
+
+Repeated stacked rounded forms and their ground arrangement match broadly. Authored FPT overexposes the distant upper rows into nearly flat yellow and changes the background to white, reducing the native relief.
+
+## [194: asurf_fakelights_backgroundl](194.md)
+
+[![Native / FPT authored](images/194-thumb.webp)](194.md)
+
+Repeated horizon objects remain aligned, but the native red background glow and dark mirror-like lower field are replaced by black sky, a very bright horizon strip and grey ground. The authored lighting/reflection composition is not preserved.
+
+## [198: asurf_klein sph](198.md)
+
+[![Native / FPT authored](images/198-thumb.webp)](198.md)
+
+Long curled arms and branching tips match structurally. Authored FPT overexposes the yellow foreground arms and central body, hiding their native segmented relief; illumination requires correction.
+
+## [203: box4dBulb aab5](203.md)
+
+[![Native / FPT authored](images/203-thumb.webp)](203.md)
+
+Angular hanging and rising forms match broadly in the neutral control. Native green light fills the centre, whereas authored FPT reduces that region to dark blue/brown texture with a small white patch; major forms lose illumination.
+
+## [216: fakeLights_JuliaBulb](216.md)
+
+[![Native / FPT authored](images/216-thumb.webp)](216.md)
+
+The decorated two-lobed body is retained, but the large bright cyan enclosing filament network disappears entirely. This defining fake-light feature is absent, and the surviving body is much darker.
+
+## [220: jos_kleinian_v4 sa1](220.md)
+
+[![Native / FPT authored](images/220-thumb.webp)](220.md)
+
+The central rounded assemblage, surrounding large smooth lobes and curled branches align in the neutral view. Authored FPT clips the broad foreground and upper surfaces into flat yellow, losing important shading and relief.
+
 ## [372: IFS_001](372.md)
 
 [![Native / FPT authored](images/372-thumb.webp)](372.md)
@@ -387,6 +435,156 @@ The large curved perforated structures and lower water boundary broadly align. T
 [![Native / FPT authored](images/504-thumb.webp)](504.md)
 
 The central opening and surrounding repeated curved structures broadly correspond. Native blue/violet illumination spreads through those surfaces, whereas FPT becomes mostly black/red with a clipped white central patch. The missing light spread obscures important structure.
+
+## [508: mandelbox58](508.md)
+
+[![Native / FPT authored](images/508-thumb.webp)](508.md)
+
+Native jagged mountainous forms and diagonal open valley become a horizontal wall and central rectangular opening in both FPT controls. Authored FPT is also largely dark. This is not a palette-only difference.
+
+## [509: mandelbox59](509.md)
+
+[![Native / FPT authored](images/509-thumb.webp)](509.md)
+
+The central perforated oval and right circular motif are recognisable, but native blue/pink illumination across the perforations disappears into dark orange outlines. Native optical highlights obscure exact surface comparison; lost defining illumination is more than a palette difference.
+
+## [510: mandelbox60](510.md)
+
+[![Native / FPT authored](images/510-thumb.webp)](510.md)
+
+Curled large right-hand lobes and clustered centre are recognisable in the neutral control, but authored FPT loses the native pink illuminated ridges and makes most forms dark green. Broad geometry is retained; lighting obscures it.
+
+## [511: mandelbox61](511.md)
+
+[![Native / FPT authored](images/511-thumb.webp)](511.md)
+
+Native upper-right illuminated arch becomes a largely black region while the lower-left opening is intensely yellow. Neutral FPT exposes broad surfaces but the reflective native view does not establish their exact agreement; severe illumination loss prevents acceptance.
+
+## [512: mandelbox62](512.md)
+
+[![Native / FPT authored](images/512-thumb.webp)](512.md)
+
+The large looping ribs and foreground fan remain correctly arranged, but the bright native source at their base disappears and the authored ribs become dark brown. This is a missing illumination feature, not just colour variation.
+
+## [516: mandelbulb power 2 - iter fog 03](516.md)
+
+[![Native / FPT authored](images/516-thumb.webp)](516.md)
+
+Native central glowing panel and surrounding illuminated forms collapse into near-black authored FPT silhouettes. Neutral shows some related outlines, but native fog/emission and absent authored light prevent confirmation of the full structure.
+
+## [517: mandelbulb power 2 - iter fog 04](517.md)
+
+[![Native / FPT authored](images/517-thumb.webp)](517.md)
+
+Native luminous central object and surrounding rays become a small isolated solid and mostly black right-hand body. Missing volumetric/emissive appearance prevents visual agreement and masks exact boundary comparison.
+
+## [518: mandelbulb power 2 - iter fog](518.md)
+
+[![Native / FPT authored](images/518-thumb.webp)](518.md)
+
+The upright body has a corresponding silhouette, but native glowing appendages and lower internal illumination disappear. FPT clips the upper-right highlights while most lower geometry is black; effects hide exact structural agreement.
+
+## [520: mandelbulb power 2 - slice 3](520.md)
+
+[![Native / FPT authored](images/520-thumb.webp)](520.md)
+
+Foreground branches broadly correspond, but the bright native open/cloudy upper region becomes dense dark textured geometry in FPT. Native depth blur and atmosphere prevent deciding whether all differences are optical; structural visibility needs a dedicated comparison.
+
+## [522: mandelbulb power 2 - slice 5](522.md)
+
+[![Native / FPT authored](images/522-thumb.webp)](522.md)
+
+The spiral ground motifs broadly align. Native bright distant haze and reflected illumination become nearly black in FPT, obscuring the upper half of the scene and flattening the relief.
+
+## [527: mandelbulb power 8 - 4_2](527.md)
+
+[![Native / FPT authored](images/527-thumb.webp)](527.md)
+
+Native clustered rounded forms become long diagonal streaks in both FPT controls. Most defining geometry is absent or severely distorted, independently of the changed lighting.
+
+## [529: mandelbulb power 8 - 7 - volmetric fog](529.md)
+
+[![Native / FPT authored](images/529-thumb.webp)](529.md)
+
+Native volumetric glowing lobes become hard saturated green/blue surfaces with large black regions. Fog dominates the reference, preventing a reliable complete geometry comparison; the defining lighting is not reproduced.
+
+## [532: mandelbulb_multi_001](532.md)
+
+[![Native / FPT authored](images/532-thumb.webp)](532.md)
+
+Native curved blue surfaces become severely clipped cyan/white regions. Neutral FPT has smooth broad surfaces with less apparent relief; reflective appearance prevents resolving geometry independently, and exposure is an obvious failure.
+
+## [533: mandelnest](533.md)
+
+[![Native / FPT authored](images/533-thumb.webp)](533.md)
+
+The upright branching body is recognisable, but native blue emissive points and dark separating cavities become bright pink/orange continuous surfaces. Lighting and visibility differ substantially, so exact openings cannot be approved from these captures.
+
+## [534: menger sponge 001](534.md)
+
+[![Native / FPT authored](images/534-thumb.webp)](534.md)
+
+Corridor framing and layered wall cells broadly align, but prominent bright native side windows are dark in FPT and native central light shafts disappear. Whether side-window visibility also differs needs investigation; this is not merely colour variation.
+
+## [535: menger sponge 002_2](535.md)
+
+[![Native / FPT authored](images/535-thumb.webp)](535.md)
+
+Crossing beams and rectangular trusses correspond in the neutral view, but the native bright yellow illuminated shaft becomes nearly black with faint teal lines. Defining illumination is missing.
+
+## [536: menger sponge 003_2](536.md)
+
+[![Native / FPT authored](images/536-thumb.webp)](536.md)
+
+The large stepped foreground structure corresponds, but the native bright horizon and starburst source disappear into a dark red upper region. Native atmosphere obscures distant boundaries; illumination and far-field visibility remain unverified.
+
+## [542: msltoe donuts 001](542.md)
+
+[![Native / FPT authored](images/542-thumb.webp)](542.md)
+
+Interlocking thick loops and smaller nested loops align in the neutral control, but authored FPT loses the native bright environmental illumination and turns most geometry dark. The few highlights do not restore surface readability.
+
+## [544: orbitTraps 004](544.md)
+
+[![Native / FPT authored](images/544-thumb.webp)](544.md)
+
+Native large luminous circular feature and bright background become almost entirely black in authored FPT. Neutral exposes related circular geometry, but luminous/transparent visibility and defining illumination are not reproduced.
+
+## [545: orbitTraps 006](545.md)
+
+[![Native / FPT authored](images/545-thumb.webp)](545.md)
+
+Broad nested circular structures remain recognisable, but native soft light sources and the central blue atmospheric region disappear into dark cavities and hard orange clipped highlights. Effects prevent full structural certification.
+
+## [546: orbitTraps 007](546.md)
+
+[![Native / FPT authored](images/546-thumb.webp)](546.md)
+
+Native dark curled form with defining cyan luminous lines becomes an almost white smooth mass. Both surface visibility and missing orbit-trap illumination prevent acceptance.
+
+## [547: planet](547.md)
+
+[![Native / FPT authored](images/547-thumb.webp)](547.md)
+
+Native smooth luminous globe with internal swirls becomes a lumpy strongly clipped object. The silhouette and apparent internal structure differ; glow and material interpretation prevent treating this as a colour-only change.
+
+## [548: primitive objects - inverted box](548.md)
+
+[![Native / FPT authored](images/548-thumb.webp)](548.md)
+
+The decorated cube itself keeps its silhouette and visible circular recesses. Native patterned surrounding walls become broad clipped yellow regions, materially changing illumination and hiding the authored environment.
+
+## [551: reflections 002](551.md)
+
+[![Native / FPT authored](images/551-thumb.webp)](551.md)
+
+The nested reflective spheres broadly match, but the prominent native upper-right light source disappears while surface highlights become much stronger. Missing source illumination changes the scene's focal feature.
+
+## [552: reflections 003](552.md)
+
+[![Native / FPT authored](images/552-thumb.webp)](552.md)
+
+Nested spheres broadly correspond, but native discrete soft light sources and blue shaded regions become broadly clipped orange/yellow reflections. The optical structure and illumination are not preserved well enough for gallery acceptance.
 
 ## [567: IFS31_anim](567.md)
 
@@ -777,3 +975,45 @@ Some central bars and curved framing correspond, but native dark blue surroundin
 [![Native / FPT authored](images/725-thumb.webp)](725.md)
 
 The curved folds, long vertical ridge and framing correspond in the neutral view. Authored FPT is almost entirely black, losing the native bright blue/cyan illuminated surfaces and their visible relief.
+
+## [730: riemann sphere 001](730.md)
+
+[![Native / FPT authored](images/730-thumb.webp)](730.md)
+
+A roughly corresponding pointed decorated body is visible, but defining native luminous arcs extending around and below it are absent. Those optical features also obscure native surface boundaries, so complete geometry correspondence cannot be certified.
+
+## [732: riemann_sphere_msltoe_v1_001](732.md)
+
+[![Native / FPT authored](images/732-thumb.webp)](732.md)
+
+Radial disks, slender supports and framing broadly correspond. Native blue-green illumination and bright upper opening become almost black in authored FPT, hiding important upper geometry.
+
+## [735: stereoscopic 001](735.md)
+
+[![Native / FPT authored](images/735-thumb.webp)](735.md)
+
+Central spherical building, rear spheres and thin surrounding structures broadly match the neutral control. Authored FPT loses the bright green/yellow environmental illumination, leaving most upper and rear forms nearly black.
+
+## [736: stereoscopic 002](736.md)
+
+[![Native / FPT authored](images/736-thumb.webp)](736.md)
+
+Angular beams broadly correspond, but the native anaglyph reference prevents exact mono-camera alignment judgment. Authored FPT is heavily white-clipped, erasing contrast across many beams. Stereo output and exposure need separate investigation.
+
+## [738: stereoscopic 004](738.md)
+
+[![Native / FPT authored](images/738-thumb.webp)](738.md)
+
+The central diamond outline and side filaments are present, but bright native red/green illumination becomes a dark olive surface and plain sky. Native stereo/effects complicate exact alignment; loss of defining light remains a hold.
+
+## [742: the grid 002](742.md)
+
+[![Native / FPT authored](images/742-thumb.webp)](742.md)
+
+Native red/blue/green open framework is replaced by dominant dark curved panels and reflective spheres. Some lines correspond, but surface visibility and material/transparency interpretation change the apparent structure too much for acceptance.
+
+## [745: transparent002](745.md)
+
+[![Native / FPT authored](images/745-thumb.webp)](745.md)
+
+The rounded outer cube silhouette matches, but the native translucent inner shape and bright reflected highlights are absent in the nearly black FPT object. Interior visibility and transparent material behavior need correction.

@@ -12,6 +12,24 @@ def fixture():
 
 
 class SelectionTests(unittest.TestCase):
+    def test_hundred_scene_batch_is_unique_and_deterministic(self):
+        scenes=[dict(id=f'{i:03d}',path=f'scene{i}.fract',sha256=f'{i:064x}',
+            collection='A' if i%2 else 'B') for i in range(1,121)]
+        cat=dict(scenes=[dict(r,status='experimental') for r in scenes])
+        report=dict(identity=dict(manifest=dict(root='test',scenes=scenes),settings={}),
+            rows=[dict(r,modes={m:dict(status='ok') for m in ('geometry','authored')}) for r in scenes])
+        result=select(cat,report,100)
+        self.assertEqual(len(result['scenes']),100)
+        self.assertEqual(len({r['id'] for r in result['scenes']}),100)
+        self.assertEqual(result['collections'],{'A':50,'B':50})
+        self.assertEqual(result,select(cat,report,100))
+
+    def test_batch_size_limits(self):
+        cat,report=fixture()
+        for count in (0,-1,101):
+            with self.subTest(count=count),self.assertRaisesRegex(ValueError,'1..100'):
+                select(cat,report,count)
+
     def test_deferred_references_are_excluded_without_changing_catalog_status(self):
         cat,report=fixture()
         original=copy.deepcopy(cat)

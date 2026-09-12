@@ -10,8 +10,8 @@ from summarize_mandel_screening import summarize
 
 
 def select(catalog, screening, count, deferred=()):
-    if not 1 <= count <= 50:
-        raise ValueError('batch size must be 1..50')
+    if not 1 <= count <= 100:
+        raise ValueError('batch size must be 1..100')
     sources=source_index(catalog['scenes'])
     original=matching_rows(screening['identity']['manifest']['scenes'],sources)
     observed=matching_rows(screening['rows'],sources)
