@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 15
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [418: constant factor 2.0  - mandelbox scale 2.0](418.md)
+## [162: abox_cylinder](162.md)
 
-[![Native / FPT authored](images/418-thumb.webp)](418.md)
+[![Native / FPT authored](images/162-thumb.webp)](162.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The large foreground rounded machinery, repeated beads, stepped connections and base framing align. FPT preserves readable green/gold foreground detail but removes much of the native yellow haze and darkens the background strongly; acceptance does not certify background atmosphere or full lighting parity.
+The foreground circular grid, large right-hand spire, repeated smaller spires and left bright horizon feature align. FPT reduces the native upper/background sphere highlights and sparkle, while the defining foreground geometry remains readable. Distant reflective/optical detail is not certified.
 
-## [420: dune](420.md)
+## [375: Construct by Ectoplaz 2](375.md)
 
-[![Native / FPT authored](images/420-thumb.webp)](420.md)
+[![Native / FPT authored](images/375-thumb.webp)](375.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The domed overhang, layered front slit, short base and tilted ground align. FPT is darker and more reflective and removes the native atmospheric veil/clouded sky, but the main object remains readable; atmosphere and exact material appearance are not certified.
+Main green structure and framing align and remain readable. Native blue atmospheric fill is absent; background contrast and materials differ.
 
-## [421: equirectangular mandelbox](421.md)
+## [378: GeneralizedFoldBox01](378.md)
 
-[![Native / FPT authored](images/421-thumb.webp)](421.md)
+[![Native / FPT authored](images/378-thumb.webp)](378.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The wide equirectangular framing, central perforated form and large top/side openings align. FPT changes brown/purple reflections to cooler blue/purple and adds grain, without an obvious large structural omission.
+Large central surfaces and framing align. FPT is sharper/orange and native blur differs; fine depth and material parity are not certified.
 
-## [422: equirectangular menger sponge](422.md)
+## [379: GeneralizedFoldBox02](379.md)
 
-[![Native / FPT authored](images/422-thumb.webp)](422.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The equirectangular chamber, central square recess and repeated wall/floor openings align closely. Brown/purple illumination and floor reflections differ slightly while retaining readable structure.
-
-## [424: folded mender sponge](424.md)
-
-[![Native / FPT authored](images/424-thumb.webp)](424.md)
+[![Native / FPT authored](images/379-thumb.webp)](379.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The tilted nested square frames, perforated beams and central recess align. FPT is sharper, more yellow/blue and less blurred than native, while keeping the main connections and gaps readable.
+Refreshed water surface and red sphere are restored; broad cavern framing matches. Reflections, saturation and sphere roughness still differ.
 
-## [430: hybrid17](430.md)
+## [380: GeneralizedFoldBox03_2](380.md)
 
-[![Native / FPT authored](images/430-thumb.webp)](430.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The nested tilted wall grids and major square recesses align. FPT retains the pink/green/yellow illumination but spreads it more softly and changes reflective contrast; fine edge and lighting parity are not certified.
-
-## [431: hybrid18_2](431.md)
-
-[![Native / FPT authored](images/431-thumb.webp)](431.md)
+[![Native / FPT authored](images/380-thumb.webp)](380.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The tilted latticed walls, repeated foreground steps and larger square recesses align closely. Brown/pink illumination and fine sampling noise differ slightly.
+Refreshed box/displacement path restores the cavern instead of the earlier incorrect close surfaces. Broad opening and rock placement now align; blue contrast, highlights and fine cave detail remain imperfect.
 
-## [433: hybrid20](433.md)
+## [381: Hybrid 1](381.md)
 
-[![Native / FPT authored](images/433-thumb.webp)](433.md)
+[![Native / FPT authored](images/381-thumb.webp)](381.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Central ornament placement and surrounding forms broadly align. Native soft focus becomes sharper and more contrasty in FPT.
+
+## [383: IFS 20](383.md)
+
+[![Native / FPT authored](images/383-thumb.webp)](383.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Broad rocky layout and framing align. Different focus, tan materials and sky response are visible; fine-depth fidelity is not claimed.
+
+## [387: IFS 25](387.md)
+
+[![Native / FPT authored](images/387-thumb.webp)](387.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The large upper cylindrical opening, concentric rings and surrounding smaller cylinders align. Both native and FPT are noisy with bright neon highlights; FPT changes contrast and fine reflective detail without an obvious broad structure or framing loss.
+Oblique stepped block layout, main diagonal opening and camera match. Small surfaces have different highlight strength and colour balance.
 
-## [438: hybrid25](438.md)
+## [388: IFS 26](388.md)
 
-[![Native / FPT authored](images/438-thumb.webp)](438.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The hanging central sphere, surrounding repeated smaller spheres and broad canopy align. FPT replaces the gold atmospheric veil with darker, red-lit surfaces, but the foreground spheres and connections remain readable. Native haze, glow and distant fine detail are not certified.
-
-## [448: hypercomplex 03](448.md)
-
-[![Native / FPT authored](images/448-thumb.webp)](448.md)
+[![Native / FPT authored](images/388-thumb.webp)](388.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The sweeping layered curl, central ridge and left/right sky openings align. FPT removes the muted atmospheric veil and uses much stronger cyan/pink bands, while the main layered structure stays readable. Atmosphere and exact palette are not certified.
+Lobed canopy, twisted supports, central sphere and waterline align. FPT sphere reflections are much darker and the water/sky balance is warmer; exact reflective appearance is not certified.
+
+## [391: IFS 29_2](391.md)
+
+[![Native / FPT authored](images/391-thumb.webp)](391.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Foreground rock outline, top cavity and left background opening align. FPT is sharper and more orange, without native depth-of-field blur; fine surface/optical parity is not claimed.

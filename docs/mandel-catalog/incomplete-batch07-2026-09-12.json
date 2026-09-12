@@ -1,0 +1,145 @@
+{
+  "scope": "Incomplete triplets remain unpromoted; failures are not hidden or counted as visually reviewed.",
+  "rows": [
+    {
+      "id": "475",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox19.fract",
+      "sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "694",
+      "path": "monte carlo DOF 004.fract",
+      "sha256": "0a2453ded101bc3cf0761f855e19cf016823ebeefe42ac5834281ef58849ba3c",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "477",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox21.fract",
+      "sha256": "1b8b55ccfc9a70ad9bbd4858ed222327a1a1d425b5c06f2d10ca32cf46e54eaa",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "697",
+      "path": "monte carlo global illumination - luminosity gradient.fract",
+      "sha256": "18c1a99bbb0b21ba491b37c96aa1fb5814160eba617f30de03e97f7dd8061da8",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "698",
+      "path": "monte carlo global illumination by volumetric effects.fract",
+      "sha256": "c3f9e8a1a7dbad3166942a84dbabe491c9115e557925f330d571d2bbbe9a71e4",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "480",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox25_3.fract",
+      "sha256": "b2fd04cd6c1ff7d616a7fd41c6210626dcf140776a3cebb74c9abf1dfad770eb",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "481",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox26 - rotations.fract",
+      "sha256": "feee33ac3b450bf19560982680174d7011aa06656760f5d487618622d375981c",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "701",
+      "path": "msltoe toroidal multi 001.fract",
+      "sha256": "f3cfaf110c580e0b08687a954cfb9bcc1196b41369fe2c35a98b15f519ab80b4",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "482",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox27.fract",
+      "sha256": "3ee0ebaa3bc3e558ae55b375f24617c6c59b3bc0e74ea668667a2e7946583fda",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "484",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox29.fract",
+      "sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "485",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox30.fract",
+      "sha256": "6e3674459bf0dde8766d1e9b132d35fb16f89d4c0e29db1fa7f031b13cf291cf",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "705",
+      "path": "msltoe_julia_bulb_mod3_001.fract",
+      "sha256": "1e26888bb4e16fce11b74a7f3d7c9ee69f18cf3fcd6230f280ee3dc022eb7065",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "489",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox36.fract",
+      "sha256": "dec362431f409a7b76729a039fcb77959b54484a2a429b5b0f3143596a078a24",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "490",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox37_2.fract",
+      "sha256": "81e52847b656749fe85f214c6945dfee8b3f052c6c06d696896dd12fdfd9f51e",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    }
+  ]
+}

@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 21
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [656: keyframe_anim_mandelbox_boxes](656.md)
+## [611: benesi pwr2 mandelbulbs 001](611.md)
 
-[![Native / FPT authored](images/656-thumb.webp)](656.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The large tilted slab and clustered upper-right cavities align. FPT is brighter yellow with sharper blue/pink markings than the subdued native material; fine reflectance and depth-of-field appearance are not certified.
-
-## [661: mandelbox001](661.md)
-
-[![Native / FPT authored](images/661-thumb.webp)](661.md)
+[![Native / FPT authored](images/611-thumb.webp)](611.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The central ornament, four pointed surrounding surfaces and major open gaps align. FPT changes the red/lavender native palette to blue/cyan and differs in reflection contrast, but keeps the principal structure illuminated and readable. Exact reflectance is not certified.
+Radial cavity, surrounding ring and right-hand surface boundary align. FPT is sharper with red/blue rather than gold/purple optical shading; depth-of-field and reflective appearance are not certified.
 
-## [664: mandelbox_menger](664.md)
+## [612: benesi_mag_transforms_001](612.md)
 
-[![Native / FPT authored](images/664-thumb.webp)](664.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The nested angular walls, large central recess and rectangular surface slots align. FPT changes pale black/white reflections to warm copper/pink and reduces contrast, but the major structure remains readable.
-
-## [665: mandelbox_menger_morph](665.md)
-
-[![Native / FPT authored](images/665-thumb.webp)](665.md)
+[![Native / FPT authored](images/612-thumb.webp)](612.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The perforated cube, large front opening and repeated smaller square cavities align in the neutral control. Authored FPT changes the soft pink/green material to strongly reflective gold/blue rings; broad geometry remains readable, while exact reflections and palette are not certified.
+Radial petal composition and center align in the geometry control. FPT reflective appearance is sharper and strongly magenta rather than brown/pink; exact material transport is not certified.
 
-## [667: mandelbox_vary_scale_4D_001](667.md)
+## [617: box_fold_bulb_pow2_001](617.md)
 
-[![Native / FPT authored](images/667-thumb.webp)](667.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The sweeping corridor, large left-wall apertures, bright upper opening and right-hand blocklike details align broadly. FPT removes the pale blue atmospheric veil and has stronger gold/green reflections, but the foreground structure remains readable. Distant haze and exact material transport are not certified.
-
-## [668: mandelbulb - 256iters](668.md)
-
-[![Native / FPT authored](images/668-thumb.webp)](668.md)
+[![Native / FPT authored](images/617-thumb.webp)](617.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The outer Mandelbulb lobes, upper central concentric feature and lower repeated protrusions align broadly. FPT is more uniformly green and less sparkling than native; both images have noisy fine detail, so microscopic geometry and reflective appearance are not certified.
+Central tiered spire, surrounding repeated spires and camera align. FPT is sharper with strongly patterned gold ground; native clouds and depth-of-field blur are not reproduced.
 
-## [669: mandelbulb001](669.md)
+## [626: diFS square grid](626.md)
 
-[![Native / FPT authored](images/669-thumb.webp)](669.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The folded central Mandelbulb surface, left cluster, upper ridges and sky boundary align. FPT changes green/gold reflections to a stronger rainbow palette; both have intense highlights, but the principal structure stays readable. Fine specular/colour parity is not certified.
-
-## [671: mandelbulb2_001](671.md)
-
-[![Native / FPT authored](images/671-thumb.webp)](671.md)
+[![Native / FPT authored](images/626-thumb.webp)](626.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The angular radial folds, central junction and faceted upper-left masses align. FPT has stronger red streaks and smoother reflective patches than native, while the principal folds and camera framing remain readable.
+Curved perforated surface, surrounding grid and foreground reflective forms align. FPT has warmer highlights and stronger brightness on the right; the principal geometry remains readable.
 
-## [672: mandelbulb3_001](672.md)
+## [627: difs_tree](627.md)
 
-[![Native / FPT authored](images/672-thumb.webp)](672.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The branching Mandelbulb silhouette, left-hand sky gap and bright central surface feature align broadly. FPT uses a grey-green sky instead of blue and changes the pink/gold reflection pattern. Both contain noisy tiny features and intense highlights; fine-detail and optical parity are not certified.
-
-## [673: mandelbulb4_001](673.md)
-
-[![Native / FPT authored](images/673-thumb.webp)](673.md)
+[![Native / FPT authored](images/627-thumb.webp)](627.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The large interlocking curved loops, left-pointing centre and upper arc align. FPT is sharper with stronger red/white reflections than the softer native view. Both have very bright surfaces; broad geometry is retained but highlight-level detail and reflective transport are not certified.
+Tree canopy silhouette, trunk, rolling grass terrain and cast shadow align. FPT canopy shadows are darker and the trunk is browner, but the main forms remain visible.
+
+## [628: fabs_box_mod1_001](628.md)
+
+[![Native / FPT authored](images/628-thumb.webp)](628.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Central bright opening, layered folded surfaces and lower-right opening align. FPT is sharper and more red/purple, with differing reflections and depth of field; broad structural landmarks remain readable.
+
+## [629: flight_anim_menger sponge_3](629.md)
+
+[![Native / FPT authored](images/629-thumb.webp)](629.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Main square window, repeated perforations, inner chamber and light position align. FPT omits the strong grey atmospheric veil and uses darker colourful surfaces; fog and complete material parity are not certified.
+
+## [630: newtonPow3-PolyFoldSym-delta-gnj-016d](630.md)
+
+[![Native / FPT authored](images/630-thumb.webp)](630.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Newton silhouette, openings and loops align clearly. Native reflective gold becomes saturated orange/red with a different environment gradient.
+
+## [631: newtonPow3-PolyFoldSym-delta-gnj-017b](631.md)
+
+[![Native / FPT authored](images/631-thumb.webp)](631.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Large Newton arcs and framing align. Native soft golden shading/haze becomes sharper saturated red/yellow detail; fine background fidelity is not certified.
+
+## [632: newtonPow3-ScaleRot-delta-gnj-007d](632.md)
+
+[![Native / FPT authored](images/632-thumb.webp)](632.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Branching Newton silhouette and major gaps align. FPT colours and environment gradient differ substantially but do not hide the structure.

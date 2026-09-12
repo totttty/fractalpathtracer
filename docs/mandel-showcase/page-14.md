@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 14
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [383: IFS 20](383.md)
+## [151: aboxMod11_002](151.md)
 
-[![Native / FPT authored](images/383-thumb.webp)](383.md)
+[![Native / FPT authored](images/151-thumb.webp)](151.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Broad rocky layout and framing align. Different focus, tan materials and sky response are visible; fine-depth fidelity is not claimed.
+The paired curved shells, repeated oval openings and large red interior regions align. FPT reduces metallic highlights and changes fine interior patterns while retaining silhouette, openings and authored crop.
 
-## [387: IFS 25](387.md)
+## [152: aboxMod11_003](152.md)
 
-[![Native / FPT authored](images/387-thumb.webp)](387.md)
+[![Native / FPT authored](images/152-thumb.webp)](152.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Oblique stepped block layout, main diagonal opening and camera match. Small surfaces have different highlight strength and colour balance.
+The large crossing arches, upper diagonal ribbed form and lower repeated curves align. FPT replaces the pale native veil with stronger green/gold contrast, but the foreground layout stays readable. Atmosphere and distant optical detail are not certified.
 
-## [388: IFS 26](388.md)
+## [153: aboxMod11_addCpixelRotate](153.md)
 
-[![Native / FPT authored](images/388-thumb.webp)](388.md)
+[![Native / FPT authored](images/153-thumb.webp)](153.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Lobed canopy, twisted supports, central sphere and waterline align. FPT sphere reflections are much darker and the water/sky balance is warmer; exact reflective appearance is not certified.
+The large upper curved lobes, left red folds and dense blue/cyan rounded cluster align closely. FPT alters metallic highlights and tiny surface reflections while retaining broad structure and framing.
 
-## [391: IFS 29_2](391.md)
+## [155: aboxMod11_hybrid](155.md)
 
-[![Native / FPT authored](images/391-thumb.webp)](391.md)
+[![Native / FPT authored](images/155-thumb.webp)](155.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Foreground rock outline, top cavity and left background opening align. FPT is sharper and more orange, without native depth-of-field blur; fine surface/optical parity is not claimed.
+The decorated rounded rectangular body, central green circular feature and paired side knobs align. FPT is darker and less metallic, but the silhouette and principal surface features remain legible. Exact reflective material response is not certified.
 
-## [393: IFS 31](393.md)
+## [156: aboxMod13Surf](156.md)
 
-[![Native / FPT authored](images/393-thumb.webp)](393.md)
+[![Native / FPT authored](images/156-thumb.webp)](156.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Dense lattice corridor, central support and converging floor align. FPT has stronger bright speckling at 32 SPP and a coloured rather than grey atmosphere; fine detail/noise parity is not certified.
+The branching mushroom-like forms, large sweeping foreground bowl and horizon line align. FPT strengthens saturated bands and removes much of the native sparkle/veil, but the silhouettes and broad surface structure remain clear.
 
-## [398: aboxmod15](398.md)
+## [157: aboxMod13_001](157.md)
 
-[![Native / FPT authored](images/398-thumb.webp)](398.md)
+[![Native / FPT authored](images/157-thumb.webp)](157.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Dense central ridges, left foreground rise and right cliff outline align. FPT is sharper with stronger dark creases; native haze and fine-detail noise are not matched.
+The curved foreground platform, scalloped upper edge and chain of right-hand protrusions align closely. FPT reduces the native bright specular patches while retaining broad shape and fine repeated surface relief.
 
-## [400: aexion01](400.md)
+## [158: aboxMod14_001](158.md)
 
-[![Native / FPT authored](images/400-thumb.webp)](400.md)
+[![Native / FPT authored](images/158-thumb.webp)](158.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Tall central spire and sweeping stepped flanks align. FPT retains readable green surfaces but omits the native atmospheric sky; atmosphere is explicitly outside this acceptance.
+The open cubic cage, repeated round apertures, internal decorated forms and silhouette align closely. FPT brightens the gold/orange reflections without filling the openings or obscuring the structure.
 
-## [406: benesi03](406.md)
+## [159: aboxMod15_001](159.md)
 
-[![Native / FPT authored](images/406-thumb.webp)](406.md)
+[![Native / FPT authored](images/159-thumb.webp)](159.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Sweeping foreground folds, large upper curl and right-hand branching cavity align closely. Yellow/orange lighting is somewhat stronger in FPT but preserves the same major surface relief.
+The long curled ribbon, scalloped upper edge and both curled ends align. FPT makes some repeated ridges more solid/brighter than the faint native appearance, but preserves the overall thin structure and framing. Subpixel edge intensity is not certified.
 
-## [410: bristorbrot01](410.md)
+## [160: aboxMod15_meng3](160.md)
 
-[![Native / FPT authored](images/410-thumb.webp)](410.md)
+[![Native / FPT authored](images/160-thumb.webp)](160.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Large receding rings and central spiral align. FPT is sharply defined and strongly gold/magenta rather than hazy grey/gold; depth of field, sky and reflective appearance are not certified.
+The central green rounded form, small upper/lower spheres and concentric foreground terrain align. FPT reduces native gold sparkle and changes sky colour and surface contrast while retaining the main shapes and authored camera.
 
-## [412: cayley2](412.md)
+## [161: aboxMod15cpixelInvert](161.md)
 
-[![Native / FPT authored](images/412-thumb.webp)](412.md)
+[![Native / FPT authored](images/161-thumb.webp)](161.md)
 
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Central ring, inner motif and surrounding repeated tiles align. Green reflective patterns and glow differ considerably while keeping the main geometry readable.
+The floating pink forms, long right-hand band, foreground troughs and horizon align. FPT reduces the native high-frequency sparkle and renders the sparse overhead filaments more continuously. Broad layout remains clear; subpixel filament visibility and exact reflective response are not certified.

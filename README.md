@@ -70,7 +70,7 @@ labelled with their original settings; they have not been rerendered here.
 
 ### Reviewed Showcase
 
-[Browse 215 visually accepted scenes](docs/mandel-showcase/README.md), with
+[Browse 240 visually accepted scenes](docs/mandel-showcase/README.md), with
 paginated native/FPT thumbnails and per-scene neutral/beauty comparisons.
 The first additional 50-scene review promoted **37** and held **13** for
 further work. The [next 50-scene batch](docs/mandel-catalog/review-batch02-2026-09-11.md)
@@ -86,6 +86,9 @@ timeouts, with unchanged renderer binaries and authored reference sampling.
 The [sixth additional batch](docs/mandel-catalog/review-batch06-2026-09-12.md)
 adds **21** accepted comparisons, **18** visual holds and eleven deferred native
 timeouts under the same settings.
+The [seventh additional batch](docs/mandel-catalog/review-batch07-2026-09-12.md)
+adds **25** accepted comparisons, **11** visual holds and fourteen deferred native
+timeouts. All 100 FPT captures succeeded; no renderer or sampling changes were made.
 Coverage expansion takes priority; outlier fixes are deferred to a
 consolidated pass. Known dark/geometry failures are separated into a
 [needs-work audit](docs/mandel-showcase/needs-work.md), not featured as successes.
@@ -97,6 +100,7 @@ first-batch scenes were refreshed, and the second/third batches have fresh FPT
 captures at checkpoints `88e7081` / `e8dc689`; the fourth/fifth use `d328d97` / `35c5aa0`
 with the same renderer executable. Older captures retain their labelled historical
 renderer version. The sixth uses checkpoint `aec19a2` with that executable.
+The seventh uses checkpoint `475b08a`, also with the same executable.
 FPT uses **300px max edge,
 32 SPP**, with authored aspect ratio and default bounces. Native sampling
 differs. Minor colour/material differences are accepted; this is neither exact

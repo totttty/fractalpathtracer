@@ -82,6 +82,12 @@ The perforated cube, inner rounded structures and separate right-hand object ali
 
 The stacked rounded lobes and central receding opening align in the neutral control. Authored FPT flattens much of the interior to saturated yellow, erasing the native crease shading and small surface features; hold the material/exposure behaviour.
 
+## [154: aboxMod11_for8cA](154.md)
+
+[![Native / FPT authored](images/154-thumb.webp)](154.md)
+
+The prominent solid-looking gold central form in native is absent from FPT, replaced by a hole-like dark region in the neutral control and a bright opening in authored output. Background detail also changes strongly. This is a major geometry/visibility mismatch, not a colour-only difference.
+
 ## [372: IFS_001](372.md)
 
 [![Native / FPT authored](images/372-thumb.webp)](372.md)
@@ -309,6 +315,30 @@ The large cube and several face cavities align, but native pink/blue fog and lum
 [![Native / FPT authored](images/462-thumb.webp)](462.md)
 
 The large rounded lobes, spiral junction and smaller foreground spheres align in neutral FPT. Authored output collapses to clipped yellow/red and black with lost gradients and many obscured surface features; a severe lighting/material failure rather than an acceptable hue change.
+
+## [476: mandelbox20 - rotations](476.md)
+
+[![Native / FPT authored](images/476-thumb.webp)](476.md)
+
+The diagonally layered foreground, large right-hand curved surface and surrounding forms align in the neutral control. Authored FPT becomes nearly uniform orange, losing the native blue/gold illumination separation and obscuring much of the dark background structure.
+
+## [479: mandelbox25_2](479.md)
+
+[![Native / FPT authored](images/479-thumb.webp)](479.md)
+
+The distant ridged walls and repeated lower spikes align in the neutral control. Authored FPT clips large foreground/left regions to bright green-yellow and turns the right wall almost black, losing native surface detail and balanced illumination.
+
+## [483: mandelbox28](483.md)
+
+[![Native / FPT authored](images/483-thumb.webp)](483.md)
+
+Native shows an open red cavern with several light sources and separated foreground platforms. Both FPT controls instead show close vertical bands and a large circular opening; authored output is blue/black and omits the native lighting arrangement. This is a major geometry/framing mismatch, not a palette difference.
+
+## [488: mandelbox34 - lights_2](488.md)
+
+[![Native / FPT authored](images/488-thumb.webp)](488.md)
+
+The four large rounded interior features, repeated central openings and enclosing curved walls align. Authored FPT loses the defining white light/reflection features inside those forms and replaces the native reflective response with saturated green and dark areas. The missing illumination/material behaviour remains a hold.
 
 ## [567: IFS31_anim](567.md)
 
@@ -603,3 +633,39 @@ The large central rounded square and surrounding apertures broadly align, but au
 [![Native / FPT authored](images/689-thumb.webp)](689.md)
 
 The Menger cube and its openings align, but native cyan/pink orbit-trap lights surrounding and covering the cube are absent from FPT. This is loss of the scene's defining illumination, not a minor material colour difference.
+
+## [692: monte carlo DOF 002](692.md)
+
+[![Native / FPT authored](images/692-thumb.webp)](692.md)
+
+Native rounded forms, bright lights and smooth red reflections become near-binary saturated red/black in FPT. The clipping obscures the main structure and native optical effects, preventing confident complete geometry or illumination acceptance.
+
+## [693: monte carlo DOF 003](693.md)
+
+[![Native / FPT authored](images/693-thumb.webp)](693.md)
+
+Some ribbed foreground forms correspond, but native large bright open regions and strong depth-of-field blur become smaller highlights among dense FPT geometry. Blur, transparency and actual occlusion cannot be separated from this comparison; do not certify the changed central opening.
+
+## [696: monte carlo global illumination - emmisive materials](696.md)
+
+[![Native / FPT authored](images/696-thumb.webp)](696.md)
+
+Native includes a large cyan luminous ring around the sphere/cube/group. That ring is absent from both FPT controls, and authored FPT leaves the cube and right-hand form almost black beside a clipped white sphere. Missing geometry and emissive transport both require investigation.
+
+## [700: msltoe toroidal bulb 001](700.md)
+
+[![Native / FPT authored](images/700-thumb.webp)](700.md)
+
+The symmetric purple curved structure and paired bright interior features broadly align. FPT substantially darkens the broad surfaces and outer contours, losing the bright native violet/cyan highlights and much of the lower detail.
+
+## [706: msltoe_sym4_mod 001](706.md)
+
+[![Native / FPT authored](images/706-thumb.webp)](706.md)
+
+The large left-hand layered forms correspond, but native open pale right-hand regions become dark geometry/reflections in FPT and overall illumination drops markedly. Surface, atmosphere and occlusion contributions cannot be separated confidently; the changed right-hand region is not certified.
+
+## [707: msltoesym2_mod_001](707.md)
+
+[![Native / FPT authored](images/707-thumb.webp)](707.md)
+
+The central rounded decorated body and broad surrounding walls align in the neutral control. Authored FPT clips large foreground and upper-right areas to saturated yellow/green, obscuring native gradients and much of the surface relief.

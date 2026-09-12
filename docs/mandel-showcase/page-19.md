@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 19
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [611: benesi pwr2 mandelbulbs 001](611.md)
+## [574: icoastahedron](574.md)
 
-[![Native / FPT authored](images/611-thumb.webp)](611.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Radial cavity, surrounding ring and right-hand surface boundary align. FPT is sharper with red/blue rather than gold/purple optical shading; depth-of-field and reflective appearance are not certified.
-
-## [612: benesi_mag_transforms_001](612.md)
-
-[![Native / FPT authored](images/612-thumb.webp)](612.md)
+[![Native / FPT authored](images/574-thumb.webp)](574.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Radial petal composition and center align in the geometry control. FPT reflective appearance is sharper and strongly magenta rather than brown/pink; exact material transport is not certified.
+Arched silhouette and triangular cavities align. Strong green/yellow material and reflection differences remain; exact glass transport is not certified.
 
-## [617: box_fold_bulb_pow2_001](617.md)
+## [575: mandelbox22_anim](575.md)
 
-[![Native / FPT authored](images/617-thumb.webp)](617.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Central tiered spire, surrounding repeated spires and camera align. FPT is sharper with strongly patterned gold ground; native clouds and depth-of-field blur are not reproduced.
-
-## [626: diFS square grid](626.md)
-
-[![Native / FPT authored](images/626-thumb.webp)](626.md)
+[![Native / FPT authored](images/575-thumb.webp)](575.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Curved perforated surface, surrounding grid and foreground reflective forms align. FPT has warmer highlights and stronger brightness on the right; the principal geometry remains readable.
+Tilted cube silhouette, framing and large cutouts align. FPT sky is lighter and cube highlights/material tones differ.
 
-## [627: difs_tree](627.md)
+## [577: menger-BoxFold4D](577.md)
 
-[![Native / FPT authored](images/627-thumb.webp)](627.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Tree canopy silhouette, trunk, rolling grass terrain and cast shadow align. FPT canopy shadows are darker and the trunk is browner, but the main forms remain visible.
-
-## [628: fabs_box_mod1_001](628.md)
-
-[![Native / FPT authored](images/628-thumb.webp)](628.md)
+[![Native / FPT authored](images/577-thumb.webp)](577.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Central bright opening, layered folded surfaces and lower-right opening align. FPT is sharper and more red/purple, with differing reflections and depth of field; broad structural landmarks remain readable.
+Central raised cube and nested square cavity align. FPT adds softer indirect shading and changes fine edge contrast, without an obvious large structural omission.
 
-## [629: flight_anim_menger sponge_3](629.md)
+## [579: menger-Rotation4D](579.md)
 
-[![Native / FPT authored](images/629-thumb.webp)](629.md)
+[![Native / FPT authored](images/579-thumb.webp)](579.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Main square window, repeated perforations, inner chamber and light position align. FPT omits the strong grey atmospheric veil and uses darker colourful surfaces; fog and complete material parity are not certified.
+Open rotated fractal lattice, silhouette and internal gaps align. Gold highlight intensity and background gradient differ.
 
-## [630: newtonPow3-PolyFoldSym-delta-gnj-016d](630.md)
+## [580: menger-Scale4D](580.md)
 
-[![Native / FPT authored](images/630-thumb.webp)](630.md)
+[![Native / FPT authored](images/580-thumb.webp)](580.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Newton silhouette, openings and loops align clearly. Native reflective gold becomes saturated orange/red with a different environment gradient.
+Nine-panel perforated slab, central opening and repeated smaller holes align. FPT changes interior reflection tones and softens edge highlights.
 
-## [631: newtonPow3-PolyFoldSym-delta-gnj-017b](631.md)
+## [581: menger-SphericalFold4Dtransform](581.md)
 
-[![Native / FPT authored](images/631-thumb.webp)](631.md)
+[![Native / FPT authored](images/581-thumb.webp)](581.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Large Newton arcs and framing align. Native soft golden shading/haze becomes sharper saturated red/yellow detail; fine background fidelity is not certified.
+Perforated slab, central cavity and nested hole layout align. Pink material and interior highlights differ without obvious large missing regions.
 
-## [632: newtonPow3-ScaleRot-delta-gnj-007d](632.md)
+## [584: menger-mod1_001_8k](584.md)
 
-[![Native / FPT authored](images/632-thumb.webp)](632.md)
+[![Native / FPT authored](images/584-thumb.webp)](584.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-Branching Newton silhouette and major gaps align. FPT colours and environment gradient differ substantially but do not hide the structure.
+Panoramic curved block corridors and large openings align. FPT is gold rather than red/black with different sky and reflection colours, but the structure remains readable.
+
+## [585: mountains_and_valleys](585.md)
+
+[![Native / FPT authored](images/585-thumb.webp)](585.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Rounded peaks, foreground cavities and silhouette align. Both authored captures use dark green material; FPT loses the sharp bright reflective flecks but retains the principal forms.
+
+## [587: neuron](587.md)
+
+[![Native / FPT authored](images/587-thumb.webp)](587.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Central polyhedral hub and radiating struts align. FPT uses darker green/gold shading and reduces background highlight density; the principal structural connections remain readable.
+
+## [588: pine-Bulb](588.md)
+
+[![Native / FPT authored](images/588-thumb.webp)](588.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Layered disks, rounded beads and large silhouette gaps align closely. Green material reflections and highlight intensity differ without obscuring the forms.
