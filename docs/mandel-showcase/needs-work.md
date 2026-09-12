@@ -244,6 +244,72 @@ Spiral outlines and central horizontal blue band align broadly. FPT removes much
 
 Large circular openings and broken spherical panels align. Native bright gold and pink material response becomes uniformly dark green, losing the central illumination and important surface contrast.
 
+## [322: sphereClusterV2 baa3](322.md)
+
+[![Native / FPT authored](images/322-thumb.webp)](322.md)
+
+Rounded radial lobes match the native arrangement, but blue textured lobes become broad saturated yellow areas with much weaker relief. This is more than a palette difference because fine surface readability is lost.
+
+## [323: sphereClusterV3 aaa1](323.md)
+
+[![Native / FPT authored](images/323-thumb.webp)](323.md)
+
+Paired cut spherical lobes and central ornate strip retain their silhouette. The native detailed reflective side panels become almost featureless pale yellow surfaces, obscuring their authored pattern and internal shading.
+
+## [325: sphereClusterV3 aaa3](325.md)
+
+[![Native / FPT authored](images/325-thumb.webp)](325.md)
+
+Pentagonal centre and looping cage retain their shape. Authored FPT turns pink/blue surfaces into overbright yellow-white bands, flattening the cage and obscuring central material detail.
+
+## [333: spheretree_1](333.md)
+
+[![Native / FPT authored](images/333-thumb.webp)](333.md)
+
+Repeated spherical clusters align broadly, but neutral greys become clipped white and bright blue in authored FPT, losing substantial curved-surface relief and reflection detail.
+
+## [334: spheretree_2](334.md)
+
+[![Native / FPT authored](images/334-thumb.webp)](334.md)
+
+Perforated green spherical body aligns, but the native red floor/background plane is absent or unlit in FPT. The cause cannot be determined from the beauty image alone; scene-wide agreement remains incomplete.
+
+## [346: transfSinOrCos- pseudoKleinianV1](346.md)
+
+[![Native / FPT authored](images/346-thumb.webp)](346.md)
+
+Perforated corridor frames and distant coloured object align, but native focal glow and much of the corridor illumination are missing in authored FPT. The darkened interior is a substantive lighting mismatch.
+
+## [348: transfSphereInvV3_abxTetra_OT](348.md)
+
+[![Native / FPT authored](images/348-thumb.webp)](348.md)
+
+Four chains of rounded bodies retain their placement, but native red outer light traces and bright central glow are absent in FPT. Much of the focal light-driven structure is missing and the remaining bodies are dark.
+
+## [353: transf_abs_add_multi](353.md)
+
+[![Native / FPT authored](images/353-thumb.webp)](353.md)
+
+Cube framing and broad blue band align, but many native dark square cavities become shallow-looking yellow patches in FPT, especially on the right face. Neutral geometry shows recesses, so depth visibility versus material response requires controlled follow-up.
+
+## [354: transf_addCpixelTile_bulb](354.md)
+
+[![Native / FPT authored](images/354-thumb.webp)](354.md)
+
+Repeated round recesses align in the neutral control, but authored FPT replaces dark reflective interiors and structured glints with flatter yellow shading and plain orange side forms. Important depth cues and material detail are lost.
+
+## [357: transf_dotFold_boxFrame](357.md)
+
+[![Native / FPT authored](images/357-thumb.webp)](357.md)
+
+Angular yellow frame and central openings align, but FPT substantially overbrightens the broad faces, losing inset edges and the native shading that separates stacked planes.
+
+## [369: vicsek_001](369.md)
+
+[![Native / FPT authored](images/369-thumb.webp)](369.md)
+
+Central gold circular body and surrounding block grid align, but FPT clips much of the pale background architecture toward white, reducing its panel edges and shadow separation.
+
 ## [372: IFS_001](372.md)
 
 [![Native / FPT authored](images/372-thumb.webp)](372.md)

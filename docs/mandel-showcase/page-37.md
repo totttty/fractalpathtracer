@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 37
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md) | [Page 32](page-32.md) | [Page 33](page-33.md) | [Page 34](page-34.md) | [Page 35](page-35.md) | [Page 36](page-36.md) | [Page 37](page-37.md) | [Page 38](page-38.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md) | [Page 32](page-32.md) | [Page 33](page-33.md) | [Page 34](page-34.md) | [Page 35](page-35.md) | [Page 36](page-36.md) | [Page 37](page-37.md) | [Page 38](page-38.md) | [Page 39](page-39.md) | [Page 40](page-40.md) | [Page 41](page-41.md) | [Page 42](page-42.md) | [Page 43](page-43.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [702: msltoe_donut_001](702.md)
+## [588: pine-Bulb](588.md)
 
-[![Native / FPT authored](images/702-thumb.webp)](702.md)
+[![Native / FPT authored](images/588-thumb.webp)](588.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The clustered rounded forms and large crossing tubular arcs align broadly. Native haze and its large central light bloom are replaced by sharper, differently distributed FPT highlights. Foreground structure remains readable; bloom, atmosphere and fine reflective transport are not certified.
+Layered disks, rounded beads and large silhouette gaps align closely. Green material reflections and highlight intensity differ without obscuring the forms.
 
-## [703: msltoe_julia_bulb_eiffie_001](703.md)
+## [590: toastn_stonemen_anim](590.md)
 
-[![Native / FPT authored](images/703-thumb.webp)](703.md)
+[![Native / FPT authored](images/590-thumb.webp)](590.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The prominent pink rounded cluster, lower-left diagonal branch and surrounding field of small forms align broadly. Native shallow-focus sparkling gold becomes sharper yellow/orange FPT surfaces. Broad placement survives; depth of field and tiny reflective details are not certified.
+Rounded mound, side cavities and base silhouette align. FPT is much less reflective and more orange/brown than the bright gold reference, but major surface relief remains visible; sky-light detail differs.
 
-## [704: msltoe_julia_bulb_mod2_001](704.md)
+## [592: hybrid 01 - mandelbox sponge with sphere](592.md)
 
-[![Native / FPT authored](images/704-thumb.webp)](704.md)
+[![Native / FPT authored](images/592-thumb.webp)](592.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The central decorated dome, upper bulbs and layered lower foreground align broadly. FPT is substantially brighter yellow/orange and less blurred than native, but the main contours and decorated central surface remain readable. Depth of field, bright peripheral highlights and exact material response are not certified.
+Foreground structure and framing align and remain visible. Authored FPT is much brighter and more saturated; accepted with a strong palette/exposure caveat.
 
-## [708: msltoesym2_mod_002](708.md)
+## [594: hybrid 02 - rectangle hieroglyphs](594.md)
 
-[![Native / FPT authored](images/708-thumb.webp)](708.md)
+[![Native / FPT authored](images/594-thumb.webp)](594.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The large central circular opening, crossing diagonal foreground bar and clustered surrounding forms align broadly. FPT changes the red/orange reflections and sharpens details blurred in native, but preserves readable major structure. Fine reflection and depth-of-field parity are not certified.
+Broad lattice and framing align; major surfaces remain readable. Native glow and stronger illumination are absent, so this is not a volumetric-lighting match.
 
-## [709: msltoesym3_mod_001](709.md)
+## [595: inverse-reciprocal-iqbulb mechanical-ribs](595.md)
 
-[![Native / FPT authored](images/709-thumb.webp)](709.md)
+[![Native / FPT authored](images/595-thumb.webp)](595.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The upper angular layered form, lower diamond-like curved body and left sweeping background align. FPT replaces the native gold/brown environment response with strong rainbow reflections, but the principal geometry remains legible. Palette, reflective environment and fine optical parity are not certified.
+Broad ribbed shapes and framing align. Native softer focus and brighter highlights differ from the sharper, darker FPT material.
 
-## [711: nebula 002](711.md)
+## [596: menger smooth mod 1 - iron man close up](596.md)
 
-[![Native / FPT authored](images/711-thumb.webp)](711.md)
+[![Native / FPT authored](images/596-thumb.webp)](596.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The symmetric rounded landscape, central recessed form and foreground lobes align. Both views are strongly reflective and colourful; FPT redistributes highlights but retains the major geometry and authored crop. Exact reflection patterns are not certified.
+Large folds and warm colours align. FPT contains sharper high-frequency detail and different reflections; fine-detail identity is not claimed.
 
-## [713: nebula 004](713.md)
+## [598: aboxmod1_001](598.md)
 
-[![Native / FPT authored](images/713-thumb.webp)](713.md)
+[![Native / FPT authored](images/598-thumb.webp)](598.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The decorated rounded body, central vertical divisions and clustered gold forms align closely. FPT changes the blue background gradient and intensifies reflections while retaining the main surface structure and camera framing.
+Broad landscape and openings align. Native haze becomes sharper, saturated green/orange shading; fog remains out of scope.
 
-## [726: quaternion_3DE_001](726.md)
+## [600: aexion001](600.md)
 
-[![Native / FPT authored](images/726-thumb.webp)](726.md)
+[![Native / FPT authored](images/600-thumb.webp)](600.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
-The stacked rounded forms, large foreground bowl and layered crossing bands align. FPT removes native reflective sparkle and changes the background to orange, but the main silhouettes, overlaps and surface structure remain readable. Environment and exact reflection patterns are not certified.
+Terrain silhouettes and framing align. Native sun disk is absent and FPT is greener/flatter; scene structure remains readable.
 
-## [727: quick-dudley_001](727.md)
+## [602: aexion_octopus_001](602.md)
 
-[![Native / FPT authored](images/727-thumb.webp)](727.md)
+[![Native / FPT authored](images/602-thumb.webp)](602.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The sweeping layered foreground, central recessed form and upper-left vertical structure align. FPT changes reflective colour toward brighter orange and cyan while retaining the principal contours, openings and authored crop. Exact reflective transport is not certified.
+Refreshed water surface is restored and the central object's placement aligns. Wave detail, reflected lighting and shadows differ; 32-SPP water noise remains visible.
 
-## [728: quick-dudley_mod_001](728.md)
+## [603: amazing surf mod1 001](603.md)
 
-[![Native / FPT authored](images/728-thumb.webp)](728.md)
+[![Native / FPT authored](images/603-thumb.webp)](603.md)
 
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The layered crossing foreground band, curved upper forms and right-hand folded structure align. FPT changes the native pink metallic reflections to darker gold/brown and sharper background detail, but retains the main geometry and framing. Fine optical transport is not certified.
+Refreshed ridge and foreground surface framing align. Native haze and fine highlights differ from the sharper blue FPT terrain; fine structural parity is not certified.

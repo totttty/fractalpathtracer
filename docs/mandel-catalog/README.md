@@ -10,9 +10,9 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| Reviewed | 375 | Explicit capture-specific visual acceptance, with limitations allowed |
-| Experimental | 162 | Opt-in scenes; execution success is not visual acceptance |
-| Blocked | 209 | 188 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
+| Reviewed | 421 | Explicit capture-specific visual acceptance, with limitations allowed |
+| Experimental | 105 | Opt-in scenes; execution success is not visual acceptance |
+| Blocked | 220 | 199 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
 
 The ranked gallery still contains all 50 rows for transparency, including
 blocked scenes **32, 37, 46 and 48**. Of the additional 50, **37** are promoted
@@ -58,8 +58,11 @@ quality and bounded concurrency.
 The [tenth additional batch](review-batch10-2026-09-12.md) adds **73** accepted
 comparisons and **19** visual holds from another 100 attempts. Seven native
 references and one FPT authored render timed out. Capture time was 88.8 minutes,
-with unchanged quality and renderer binaries. Of the 162 experimental scenes,
-**57** remain eligible for routine review, **87** have deferred incomplete comparisons and
+with unchanged quality and renderer binaries.
+The [eleventh additional batch](review-batch11-2026-09-12.md) completes the final
+**57 routine candidates**: **46** accepted and **11** visual holds. All 171
+captures succeeded in 34.3 minutes at unchanged settings. No routine candidates
+remain. Of the **105 experimental scenes**, **87** have deferred incomplete comparisons and
 **18** retain historical screening warnings. These groups are not silently promoted.
 Colour differences alone are not a blocker. Geometry, missing assets and
 failed render contracts must remain visible. [Explicit decisions](reviews.json)

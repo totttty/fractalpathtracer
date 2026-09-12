@@ -1,0 +1,407 @@
+{
+  "version": 1,
+  "reviewed_at": "2026-09-12",
+  "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+  "rows": [
+    {
+      "id": "314",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Curved decorated walls and foreground toothed rims align closely. FPT strengthens yellow illumination and softens reflections, but the major cavities and wall outlines remain readable."
+    },
+    {
+      "id": "315",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Twisting ribbons, central convergence and rainbow side panels retain their positions. FPT is noisier and changes reflectance, with the principal open passages and curved surfaces preserved."
+    },
+    {
+      "id": "316",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Stepped triangular tower and repeated open circular tiers align. FPT dims the pink material and glints, but the silhouette and repeated voids remain clear."
+    },
+    {
+      "id": "317",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Radial branching sphere and its rounded central forms match in silhouette. FPT is substantially brighter and greener, but the perforations and major branches remain legible; subpixel sparkle is not certified."
+    },
+    {
+      "id": "318",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Open symmetric blue frame, paired large holes and small outer ornaments align. Brighter gold edges and reduced sparkle change appearance without hiding the primary openings."
+    },
+    {
+      "id": "319",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Repeated orange cut discs and central gold cluster retain their arrangement. FPT strengthens yellow highlights, but the disc spacing and dark centre details remain readable."
+    },
+    {
+      "id": "320",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Perforated round body, central hole and outer terminals align. FPT fills out the bright yellow shading and changes fine hole contrast; acceptance covers the visible larger openings, not subpixel pore fidelity."
+    },
+    {
+      "id": "321",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Pointed radial silhouette and repeated rounded terminals retain their positions. FPT changes sparse native sparkle into more solid blue/pink shading; the main forms remain readable, while fine transparency-like gaps are not certified at this sampling."
+    },
+    {
+      "id": "322",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Rounded radial lobes match the native arrangement, but blue textured lobes become broad saturated yellow areas with much weaker relief. This is more than a palette difference because fine surface readability is lost."
+    },
+    {
+      "id": "323",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Paired cut spherical lobes and central ornate strip retain their silhouette. The native detailed reflective side panels become almost featureless pale yellow surfaces, obscuring their authored pattern and internal shading."
+    },
+    {
+      "id": "324",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Red outer petals and opposing central cones align. FPT changes the blue/gold inner cluster and reflection pattern, but the radial layering and principal forms remain distinguishable."
+    },
+    {
+      "id": "325",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Pentagonal centre and looping cage retain their shape. Authored FPT turns pink/blue surfaces into overbright yellow-white bands, flattening the cage and obscuring central material detail."
+    },
+    {
+      "id": "326",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Intersecting perforated curved discs and inner red/yellow rings align closely. FPT changes highlight strength and reflection colour, with the main holes and cut surfaces preserved."
+    },
+    {
+      "id": "327",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Four blue framed lobes, central ornament and cardinal pointed terminals align. FPT adds a stronger red background glow and softer blue shading, while the open frame geometry remains clear."
+    },
+    {
+      "id": "328",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Rounded triangular wire shell and its large circular holes match closely. FPT fills out thin yellow lines and modifies small-pore contrast; principal openings and silhouette are retained."
+    },
+    {
+      "id": "329",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Open rounded cubical cage and repeated large circular apertures align closely. Native sparkle becomes more continuous yellow linework; thin-line brightness is not exact parity."
+    },
+    {
+      "id": "330",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Shallow bowl outline, central ring and repeated orange circular frames retain their arrangement. FPT makes interior reflected detail more visible and less sparkling, with the main rim geometry unchanged."
+    },
+    {
+      "id": "331",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Rounded body, large top opening and surrounding repeated circular dimples align. Blue/gold sparkle becomes softer translucent-looking pale shading; broad geometry is readable, but dielectric/material appearance is not certified."
+    },
+    {
+      "id": "332",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Layered upper crown and hanging curved lower spikes retain their arrangement. FPT changes red/gold reflectance to red/green and flattens the upper shading, but the main cutouts and separated lower forms remain distinguishable."
+    },
+    {
+      "id": "333",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Repeated spherical clusters align broadly, but neutral greys become clipped white and bright blue in authored FPT, losing substantial curved-surface relief and reflection detail."
+    },
+    {
+      "id": "334",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Perforated green spherical body aligns, but the native red floor/background plane is absent or unlit in FPT. The cause cannot be determined from the beauty image alone; scene-wide agreement remains incomplete."
+    },
+    {
+      "id": "335",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Central blue sphere, radial bead lines and smaller branching strings align closely. FPT has modestly different sparkle and edge intensity; the large open structure remains intact."
+    },
+    {
+      "id": "336",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Stepped architectural towers and repeated vertical insets retain their framing. Both versions are brightly orange-lit; FPT changes floor reflection and fine contrast, but major architectural relief remains readable."
+    },
+    {
+      "id": "337",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Perforated rectangular body, large inset opening and repeated rounded cells align. Reflective sparkle becomes smoother multicoloured edges, without obvious loss of the major cavity."
+    },
+    {
+      "id": "338",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Four ornate repeated bodies retain their horizontal spacing and outline. FPT is brighter and more cyan; acceptance covers the repeated large forms, not highlight-region microdetail at this small framing."
+    },
+    {
+      "id": "339",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Receding perforated rectangular frame, large central opening and nested square holes align closely. FPT changes edge brightness and fine reflection while preserving the principal voids."
+    },
+    {
+      "id": "340",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Slanted rainbow cavity, rounded rim and recessed circular features retain their geometry and framing. FPT adds stronger internal illumination and noise, with the larger recess boundaries still clear."
+    },
+    {
+      "id": "341",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Gold foreground curves, central narrow opening and repeated rear column details align. FPT reduces native blue haze and alters reflections, but foreground and background structure remain readable; atmosphere is not matched."
+    },
+    {
+      "id": "342",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Receding stepped rectangular stack and repeated small blocks align. FPT increases gold brightness and changes microcontrast; acceptance is limited to the visible stepped structure rather than highlight-region fine detail."
+    },
+    {
+      "id": "343",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Central blue pillar, paired curved side bands and ornate outer branches retain their arrangement. FPT is more matte and less sparkling, but the main blue surfaces and cutouts remain readable."
+    },
+    {
+      "id": "344",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "White square lattice and concentric layers of oval holes align closely, including the small central square opening. Minor edge shading changes do not obscure the pattern."
+    },
+    {
+      "id": "345",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "White twisted perforated surface retains its pointed silhouette, curved folds and major holes. Minor edge shading and diffuse noise differ."
+    },
+    {
+      "id": "346",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Perforated corridor frames and distant coloured object align, but native focal glow and much of the corridor illumination are missing in authored FPT. The darkened interior is a substantive lighting mismatch."
+    },
+    {
+      "id": "347",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Stacked yellow rectangular structures, narrow gaps and blue inset windows retain close alignment. FPT adds diffuse noise and stronger light on distant blocks while keeping the architectural relief readable."
+    },
+    {
+      "id": "348",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Four chains of rounded bodies retain their placement, but native red outer light traces and bright central glow are absent in FPT. Much of the focal light-driven structure is missing and the remaining bodies are dark."
+    },
+    {
+      "id": "349",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Cross-shaped coloured petals, smaller diagonal perforated leaves and central ornament align. FPT reduces reflective sparkle and changes saturation while retaining the main open pattern."
+    },
+    {
+      "id": "350",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Rough decorated cube and projecting square-ended corner forms align closely. FPT changes fine pink reflectance and brightness, with the overall volume and attached shapes preserved."
+    },
+    {
+      "id": "351",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Angled triangular cutout frame and adjoining perforated walls align. FPT shifts gold lighting toward orange and reveals different reflections, but the main cavities and framing remain readable."
+    },
+    {
+      "id": "352",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Symmetric stacked blue/gold forms and repeated square gaps match closely. FPT is more matte and resolves less sparkle; larger openings and silhouette are retained."
+    },
+    {
+      "id": "353",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Cube framing and broad blue band align, but many native dark square cavities become shallow-looking yellow patches in FPT, especially on the right face. Neutral geometry shows recesses, so depth visibility versus material response requires controlled follow-up."
+    },
+    {
+      "id": "354",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Repeated round recesses align in the neutral control, but authored FPT replaces dark reflective interiors and structured glints with flatter yellow shading and plain orange side forms. Important depth cues and material detail are lost."
+    },
+    {
+      "id": "355",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Red four-way frame, large central hole and intertwined corner loops align closely. FPT is matte rather than glossy, but surface separation and major openings remain visible."
+    },
+    {
+      "id": "356",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Central orange interlocking rings and four broad outward surfaces preserve their geometry. FPT removes strong specular highlights and alters shadow contrast; the ring arrangement remains readable."
+    },
+    {
+      "id": "357",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Angular yellow frame and central openings align, but FPT substantially overbrightens the broad faces, losing inset edges and the native shading that separates stacked planes."
+    },
+    {
+      "id": "358",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Symmetric ornate corridor and narrow central vertical ornament retain their arrangement. FPT changes green/gold reflections to red/gold and strengthens lower illumination without an obvious large structural omission."
+    },
+    {
+      "id": "359",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Stacked cut rounded forms and distant central arrangement align. FPT brightens the cyan background structure and changes sparkle; the foreground separations remain clear despite noise."
+    },
+    {
+      "id": "360",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Central tiered pedestal, repeated surrounding bases and rectangular floor bands align closely. FPT softens metallic highlights but retains the stepped geometry and central relief."
+    },
+    {
+      "id": "361",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Square nested frames, four centre openings and decorated cardinal forms align. FPT replaces bright reflective banding with a darker blue/red palette; main frame layers remain visible, but reflected-band material parity is not established."
+    },
+    {
+      "id": "362",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Repeated gold pedestals and stepped rectangular corridor surfaces retain their placement. FPT is softer and less reflective, but the foreground and rear structural layers remain readable."
+    },
+    {
+      "id": "363",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Rough rounded landscape, isolated bright patches and skyline align closely. FPT changes sparkle and small-scale shading but preserves the visible foreground masses and openings."
+    },
+    {
+      "id": "365",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Red cylindrical body, long vertical recesses and repeated small square holes align. FPT changes internal gold reflection and adds noise without hiding the principal cavities."
+    },
+    {
+      "id": "366",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "White circular body, radial deep slots and repeated small perforations align closely. Authored FPT retains the slot shadows and visible circular outline; minor edge shading differs."
+    },
+    {
+      "id": "367",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Segmented rainbow cylinder, radial top pattern and outer oval recesses match closely. FPT changes inner gold highlights while retaining the segment boundaries and openings."
+    },
+    {
+      "id": "368",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Twisted yellow perforated ring, central hole and repeated square recesses align closely. FPT is more matte and darker while retaining the spiral geometry and larger openings."
+    },
+    {
+      "id": "369",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Central gold circular body and surrounding block grid align, but FPT clips much of the pale background architecture toward white, reducing its panel edges and shadow separation."
+    },
+    {
+      "id": "370",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Stacked decorated rings, upper crown and broad lower centre retain their arrangement. FPT replaces native sparkle with matte pink/blue shading and reveals different interior reflections; the large ring boundaries remain readable."
+    },
+    {
+      "id": "371",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Tilted decorated rounded assembly, upper disc and side loops match closely. FPT smooths blue/gold sparkle while preserving the layered forms and prominent circular motifs."
+    }
+  ],
+  "evidence_sha256": "8f843e8b8d1bf9bdd049ac22be1c50a08d8f0b547fbdc15bf183a309d33bab32"
+}

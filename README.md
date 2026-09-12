@@ -70,7 +70,7 @@ labelled with their original settings; they have not been rerendered here.
 
 ### Reviewed Showcase
 
-[Browse 375 visually accepted scenes](docs/mandel-showcase/README.md), with
+[Browse 421 visually accepted scenes](docs/mandel-showcase/README.md), with
 paginated native/FPT thumbnails and per-scene neutral/beauty comparisons.
 The first additional 50-scene review promoted **37** and held **13** for
 further work. The [next 50-scene batch](docs/mandel-catalog/review-batch02-2026-09-11.md)
@@ -100,6 +100,10 @@ The [tenth additional batch](docs/mandel-catalog/review-batch10-2026-09-12.md)
 adds **73** accepted comparisons, **19** visual holds and **8** incomplete
 comparisons from another 100 scenes. Captures use checkpoint `200e63c` with
 unchanged renderer binaries; the showcase remains a visual review, not exact parity.
+The [eleventh additional batch](docs/mandel-catalog/review-batch11-2026-09-12.md)
+completes the final **57 routine candidates**: **46** accepted and **11** visual
+holds, with all native/FPT captures successful. No routine candidates remain;
+incomplete references and historical warnings stay separate for the outlier pass.
 Coverage expansion takes priority; outlier fixes are deferred to a
 consolidated pass. Known dark/geometry failures are separated into a
 [needs-work audit](docs/mandel-showcase/needs-work.md), not featured as successes.

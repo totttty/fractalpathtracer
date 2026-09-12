@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 30
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md) | [Page 32](page-32.md) | [Page 33](page-33.md) | [Page 34](page-34.md) | [Page 35](page-35.md) | [Page 36](page-36.md) | [Page 37](page-37.md) | [Page 38](page-38.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md) | [Page 32](page-32.md) | [Page 33](page-33.md) | [Page 34](page-34.md) | [Page 35](page-35.md) | [Page 36](page-36.md) | [Page 37](page-37.md) | [Page 38](page-38.md) | [Page 39](page-39.md) | [Page 40](page-40.md) | [Page 41](page-41.md) | [Page 42](page-42.md) | [Page 43](page-43.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [487: mandelbox33 - spiral](487.md)
+## [351: transf_Zvec_axis_swap](351.md)
 
-[![Native / FPT authored](images/487-thumb.webp)](487.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The two decorated spiral forms, surrounding layered walls and authored crop align closely. FPT changes small reflective highlights and fine surface contrast but preserves the major forms and balanced dark/gold appearance.
-
-## [493: mandelbox41_2](493.md)
-
-[![Native / FPT authored](images/493-thumb.webp)](493.md)
+[![Native / FPT authored](images/351-thumb.webp)](351.md)
 
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The crossing chains of rounded forms, upper-left layered cluster and broad enclosing surfaces align. FPT removes much of the native haze and changes reflective colour to pink/gold, but foreground structure remains readable. Atmosphere and distant reflective detail are not certified.
+Angled triangular cutout frame and adjoining perforated walls align. FPT shifts gold lighting toward orange and reveals different reflections, but the main cavities and framing remain readable.
 
-## [494: mandelbox44_2](494.md)
+## [352: transf_absAddConstantV2_mbulb](352.md)
 
-[![Native / FPT authored](images/494-thumb.webp)](494.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The repeated stacked bulb-like columns, right foreground column and camera placement align. Both authored views are dark; FPT reduces the native brown veil and strengthens purple contrast, with the main column contours still readable. Atmosphere and deep background illumination are not certified.
-
-## [500: mandelbox50 - hearts](500.md)
-
-[![Native / FPT authored](images/500-thumb.webp)](500.md)
+[![Native / FPT authored](images/352-thumb.webp)](352.md)
 
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The paired heart-shaped forms, overlapping placement and layered surface bands align. Both views are bright; FPT changes the background from hazy red to green and sharpens the patterned hearts, while the defining contours remain readable. Bloom and fine material response are not certified.
+Symmetric stacked blue/gold forms and repeated square gaps match closely. FPT is more matte and resolves less sparkle; larger openings and silhouette are retained.
 
-## [507: mandelbox57](507.md)
+## [355: transf_cayley2_v1 Torus](355.md)
 
-[![Native / FPT authored](images/507-thumb.webp)](507.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The curved foreground blade and repeated ribbed background align. FPT reduces the concentrated white specular highlight and reveals more purple/red background structure than the blurred native view. Main contours remain readable; depth of field and exact specular response are not certified.
-
-## [528: mandelbulb power 8 - 5 - interior](528.md)
-
-[![Native / FPT authored](images/528-thumb.webp)](528.md)
+[![Native / FPT authored](images/355-thumb.webp)](355.md)
 
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-The central bowl-like opening and repeated curled rims retain their layout and silhouette. Reflective highlight patterns and interior shading differ markedly, but the main nested forms remain readable.
+Red four-way frame, large central hole and intertwined corner loops align closely. FPT is matte rather than glossy, but surface separation and major openings remain visible.
 
-## [531: mandelbulb power 8](531.md)
+## [356: transf_cayley2_v1 sphereGrid](356.md)
 
-[![Native / FPT authored](images/531-thumb.webp)](531.md)
+[![Native / FPT authored](images/356-thumb.webp)](356.md)
 
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Curving layered ridges and nested dark hollows retain close structural and colour agreement across the crop. FPT differs modestly in fine highlights and surface contrast.
+Central orange interlocking rings and four broad outward surfaces preserve their geometry. FPT removes strong specular highlights and alters shadow contrast; the ring arrangement remains readable.
 
-## [563: Makin3D-Julia_001](563.md)
+## [358: transf_juliaBox](358.md)
 
-[![Native / FPT authored](images/563-thumb.webp)](563.md)
+[![Native / FPT authored](images/358-thumb.webp)](358.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Curved foreground forms remain clear and similarly placed. Pink/yellow native environment becomes dark blue with chrome surfaces; accepted with strong material/environment caveats.
+Symmetric ornate corridor and narrow central vertical ornament retain their arrangement. FPT changes green/gold reflections to red/gold and strengthens lower illumination without an obvious large structural omission.
 
-## [564: Abox4D8K](564.md)
+## [359: transf_juliaBoxV2](359.md)
 
-[![Native / FPT authored](images/564-thumb.webp)](564.md)
+[![Native / FPT authored](images/359-thumb.webp)](359.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Rounded corridor features and camera framing align. FPT replaces olive highlights with reddish lower-contrast shading.
+Stacked cut rounded forms and distant central arrangement align. FPT brightens the cyan background structure and changes sparkle; the foreground separations remain clear despite noise.
 
-## [565: Caves-PseudoKleinianMod2](565.md)
+## [360: transf_mandalay_foldv1_asurf](360.md)
 
-[![Native / FPT authored](images/565-thumb.webp)](565.md)
+[![Native / FPT authored](images/360-thumb.webp)](360.md)
 
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
-Cave pillars, water/floor extent and framing broadly align. Native reflective highlights and floor response differ.
+Central tiered pedestal, repeated surrounding bases and rectangular floor bands align closely. FPT softens metallic highlights but retains the stepped geometry and central relief.
+
+## [361: transf_mandalay_foldv1_sphereClusterV2](361.md)
+
+[![Native / FPT authored](images/361-thumb.webp)](361.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+Square nested frames, four centre openings and decorated cardinal forms align. FPT replaces bright reflective banding with a darker blue/red palette; main frame layers remain visible, but reflected-band material parity is not established.
+
+## [362: transf_mandalay_foldv2_asurf](362.md)
+
+[![Native / FPT authored](images/362-thumb.webp)](362.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+Repeated gold pedestals and stepped rectangular corridor surfaces retain their placement. FPT is softer and less reflective, but the foreground and rear structural layers remain readable.
+
+## [363: transf_sin_add_asurf](363.md)
+
+[![Native / FPT authored](images/363-thumb.webp)](363.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+Rough rounded landscape, isolated bright patches and skyline align closely. FPT changes sparkle and small-scale shading but preserves the visible foreground masses and openings.
