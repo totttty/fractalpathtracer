@@ -70,6 +70,18 @@ The four curled lobes and central opening align in the neutral control, but auth
 
 The rectangular slab and its camera framing align, but the native multicoloured fractal/checker appearance becomes a plain grey-yellow checkerboard in FPT. The defining procedural material is not reproduced.
 
+## [129: T_absAdd_sphInv4_menger](129.md)
+
+[![Native / FPT authored](images/129-thumb.webp)](129.md)
+
+The perforated cube, inner rounded structures and separate right-hand object align in the neutral control. Authored FPT washes much of the pale material to white/cyan, clipping smaller openings and surface contrast that remain visible in native.
+
+## [139: T_sphInvV4 menger](139.md)
+
+[![Native / FPT authored](images/139-thumb.webp)](139.md)
+
+The stacked rounded lobes and central receding opening align in the neutral control. Authored FPT flattens much of the interior to saturated yellow, erasing the native crease shading and small surface features; hold the material/exposure behaviour.
+
 ## [372: IFS_001](372.md)
 
 [![Native / FPT authored](images/372-thumb.webp)](372.md)
@@ -261,6 +273,42 @@ The native central frame encloses a large bright sky opening; FPT instead fills 
 [![Native / FPT authored](images/446-thumb.webp)](446.md)
 
 The isolated upper loop and larger lower forms broadly correspond, but FPT loses the native blue illuminated environment and renders most surfaces almost black against dark green. Authored readability is insufficient for acceptance; reflective silhouette details remain uncertain.
+
+## [451: interior - mandelbulb power 8](451.md)
+
+[![Native / FPT authored](images/451-thumb.webp)](451.md)
+
+The bowl-like Mandelbulb, upper openings and lower rounded features align in the neutral control. Authored FPT is substantially darker, losing the bright native golden illumination and obscuring interior details.
+
+## [452: iter fog 002_2](452.md)
+
+[![Native / FPT authored](images/452-thumb.webp)](452.md)
+
+The broad outer loop corresponds, but native central glow and surrounding fog become harsh white patches and black surfaces in FPT. Native obscuration prevents confident interior geometry comparison; the defining volume/light behaviour is not retained.
+
+## [453: iter fog 004](453.md)
+
+[![Native / FPT authored](images/453-thumb.webp)](453.md)
+
+The main curved red/blue surfaces correspond, but native fog and a concentrated bright central light become sharp, strongly reflective surfaces with broad pale-blue illumination in FPT. The native veil obscures interior surfaces and the defining light distribution differs; defer optical/material interpretation rather than certify the full structure.
+
+## [459: iter fog 1](459.md)
+
+[![Native / FPT authored](images/459-thumb.webp)](459.md)
+
+The decorated cube and main face features align in the neutral control, but the defining native green/blue/red glowing illumination is almost absent in FPT. Authored surfaces are too dark to read clearly.
+
+## [460: iter fog 2](460.md)
+
+[![Native / FPT authored](images/460-thumb.webp)](460.md)
+
+The large cube and several face cavities align, but native pink/blue fog and luminous face detail become a hard red surface in FPT. The apparent central face feature differs under the native veil; volume versus surface interpretation needs investigation before complete geometry acceptance.
+
+## [462: jos_kleinian 002](462.md)
+
+[![Native / FPT authored](images/462-thumb.webp)](462.md)
+
+The large rounded lobes, spiral junction and smaller foreground spheres align in neutral FPT. Authored output collapses to clipped yellow/red and black with lost gradients and many obscured surface features; a severe lighting/material failure rather than an acceptable hue change.
 
 ## [567: IFS31_anim](567.md)
 
@@ -495,3 +543,63 @@ The corridor, central tapered forms and right-hand rectangular recesses align, b
 [![Native / FPT authored](images/670-thumb.webp)](670.md)
 
 Native shows a heavily veiled landscape with a bright white light, while FPT exposes a large right-hand curl against a clear blue sky and omits the light. The visible silhouette/coverage differs substantially; optical obscuration versus actual geometry must be separated before acceptance.
+
+## [676: mandelbulb_kali 001](676.md)
+
+[![Native / FPT authored](images/676-thumb.webp)](676.md)
+
+Some outer arches and right-hand curved forms correspond, but the large native central open-looking blue region is filled by dense structures in neutral and authored FPT. Refraction/atmosphere versus geometry is unresolved, and the native pale illumination becomes strong red/gold. Do not accept the opening mismatch as a palette-only change.
+
+## [677: mandelbulb_kali_multi 001](677.md)
+
+[![Native / FPT authored](images/677-thumb.webp)](677.md)
+
+The sweeping red curved surfaces and central junction align broadly in the neutral control. Authored FPT omits the bright yellow native environmental illumination, leaving the centre and much of the left/background region almost black.
+
+## [679: mandelbulb_vary_power_001](679.md)
+
+[![Native / FPT authored](images/679-thumb.webp)](679.md)
+
+The thick crossing foreground branches align, but native blue open-looking background regions become dense wall-like structures in neutral and authored FPT. Foreground colour differences alone would be acceptable; background depth/visibility versus atmospheric obscuration needs investigation.
+
+## [681: menger cross kifs 001](681.md)
+
+[![Native / FPT authored](images/681-thumb.webp)](681.md)
+
+The triangular Menger frames and major beams align in the neutral control, but authored FPT clips most surfaces to stark white/black and fails to retain the native distributed golden illumination. A severe exposure/material failure.
+
+## [683: menger middle mod](683.md)
+
+[![Native / FPT authored](images/683-thumb.webp)](683.md)
+
+The tilted wall planes and narrow triangular opening broadly align, but the bright native cyan beam crossing the image is absent in FPT. Both scenes are intentionally dark; the defining illumination is nevertheless missing, not a small palette difference.
+
+## [684: menger octo 001](684.md)
+
+[![Native / FPT authored](images/684-thumb.webp)](684.md)
+
+Native shows a blurred but recognisable nested block structure with coloured highlights. Authored FPT clips almost the entire image to white/yellow; neither authored detail nor geometry through the native blur can be accepted reliably.
+
+## [685: menger prism shape2 001](685.md)
+
+[![Native / FPT authored](images/685-thumb.webp)](685.md)
+
+The scattered angular blocks, triangular openings and foreground square face align in the neutral control. FPT substantially darkens the scene and loses the bright illuminated panels visible in native, obscuring much of the background geometry.
+
+## [686: menger pwr2 polynomial 001](686.md)
+
+[![Native / FPT authored](images/686-thumb.webp)](686.md)
+
+The broad blue/red curved foreground body and central recess align. FPT loses the bright pale native environmental illumination and deeply darkens most surfaces, with changed interior reflective detail. Readability is insufficient for a colour-only acceptance.
+
+## [687: menger smooth 001](687.md)
+
+[![Native / FPT authored](images/687-thumb.webp)](687.md)
+
+The large central rounded square and surrounding apertures broadly align, but authored FPT substantially increases white/yellow clipping across the frame, losing surface gradients visible in the already bright native render. Hold exposure/reflectance behaviour.
+
+## [689: menger sponge_with_orbit_trap_lights](689.md)
+
+[![Native / FPT authored](images/689-thumb.webp)](689.md)
+
+The Menger cube and its openings align, but native cyan/pink orbit-trap lights surrounding and covering the cube are absent from FPT. This is loss of the scene's defining illumination, not a minor material colour difference.

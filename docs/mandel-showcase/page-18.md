@@ -1,85 +1,85 @@
 # Reviewed Scenes: Page 18
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
-## [630: newtonPow3-PolyFoldSym-delta-gnj-016d](630.md)
+## [590: toastn_stonemen_anim](590.md)
 
-[![Native / FPT authored](images/630-thumb.webp)](630.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Newton silhouette, openings and loops align clearly. Native reflective gold becomes saturated orange/red with a different environment gradient.
-
-## [631: newtonPow3-PolyFoldSym-delta-gnj-017b](631.md)
-
-[![Native / FPT authored](images/631-thumb.webp)](631.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Large Newton arcs and framing align. Native soft golden shading/haze becomes sharper saturated red/yellow detail; fine background fidelity is not certified.
-
-## [632: newtonPow3-ScaleRot-delta-gnj-007d](632.md)
-
-[![Native / FPT authored](images/632-thumb.webp)](632.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Branching Newton silhouette and major gaps align. FPT colours and environment gradient differ substantially but do not hide the structure.
-
-## [633: newtonPow3-delta-gnj-001b](633.md)
-
-[![Native / FPT authored](images/633-thumb.webp)](633.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Newton silhouette, framing and branching placement align. FPT is more saturated orange with different highlights and background lighting.
-
-## [634: newtonPow3-delta-gnj-002h](634.md)
-
-[![Native / FPT authored](images/634-thumb.webp)](634.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Broad Newton silhouette and openings align. Brighter yellow highlights and a different environment gradient remain.
-
-## [635: newtonPow3-rotfold-delta-gnj-003d](635.md)
-
-[![Native / FPT authored](images/635-thumb.webp)](635.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Newton coil placement and framing align clearly. Native gold becomes saturated orange/red; reflection and environment differences remain.
-
-## [636: newtonPow3-rotfold-delta-gnj-010g](636.md)
-
-[![Native / FPT authored](images/636-thumb.webp)](636.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Newton coils and framing align. FPT interiors are smoother/darker orange and the environment gradient differs.
-
-## [640: hex grid 001](640.md)
-
-[![Native / FPT authored](images/640-thumb.webp)](640.md)
+[![Native / FPT authored](images/590-thumb.webp)](590.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The diagonal hexagonal floor, curled central structure and reflective foreground forms align. FPT has stronger dark reflections and less blue haze; large openings and surface layout remain readable, without certifying exact reflective or atmospheric appearance.
+Rounded mound, side cavities and base silhouette align. FPT is much less reflective and more orange/brown than the bright gold reference, but major surface relief remains visible; sky-light detail differs.
 
-## [642: hybrid001](642.md)
+## [592: hybrid 01 - mandelbox sponge with sphere](592.md)
 
-[![Native / FPT authored](images/642-thumb.webp)](642.md)
+[![Native / FPT authored](images/592-thumb.webp)](592.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Foreground structure and framing align and remain visible. Authored FPT is much brighter and more saturated; accepted with a strong palette/exposure caveat.
+
+## [594: hybrid 02 - rectangle hieroglyphs](594.md)
+
+[![Native / FPT authored](images/594-thumb.webp)](594.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Broad lattice and framing align; major surfaces remain readable. Native glow and stronger illumination are absent, so this is not a volumetric-lighting match.
+
+## [595: inverse-reciprocal-iqbulb mechanical-ribs](595.md)
+
+[![Native / FPT authored](images/595-thumb.webp)](595.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Broad ribbed shapes and framing align. Native softer focus and brighter highlights differ from the sharper, darker FPT material.
+
+## [596: menger smooth mod 1 - iron man close up](596.md)
+
+[![Native / FPT authored](images/596-thumb.webp)](596.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Large folds and warm colours align. FPT contains sharper high-frequency detail and different reflections; fine-detail identity is not claimed.
+
+## [598: aboxmod1_001](598.md)
+
+[![Native / FPT authored](images/598-thumb.webp)](598.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Broad landscape and openings align. Native haze becomes sharper, saturated green/orange shading; fog remains out of scope.
+
+## [600: aexion001](600.md)
+
+[![Native / FPT authored](images/600-thumb.webp)](600.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Terrain silhouettes and framing align. Native sun disk is absent and FPT is greener/flatter; scene structure remains readable.
+
+## [602: aexion_octopus_001](602.md)
+
+[![Native / FPT authored](images/602-thumb.webp)](602.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The large concentric curved sheets, central opening and smaller right-hand ring align. FPT replaces the native pink atmospheric veil with blue sky and darker gold surfaces; the broad structure is readable, but haze, thin-line brightness and exact reflective colour are not certified.
+Refreshed water surface is restored and the central object's placement aligns. Wave detail, reflected lighting and shadows differ; 32-SPP water noise remains visible.
 
-## [647: hybrid007](647.md)
+## [603: amazing surf mod1 001](603.md)
 
-[![Native / FPT authored](images/647-thumb.webp)](647.md)
+[![Native / FPT authored](images/603-thumb.webp)](603.md)
 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
-The converging field of repeated rounded clusters, central upright and its shadow align. FPT uses more matte violet surfaces and a darker background than the native glossy pink/brown appearance; the repeated structure remains readable.
+Refreshed ridge and foreground surface framing align. Native haze and fine highlights differ from the sharper blue FPT terrain; fine structural parity is not certified.
+
+## [606: amazing_surf 002](606.md)
+
+[![Native / FPT authored](images/606-thumb.webp)](606.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Foreground arches, central bowl, curling supports and distant repetition align. FPT is strongly orange and sharp rather than hazy with authored depth of field; atmosphere and optical effects are not certified.

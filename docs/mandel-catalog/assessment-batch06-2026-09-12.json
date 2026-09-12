@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "reviewed_at": "2026-09-12",
+  "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+  "rows": [
+    {
+      "id": "128",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The symmetrical clustered form, upper/lower lobes and silhouette align closely. FPT softens the tiny sparkling edge pattern and changes red/gold contrast; broad structure remains readable, without certifying microscopic detail."
+    },
+    {
+      "id": "451",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The bowl-like Mandelbulb, upper openings and lower rounded features align in the neutral control. Authored FPT is substantially darker, losing the bright native golden illumination and obscuring interior details."
+    },
+    {
+      "id": "676",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Some outer arches and right-hand curved forms correspond, but the large native central open-looking blue region is filled by dense structures in neutral and authored FPT. Refraction/atmosphere versus geometry is unresolved, and the native pale illumination becomes strong red/gold. Do not accept the opening mismatch as a palette-only change."
+    },
+    {
+      "id": "129",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The perforated cube, inner rounded structures and separate right-hand object align in the neutral control. Authored FPT washes much of the pale material to white/cyan, clipping smaller openings and surface contrast that remain visible in native."
+    },
+    {
+      "id": "452",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "The broad outer loop corresponds, but native central glow and surrounding fog become harsh white patches and black surfaces in FPT. Native obscuration prevents confident interior geometry comparison; the defining volume/light behaviour is not retained."
+    },
+    {
+      "id": "677",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The sweeping red curved surfaces and central junction align broadly in the neutral control. Authored FPT omits the bright yellow native environmental illumination, leaving the centre and much of the left/background region almost black."
+    },
+    {
+      "id": "130",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The separated triangular top, open box panels and large central gap align. FPT changes fine triangular reflections and blue/gold surface patterns, but the main panel geometry and framing remain clear."
+    },
+    {
+      "id": "453",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "The main curved red/blue surfaces correspond, but native fog and a concentrated bright central light become sharp, strongly reflective surfaces with broad pale-blue illumination in FPT. The native veil obscures interior surfaces and the defining light distribution differs; defer optical/material interpretation rather than certify the full structure."
+    },
+    {
+      "id": "131",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The faceted orange polyhedron, centre junction and silhouette align closely. FPT removes the strongest pale specular highlight and changes individual face brightness slightly."
+    },
+    {
+      "id": "679",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "acceptable",
+      "note": "The thick crossing foreground branches align, but native blue open-looking background regions become dense wall-like structures in neutral and authored FPT. Foreground colour differences alone would be acceptable; background depth/visibility versus atmospheric obscuration needs investigation."
+    },
+    {
+      "id": "132",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The tilted open lattice, hexagonal gaps and outer silhouette align. FPT brightens and visually thickens some yellow lines, while preserving the broad openings and connectivity. Subpixel line thickness is not certified."
+    },
+    {
+      "id": "459",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The decorated cube and main face features align in the neutral control, but the defining native green/blue/red glowing illumination is almost absent in FPT. Authored surfaces are too dark to read clearly."
+    },
+    {
+      "id": "133",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The four repeated orange tube frames, central gaps and green end openings align closely. FPT changes face brightness and introduces mild sampling grain without a broad coverage difference."
+    },
+    {
+      "id": "460",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "The large cube and several face cavities align, but native pink/blue fog and luminous face detail become a hard red surface in FPT. The apparent central face feature differs under the native veil; volume versus surface interpretation needs investigation before complete geometry acceptance."
+    },
+    {
+      "id": "681",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The triangular Menger frames and major beams align in the neutral control, but authored FPT clips most surfaces to stark white/black and fails to retain the native distributed golden illumination. A severe exposure/material failure."
+    },
+    {
+      "id": "135",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The grid of paired and clustered wire spheres, gaps and positions align. FPT makes the yellow lattice brighter and more continuous than native fine points; broad connectivity is retained, while subpixel wire appearance is not certified."
+    },
+    {
+      "id": "682",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The nested spiral, repeated angular blocks and large foreground curl align closely. FPT has smoother pink/gold shading and fewer sparkling highlights; broad depth layering and framing remain readable."
+    },
+    {
+      "id": "136",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The green rounded petal layers, raised centre and silhouette align. FPT is matte and grainier with reduced glossy highlights; the broad surfaces remain readable."
+    },
+    {
+      "id": "462",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The large rounded lobes, spiral junction and smaller foreground spheres align in neutral FPT. Authored output collapses to clipped yellow/red and black with lost gradients and many obscured surface features; a severe lighting/material failure rather than an acceptable hue change."
+    },
+    {
+      "id": "683",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The tilted wall planes and narrow triangular opening broadly align, but the bright native cyan beam crossing the image is absent in FPT. Both scenes are intentionally dark; the defining illumination is nevertheless missing, not a small palette difference."
+    },
+    {
+      "id": "137",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The star-edged open cup, central crease and outer red shell align closely. FPT has much brighter yellow interior reflections and more grain, but the cavity edges and broad form remain readable."
+    },
+    {
+      "id": "684",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Native shows a blurred but recognisable nested block structure with coloured highlights. Authored FPT clips almost the entire image to white/yellow; neither authored detail nor geometry through the native blur can be accepted reliably."
+    },
+    {
+      "id": "138",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The radial folded pale-yellow form, repeated outer ribs and narrow gaps align. FPT is brighter and flatter, but the outer silhouette and primary folds remain legible; fine highlight contrast differs."
+    },
+    {
+      "id": "685",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The scattered angular blocks, triangular openings and foreground square face align in the neutral control. FPT substantially darkens the scene and loses the bright illuminated panels visible in native, obscuring much of the background geometry."
+    },
+    {
+      "id": "139",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The stacked rounded lobes and central receding opening align in the neutral control. Authored FPT flattens much of the interior to saturated yellow, erasing the native crease shading and small surface features; hold the material/exposure behaviour."
+    },
+    {
+      "id": "686",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The broad blue/red curved foreground body and central recess align. FPT loses the bright pale native environmental illumination and deeply darkens most surfaces, with changed interior reflective detail. Readability is insufficient for a colour-only acceptance."
+    },
+    {
+      "id": "140",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The rounded blue hexagonal cage, smaller lower cage and receding internal openings align. FPT brightens/thickens some wire highlights, but the broad openings and silhouette remain intact; fine line intensity is not certified."
+    },
+    {
+      "id": "687",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The large central rounded square and surrounding apertures broadly align, but authored FPT substantially increases white/yellow clipping across the frame, losing surface gradients visible in the already bright native render. Hold exposure/reflectance behaviour."
+    },
+    {
+      "id": "141",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The silver framed form, paired blue openings and repeated central rounded features align. FPT is more matte and grainy with reduced metallic highlights; broad geometry and camera framing are retained."
+    },
+    {
+      "id": "468",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The curved orange lattice, repeated inset ornaments and central receding grid align closely. Fine reflective sparkle and surface brightness differ slightly."
+    },
+    {
+      "id": "688",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The sweeping curved corridor, right-hand rounded slots and concentrated central illuminated feature align. Both are intentionally dark with green/gold highlights; FPT changes reflection and fine highlight distribution while keeping the structure readable."
+    },
+    {
+      "id": "142",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The rounded perforated cube, large front cavity and small blue opening align closely. FPT has a more matte olive/red surface with fewer bright yellow sparkles than native, without an obvious broad geometry loss."
+    },
+    {
+      "id": "689",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The Menger cube and its openings align, but native cyan/pink orbit-trap lights surrounding and covering the cube are absent from FPT. This is loss of the scene's defining illumination, not a minor material colour difference."
+    },
+    {
+      "id": "143",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The rounded gold wire-grid form, four major openings and repeated outer bands align. FPT changes line intensity, fine reflections and the apparent density of subpixel wires, while retaining broad connectivity and framing."
+    },
+    {
+      "id": "690",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The large crossing beams, repeated angular recesses and red panels broadly align. FPT removes the pale native veil/blur and has stronger dark red contrast, but the foreground structural layout stays readable. Distant optical effects and fine reflective detail are not certified."
+    },
+    {
+      "id": "144",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The repeated upright striped forms, their spacing, stems and horizon align. FPT has a darker orange/green ground and fewer sparkling reflections, while the main objects and broad layout remain readable."
+    },
+    {
+      "id": "472",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The large curved central arch, surrounding rounded forms and branching interior align broadly. FPT is much brighter orange/red with stronger highlights and less native haze, but the main arches and openings remain readable. Fine highlight detail, light effects and exact exposure are not certified."
+    },
+    {
+      "id": "691",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The nested perforated frames, central bright opening and purple/pink surfaces align broadly. FPT is sharper and brighter while native strongly blurs the foreground, so depth-of-field and fine near-surface detail are not certified. The large-scale framing and structure remain readable."
+    },
+    {
+      "id": "145",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The tall right-hand gold spindle, smaller repeated towers, layered ground forms and horizon align. FPT reduces sparkling highlights and changes fine gold/green shading while retaining the scene layout."
+    }
+  ],
+  "evidence_sha256": "e8e053853297794d15d06e0a729776791fe4ac5bcc68f7d324666f4c7f68d949"
+}

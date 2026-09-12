@@ -1,0 +1,115 @@
+{
+  "scope": "Incomplete triplets remain unpromoted; failures are not hidden or counted as visually reviewed.",
+  "rows": [
+    {
+      "id": "678",
+      "path": "mandelbulb_power_2_001.fract",
+      "sha256": "02724a85d8801ebedbbce003d294cf9c7b72083c8d34c25b20d6ee5672c10c97",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "454",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/iter fog 006.fract",
+      "sha256": "0542c246d0c295c0e8b3435840bc68978a07224c4c89575be6f3d6256a2cf1f8",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "680",
+      "path": "mandelnest pow 5.fract",
+      "sha256": "8d24ba6ee4dc248f4ef71005d443fb054f681330d6b1205af86907dc97f89fc9",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "461",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/iter fog 4.fract",
+      "sha256": "09e75666d855e8dd3fcd1ae54de3d61e60e0cf599d9dcfe000d30a4d99ef1108",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "463",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/light beam.fract",
+      "sha256": "b06a81913faa538729ec745a1c03e4d78d324a10f02afda8b736a1c97d1aab82",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "465",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/lightning tower.fract",
+      "sha256": "0838aff5d584045338c705a3cf54f813861a10a28169931d5ce16002f01b3483",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "466",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/luminosity.fract",
+      "sha256": "0e7ec181f2d06cc03702f7687dc066a396d06bf6c4306f1eb734d36990d9a01f",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "467",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandalay.fract",
+      "sha256": "62a73c049fd94f5638989bd2e5e7c8ca39f6d0fc0184e2ac13a68b6e2efb57fd",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "469",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox10.fract",
+      "sha256": "3c87f2e6ec4d9ba6c316c516e6919c0b4fa3dce3bb88b349f68cce2c80aa3446",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "470",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox11 - rotations.fract",
+      "sha256": "7dd1ef4b53ad4d1ef3e1593eee059ffb1fa35023f317918d25c434985c325143",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "473",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox17.fract",
+      "sha256": "c532b9970fd9e42cc80f752d7d67d87b3d7d53c6f926e6a682d0c93fcd67ccea",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    }
+  ]
+}
