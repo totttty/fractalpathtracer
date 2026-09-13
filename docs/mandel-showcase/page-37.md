@@ -4,6 +4,14 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [587: neuron](587.md)
+
+[![Native / FPT authored](images/587-thumb.webp)](587.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Central polyhedral hub and radiating struts align. FPT uses darker green/gold shading and reduces background highlight density; the principal structural connections remain readable.
+
 ## [588: pine-Bulb](588.md)
 
 [![Native / FPT authored](images/588-thumb.webp)](588.md)
@@ -75,11 +83,3 @@ Terrain silhouettes and framing align. Native sun disk is absent and FPT is gree
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 Refreshed water surface is restored and the central object's placement aligns. Wave detail, reflected lighting and shadows differ; 32-SPP water noise remains visible.
-
-## [603: amazing surf mod1 001](603.md)
-
-[![Native / FPT authored](images/603-thumb.webp)](603.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Refreshed ridge and foreground surface framing align. Native haze and fine highlights differ from the sharper blue FPT terrain; fine structural parity is not certified.

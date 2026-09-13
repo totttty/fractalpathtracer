@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [737: stereoscopic 003](737.md)
+
+[![Native / FPT authored](images/737-thumb.webp)](737.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The central bead-covered protrusion, left rods and rounded background forms remain recognisable. Native red/cyan stereo is not reproduced and FPT reflections differ; acceptance is for broad monocular structure and readable illumination, not stereo or exact optical parity.
+
+## [740: subsurface scattering 002](740.md)
+
+[![Native / FPT authored](images/740-thumb.webp)](740.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The perforated cube silhouette and major square openings correspond. Native smooth subsurface green shading becomes rougher, sharper material with a patterned environment; accepted for the readable cube and openings, not subsurface transport or environment parity.
+
 ## [746: voxel_export_with_Bristorbrot4D](746.md)
 
 [![Native / FPT authored](images/746-thumb.webp)](746.md)

@@ -4,6 +4,14 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [603: amazing surf mod1 001](603.md)
+
+[![Native / FPT authored](images/603-thumb.webp)](603.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Refreshed ridge and foreground surface framing align. Native haze and fine highlights differ from the sharper blue FPT terrain; fine structural parity is not certified.
+
 ## [606: amazing_surf 002](606.md)
 
 [![Native / FPT authored](images/606-thumb.webp)](606.md)
@@ -27,6 +35,14 @@ Radial cavity, surrounding ring and right-hand surface boundary align. FPT is sh
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 Radial petal composition and center align in the geometry control. FPT reflective appearance is sharper and strongly magenta rather than brown/pink; exact material transport is not certified.
+
+## [614: benesi_t1_pine_tree_001](614.md)
+
+[![Native / FPT authored](images/614-thumb.webp)](614.md)
+
+accepted-with-limitations | captured-2026-09-13 | 32 SPP
+
+Blue radial interior, bright central opening and surrounding repeated lobes align. FPT has sharper edges, a smaller central bloom and less atmospheric softness, but the principal structure and light pattern are retained. Acceptance does not certify bloom or fine centre detail hidden by the native highlight.
 
 ## [617: box_fold_bulb_pow2_001](617.md)
 
@@ -67,19 +83,3 @@ Central bright opening, layered folded surfaces and lower-right opening align. F
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 Main square window, repeated perforations, inner chamber and light position align. FPT omits the strong grey atmospheric veil and uses darker colourful surfaces; fog and complete material parity are not certified.
-
-## [630: newtonPow3-PolyFoldSym-delta-gnj-016d](630.md)
-
-[![Native / FPT authored](images/630-thumb.webp)](630.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Newton silhouette, openings and loops align clearly. Native reflective gold becomes saturated orange/red with a different environment gradient.
-
-## [631: newtonPow3-PolyFoldSym-delta-gnj-017b](631.md)
-
-[![Native / FPT authored](images/631-thumb.webp)](631.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Large Newton arcs and framing align. Native soft golden shading/haze becomes sharper saturated red/yellow detail; fine background fidelity is not certified.

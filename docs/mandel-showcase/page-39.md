@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [630: newtonPow3-PolyFoldSym-delta-gnj-016d](630.md)
+
+[![Native / FPT authored](images/630-thumb.webp)](630.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Newton silhouette, openings and loops align clearly. Native reflective gold becomes saturated orange/red with a different environment gradient.
+
+## [631: newtonPow3-PolyFoldSym-delta-gnj-017b](631.md)
+
+[![Native / FPT authored](images/631-thumb.webp)](631.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Large Newton arcs and framing align. Native soft golden shading/haze becomes sharper saturated red/yellow detail; fine background fidelity is not certified.
+
 ## [632: newtonPow3-ScaleRot-delta-gnj-007d](632.md)
 
 [![Native / FPT authored](images/632-thumb.webp)](632.md)
@@ -67,19 +83,3 @@ The large concentric curved sheets, central opening and smaller right-hand ring 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 The converging field of repeated rounded clusters, central upright and its shadow align. FPT uses more matte violet surfaces and a darker background than the native glossy pink/brown appearance; the repeated structure remains readable.
-
-## [648: hybrid008 - collatz](648.md)
-
-[![Native / FPT authored](images/648-thumb.webp)](648.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The rounded foreground ridges and large curled background forms align. FPT is more orange/green and omits the native blue-grey haze, but the main surface relief remains visible; atmosphere and fine reflective appearance are not certified.
-
-## [652: iq_bulb_001](652.md)
-
-[![Native / FPT authored](images/652-thumb.webp)](652.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The central branching ridges, side arches and major openings align. FPT is sharper and brown/white instead of the native blurred blue/silver appearance; depth of field, reflections and fine material behaviour remain approximate.

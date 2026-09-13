@@ -6821,6 +6821,116 @@
       "evidence_sha256": "961d9de87ba0f8f57dc9c38ead236435daad48e9e74c3cbaca5e67af01813c92",
       "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
       "reviewed_at": "2026-09-12"
+    },
+    {
+      "id": "051",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Fresh FPT is no longer a single-colour image, but the native golden reflective environment becomes largely black with saturated red/yellow contours. The focal forms are recognizable; severe illumination and reflection changes prevent structural certification of the surrounding scene.",
+      "source_sha256": "30cc041cab5f60450818d0a912e506977488432b62a85d4c8e17956d1f906013",
+      "evidence_sha256": "cb4c350c3c131060436ae5f7b3c6bc6d19b72389c1d147bff9b7af6e3562efac",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "095",
+      "decision": "needs-work",
+      "geometry": "needs-work",
+      "illumination": "needs-work",
+      "note": "The native central pointed form is surrounded by broad sweeping structures across the frame; FPT shows a much smaller isolated star and nearly uniform background. Major framing or geometric coverage differs, not only colour.",
+      "source_sha256": "2e2550bccaecba8ee0bfc8e9e0fe5d99f914f8de9b0cf164b89f7b58dd3aaccc",
+      "evidence_sha256": "20fcfedc2973019e1dbf54d2652c8d81d4bb1cc526a9d67117fc13372e706a0d",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "376",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Neutral FPT exposes rectangular architecture, but authored FPT is almost black and lacks the native bright yellow illuminated feature. The dark beauty capture cannot establish scene-wide geometry agreement.",
+      "source_sha256": "663ee77e5f49d2e5774b9bc4694f9fe75e44d5d90361ca342263778168e59446",
+      "evidence_sha256": "c8224e68ae59ff11785eb1efbfe5be9f9d157526f26391a952c8b4b7dc988abd",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "556",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Native output is dominated by bright yellow volumetric beams; FPT shows a dim purple underlying fractal without those beams. The neutral control exposes geometry but does not reproduce the authored volume effect. This remains within the deferred fog/volume limitations, not an accepted lighting match.",
+      "source_sha256": "9c5bea4c0228408ff3fe95ff4d21d63771438073c844c85e832526162e9efdd4",
+      "evidence_sha256": "8090430a1757c50444c6558318158d22df2ef8cc7ed96bc4cabb6bc53903a45a",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "568",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Both native and FPT beauty images show only a tiny dark central object, so the historical darkness warning is not by itself proof of an FPT regression. FPT also lacks the small native white source at the left. Authored framing gives too little readable structure for gallery acceptance; do not claim a confirmed geometry failure.",
+      "source_sha256": "dd066c35cd74f51dbf1b4630e6188ddd603812731a057d91d7295316f1c65338",
+      "evidence_sha256": "83e2b98de5cd54d6dc240458c68544e96e05593d69f38d9698ffa9e8c0d56525",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "582",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The small perforated gold structure, camera framing and broad red environment band align. FPT is darker/oranger and omits the small native white source at the upper left. Acceptance covers the readable central object at authored scale, not source-disc or exact lighting parity; the dark neutral screen mostly reflects the small object coverage.",
+      "source_sha256": "5897c68149c88517054f0ae4109d42563b3a02cb277ea8558bc12af5c46e1e35",
+      "evidence_sha256": "a846dc363d852ee03e81826b6a1c119a6ef3ddb8a68bb0f29a2cc9134c0cf9a8",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "609",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Perforated cube framing aligns, but native illuminated fog and softened green environment become nearly black surfaces with clipped white openings in FPT. The authored volume and illumination differ substantially; fog remains out of scope for fixes.",
+      "source_sha256": "394f378f7d7f74cdb20b6477902754ed3f508a3c3143a042ddd09624a35214e6",
+      "evidence_sha256": "714892a7d8f86ad5903b88cda932d9af8ffe81b2a3ae59a2732a37d6dc32c7f6",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "614",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Blue radial interior, bright central opening and surrounding repeated lobes align. FPT has sharper edges, a smaller central bloom and less atmospheric softness, but the principal structure and light pattern are retained. Acceptance does not certify bloom or fine centre detail hidden by the native highlight.",
+      "source_sha256": "9042cf58d9907089365361ebc2a7fa1c01ef1dfde30f124bc7d570f0bf87fc5e",
+      "evidence_sha256": "d0bf8730605590926f34f260dab66ead3812d94f5c10ee3540460338a3437e5c",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "663",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Native output contains prominent gold illuminated arcs and a visible environment; authored FPT is effectively black despite a detailed neutral geometry capture. Missing illumination prevents a meaningful beauty-geometry comparison.",
+      "source_sha256": "e44106535945035e477b5d7e68ad236ba0596440bae4db3c25e25c5b89c345b7",
+      "evidence_sha256": "8eabdd05ce57e9818e9b9a35340402e601b4ee796d3ceac8cedbef4b7cce7540",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
+    },
+    {
+      "id": "714",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Native output contains bright blue beams through rectangular openings; authored FPT is nearly black. Neutral FPT shows the room and openings, but the authored volume/light effect is absent. This is not an accepted lighting match and volumetric fixes remain deferred.",
+      "source_sha256": "55f12b9a0e0a2049cc618316adf1a59220debf05a86efa2c0924ad8a32a9ddf6",
+      "evidence_sha256": "9a1e207fa0cc18c92cac69b9473188c8617364c4018c35a10d570808a9b31230",
+      "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+      "reviewed_at": "2026-09-13"
     }
   ]
 }

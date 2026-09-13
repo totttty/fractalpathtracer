@@ -10,9 +10,9 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| Reviewed | 421 | Explicit capture-specific visual acceptance, with limitations allowed |
-| Experimental | 105 | Opt-in scenes; execution success is not visual acceptance |
-| Blocked | 220 | 199 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
+| Reviewed | 423 | Explicit capture-specific visual acceptance, with limitations allowed |
+| Experimental | 95 | Opt-in scenes with deferred incomplete comparisons; execution success is not visual acceptance |
+| Blocked | 228 | 207 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
 
 The ranked gallery still contains all 50 rows for transparency, including
 blocked scenes **32, 37, 46 and 48**. Of the additional 50, **37** are promoted
@@ -62,8 +62,13 @@ with unchanged quality and renderer binaries.
 The [eleventh additional batch](review-batch11-2026-09-12.md) completes the final
 **57 routine candidates**: **46** accepted and **11** visual holds. All 171
 captures succeeded in 34.3 minutes at unchanged settings. No routine candidates
-remain. Of the **105 experimental scenes**, **87** have deferred incomplete comparisons and
-**18** retain historical screening warnings. These groups are not silently promoted.
+remain.
+The [historical-warning triage](review-batch12-2026-09-13.md) captures the 18
+remaining warning scenes: **2** accepted with limitations, **8** visual holds
+and **8** native timeouts. All 36 FPT captures succeeded; no renderer fixes
+were introduced. All **95 experimental scenes** now have source-bound deferred
+incomplete comparisons. There are no untouched routine or warning candidates;
+the historical flags remain recorded rather than erased.
 Colour differences alone are not a blocker. Geometry, missing assets and
 failed render contracts must remain visible. [Explicit decisions](reviews.json)
 are tied to the complete [capture evidence](review-evidence.json), including

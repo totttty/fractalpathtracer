@@ -1,0 +1,85 @@
+{
+  "scope": "Incomplete triplets remain unpromoted; failures are not hidden or counted as visually reviewed.",
+  "rows": [
+    {
+      "id": "408",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/blockify.fract",
+      "sha256": "edfb3ff38457df33f24fc3c2aa31bb719a5f300817e3bb6ac787983505c514e3",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "425",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hexgrid.fract",
+      "sha256": "852211c2811c847d28f0f183ae6a2389f49a2e2f747b155b6592b267e95a40d6",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "426",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hexgrid_v2.fract",
+      "sha256": "c1b8797683d5e6a2d88312ec54ec5f07a2294b3e1ac033723a4fe5dd5e2942d0",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "464",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/light circle.fract",
+      "sha256": "3f0c6dd7a64d2ed8ef4c73dc3e9cc1d385d7ccb012286626ff0a63d317683c52",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "543",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/orbitTraps 003.fract",
+      "sha256": "dc428154d2f8932e54365ed5eda0b4223a2984790bf5145e2a4296c3d6c13558",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "653",
+      "path": "iteration fog.fract",
+      "sha256": "5f9b1585d112ae9cfd8aa2248b57ee69260a8c00a7035f7e3c1b3346d72f345a",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "695",
+      "path": "monte carlo global illumination - cube scene.fract",
+      "sha256": "ab3595287f547eb96698e8283318607971de6cc30e8b29ec7d0af8f85ab00fd4",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "741",
+      "path": "texture transparency alpha.fract",
+      "sha256": "6a4fc8fb0425e1a073bdd021d0fa7cc2adcfb8500a5bc19ed8030bf915247099",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    }
+  ]
+}

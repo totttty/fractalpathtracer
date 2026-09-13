@@ -2,7 +2,7 @@
 
 [Back to FPT Metal](../../README.md) | [Experimental catalogue](../mandel-catalog/README.md) | [Needs-work audit](needs-work.md)
 
-**421 visually accepted captures; 199 reviewed cases held back.** Colours need not match exactly. Significant geometry and illumination failures are excluded.
+**423 visually accepted captures; 207 reviewed cases held back.** Colours need not match exactly. Significant geometry and illumination failures are excluded.
 
 Continuous FPT Metal only, not NAADF voxel output. Captures use 300px max edge and 32 FPT SPP; native sampling differs. Individual pages label historical versus refreshed captures, renderer identity and reduced/monoscopic references.
 

@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "reviewed_at": "2026-09-13",
+  "reviewer": "Codex visual comparison of native CPU, neutral FPT and authored FPT captures",
+  "rows": [
+    {
+      "id": "051",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Fresh FPT is no longer a single-colour image, but the native golden reflective environment becomes largely black with saturated red/yellow contours. The focal forms are recognizable; severe illumination and reflection changes prevent structural certification of the surrounding scene."
+    },
+    {
+      "id": "095",
+      "decision": "needs-work",
+      "geometry": "needs-work",
+      "illumination": "needs-work",
+      "note": "The native central pointed form is surrounded by broad sweeping structures across the frame; FPT shows a much smaller isolated star and nearly uniform background. Major framing or geometric coverage differs, not only colour."
+    },
+    {
+      "id": "376",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Neutral FPT exposes rectangular architecture, but authored FPT is almost black and lacks the native bright yellow illuminated feature. The dark beauty capture cannot establish scene-wide geometry agreement."
+    },
+    {
+      "id": "556",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Native output is dominated by bright yellow volumetric beams; FPT shows a dim purple underlying fractal without those beams. The neutral control exposes geometry but does not reproduce the authored volume effect. This remains within the deferred fog/volume limitations, not an accepted lighting match."
+    },
+    {
+      "id": "568",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Both native and FPT beauty images show only a tiny dark central object, so the historical darkness warning is not by itself proof of an FPT regression. FPT also lacks the small native white source at the left. Authored framing gives too little readable structure for gallery acceptance; do not claim a confirmed geometry failure."
+    },
+    {
+      "id": "582",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The small perforated gold structure, camera framing and broad red environment band align. FPT is darker/oranger and omits the small native white source at the upper left. Acceptance covers the readable central object at authored scale, not source-disc or exact lighting parity; the dark neutral screen mostly reflects the small object coverage."
+    },
+    {
+      "id": "609",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "Perforated cube framing aligns, but native illuminated fog and softened green environment become nearly black surfaces with clipped white openings in FPT. The authored volume and illumination differ substantially; fog remains out of scope for fixes."
+    },
+    {
+      "id": "614",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "Blue radial interior, bright central opening and surrounding repeated lobes align. FPT has sharper edges, a smaller central bloom and less atmospheric softness, but the principal structure and light pattern are retained. Acceptance does not certify bloom or fine centre detail hidden by the native highlight."
+    },
+    {
+      "id": "663",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Native output contains prominent gold illuminated arcs and a visible environment; authored FPT is effectively black despite a detailed neutral geometry capture. Missing illumination prevents a meaningful beauty-geometry comparison."
+    },
+    {
+      "id": "714",
+      "decision": "needs-work",
+      "geometry": "uncertain",
+      "illumination": "needs-work",
+      "note": "Native output contains bright blue beams through rectangular openings; authored FPT is nearly black. Neutral FPT shows the room and openings, but the authored volume/light effect is absent. This is not an accepted lighting match and volumetric fixes remain deferred."
+    }
+  ],
+  "evidence_sha256": "4ff955d32304d221af46f6ce09821aa2e7deb9394554158fbb89bab977bd7329"
+}

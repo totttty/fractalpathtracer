@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [671: mandelbulb2_001](671.md)
+
+[![Native / FPT authored](images/671-thumb.webp)](671.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The angular radial folds, central junction and faceted upper-left masses align. FPT has stronger red streaks and smoother reflective patches than native, while the principal folds and camera framing remain readable.
+
+## [672: mandelbulb3_001](672.md)
+
+[![Native / FPT authored](images/672-thumb.webp)](672.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The branching Mandelbulb silhouette, left-hand sky gap and bright central surface feature align broadly. FPT uses a grey-green sky instead of blue and changes the pink/gold reflection pattern. Both contain noisy tiny features and intense highlights; fine-detail and optical parity are not certified.
+
 ## [673: mandelbulb4_001](673.md)
 
 [![Native / FPT authored](images/673-thumb.webp)](673.md)
@@ -67,19 +83,3 @@ The clustered rounded forms and large crossing tubular arcs align broadly. Nativ
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
 The prominent pink rounded cluster, lower-left diagonal branch and surrounding field of small forms align broadly. Native shallow-focus sparkling gold becomes sharper yellow/orange FPT surfaces. Broad placement survives; depth of field and tiny reflective details are not certified.
-
-## [704: msltoe_julia_bulb_mod2_001](704.md)
-
-[![Native / FPT authored](images/704-thumb.webp)](704.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The central decorated dome, upper bulbs and layered lower foreground align broadly. FPT is substantially brighter yellow/orange and less blurred than native, but the main contours and decorated central surface remain readable. Depth of field, bright peripheral highlights and exact material response are not certified.
-
-## [708: msltoesym2_mod_002](708.md)
-
-[![Native / FPT authored](images/708-thumb.webp)](708.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The large central circular opening, crossing diagonal foreground bar and clustered surrounding forms align broadly. FPT changes the red/orange reflections and sharpens details blurred in native, but preserves readable major structure. Fine reflection and depth-of-field parity are not certified.

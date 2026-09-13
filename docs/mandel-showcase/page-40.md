@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [648: hybrid008 - collatz](648.md)
+
+[![Native / FPT authored](images/648-thumb.webp)](648.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The rounded foreground ridges and large curled background forms align. FPT is more orange/green and omits the native blue-grey haze, but the main surface relief remains visible; atmosphere and fine reflective appearance are not certified.
+
+## [652: iq_bulb_001](652.md)
+
+[![Native / FPT authored](images/652-thumb.webp)](652.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The central branching ridges, side arches and major openings align. FPT is sharper and brown/white instead of the native blurred blue/silver appearance; depth of field, reflections and fine material behaviour remain approximate.
+
 ## [655: kaliset001](655.md)
 
 [![Native / FPT authored](images/655-thumb.webp)](655.md)
@@ -67,19 +83,3 @@ The outer Mandelbulb lobes, upper central concentric feature and lower repeated 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 The folded central Mandelbulb surface, left cluster, upper ridges and sky boundary align. FPT changes green/gold reflections to a stronger rainbow palette; both have intense highlights, but the principal structure stays readable. Fine specular/colour parity is not certified.
-
-## [671: mandelbulb2_001](671.md)
-
-[![Native / FPT authored](images/671-thumb.webp)](671.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The angular radial folds, central junction and faceted upper-left masses align. FPT has stronger red streaks and smoother reflective patches than native, while the principal folds and camera framing remain readable.
-
-## [672: mandelbulb3_001](672.md)
-
-[![Native / FPT authored](images/672-thumb.webp)](672.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The branching Mandelbulb silhouette, left-hand sky gap and bright central surface feature align broadly. FPT uses a grey-green sky instead of blue and changes the pink/gold reflection pattern. Both contain noisy tiny features and intense highlights; fine-detail and optical parity are not certified.

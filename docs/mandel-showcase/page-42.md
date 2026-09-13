@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [704: msltoe_julia_bulb_mod2_001](704.md)
+
+[![Native / FPT authored](images/704-thumb.webp)](704.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The central decorated dome, upper bulbs and layered lower foreground align broadly. FPT is substantially brighter yellow/orange and less blurred than native, but the main contours and decorated central surface remain readable. Depth of field, bright peripheral highlights and exact material response are not certified.
+
+## [708: msltoesym2_mod_002](708.md)
+
+[![Native / FPT authored](images/708-thumb.webp)](708.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The large central circular opening, crossing diagonal foreground bar and clustered surrounding forms align broadly. FPT changes the red/orange reflections and sharpens details blurred in native, but preserves readable major structure. Fine reflection and depth-of-field parity are not certified.
+
 ## [709: msltoesym3_mod_001](709.md)
 
 [![Native / FPT authored](images/709-thumb.webp)](709.md)
@@ -67,19 +83,3 @@ The diagonal layered lattice and large curved upper-right band retain their fram
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
 The repeated rectangular tunnel, curved side walls and central bright region remain recognisable and aligned. FPT is greener and reveals different reflective inner bands; optical reflection and highlight intensity are not matched, but the main form remains readable.
-
-## [737: stereoscopic 003](737.md)
-
-[![Native / FPT authored](images/737-thumb.webp)](737.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The central bead-covered protrusion, left rods and rounded background forms remain recognisable. Native red/cyan stereo is not reproduced and FPT reflections differ; acceptance is for broad monocular structure and readable illumination, not stereo or exact optical parity.
-
-## [740: subsurface scattering 002](740.md)
-
-[![Native / FPT authored](images/740-thumb.webp)](740.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The perforated cube silhouette and major square openings correspond. Native smooth subsurface green shading becomes rougher, sharper material with a patterned environment; accepted for the readable cube and openings, not subsurface transport or environment parity.

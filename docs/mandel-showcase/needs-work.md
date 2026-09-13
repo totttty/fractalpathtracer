@@ -28,6 +28,12 @@ Known production float32 position stalls leave unresolved geometry misses; the o
 
 Known major deep-zoom production geometry failure. Higher-precision diagnostic output is not substituted in the gallery.
 
+## [051: EXR example](051.md)
+
+[![Native / FPT authored](images/051-thumb.webp)](051.md)
+
+Fresh FPT is no longer a single-colour image, but the native golden reflective environment becomes largely black with saturated red/yellow contours. The focal forms are recognizable; severe illumination and reflection changes prevent structural certification of the surrounding scene.
+
 ## [053: DIFS Box DiagV1 pseudoKl](053.md)
 
 [![Native / FPT authored](images/053-thumb.webp)](053.md)
@@ -51,6 +57,12 @@ The spherical arrangement aligns, but the native red trap-light line network dis
 [![Native / FPT authored](images/093-thumb.webp)](093.md)
 
 The central stepped structure and horizontal supports broadly align, but the defining bright red surrounding light pattern and glow are absent in FPT, leaving the structure against black.
+
+## [095: Scator Spikey Imaginary Pow2](095.md)
+
+[![Native / FPT authored](images/095-thumb.webp)](095.md)
+
+The native central pointed form is surrounded by broad sweeping structures across the frame; FPT shows a much smaller isolated star and nearly uniform background. Major framing or geometric coverage differs, not only colour.
 
 ## [100: T-DifsCayley2_coloredByChessboard](100.md)
 
@@ -327,6 +339,12 @@ Only small cyan light patches remain bright in authored FPT, with most native bl
 [![Native / FPT authored](images/374-thumb.webp)](374.md)
 
 Central spiral is similarly placed, but FPT fills much more of the image with sharp structure. Depth-of-field versus actual geometry must be isolated before acceptance.
+
+## [376: Construct by Ectoplaz 3](376.md)
+
+[![Native / FPT authored](images/376-thumb.webp)](376.md)
+
+Neutral FPT exposes rectangular architecture, but authored FPT is almost black and lacks the native bright yellow illuminated feature. The dark beauty capture cannot establish scene-wide geometry agreement.
 
 ## [377: FoldIntPow2 3](377.md)
 
@@ -748,6 +766,12 @@ The nested reflective spheres broadly match, but the prominent native upper-righ
 
 Nested spheres broadly correspond, but native discrete soft light sources and blue shaded regions become broadly clipped orange/yellow reflections. The optical structure and illumination are not preserved well enough for gallery acceptance.
 
+## [556: volumetricLight002](556.md)
+
+[![Native / FPT authored](images/556-thumb.webp)](556.md)
+
+Native output is dominated by bright yellow volumetric beams; FPT shows a dim purple underlying fractal without those beams. The neutral control exposes geometry but does not reproduce the authored volume effect. This remains within the deferred fog/volume limitations, not an accepted lighting match.
+
 ## [557: volumetricLight003](557.md)
 
 [![Native / FPT authored](images/557-thumb.webp)](557.md)
@@ -771,6 +795,12 @@ The interlocking smooth ribs and two raised tips match the neutral control, but 
 [![Native / FPT authored](images/567-thumb.webp)](567.md)
 
 Production refresh still replaces the open native beam lattice with black bars and displaced-looking detail. The successful offline precision prototype is not the production renderer.
+
+## [568: box-deuce-deuce](568.md)
+
+[![Native / FPT authored](images/568-thumb.webp)](568.md)
+
+Both native and FPT beauty images show only a tiny dark central object, so the historical darkness warning is not by itself proof of an FPT regression. FPT also lacks the small native white source at the left. Authored framing gives too little readable structure for gallery acceptance; do not claim a confirmed geometry failure.
 
 ## [573: hybrid77](573.md)
 
@@ -849,6 +879,12 @@ Main ornate structure aligns in the neutral control, but authored FPT is severel
 [![Native / FPT authored](images/608-thumb.webp)](608.md)
 
 Outer filament arrangement broadly aligns, but the native dark/fogged central opening is replaced by dense gold structure, flat saturated blue sky and a large bright upper-right region. Geometry behind the atmospheric reference remains unverified.
+
+## [609: benchmark](609.md)
+
+[![Native / FPT authored](images/609-thumb.webp)](609.md)
+
+Perforated cube framing aligns, but native illuminated fog and softened green environment become nearly black surfaces with clipped white openings in FPT. The authored volume and illumination differ substantially; fog remains out of scope for fixes.
 
 ## [610: benesi 001](610.md)
 
@@ -988,6 +1024,12 @@ Native is dominated by bright projected blue-white rays and hazy geometry, while
 
 Native layered pink/brown folds and a bright central light become large dark red/blue regions in authored FPT. Neutral FPT shows broad smooth planes across the centre/right rather than clearly corresponding fine folds; material versus structural causes need investigation before acceptance.
 
+## [663: mandelbox003](663.md)
+
+[![Native / FPT authored](images/663-thumb.webp)](663.md)
+
+Native output contains prominent gold illuminated arcs and a visible environment; authored FPT is effectively black despite a detailed neutral geometry capture. Missing illumination prevents a meaningful beauty-geometry comparison.
+
 ## [666: mandelbox_menger_with_textures](666.md)
 
 [![Native / FPT authored](images/666-thumb.webp)](666.md)
@@ -1095,6 +1137,12 @@ The large left-hand layered forms correspond, but native open pale right-hand re
 [![Native / FPT authored](images/707-thumb.webp)](707.md)
 
 The central rounded decorated body and broad surrounding walls align in the neutral control. Authored FPT clips large foreground and upper-right areas to saturated yellow/green, obscuring native gradients and much of the surface relief.
+
+## [714: octahedron with box foldig_2](714.md)
+
+[![Native / FPT authored](images/714-thumb.webp)](714.md)
+
+Native output contains bright blue beams through rectangular openings; authored FPT is nearly black. Neutral FPT shows the room and openings, but the authored volume/light effect is absent. This is not an accepted lighting match and volumetric fixes remain deferred.
 
 ## [715: orbittrap001](715.md)
 

@@ -60,6 +60,14 @@ accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 Perforated slab, central cavity and nested hole layout align. Pink material and interior highlights differ without obvious large missing regions.
 
+## [582: menger-coastn](582.md)
+
+[![Native / FPT authored](images/582-thumb.webp)](582.md)
+
+accepted-with-limitations | captured-2026-09-13 | 32 SPP
+
+The small perforated gold structure, camera framing and broad red environment band align. FPT is darker/oranger and omits the small native white source at the upper left. Acceptance covers the readable central object at authored scale, not source-disc or exact lighting parity; the dark neutral screen mostly reflects the small object coverage.
+
 ## [584: menger-mod1_001_8k](584.md)
 
 [![Native / FPT authored](images/584-thumb.webp)](584.md)
@@ -75,11 +83,3 @@ Panoramic curved block corridors and large openings align. FPT is gold rather th
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 Rounded peaks, foreground cavities and silhouette align. Both authored captures use dark green material; FPT loses the sharp bright reflective flecks but retains the principal forms.
-
-## [587: neuron](587.md)
-
-[![Native / FPT authored](images/587-thumb.webp)](587.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Central polyhedral hub and radiating struts align. FPT uses darker green/gold shading and reduces background highlight density; the principal structural connections remain readable.
