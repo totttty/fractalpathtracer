@@ -1,0 +1,14 @@
+[
+  "/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2",
+  "-n",
+  "-C",
+  "-O",
+  "opencl_enabled=0#file_lightmap=/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg#basic_fog_enabled=0#volumetric_fog_enabled=0#iteration_fog_enable=0#clouds_enable=0#glow_enabled=0#ambient_occlusion_enabled=0#raytraced_reflections=0#DOF_enabled=0#DOF_monte_carlo=0#post_chromatic_aberration_enabled=0#DOF_MC_global_illumination=0#textured_background=0#background_color_1=0000 0000 0000#background_color_2=0000 0000 0000#background_color_3=0000 0000 0000#brightness=1#contrast=1#gamma=1#random_lights_group=0#fake_lights_enabled=0#light1_enabled=1#light1_type=0#light1_relative_position=1#light1_rotation=0 0 0#light1_use_target_point=0#light1_intensity=1#light1_color=ffff ffff ffff#light1_cast_shadows=0#light1_volumetric=0#mat1_use_colors_from_palette=0#mat1_surface_gradient_enable=0#mat1_surface_color=ffff ffff ffff#mat1_specular=0#mat1_specular_plastic_enable=0#mat1_specular_metallic=0#mat1_reflectance=0#mat1_iridescence_enabled=0#mat1_luminosity=0#mat1_transparency_of_surface=0#mat1_shading=1#mat1_use_color_texture=0#mat1_use_normal_map_texture=0",
+  "-f",
+  "png",
+  "-r",
+  "300x225",
+  "-o",
+  "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-geometry-outliers-20260913/578/scene.png",
+  "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/examples/Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract"
+]

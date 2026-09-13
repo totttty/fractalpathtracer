@@ -1,0 +1,1 @@
+"xcrun" "-sdk" "macosx" "metal" "-std=macos-metal2.4" "-ffast-math" "-c" "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-path-integration-20260913/verified/geometry-float/probe.metal" "-o" "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-path-integration-20260913/verified/geometry-float/probe.air"

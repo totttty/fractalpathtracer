@@ -1,0 +1,69 @@
+{
+  "repeated_suites": [
+    {
+      "capture": "geometry-float",
+      "file": "render.png",
+      "byte_exact": true
+    },
+    {
+      "capture": "geometry-float",
+      "file": "linear.f32",
+      "byte_exact": true
+    },
+    {
+      "capture": "geometry-safe-float",
+      "file": "render.png",
+      "byte_exact": true
+    },
+    {
+      "capture": "geometry-safe-float",
+      "file": "linear.f32",
+      "byte_exact": true
+    },
+    {
+      "capture": "geometry-two-term",
+      "file": "render.png",
+      "byte_exact": true
+    },
+    {
+      "capture": "geometry-two-term",
+      "file": "linear.f32",
+      "byte_exact": true
+    },
+    {
+      "capture": "authored-path-float",
+      "file": "render.png",
+      "byte_exact": true
+    },
+    {
+      "capture": "authored-path-float",
+      "file": "linear.f32",
+      "byte_exact": true
+    },
+    {
+      "capture": "authored-path-two-term",
+      "file": "render.png",
+      "byte_exact": true
+    },
+    {
+      "capture": "authored-path-two-term",
+      "file": "linear.f32",
+      "byte_exact": true
+    },
+    {
+      "capture": "authored-path-two-term-repeat",
+      "file": "render.png",
+      "byte_exact": true
+    },
+    {
+      "capture": "authored-path-two-term-repeat",
+      "file": "linear.f32",
+      "byte_exact": true
+    }
+  ],
+  "rust_example_tests": 3,
+  "python_tests": 148,
+  "production_changed": false,
+  "gallery_changed": false,
+  "scene_promoted": false
+}

@@ -1,0 +1,14 @@
+[
+  "/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2",
+  "-n",
+  "-C",
+  "-O",
+  "opencl_enabled=0#file_lightmap=/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+  "-f",
+  "png",
+  "-r",
+  "300x225",
+  "-o",
+  "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-next50/captures/578/mandel/scene.png",
+  "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/examples/Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract"
+]

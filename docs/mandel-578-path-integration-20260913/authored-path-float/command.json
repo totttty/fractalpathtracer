@@ -1,0 +1,20 @@
+[
+  "/Volumes/Ventura/Projects/FPT-metal-release/target/release/examples/mandel_hybrid_render",
+  "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/examples/Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract",
+  "--mandelbulber-root",
+  "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2",
+  "--width",
+  "300",
+  "--height",
+  "225",
+  "--samples",
+  "4",
+  "--sdf-bounce-cap",
+  "4",
+  "--mandel-appearance",
+  "authored-path",
+  "--precision-control",
+  "float",
+  "--out",
+  "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-path-integration-20260913/verified/authored-path-float"
+]

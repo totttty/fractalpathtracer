@@ -1,0 +1,1 @@
+"xcrun" "-sdk" "macosx" "metallib" "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-path-integration-20260913/verified/geometry-float/probe.air" "-o" "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-path-integration-20260913/verified/geometry-float/probe.metallib"
