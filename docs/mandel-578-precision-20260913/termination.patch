@@ -1,0 +1,33 @@
+--- baseline.metal
++++ termination.metal
+@@ -8953,6 +8953,30 @@
+     device const float4 *points [[buffer(0)]], device float4 *samples [[buffer(1)]],
+     constant FptRenderConfig &cfg [[buffer(2)]], uint gid [[thread_position_in_grid]]) {
+     float3 p = points[gid].xyz;
++    if (points[gid].w == -6.0f) {
++        float3 start = cameraPos(cfg), position = start;
++        int maximum_iterations = sdfMarchIterationLimit(int(cfg.render[1]), cfg);
++        for (int iteration = 0; iteration < maximum_iterations; ++iteration) {
++            float threshold = mandelbulberMarchThreshold(position, cfg);
++            float distance = mapSdf(position, cfg);
++            if (!isfinite(distance)) {
++                samples[gid] = float4(distance, threshold, iteration, 4.0f); return;
++            }
++            if (distance < threshold) {
++                samples[gid] = float4(distance, threshold, iteration, 1.0f); return;
++            }
++            float step = sdfMarchStep(distance, threshold, cfg);
++            float3 next_position = position + p * step;
++            if (all(next_position == position)) {
++                samples[gid] = float4(distance, threshold, iteration, 2.0f); return;
++            }
++            position = next_position;
++            if (length(position - start) >= cfg.render[4]) {
++                samples[gid] = float4(distance, threshold, iteration, 3.0f); return;
++            }
++        }
++        samples[gid] = float4(0.0f, 0.0f, maximum_iterations, 5.0f); return;
++    }
+     if (points[gid].w == -5.0f || points[gid].w == -6.0f) {
+         MandelbulberMarchResult hit = points[gid].w == -5.0f
+             ? marchMandelbulber(p, cameraPos(cfg), int(cfg.render[1]), cfg)

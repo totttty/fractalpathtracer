@@ -1,0 +1,29 @@
+--- baseline.metal
++++ scalar-travel.metal
+@@ -8953,6 +8953,26 @@
+     device const float4 *points [[buffer(0)]], device float4 *samples [[buffer(1)]],
+     constant FptRenderConfig &cfg [[buffer(2)]], uint gid [[thread_position_in_grid]]) {
+     float3 p = points[gid].xyz;
++    if (points[gid].w == -6.0f) {
++        float3 start = cameraPos(cfg), position = start;
++        float travel = 0.0f;
++        int maximum_iterations = sdfMarchIterationLimit(int(cfg.render[1]), cfg);
++        for (int iteration = 0; iteration < maximum_iterations; ++iteration) {
++            float threshold = mandelbulberMarchThreshold(position, cfg);
++            float distance = mapSdf(position, cfg);
++            if (!isfinite(distance)) break;
++            if (distance < threshold) {
++                samples[gid] = float4(position, 1.0f); return;
++            }
++            float step = sdfMarchStep(distance, threshold, cfg);
++            float next_travel = travel + step;
++            if (next_travel == travel) break;
++            travel = next_travel;
++            position = fma(p, float3(travel), start);
++            if (travel >= cfg.render[4]) break;
++        }
++        samples[gid] = float4(position, 0.0f); return;
++    }
+     if (points[gid].w == -5.0f || points[gid].w == -6.0f) {
+         MandelbulberMarchResult hit = points[gid].w == -5.0f
+             ? marchMandelbulber(p, cameraPos(cfg), int(cfg.render[1]), cfg)

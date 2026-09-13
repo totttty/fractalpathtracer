@@ -1,0 +1,5470 @@
+{
+  "common_hits": 273,
+  "native_only": 0,
+  "metal_only": 0,
+  "neither": 0,
+  "median_common_error_in_thresholds": 1.426974777307014,
+  "common_over_one_threshold": 199,
+  "rows": [
+    {
+      "index": 0,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5215742365778,
+        545.9329919277507,
+        -1074.8246889679401
+      ],
+      "metal_point": [
+        341.5216064453125,
+        545.9330444335938,
+        -1074.82470703125
+      ],
+      "position_error": 6.268701659049164e-08,
+      "threshold": 1.9932085503142458e-08,
+      "error_in_thresholds": 3.145030487683214,
+      "native_steps": 9,
+      "native_travel": 4.484719238207052e-06
+    },
+    {
+      "index": 1,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5216179597585,
+        545.9326459827506,
+        -1074.82476097436
+      ],
+      "metal_point": [
+        341.5216064453125,
+        545.9326171875,
+        -1074.82470703125
+      ],
+      "position_error": 6.076391328679905e-08,
+      "threshold": 2.11800136657054e-08,
+      "error_in_thresholds": 2.8689270104290703,
+      "native_steps": 11,
+      "native_travel": 4.765503074783714e-06
+    },
+    {
+      "index": 2,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52172379516963,
+        545.9323448212439,
+        -1074.8248259941306
+      ],
+      "metal_point": [
+        341.5216979980469,
+        545.9323120117188,
+        -1074.8248291015625
+      ],
+      "position_error": 4.0871358709047744e-08,
+      "threshold": 2.2171804955189164e-08,
+      "error_in_thresholds": 1.8433933904637778,
+      "native_steps": 10,
+      "native_travel": 4.988656114917561e-06
+    },
+    {
+      "index": 3,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5217532083556,
+        545.9317766355712,
+        -1074.8249427982887
+      ],
+      "metal_point": [
+        341.521728515625,
+        545.9317626953125,
+        -1074.824951171875
+      ],
+      "position_error": 2.887354807742213e-08,
+      "threshold": 2.4424888156095876e-08,
+      "error_in_thresholds": 1.1821363476833762,
+      "native_steps": 11,
+      "native_travel": 5.495599835121571e-06
+    },
+    {
+      "index": 4,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5217684956833,
+        545.9309835154622,
+        -1074.825104955309
+      ],
+      "metal_point": [
+        341.5217590332031,
+        545.9309692382812,
+        -1074.8250732421875
+      ],
+      "position_error": 3.519825098106315e-08,
+      "threshold": 2.768377061833531e-08,
+      "error_in_thresholds": 1.2714399156938145,
+      "native_steps": 11,
+      "native_travel": 6.2288483891254435e-06
+    },
+    {
+      "index": 5,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5220568333144,
+        545.9307869289615,
+        -1074.8251549509046
+      ],
+      "metal_point": [
+        341.5220642089844,
+        545.9307861328125,
+        -1074.8251953125
+      ],
+      "position_error": 4.007587802063945e-08,
+      "threshold": 2.8133644835586615e-08,
+      "error_in_thresholds": 1.4244822615357307,
+      "native_steps": 10,
+      "native_travel": 6.330070088006986e-06
+    },
+    {
+      "index": 6,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5224590571934,
+        545.9309647196588,
+        -1074.8251325752994
+      ],
+      "metal_point": [
+        341.5224609375,
+        545.930908203125,
+        -1074.8251953125
+      ],
+      "position_error": 8.248115604047132e-08,
+      "threshold": 2.6933637433631488e-08,
+      "error_in_thresholds": 3.0623845829853926,
+      "native_steps": 7,
+      "native_travel": 6.060068422567083e-06
+    },
+    {
+      "index": 7,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52278560137154,
+        545.930844206413,
+        -1074.8251683842989
+      ],
+      "metal_point": [
+        341.5227966308594,
+        545.9308471679688,
+        -1074.8251953125
+      ],
+      "position_error": 2.856421825192772e-08,
+      "threshold": 2.7175760652315727e-08,
+      "error_in_thresholds": 1.0510917658341121,
+      "native_steps": 6,
+      "native_travel": 6.114546146771037e-06
+    },
+    {
+      "index": 8,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52285726499656,
+        545.9285661122977,
+        -1074.8256351066796
+      ],
+      "metal_point": [
+        341.5228576660156,
+        545.9285278320312,
+        -1074.82568359375
+      ],
+      "position_error": 6.033019142925213e-08,
+      "threshold": 3.7112787778167724e-08,
+      "error_in_thresholds": 1.625590397300805,
+      "native_steps": 18,
+      "native_travel": 8.350377250087734e-06
+    },
+    {
+      "index": 9,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5232725210072,
+        545.9274340026471,
+        -1074.8258801252205
+      ],
+      "metal_point": [
+        341.5232849121094,
+        545.9274291992188,
+        -1074.825927734375
+      ],
+      "position_error": 4.8270684560769085e-08,
+      "threshold": 4.195233479267121e-08,
+      "error_in_thresholds": 1.1506078219322764,
+      "native_steps": 18,
+      "native_travel": 9.43927532835102e-06
+    },
+    {
+      "index": 10,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5238289870481,
+        545.9274381098277,
+        -1074.8258984584975
+      ],
+      "metal_point": [
+        341.5238342285156,
+        545.9274291992188,
+        -1074.825927734375
+      ],
+      "position_error": 3.031985066892391e-08,
+      "threshold": 4.1864486761839796e-08,
+      "error_in_thresholds": 0.7242379643015469,
+      "native_steps": 17,
+      "native_travel": 9.419509521413953e-06
+    },
+    {
+      "index": 11,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5243759638833,
+        545.9276159582557,
+        -1074.8258810579264
+      ],
+      "metal_point": [
+        341.5243835449219,
+        545.9274291992188,
+        -1074.825927734375
+      ],
+      "position_error": 1.8813749885138216e-07,
+      "threshold": 4.114504318454425e-08,
+      "error_in_thresholds": 4.572543477656484,
+      "native_steps": 24,
+      "native_travel": 9.257634716522455e-06
+    },
+    {
+      "index": 12,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5247473850328,
+        545.9291908191166,
+        -1074.825572912141
+      ],
+      "metal_point": [
+        341.5248107910156,
+        545.9285278320312,
+        -1074.82568359375
+      ],
+      "position_error": 6.593226208704158e-07,
+      "threshold": 3.4327359691434344e-08,
+      "error_in_thresholds": 19.20691328424352,
+      "native_steps": 24,
+      "native_travel": 7.723655930572726e-06
+    },
+    {
+      "index": 13,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52490569822453,
+        545.9309294028427,
+        -1074.8252240594666
+      ],
+      "metal_point": [
+        341.52490234375,
+        545.930908203125,
+        -1074.8251953125
+      ],
+      "position_error": 3.503490093248503e-08,
+      "threshold": 2.6792781535009693e-08,
+      "error_in_thresholds": 1.3076246259353659,
+      "native_steps": 6,
+      "native_travel": 6.02837584537718e-06
+    },
+    {
+      "index": 14,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5252435437213,
+        545.9309858786289,
+        -1074.8252241889193
+      ],
+      "metal_point": [
+        341.5252380371094,
+        545.9309692382812,
+        -1074.8251953125
+      ],
+      "position_error": 3.298803746446108e-08,
+      "threshold": 2.6837452687223283e-08,
+      "error_in_thresholds": 1.2291791567895693,
+      "native_steps": 6,
+      "native_travel": 6.038426854625237e-06
+    },
+    {
+      "index": 15,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5255967631278,
+        545.9309656860811,
+        -1074.8252404725456
+      ],
+      "metal_point": [
+        341.5256042480469,
+        545.930908203125,
+        -1074.8251953125
+      ],
+      "position_error": 7.176069357915837e-08,
+      "threshold": 2.730957132983112e-08,
+      "error_in_thresholds": 2.627675576173247,
+      "native_steps": 7,
+      "native_travel": 6.144653549212e-06
+    },
+    {
+      "index": 16,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52587062310556,
+        545.9311816770895,
+        -1074.825205890157
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.9312133789062,
+        -1074.8251953125
+      ],
+      "position_error": 3.3624147250565714e-08,
+      "threshold": 2.6754929092682435e-08,
+      "error_in_thresholds": 1.2567458928441726,
+      "native_steps": 10,
+      "native_travel": 6.019859045853546e-06
+    },
+    {
+      "index": 17,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52585420941915,
+        545.9320517586195,
+        -1074.8250280104276
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.9320068359375,
+        -1074.8250732421875
+      ],
+      "position_error": 6.676355022021465e-08,
+      "threshold": 2.3110624108138705e-08,
+      "error_in_thresholds": 2.888868336390059,
+      "native_steps": 12,
+      "native_travel": 5.199890424331208e-06
+    },
+    {
+      "index": 18,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52585334573024,
+        545.9326675009746,
+        -1074.8249024981696
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.9326171875,
+        -1074.824951171875
+      ],
+      "position_error": 7.277792631844188e-08,
+      "threshold": 2.0597621345776017e-08,
+      "error_in_thresholds": 3.5333170319380858,
+      "native_steps": 10,
+      "native_travel": 4.634464802799603e-06
+    },
+    {
+      "index": 19,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52589270860057,
+        545.9330676031935,
+        -1074.8248223173068
+      ],
+      "metal_point": [
+        341.5259094238281,
+        545.9330444335938,
+        -1074.8248291015625
+      ],
+      "position_error": 2.8675961098003743e-08,
+      "threshold": 1.9075718257052398e-08,
+      "error_in_thresholds": 1.5032703204977396,
+      "native_steps": 10,
+      "native_travel": 4.292036607836788e-06
+    },
+    {
+      "index": 20,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52598902287707,
+        545.9332887748805,
+        -1074.8247805628012
+      ],
+      "metal_point": [
+        341.5259704589844,
+        545.933349609375,
+        -1074.8248291015625
+      ],
+      "position_error": 7.813394231085919e-08,
+      "threshold": 1.8414074852135274e-08,
+      "error_in_thresholds": 4.243164152327689,
+      "native_steps": 14,
+      "native_travel": 4.143166841730436e-06
+    },
+    {
+      "index": 21,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5207567116208,
+        545.9316922984314,
+        -1074.8245670575486
+      ],
+      "metal_point": [
+        341.52093505859375,
+        545.9319458007812,
+        -1074.8245849609375
+      ],
+      "position_error": 3.031933508868729e-07,
+      "threshold": 2.6477099981982175e-08,
+      "error_in_thresholds": 11.451154057400464,
+      "native_steps": 23,
+      "native_travel": 5.957347495945988e-06
+    },
+    {
+      "index": 22,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5212752551601,
+        545.9320730290257,
+        -1074.8245336012696
+      ],
+      "metal_point": [
+        341.5212707519531,
+        545.9320678710938,
+        -1074.8245849609375
+      ],
+      "position_error": 5.05996849581608e-08,
+      "threshold": 2.3921483043472002e-08,
+      "error_in_thresholds": 2.1152402995335646,
+      "native_steps": 10,
+      "native_travel": 5.3823336847812e-06
+    },
+    {
+      "index": 23,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5215591050522,
+        545.9320631540597,
+        -1074.824544710978
+      ],
+      "metal_point": [
+        341.52154541015625,
+        545.9320068359375,
+        -1074.8245849609375
+      ],
+      "position_error": 6.891058672950524e-08,
+      "threshold": 2.3404402473110122e-08,
+      "error_in_thresholds": 2.944342920468842,
+      "native_steps": 7,
+      "native_travel": 5.265990556449776e-06
+    },
+    {
+      "index": 24,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52175075700325,
+        545.9318330936945,
+        -1074.8245823241778
+      ],
+      "metal_point": [
+        341.521728515625,
+        545.9318237304688,
+        -1074.8245849609375
+      ],
+      "position_error": 2.370657324325184e-08,
+      "threshold": 2.398449124386828e-08,
+      "error_in_thresholds": 0.9884125955480715,
+      "native_steps": 8,
+      "native_travel": 5.396510529870361e-06
+    },
+    {
+      "index": 25,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5217564583764,
+        545.9310167229905,
+        -1074.8246925624749
+      ],
+      "metal_point": [
+        341.521728515625,
+        545.9309692382812,
+        -1074.82470703125
+      ],
+      "position_error": 5.562927593841599e-08,
+      "threshold": 2.7306245654322164e-08,
+      "error_in_thresholds": 2.0372363393577952,
+      "native_steps": 12,
+      "native_travel": 6.1439052722224844e-06
+    },
+    {
+      "index": 26,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5221004156613,
+        545.9309905260887,
+        -1074.8247079428763
+      ],
+      "metal_point": [
+        341.5220947265625,
+        545.9309692382812,
+        -1074.82470703125
+      ],
+      "position_error": 2.1536860077567847e-08,
+      "threshold": 2.6951308413951923e-08,
+      "error_in_thresholds": 0.799102579614236,
+      "native_steps": 6,
+      "native_travel": 6.064044393139181e-06
+    },
+    {
+      "index": 27,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52245364797255,
+        545.9309894420759,
+        -1074.8247202578123
+      ],
+      "metal_point": [
+        341.5224609375,
+        545.9309692382812,
+        -1074.82470703125
+      ],
+      "position_error": 2.4633244198327882e-08,
+      "threshold": 2.65597632593307e-08,
+      "error_in_thresholds": 0.9274647502618077,
+      "native_steps": 5,
+      "native_travel": 5.975946733349406e-06
+    },
+    {
+      "index": 28,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227802735067,
+        545.9308433710327,
+        -1074.8247511995396
+      ],
+      "metal_point": [
+        341.52276611328125,
+        545.9308471679688,
+        -1074.82470703125
+      ],
+      "position_error": 4.544706702816355e-08,
+      "threshold": 2.6897036453289067e-08,
+      "error_in_thresholds": 1.6896681947503596,
+      "native_steps": 6,
+      "native_travel": 6.051833201990039e-06
+    },
+    {
+      "index": 29,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5228484934443,
+        545.9284808840694,
+        -1074.8250719987452
+      ],
+      "metal_point": [
+        341.5228576660156,
+        545.9285888671875,
+        -1074.8250732421875
+      ],
+      "position_error": 1.0583899502883404e-07,
+      "threshold": 3.708520613269165e-08,
+      "error_in_thresholds": 2.853941128172239,
+      "native_steps": 18,
+      "native_travel": 8.34417137985562e-06
+    },
+    {
+      "index": 30,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5232310955361,
+        545.9266023381756,
+        -1074.8253383961398
+      ],
+      "metal_point": [
+        341.5230407714844,
+        545.9235229492188,
+        -1074.8258056640625
+      ],
+      "position_error": 3.0473129980809145e-06,
+      "threshold": 4.5132583793822934e-08,
+      "error_in_thresholds": 67.51913455701565,
+      "native_steps": 31,
+      "native_travel": 1.0154831353610158e-05
+    },
+    {
+      "index": 31,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5238332235508,
+        545.9235135943601,
+        -1074.8257754831907
+      ],
+      "metal_point": [
+        341.5238342285156,
+        545.9235229492188,
+        -1074.8258056640625
+      ],
+      "position_error": 3.087248100078408e-08,
+      "threshold": 5.8580216119353e-08,
+      "error_in_thresholds": 0.5270120707285136,
+      "native_steps": 35,
+      "native_travel": 1.3180548626854422e-05
+    },
+    {
+      "index": 32,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5244186267655,
+        545.927423111027,
+        -1074.8252686713042
+      ],
+      "metal_point": [
+        341.5244140625,
+        545.9273681640625,
+        -1074.8253173828125
+      ],
+      "position_error": 7.184747892179947e-08,
+      "threshold": 4.153168142850977e-08,
+      "error_in_thresholds": 1.7299438994656056,
+      "native_steps": 16,
+      "native_travel": 9.344628321414699e-06
+    },
+    {
+      "index": 33,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5247636371643,
+        545.9293522942776,
+        -1074.825020514617
+      ],
+      "metal_point": [
+        341.5247802734375,
+        545.9293212890625,
+        -1074.8250732421875
+      ],
+      "position_error": 6.190424701476204e-08,
+      "threshold": 3.324202231797081e-08,
+      "error_in_thresholds": 1.862228670164158,
+      "native_steps": 23,
+      "native_travel": 7.4794550215434304e-06
+    },
+    {
+      "index": 34,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5249351648692,
+        545.9309518704143,
+        -1074.8248108104851
+      ],
+      "metal_point": [
+        341.5249328613281,
+        545.9309692382812,
+        -1074.8248291015625
+      ],
+      "position_error": 2.4734471968861974e-08,
+      "threshold": 2.6414373805003865e-08,
+      "error_in_thresholds": 0.9364019814157527,
+      "native_steps": 6,
+      "native_travel": 5.943234106125868e-06
+    },
+    {
+      "index": 35,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52528134214924,
+        545.9309928675374,
+        -1074.824817210185
+      ],
+      "metal_point": [
+        341.5252990722656,
+        545.9309692382812,
+        -1074.8248291015625
+      ],
+      "position_error": 3.109862674805956e-08,
+      "threshold": 2.6544343580871855e-08,
+      "error_in_thresholds": 1.1715726423338482,
+      "native_steps": 5,
+      "native_travel": 5.972477305696166e-06
+    },
+    {
+      "index": 36,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5256368295049,
+        545.9309856454732,
+        -1074.824830430223
+      ],
+      "metal_point": [
+        341.525634765625,
+        545.9309692382812,
+        -1074.8248291015625
+      ],
+      "position_error": 1.620095961407224e-08,
+      "threshold": 2.6973606640836415e-08,
+      "error_in_thresholds": 0.6006226690332528,
+      "native_steps": 7,
+      "native_travel": 6.0690614941881924e-06
+    },
+    {
+      "index": 37,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5258532622338,
+        545.931372671309,
+        -1074.824785717746
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.9313354492188,
+        -1074.8248291015625
+      ],
+      "position_error": 6.118345347463374e-08,
+      "threshold": 2.5651258971449533e-08,
+      "error_in_thresholds": 2.385202751363291,
+      "native_steps": 13,
+      "native_travel": 5.771533268576145e-06
+    },
+    {
+      "index": 38,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52594645544144,
+        545.931944968169,
+        -1074.824711786057
+      ],
+      "metal_point": [
+        341.52593994140625,
+        545.9319458007812,
+        -1074.82470703125
+      ],
+      "position_error": 7.917632857321197e-09,
+      "threshold": 2.3453842719534238e-08,
+      "error_in_thresholds": 0.33758360845179364,
+      "native_steps": 9,
+      "native_travel": 5.277114611895202e-06
+    },
+    {
+      "index": 39,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52604590077607,
+        545.9323596240619,
+        -1074.8246593188069
+      ],
+      "metal_point": [
+        341.5260009765625,
+        545.9324340820312,
+        -1074.82470703125
+      ],
+      "position_error": 9.686521123315431e-08,
+      "threshold": 2.1966774784664705e-08,
+      "error_in_thresholds": 4.409623724133467,
+      "native_steps": 11,
+      "native_travel": 4.9425243265495576e-06
+    },
+    {
+      "index": 40,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5262426834958,
+        545.9324992841784,
+        -1074.824647272626
+      ],
+      "metal_point": [
+        341.5262756347656,
+        545.9324951171875,
+        -1074.82470703125
+      ],
+      "position_error": 6.676605151677367e-08,
+      "threshold": 2.180450933956226e-08,
+      "error_in_thresholds": 3.0620295314617727,
+      "native_steps": 20,
+      "native_travel": 4.906014601401507e-06
+    },
+    {
+      "index": 41,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52672068663367,
+        545.9321378370705,
+        -1074.8247124606792
+      ],
+      "metal_point": [
+        341.5267028808594,
+        545.93212890625,
+        -1074.82470703125
+      ],
+      "position_error": 2.0162736998583793e-08,
+      "threshold": 2.4207371882133717e-08,
+      "error_in_thresholds": 0.8329172244205877,
+      "native_steps": 27,
+      "native_travel": 5.446658673480086e-06
+    },
+    {
+      "index": 42,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52060459306875,
+        545.9315178321306,
+        -1074.824200883271
+      ],
+      "metal_point": [
+        341.5205993652344,
+        545.9315185546875,
+        -1074.82421875
+      ],
+      "position_error": 1.819323998574481e-08,
+      "threshold": 2.73596333283832e-08,
+      "error_in_thresholds": 0.664966513526734,
+      "native_steps": 13,
+      "native_travel": 6.155917498886219e-06
+    },
+    {
+      "index": 43,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52123867332773,
+        545.9320729719523,
+        -1074.8241876281172
+      ],
+      "metal_point": [
+        341.5212097167969,
+        545.9320678710938,
+        -1074.82421875
+      ],
+      "position_error": 4.181091671455251e-08,
+      "threshold": 2.3892518235362153e-08,
+      "error_in_thresholds": 1.7499585561755566,
+      "native_steps": 8,
+      "native_travel": 5.375816602956484e-06
+    },
+    {
+      "index": 44,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5215324011352,
+        545.932072392275,
+        -1074.8241977838031
+      ],
+      "metal_point": [
+        341.5215148925781,
+        545.9320678710938,
+        -1074.82421875
+      ],
+      "position_error": 2.7038122836399805e-08,
+      "threshold": 2.3308093079798824e-08,
+      "error_in_thresholds": 1.1600315282692004,
+      "native_steps": 6,
+      "native_travel": 5.244320942954734e-06
+    },
+    {
+      "index": 45,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52174133198275,
+        545.9318741960519,
+        -1074.8242175125733
+      ],
+      "metal_point": [
+        341.521728515625,
+        545.9318237304688,
+        -1074.82421875
+      ],
+      "position_error": 5.0861615115898686e-08,
+      "threshold": 2.371443985946969e-08,
+      "error_in_thresholds": 2.1447529613729643,
+      "native_steps": 6,
+      "native_travel": 5.33574896838068e-06
+    },
+    {
+      "index": 46,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5217306891344,
+        545.9310143356757,
+        -1074.8242715112794
+      ],
+      "metal_point": [
+        341.521728515625,
+        545.9310302734375,
+        -1074.82421875
+      ],
+      "position_error": 5.386597830976603e-08,
+      "threshold": 2.7206595545760368e-08,
+      "error_in_thresholds": 1.9798867601484973,
+      "native_steps": 15,
+      "native_travel": 6.121483997796081e-06
+    },
+    {
+      "index": 47,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5220513807295,
+        545.9308909025387,
+        -1074.8242903632326
+      ],
+      "metal_point": [
+        341.5220642089844,
+        545.930908203125,
+        -1074.8243408203125
+      ],
+      "position_error": 5.357574707078172e-08,
+      "threshold": 2.727289001136973e-08,
+      "error_in_thresholds": 1.9644323373300978,
+      "native_steps": 6,
+      "native_travel": 6.136400252558188e-06
+    },
+    {
+      "index": 48,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5224352937158,
+        545.930962944394,
+        -1074.8242990341712
+      ],
+      "metal_point": [
+        341.5224304199219,
+        545.9309692382812,
+        -1074.8243408203125
+      ],
+      "position_error": 4.1540637349791614e-08,
+      "threshold": 2.6529922457496138e-08,
+      "error_in_thresholds": 1.5658031951033515,
+      "native_steps": 6,
+      "native_travel": 5.96923255293663e-06
+    },
+    {
+      "index": 49,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52277543204616,
+        545.9308462080617,
+        -1074.8243181326347
+      ],
+      "metal_point": [
+        341.52276611328125,
+        545.9308471679688,
+        -1074.8243408203125
+      ],
+      "position_error": 2.3970412832378802e-08,
+      "threshold": 2.671835047296023e-08,
+      "error_in_thresholds": 0.8971516732156641,
+      "native_steps": 5,
+      "native_travel": 6.01162885641605e-06
+    },
+    {
+      "index": 50,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52272295258683,
+        545.927455047468,
+        -1074.8245307334232
+      ],
+      "metal_point": [
+        341.5227355957031,
+        545.9274291992188,
+        -1074.8245849609375
+      ],
+      "position_error": 5.995015048463172e-08,
+      "threshold": 4.1334232181660595e-08,
+      "error_in_thresholds": 1.45037532622248,
+      "native_steps": 20,
+      "native_travel": 9.300202240873632e-06
+    },
+    {
+      "index": 51,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5228878575195,
+        545.9209537273233,
+        -1074.8249474658905
+      ],
+      "metal_point": [
+        341.52288818359375,
+        545.9209594726562,
+        -1074.824951171875
+      ],
+      "position_error": 6.684247219467338e-09,
+      "threshold": 6.943290088430145e-08,
+      "error_in_thresholds": 0.09626916252002117,
+      "native_steps": 49,
+      "native_travel": 1.5622402698967824e-05
+    },
+    {
+      "index": 52,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52387290998155,
+        545.9266146785675,
+        -1074.8246234827075
+      ],
+      "metal_point": [
+        341.5238037109375,
+        545.9015502929688,
+        -1074.826171875
+      ],
+      "position_error": 2.452369394045539e-05,
+      "threshold": 4.4685165842256207e-08,
+      "error_in_thresholds": 548.81062827487,
+      "native_steps": 20,
+      "native_travel": 1.0054162314507645e-05
+    },
+    {
+      "index": 53,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5244822187224,
+        545.9269184355945,
+        -1074.8246252681079
+      ],
+      "metal_point": [
+        341.5245056152344,
+        545.9265747070312,
+        -1074.82470703125
+      ],
+      "position_error": 3.457940566617103e-07,
+      "threshold": 4.344463228841118e-08,
+      "error_in_thresholds": 7.959419574922967,
+      "native_steps": 26,
+      "native_travel": 9.775042264892514e-06
+    },
+    {
+      "index": 54,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5247955410877,
+        545.9293814219807,
+        -1074.824480337543
+      ],
+      "metal_point": [
+        341.5248107910156,
+        545.9293823242188,
+        -1074.824462890625
+      ],
+      "position_error": 2.2646340855752297e-08,
+      "threshold": 3.289453117048876e-08,
+      "error_in_thresholds": 0.6884530665106242,
+      "native_steps": 16,
+      "native_travel": 7.401269513359969e-06
+    },
+    {
+      "index": 55,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52496721238356,
+        545.9309655108361,
+        -1074.8243860964951
+      ],
+      "metal_point": [
+        341.52496337890625,
+        545.9309692382812,
+        -1074.8243408203125
+      ],
+      "position_error": 4.452227701216944e-08,
+      "threshold": 2.6190907003775788e-08,
+      "error_in_thresholds": 1.6999135236420384,
+      "native_steps": 4,
+      "native_travel": 5.892954075849551e-06
+    },
+    {
+      "index": 56,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5253267666028,
+        545.9309740166932,
+        -1074.8243979454112
+      ],
+      "metal_point": [
+        341.52532958984375,
+        545.9309692382812,
+        -1074.8243408203125
+      ],
+      "position_error": 5.6048909582871755e-08,
+      "threshold": 2.648035911170594e-08,
+      "error_in_thresholds": 2.1166219591823703,
+      "native_steps": 6,
+      "native_travel": 5.958080800133835e-06
+    },
+    {
+      "index": 57,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5256840356232,
+        545.9309866363714,
+        -1074.824409455405
+      ],
+      "metal_point": [
+        341.52569580078125,
+        545.9309692382812,
+        -1074.824462890625
+      ],
+      "position_error": 5.606893620372065e-08,
+      "threshold": 2.6837642746330746e-08,
+      "error_in_thresholds": 2.089190050470674,
+      "native_steps": 7,
+      "native_travel": 6.038469617924415e-06
+    },
+    {
+      "index": 58,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52595821583975,
+        545.9312232478949,
+        -1074.8244039409963
+      ],
+      "metal_point": [
+        341.52593994140625,
+        545.9312744140625,
+        -1074.8243408203125
+      ],
+      "position_error": 8.133160731598434e-08,
+      "threshold": 2.6239193152481352e-08,
+      "error_in_thresholds": 3.0996230274059733,
+      "native_steps": 16,
+      "native_travel": 5.903818459308303e-06
+    },
+    {
+      "index": 59,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.525979585208,
+        545.9319866085292,
+        -1074.8243564130923
+      ],
+      "metal_point": [
+        341.5260009765625,
+        545.9319458007812,
+        -1074.8243408203125
+      ],
+      "position_error": 4.750148091475929e-08,
+      "threshold": 2.31829227450198e-08,
+      "error_in_thresholds": 2.0489858607221407,
+      "native_steps": 7,
+      "native_travel": 5.216157617629455e-06
+    },
+    {
+      "index": 60,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5262541201049,
+        545.9320375177101,
+        -1074.8243626520382
+      ],
+      "metal_point": [
+        341.5262756347656,
+        545.9320068359375,
+        -1074.8243408203125
+      ],
+      "position_error": 4.235260528709062e-08,
+      "threshold": 2.3476832261583986e-08,
+      "error_in_thresholds": 1.8040170332687415,
+      "native_steps": 8,
+      "native_travel": 5.282287258856396e-06
+    },
+    {
+      "index": 61,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5271773711039,
+        545.930891524535,
+        -1074.8244669142944
+      ],
+      "metal_point": [
+        341.5271911621094,
+        545.9308471679688,
+        -1074.824462890625
+      ],
+      "position_error": 4.5532185643763115e-08,
+      "threshold": 2.9752939318617265e-08,
+      "error_in_thresholds": 1.530342436294095,
+      "native_steps": 22,
+      "native_travel": 6.6944113466888835e-06
+    },
+    {
+      "index": 62,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52753221863765,
+        545.9309100720782,
+        -1074.8244779661875
+      ],
+      "metal_point": [
+        341.5275573730469,
+        545.9308471679688,
+        -1074.824462890625
+      ],
+      "position_error": 6.777754534618735e-08,
+      "threshold": 3.045506545033421e-08,
+      "error_in_thresholds": 2.225493340564913,
+      "native_steps": 23,
+      "native_travel": 6.852389726325196e-06
+    },
+    {
+      "index": 63,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5206982002234,
+        545.9317465021421,
+        -1074.8238075845675
+      ],
+      "metal_point": [
+        341.5208740234375,
+        545.9320068359375,
+        -1074.8238525390625
+      ],
+      "position_error": 3.0990806546836906e-07,
+      "threshold": 2.629401239971632e-08,
+      "error_in_thresholds": 11.786259957484182,
+      "native_steps": 21,
+      "native_travel": 5.916152789936171e-06
+    },
+    {
+      "index": 64,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.521193660232,
+        545.9320603258438,
+        -1074.8238281242934
+      ],
+      "metal_point": [
+        341.52117919921875,
+        545.9320678710938,
+        -1074.8238525390625
+      ],
+      "position_error": 2.8673921334708408e-08,
+      "threshold": 2.40258881378129e-08,
+      "error_in_thresholds": 1.1934593705853582,
+      "native_steps": 9,
+      "native_travel": 5.405824831007901e-06
+    },
+    {
+      "index": 65,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52150272872626,
+        545.9320777956519,
+        -1074.8238389648714
+      ],
+      "metal_point": [
+        341.5215148925781,
+        545.9320678710938,
+        -1074.8238525390625
+      ],
+      "position_error": 2.0267255719608802e-08,
+      "threshold": 2.3331385183921805e-08,
+      "error_in_thresholds": 0.8686692007286149,
+      "native_steps": 7,
+      "native_travel": 5.249561666382405e-06
+    },
+    {
+      "index": 66,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5217220847176,
+        545.9318940331779,
+        -1074.8238444892513
+      ],
+      "metal_point": [
+        341.521728515625,
+        545.931884765625,
+        -1074.8238525390625
+      ],
+      "position_error": 1.3533182045052415e-08,
+      "threshold": 2.365184977837668e-08,
+      "error_in_thresholds": 0.5721828174904487,
+      "native_steps": 6,
+      "native_travel": 5.3216662001347515e-06
+    },
+    {
+      "index": 67,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52175296786976,
+        545.9311434173796,
+        -1074.823837250942
+      ],
+      "metal_point": [
+        341.521728515625,
+        545.9310913085938,
+        -1074.8238525390625
+      ],
+      "position_error": 5.816054432025139e-08,
+      "threshold": 2.6623799523997146e-08,
+      "error_in_thresholds": 2.184532086332338,
+      "native_steps": 12,
+      "native_travel": 5.990354892899356e-06
+    },
+    {
+      "index": 68,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5220624128512,
+        545.9309889869858,
+        -1074.8238462033544
+      ],
+      "metal_point": [
+        341.5220642089844,
+        545.9309692382812,
+        -1074.8238525390625
+      ],
+      "position_error": 2.0329831799060693e-08,
+      "threshold": 2.6823350622442443e-08,
+      "error_in_thresholds": 0.7579154478207215,
+      "native_steps": 6,
+      "native_travel": 6.035253890049548e-06
+    },
+    {
+      "index": 69,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5224281752498,
+        545.9309839280338,
+        -1074.8238587477715
+      ],
+      "metal_point": [
+        341.5224304199219,
+        545.9309692382812,
+        -1074.8238525390625
+      ],
+      "position_error": 1.572767324188404e-08,
+      "threshold": 2.6416324683573856e-08,
+      "error_in_thresholds": 0.5953770416693807,
+      "native_steps": 5,
+      "native_travel": 5.943673053804116e-06
+    },
+    {
+      "index": 70,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227701765464,
+        545.930847890162,
+        -1074.8238690250844
+      ],
+      "metal_point": [
+        341.52276611328125,
+        545.9308471679688,
+        -1074.8238525390625
+      ],
+      "position_error": 1.659640900871068e-08,
+      "threshold": 2.6677640896851796e-08,
+      "error_in_thresholds": 0.6221093189191705,
+      "native_steps": 5,
+      "native_travel": 6.002469201791653e-06
+    },
+    {
+      "index": 71,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5228582633279,
+        545.928528010197,
+        -1074.8238464005733
+      ],
+      "metal_point": [
+        341.5228576660156,
+        545.9285888671875,
+        -1074.8238525390625
+      ],
+      "position_error": 5.973506863466238e-08,
+      "threshold": 3.6574097293990004e-08,
+      "error_in_thresholds": 1.6332615991722172,
+      "native_steps": 23,
+      "native_travel": 8.22917189114775e-06
+    },
+    {
+      "index": 72,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5233088195898,
+        545.9274031959621,
+        -1074.823849481295
+      ],
+      "metal_point": [
+        341.5233154296875,
+        545.9273681640625,
+        -1074.8238525390625
+      ],
+      "position_error": 3.4942346868658175e-08,
+      "threshold": 4.12560136287077e-08,
+      "error_in_thresholds": 0.8469637222619054,
+      "native_steps": 18,
+      "native_travel": 9.282603066459231e-06
+    },
+    {
+      "index": 73,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52389886581983,
+        545.9274248343017,
+        -1074.8238700478428
+      ],
+      "metal_point": [
+        341.5238952636719,
+        545.9273681640625,
+        -1074.8238525390625
+      ],
+      "position_error": 5.8029911424870316e-08,
+      "threshold": 4.108243216049603e-08,
+      "error_in_thresholds": 1.4125237570688576,
+      "native_steps": 17,
+      "native_travel": 9.243547236111605e-06
+    },
+    {
+      "index": 74,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5244859376231,
+        545.9274509895097,
+        -1074.8238905616424
+      ],
+      "metal_point": [
+        341.52447509765625,
+        545.9274291992188,
+        -1074.8238525390625
+      ],
+      "position_error": 4.408655951926286e-08,
+      "threshold": 4.104816236189687e-08,
+      "error_in_thresholds": 1.0740202967084929,
+      "native_steps": 19,
+      "native_travel": 9.235836531426795e-06
+    },
+    {
+      "index": 75,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52475056719123,
+        545.9300351547316,
+        -1074.8239282602829
+      ],
+      "metal_point": [
+        341.5247802734375,
+        545.9298706054688,
+        -1074.823974609375
+      ],
+      "position_error": 1.694474095006027e-07,
+      "threshold": 2.9981794543571096e-08,
+      "error_in_thresholds": 5.651676695147549,
+      "native_steps": 18,
+      "native_travel": 6.745903772303495e-06
+    },
+    {
+      "index": 76,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5250022560909,
+        545.9309692587777,
+        -1074.8239472626537
+      ],
+      "metal_point": [
+        341.5249938964844,
+        545.9309692382812,
+        -1074.823974609375
+      ],
+      "position_error": 2.792570250699047e-08,
+      "threshold": 2.6141732581276526e-08,
+      "error_in_thresholds": 1.0682422222845198,
+      "native_steps": 4,
+      "native_travel": 5.881889830787217e-06
+    },
+    {
+      "index": 77,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.525365418466,
+        545.9309896625799,
+        -1074.8239599992603
+      ],
+      "metal_point": [
+        341.525390625,
+        545.9309692382812,
+        -1074.823974609375
+      ],
+      "position_error": 3.47466479682848e-08,
+      "threshold": 2.6390674086747083e-08,
+      "error_in_thresholds": 1.3166260116763722,
+      "native_steps": 5,
+      "native_travel": 5.937901669518092e-06
+    },
+    {
+      "index": 78,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5257342769312,
+        545.930983620562,
+        -1074.823972639764
+      ],
+      "metal_point": [
+        341.5257263183594,
+        545.9309692382812,
+        -1074.823974609375
+      ],
+      "position_error": 1.6166998276142377e-08,
+      "threshold": 2.684774550980788e-08,
+      "error_in_thresholds": 0.6021734029859726,
+      "native_steps": 8,
+      "native_travel": 6.040742739706771e-06
+    },
+    {
+      "index": 79,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5258542765986,
+        545.9316457393703,
+        -1074.8239840970223
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.9315795898438,
+        -1074.823974609375
+      ],
+      "position_error": 6.955151239344337e-08,
+      "threshold": 2.4296409787004966e-08,
+      "error_in_thresholds": 2.8626250957721036,
+      "native_steps": 10,
+      "native_travel": 5.466692202076116e-06
+    },
+    {
+      "index": 80,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52601467226907,
+        545.932026148231,
+        -1074.8239938302088
+      ],
+      "metal_point": [
+        341.5260314941406,
+        545.9320068359375,
+        -1074.823974609375
+      ],
+      "position_error": 3.1271057572860794e-08,
+      "threshold": 2.3026348238284793e-08,
+      "error_in_thresholds": 1.358055443670739,
+      "native_steps": 7,
+      "native_travel": 5.180928353614077e-06
+    },
+    {
+      "index": 81,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5262941504031,
+        545.9320723954087,
+        -1074.8240039696793
+      ],
+      "metal_point": [
+        341.52630615234375,
+        545.9320068359375,
+        -1074.823974609375
+      ],
+      "position_error": 7.112243952959397e-08,
+      "threshold": 2.3357569432858775e-08,
+      "error_in_thresholds": 3.04494180073124,
+      "native_steps": 9,
+      "native_travel": 5.255453122393222e-06
+    },
+    {
+      "index": 82,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5265934098822,
+        545.932073059571,
+        -1074.8240142865727
+      ],
+      "metal_point": [
+        341.5265808105469,
+        545.9320678710938,
+        -1074.823974609375
+      ],
+      "position_error": 4.096843879529598e-08,
+      "threshold": 2.3962537828925172e-08,
+      "error_in_thresholds": 1.7096869742170209,
+      "native_steps": 11,
+      "native_travel": 5.391571011508162e-06
+    },
+    {
+      "index": 83,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52689194202446,
+        545.9320747596346,
+        -1074.8240245897528
+      ],
+      "metal_point": [
+        341.5268859863281,
+        545.9320678710938,
+        -1074.823974609375
+      ],
+      "position_error": 4.961245524851112e-08,
+      "threshold": 2.461581697059936e-08,
+      "error_in_thresholds": 2.015470593877394,
+      "native_steps": 13,
+      "native_travel": 5.538558818384855e-06
+    },
+    {
+      "index": 84,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5207246438844,
+        545.9318649097104,
+        -1074.8234220842062
+      ],
+      "metal_point": [
+        341.5207824707031,
+        545.9319458007812,
+        -1074.823486328125
+      ],
+      "position_error": 1.1560861589727653e-07,
+      "threshold": 2.589880997947455e-08,
+      "error_in_thresholds": 4.463858223173158,
+      "native_steps": 12,
+      "native_travel": 5.827232245381773e-06
+    },
+    {
+      "index": 85,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5210538985519,
+        545.9318837033807,
+        -1074.8234350851071
+      ],
+      "metal_point": [
+        341.5210876464844,
+        545.9319458007812,
+        -1074.823486328125
+      ],
+      "position_error": 8.52514843205004e-08,
+      "threshold": 2.509263500249044e-08,
+      "error_in_thresholds": 3.3974703857143425,
+      "native_steps": 10,
+      "native_travel": 5.645842875560348e-06
+    },
+    {
+      "index": 86,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52137596375303,
+        545.9318929648329,
+        -1074.823446997384
+      ],
+      "metal_point": [
+        341.5213928222656,
+        545.9319458007812,
+        -1074.823486328125
+      ],
+      "position_error": 6.639730288661519e-08,
+      "threshold": 2.43953317573019e-08,
+      "error_in_thresholds": 2.7217216616347693,
+      "native_steps": 9,
+      "native_travel": 5.488949645392927e-06
+    },
+    {
+      "index": 87,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5216957599194,
+        545.9318997426384,
+        -1074.823458612286
+      ],
+      "metal_point": [
+        341.5216979980469,
+        545.931884765625,
+        -1074.823486328125
+      ],
+      "position_error": 3.084280415787606e-08,
+      "threshold": 2.377396003163468e-08,
+      "error_in_thresholds": 1.2973355771119015,
+      "native_steps": 7,
+      "native_travel": 5.349141007117802e-06
+    },
+    {
+      "index": 88,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5216180898483,
+        545.9308555919022,
+        -1074.823363818493
+      ],
+      "metal_point": [
+        341.52166748046875,
+        545.9309692382812,
+        -1074.8233642578125
+      ],
+      "position_error": 1.2101152493071095e-07,
+      "threshold": 2.8117639451524506e-08,
+      "error_in_thresholds": 4.303758327200182,
+      "native_steps": 17,
+      "native_travel": 6.3264688765930125e-06
+    },
+    {
+      "index": 89,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.522025723305,
+        545.9309353782677,
+        -1074.8233849003814
+      ],
+      "metal_point": [
+        341.52203369140625,
+        545.930908203125,
+        -1074.8233642578125
+      ],
+      "position_error": 3.4222833645259526e-08,
+      "threshold": 2.7207785564278717e-08,
+      "error_in_thresholds": 1.2578323790595773,
+      "native_steps": 6,
+      "native_travel": 6.12175175196271e-06
+    },
+    {
+      "index": 90,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5224155520672,
+        545.9309844873054,
+        -1074.8234026626105
+      ],
+      "metal_point": [
+        341.5224304199219,
+        545.9309692382812,
+        -1074.8233642578125
+      ],
+      "position_error": 4.288559906876534e-08,
+      "threshold": 2.6538801415679807e-08,
+      "error_in_thresholds": 1.615958399817839,
+      "native_steps": 5,
+      "native_travel": 5.971230318527955e-06
+    },
+    {
+      "index": 91,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227654493633,
+        545.9308535288061,
+        -1074.8234031630304
+      ],
+      "metal_point": [
+        341.52276611328125,
+        545.9308471679688,
+        -1074.8233642578125
+      ],
+      "position_error": 3.850328502398203e-08,
+      "threshold": 2.676856300058215e-08,
+      "error_in_thresholds": 1.4383769880790642,
+      "native_steps": 5,
+      "native_travel": 6.022926675130983e-06
+    },
+    {
+      "index": 92,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5228575605341,
+        545.9285056485485,
+        -1074.8231991993716
+      ],
+      "metal_point": [
+        341.5228576660156,
+        545.9285888671875,
+        -1074.8232421875
+      ],
+      "position_error": 9.147076897300067e-08,
+      "threshold": 3.6820687785384135e-08,
+      "error_in_thresholds": 2.484222171681153,
+      "native_steps": 20,
+      "native_travel": 8.28465475171143e-06
+    },
+    {
+      "index": 93,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52309362388746,
+        545.9236104482062,
+        -1074.8227754626357
+      ],
+      "metal_point": [
+        341.5231018066406,
+        545.923583984375,
+        -1074.82275390625
+      ],
+      "position_error": 3.427678140936363e-08,
+      "threshold": 5.797443699751342e-08,
+      "error_in_thresholds": 0.5912395735871276,
+      "native_steps": 32,
+      "native_travel": 1.3044248324440516e-05
+    },
+    {
+      "index": 94,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52393549430604,
+        545.9236370507543,
+        -1074.8228068121045
+      ],
+      "metal_point": [
+        341.52392578125,
+        545.923583984375,
+        -1074.82275390625
+      ],
+      "position_error": 7.378970818927274e-08,
+      "threshold": 5.7743104217373744e-08,
+      "error_in_thresholds": 1.2778964551592447,
+      "native_steps": 25,
+      "native_travel": 1.299219844890909e-05
+    },
+    {
+      "index": 95,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52452211576684,
+        545.9274547082887,
+        -1074.8231638261666
+      ],
+      "metal_point": [
+        341.5245361328125,
+        545.9274291992188,
+        -1074.8231201171875
+      ],
+      "position_error": 5.128269056241877e-08,
+      "threshold": 4.119113604146264e-08,
+      "error_in_thresholds": 1.2449933527154498,
+      "native_steps": 14,
+      "native_travel": 9.268005609329092e-06
+    },
+    {
+      "index": 96,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52484847130256,
+        545.9295484278043,
+        -1074.8233597832843
+      ],
+      "metal_point": [
+        341.52484130859375,
+        545.9295043945312,
+        -1074.8233642578125
+      ],
+      "position_error": 4.3785026013345606e-08,
+      "threshold": 3.224103014601869e-08,
+      "error_in_thresholds": 1.3580529472862526,
+      "native_steps": 19,
+      "native_travel": 7.254231782854205e-06
+    },
+    {
+      "index": 97,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5250377964939,
+        545.9309773544426,
+        -1074.8234923696953
+      ],
+      "metal_point": [
+        341.5250244140625,
+        545.9309692382812,
+        -1074.823486328125
+      ],
+      "position_error": 1.6383625704387837e-08,
+      "threshold": 2.6219429686591787e-08,
+      "error_in_thresholds": 0.6248658304252198,
+      "native_steps": 5,
+      "native_travel": 5.89937167948315e-06
+    },
+    {
+      "index": 98,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52555123370325,
+        545.9304374167035,
+        -1074.8234624227148
+      ],
+      "metal_point": [
+        341.5260009765625,
+        545.9286499023438,
+        -1074.8233642578125
+      ],
+      "position_error": 1.8025747570557698e-06,
+      "threshold": 2.8997430026987664e-08,
+      "error_in_thresholds": 62.16325913634859,
+      "native_steps": 11,
+      "native_travel": 6.524421756072223e-06
+    },
+    {
+      "index": 99,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5258248119505,
+        545.9308608369448,
+        -1074.8235092027624
+      ],
+      "metal_point": [
+        341.5257873535156,
+        545.9309692382812,
+        -1074.823486328125
+      ],
+      "position_error": 1.1420869469068151e-07,
+      "threshold": 2.754839914596525e-08,
+      "error_in_thresholds": 4.14574705722632,
+      "native_steps": 13,
+      "native_travel": 6.19838980784218e-06
+    },
+    {
+      "index": 100,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5258490528518,
+        545.9317944670622,
+        -1074.8235924055282
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.9317626953125,
+        -1074.8236083984375
+      ],
+      "position_error": 4.534913377029695e-08,
+      "threshold": 2.374264655922962e-08,
+      "error_in_thresholds": 1.910028591680657,
+      "native_steps": 8,
+      "native_travel": 5.342095475826663e-06
+    },
+    {
+      "index": 101,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5260529720111,
+        545.9320610698455,
+        -1074.8236229510476
+      ],
+      "metal_point": [
+        341.52606201171875,
+        545.9320068359375,
+        -1074.8236083984375
+      ],
+      "position_error": 5.554238650425693e-08,
+      "threshold": 2.3005331127052166e-08,
+      "error_in_thresholds": 2.414326757459455,
+      "native_steps": 6,
+      "native_travel": 5.1761995035867364e-06
+    },
+    {
+      "index": 102,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52635216269766,
+        545.932074708422,
+        -1074.8236344614375
+      ],
+      "metal_point": [
+        341.5263671875,
+        545.9320678710938,
+        -1074.8236083984375
+      ],
+      "position_error": 3.012776362613631e-08,
+      "threshold": 2.350800416458489e-08,
+      "error_in_thresholds": 1.2815959796163459,
+      "native_steps": 8,
+      "native_travel": 5.289300937031599e-06
+    },
+    {
+      "index": 103,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52670510123596,
+        545.9319916409393,
+        -1074.8236392916685
+      ],
+      "metal_point": [
+        341.5267333984375,
+        545.9319458007812,
+        -1074.8236083984375
+      ],
+      "position_error": 6.06447940673794e-08,
+      "threshold": 2.455159086309804e-08,
+      "error_in_thresholds": 2.4700963129249107,
+      "native_steps": 10,
+      "native_travel": 5.524107944197058e-06
+    },
+    {
+      "index": 104,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52696316146177,
+        545.9320740362083,
+        -1074.8236554509726
+      ],
+      "metal_point": [
+        341.5269775390625,
+        545.9320678710938,
+        -1074.8236083984375
+      ],
+      "position_error": 4.842278143020897e-08,
+      "threshold": 2.4820917440611952e-08,
+      "error_in_thresholds": 1.9508860438405746,
+      "native_steps": 13,
+      "native_travel": 5.584706424137687e-06
+    },
+    {
+      "index": 105,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52011778449247,
+        545.9309943194198,
+        -1074.8228515144053
+      ],
+      "metal_point": [
+        341.5201110839844,
+        545.9309692382812,
+        -1074.8228759765625
+      ],
+      "position_error": 3.483410147414414e-08,
+      "threshold": 3.077792407585678e-08,
+      "error_in_thresholds": 1.1317885309057982,
+      "native_steps": 10,
+      "native_travel": 6.925032917067774e-06
+    },
+    {
+      "index": 106,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52049282662864,
+        545.9309836918734,
+        -1074.8228626446923
+      ],
+      "metal_point": [
+        341.5205078125,
+        545.9309692382812,
+        -1074.8228759765625
+      ],
+      "position_error": 2.4143449991402577e-08,
+      "threshold": 2.997412495081387e-08,
+      "error_in_thresholds": 0.8054763910880081,
+      "native_steps": 11,
+      "native_travel": 6.74417811393312e-06
+    },
+    {
+      "index": 107,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52087512805923,
+        545.9309845723891,
+        -1074.8228759631795
+      ],
+      "metal_point": [
+        341.5208740234375,
+        545.9309692382812,
+        -1074.8228759765625
+      ],
+      "position_error": 1.5013524367699866e-08,
+      "threshold": 2.9179505676168434e-08,
+      "error_in_thresholds": 0.5145229166771579,
+      "native_steps": 10,
+      "native_travel": 6.565388777137896e-06
+    },
+    {
+      "index": 108,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5212570208392,
+        545.9309847905723,
+        -1074.8228891561762
+      ],
+      "metal_point": [
+        341.5212707519531,
+        545.9309692382812,
+        -1074.8228759765625
+      ],
+      "position_error": 2.400277520326273e-08,
+      "threshold": 2.8463050683884817e-08,
+      "error_in_thresholds": 0.8432959442696912,
+      "native_steps": 9,
+      "native_travel": 6.4041864038740825e-06
+    },
+    {
+      "index": 109,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52163494873963,
+        545.9309747083248,
+        -1074.8229004776847
+      ],
+      "metal_point": [
+        341.5216369628906,
+        545.9309692382812,
+        -1074.8228759765625
+      ],
+      "position_error": 2.4594706103266427e-08,
+      "threshold": 2.787570189976118e-08,
+      "error_in_thresholds": 0.8822990786638143,
+      "native_steps": 8,
+      "native_travel": 6.272032927446264e-06
+    },
+    {
+      "index": 110,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5220196097051,
+        545.9309817272813,
+        -1074.8229149113954
+      ],
+      "metal_point": [
+        341.5220031738281,
+        545.9309692382812,
+        -1074.8228759765625
+      ],
+      "position_error": 4.303566331467899e-08,
+      "threshold": 2.7293608264173427e-08,
+      "error_in_thresholds": 1.5767670913328506,
+      "native_steps": 7,
+      "native_travel": 6.14106185943902e-06
+    },
+    {
+      "index": 111,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5224015071385,
+        545.9309814059952,
+        -1074.8229280136654
+      ],
+      "metal_point": [
+        341.52239990234375,
+        545.9309692382812,
+        -1074.8228759765625
+      ],
+      "position_error": 5.2211754113750714e-08,
+      "threshold": 2.6837520716484098e-08,
+      "error_in_thresholds": 1.945476061865927,
+      "native_steps": 6,
+      "native_travel": 6.038442161208921e-06
+    },
+    {
+      "index": 112,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227593058153,
+        545.9308527938499,
+        -1074.8229186774001
+      ],
+      "metal_point": [
+        341.52276611328125,
+        545.9308471679688,
+        -1074.8228759765625
+      ],
+      "position_error": 4.258253348307912e-08,
+      "threshold": 2.7052504648936298e-08,
+      "error_in_thresholds": 1.5740699072295867,
+      "native_steps": 6,
+      "native_travel": 6.0868135460106655e-06
+    },
+    {
+      "index": 113,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5231407785236,
+        545.9307812050782,
+        -1074.8229197614996
+      ],
+      "metal_point": [
+        341.52313232421875,
+        545.9307250976562,
+        -1074.8228759765625
+      ],
+      "position_error": 6.999057428450295e-08,
+      "threshold": 2.710329965106734e-08,
+      "error_in_thresholds": 2.5823635935688256,
+      "native_steps": 6,
+      "native_travel": 6.09824242149015e-06
+    },
+    {
+      "index": 114,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52353397047506,
+        545.9307514460772,
+        -1074.8229282945151
+      ],
+      "metal_point": [
+        341.5235290527344,
+        545.9307250976562,
+        -1074.8228759765625
+      ],
+      "position_error": 5.7406523881804744e-08,
+      "threshold": 2.707124037786377e-08,
+      "error_in_thresholds": 2.120572352079819,
+      "native_steps": 7,
+      "native_travel": 6.0910290850193455e-06
+    },
+    {
+      "index": 115,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5239312711354,
+        545.9306767510365,
+        -1074.8229294004047
+      ],
+      "metal_point": [
+        341.52392578125,
+        545.9306640625,
+        -1074.8228759765625
+      ],
+      "position_error": 5.389036719072079e-08,
+      "threshold": 2.7345077005939996e-08,
+      "error_in_thresholds": 1.970752072814223,
+      "native_steps": 9,
+      "native_travel": 6.152642326336499e-06
+    },
+    {
+      "index": 116,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52433945224675,
+        545.9305847167979,
+        -1074.8229279608709
+      ],
+      "metal_point": [
+        341.52435302734375,
+        545.9305419921875,
+        -1074.8228759765625
+      ],
+      "position_error": 6.703547753773925e-08,
+      "threshold": 2.7806564525108277e-08,
+      "error_in_thresholds": 2.4107788460242454,
+      "native_steps": 12,
+      "native_travel": 6.256477018149361e-06
+    },
+    {
+      "index": 117,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5247522492169,
+        545.930546603149,
+        -1074.8229357622295
+      ],
+      "metal_point": [
+        341.5247497558594,
+        545.9305419921875,
+        -1074.8228759765625
+      ],
+      "position_error": 5.860842729158254e-08,
+      "threshold": 2.8144233696762753e-08,
+      "error_in_thresholds": 2.0824310913224076,
+      "native_steps": 13,
+      "native_travel": 6.332452581771619e-06
+    },
+    {
+      "index": 118,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52507474886215,
+        545.9309851869766,
+        -1074.8230207436686
+      ],
+      "metal_point": [
+        341.52508544921875,
+        545.9309692382812,
+        -1074.822998046875
+      ],
+      "position_error": 2.9035339064190966e-08,
+      "threshold": 2.645922125375225e-08,
+      "error_in_thresholds": 1.0973618152149278,
+      "native_steps": 5,
+      "native_travel": 5.953324782094255e-06
+    },
+    {
+      "index": 119,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52547769129984,
+        545.9309050590624,
+        -1074.8230211290074
+      ],
+      "metal_point": [
+        341.52545166015625,
+        545.9309692382812,
+        -1074.822998046875
+      ],
+      "position_error": 7.129158683536268e-08,
+      "threshold": 2.7184318051194985e-08,
+      "error_in_thresholds": 2.622526219017247,
+      "native_steps": 9,
+      "native_travel": 6.116471561518871e-06
+    },
+    {
+      "index": 120,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5258437502984,
+        545.9309684994613,
+        -1074.8230444251528
+      ],
+      "metal_point": [
+        341.5258483886719,
+        545.9309692382812,
+        -1074.822998046875
+      ],
+      "position_error": 4.552295107852892e-08,
+      "threshold": 2.7354718375560868e-08,
+      "error_in_thresholds": 1.664171805884861,
+      "native_steps": 11,
+      "native_travel": 6.154811634501194e-06
+    },
+    {
+      "index": 121,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52586343836384,
+        545.9318908274865,
+        -1074.8232004528077
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.931884765625,
+        -1074.8232421875
+      ],
+      "position_error": 4.3866968050300557e-08,
+      "threshold": 2.3558250908257725e-08,
+      "error_in_thresholds": 1.86206387821959,
+      "native_steps": 6,
+      "native_travel": 5.300606454357987e-06
+    },
+    {
+      "index": 122,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.526102744149,
+        545.9320738505578,
+        -1074.8232395237064
+      ],
+      "metal_point": [
+        341.5260925292969,
+        545.9320678710938,
+        -1074.8232421875
+      ],
+      "position_error": 1.1847960774520235e-08,
+      "threshold": 2.32134798519326e-08,
+      "error_in_thresholds": 0.5103914126659408,
+      "native_steps": 7,
+      "native_travel": 5.223032966684834e-06
+    },
+    {
+      "index": 123,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5264263366264,
+        545.932050477668,
+        -1074.8232467347034
+      ],
+      "metal_point": [
+        341.52642822265625,
+        545.9320068359375,
+        -1074.8232421875
+      ],
+      "position_error": 4.288916198811478e-08,
+      "threshold": 2.3912411949270758e-08,
+      "error_in_thresholds": 1.7935941417830392,
+      "native_steps": 10,
+      "native_travel": 5.3802926885859195e-06
+    },
+    {
+      "index": 124,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5267219787906,
+        545.9320798051815,
+        -1074.8232618593988
+      ],
+      "metal_point": [
+        341.5267333984375,
+        545.9320678710938,
+        -1074.8232421875
+      ],
+      "position_error": 2.5084816858242135e-08,
+      "threshold": 2.441109088326375e-08,
+      "error_in_thresholds": 1.0275991752355602,
+      "native_steps": 11,
+      "native_travel": 5.492495448734343e-06
+    },
+    {
+      "index": 125,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5270364949773,
+        545.9320743879828,
+        -1074.8232717819476
+      ],
+      "metal_point": [
+        341.52703857421875,
+        545.9320678710938,
+        -1074.8232421875
+      ],
+      "position_error": 2.9662825373389854e-08,
+      "threshold": 2.5139177297631636e-08,
+      "error_in_thresholds": 1.179944157368443,
+      "native_steps": 17,
+      "native_travel": 5.656314891967117e-06
+    },
+    {
+      "index": 126,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51989710258977,
+        545.9307472029047,
+        -1074.822289768441
+      ],
+      "metal_point": [
+        341.5198974609375,
+        545.9307250976562,
+        -1074.822265625
+      ],
+      "position_error": 3.196920442275879e-08,
+      "threshold": 3.263981757236973e-08,
+      "error_in_thresholds": 0.9794541391622659,
+      "native_steps": 12,
+      "native_travel": 7.343958953783187e-06
+    },
+    {
+      "index": 127,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5203179477264,
+        545.9307740523557,
+        -1074.822311029139
+      ],
+      "metal_point": [
+        341.5202941894531,
+        545.9307250976562,
+        -1074.822265625
+      ],
+      "position_error": 6.92089642685903e-08,
+      "threshold": 3.158732508070865e-08,
+      "error_in_thresholds": 2.1910359326645974,
+      "native_steps": 11,
+      "native_travel": 7.107148143159445e-06
+    },
+    {
+      "index": 128,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5207252058741,
+        545.93078154755,
+        -1074.8223269470705
+      ],
+      "metal_point": [
+        341.5207214355469,
+        545.9307861328125,
+        -1074.8223876953125
+      ],
+      "position_error": 5.960703362896778e-08,
+      "threshold": 3.07127801895417e-08,
+      "error_in_thresholds": 1.940789249983469,
+      "native_steps": 11,
+      "native_travel": 6.910375542646881e-06
+    },
+    {
+      "index": 129,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52113219596464,
+        545.9307906324102,
+        -1074.8223432559914
+      ],
+      "metal_point": [
+        341.5211181640625,
+        545.9307861328125,
+        -1074.8223876953125
+      ],
+      "position_error": 4.5721420560552684e-08,
+      "threshold": 2.991136479578867e-08,
+      "error_in_thresholds": 1.5285635032939042,
+      "native_steps": 11,
+      "native_travel": 6.73005707905245e-06
+    },
+    {
+      "index": 130,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5215348185878,
+        545.9307915298587,
+        -1074.8223573524165
+      ],
+      "metal_point": [
+        341.52154541015625,
+        545.9307861328125,
+        -1074.8223876953125
+      ],
+      "position_error": 3.182456374221137e-08,
+      "threshold": 2.9236296444317726e-08,
+      "error_in_thresholds": 1.0885292466103957,
+      "native_steps": 11,
+      "native_travel": 6.578166699971487e-06
+    },
+    {
+      "index": 131,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52193682103956,
+        545.9307908648311,
+        -1074.8223710339726
+      ],
+      "metal_point": [
+        341.5219421386719,
+        545.9307861328125,
+        -1074.8223876953125
+      ],
+      "position_error": 1.769356253260575e-08,
+      "threshold": 2.865967714881222e-08,
+      "error_in_thresholds": 0.6173678245129516,
+      "native_steps": 11,
+      "native_travel": 6.448427358482748e-06
+    },
+    {
+      "index": 132,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5223557015471,
+        545.9308560027868,
+        -1074.8224018707954
+      ],
+      "metal_point": [
+        341.5223388671875,
+        545.9307861328125,
+        -1074.8223876953125
+      ],
+      "position_error": 7.153714113070061e-08,
+      "threshold": 2.7875478550527985e-08,
+      "error_in_thresholds": 2.5663107810339505,
+      "native_steps": 10,
+      "native_travel": 6.271982673868795e-06
+    },
+    {
+      "index": 133,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227772963517,
+        545.9309809007727,
+        -1074.8224478528928
+      ],
+      "metal_point": [
+        341.52276611328125,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 6.248673248880885e-08,
+      "threshold": 2.6928664106082805e-08,
+      "error_in_thresholds": 2.3204542283511933,
+      "native_steps": 6,
+      "native_travel": 6.05894942386863e-06
+    },
+    {
+      "index": 134,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5231676506255,
+        545.9309860023434,
+        -1074.8224625854134
+      ],
+      "metal_point": [
+        341.5231628417969,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 4.912149154133821e-08,
+      "threshold": 2.6638372885494774e-08,
+      "error_in_thresholds": 1.8440124609895383,
+      "native_steps": 5,
+      "native_travel": 5.993633899236324e-06
+    },
+    {
+      "index": 135,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5235567613258,
+        545.9309811450021,
+        -1074.822474767021
+      ],
+      "metal_point": [
+        341.5235595703125,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 3.6206147678954873e-08,
+      "threshold": 2.649863950928722e-08,
+      "error_in_thresholds": 1.3663398706286551,
+      "native_steps": 5,
+      "native_travel": 5.9621938895896235e-06
+    },
+    {
+      "index": 136,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52394648531015,
+        545.9309794656945,
+        -1074.8224877699502
+      ],
+      "metal_point": [
+        341.5239562988281,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 2.555376577768593e-08,
+      "threshold": 2.6452052566031508e-08,
+      "error_in_thresholds": 0.9660409419608096,
+      "native_steps": 5,
+      "native_travel": 5.951711827357089e-06
+    },
+    {
+      "index": 137,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5243361176167,
+        545.9309819833907,
+        -1074.8225018269254
+      ],
+      "metal_point": [
+        341.52435302734375,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 2.2084127692502564e-08,
+      "threshold": 2.649487957913808e-08,
+      "error_in_thresholds": 0.833524365586907,
+      "native_steps": 5,
+      "native_travel": 5.9613479053060665e-06
+    },
+    {
+      "index": 138,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.524724548245,
+        545.9309906863184,
+        -1074.8225174003185
+      ],
+      "metal_point": [
+        341.52471923828125,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 2.282948647729714e-08,
+      "threshold": 2.6617237912204485e-08,
+      "error_in_thresholds": 0.857695548749234,
+      "native_steps": 5,
+      "native_travel": 5.988878530246008e-06
+    },
+    {
+      "index": 139,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52511544296374,
+        545.9309819003013,
+        -1074.8225286538561
+      ],
+      "metal_point": [
+        341.5251159667969,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 2.2212588185879428e-08,
+      "threshold": 2.692410881526794e-08,
+      "error_in_thresholds": 0.8250073693537914,
+      "native_steps": 6,
+      "native_travel": 6.057924483435285e-06
+    },
+    {
+      "index": 140,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5255050739036,
+        545.9309820050507,
+        -1074.8225421030222
+      ],
+      "metal_point": [
+        341.5255126953125,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 3.4757717444009574e-08,
+      "threshold": 2.729334730540243e-08,
+      "error_in_thresholds": 1.2734867971701533,
+      "native_steps": 7,
+      "native_travel": 6.141003143715546e-06
+    },
+    {
+      "index": 141,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.525892903898,
+        545.9309873901009,
+        -1074.8225568200965
+      ],
+      "metal_point": [
+        341.5259094238281,
+        545.9309692382812,
+        -1074.822509765625
+      ],
+      "position_error": 5.1827046214826296e-08,
+      "threshold": 2.7736156692557783e-08,
+      "error_in_thresholds": 1.868573457718193,
+      "native_steps": 10,
+      "native_travel": 6.2406352558255e-06
+    },
+    {
+      "index": 142,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5263081786187,
+        545.9309231556352,
+        -1074.8225549474362
+      ],
+      "metal_point": [
+        341.52630615234375,
+        545.930908203125,
+        -1074.822509765625
+      ],
+      "position_error": 4.6518413114932256e-08,
+      "threshold": 2.8605241034030622e-08,
+      "error_in_thresholds": 1.6262199315010484,
+      "native_steps": 18,
+      "native_travel": 6.436179232656889e-06
+    },
+    {
+      "index": 143,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5266944106201,
+        545.9309386801777,
+        -1074.8225721632734
+      ],
+      "metal_point": [
+        341.5267028808594,
+        545.9309692382812,
+        -1074.8226318359375
+      ],
+      "position_error": 6.599113040326801e-08,
+      "threshold": 2.9185294826787315e-08,
+      "error_in_thresholds": 2.261108917861572,
+      "native_steps": 21,
+      "native_travel": 6.566691336027145e-06
+    },
+    {
+      "index": 144,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.527062346186,
+        545.9309845008062,
+        -1074.8225963796515
+      ],
+      "metal_point": [
+        341.5270690917969,
+        545.9309692382812,
+        -1074.8226318359375
+      ],
+      "position_error": 3.8268245443125714e-08,
+      "threshold": 2.969228958289273e-08,
+      "error_in_thresholds": 1.2888277051283388,
+      "native_steps": 23,
+      "native_travel": 6.680765156150862e-06
+    },
+    {
+      "index": 145,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52745531819323,
+        545.9309787153613,
+        -1074.8226084603555
+      ],
+      "metal_point": [
+        341.5268859863281,
+        545.931884765625,
+        -1074.8228759765625
+      ],
+      "position_error": 1.0771580764480017e-06,
+      "threshold": 3.053023124480597e-08,
+      "error_in_thresholds": 35.281687446479985,
+      "native_steps": 30,
+      "native_travel": 6.869302030081342e-06
+    },
+    {
+      "index": 146,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52600611119675,
+        545.9337308340918,
+        -1074.8232517142176
+      ],
+      "metal_point": [
+        341.5260314941406,
+        545.9337158203125,
+        -1074.8232421875
+      ],
+      "position_error": 3.0265021436800634e-08,
+      "threshold": 1.6785354594764418e-08,
+      "error_in_thresholds": 1.8030611903927671,
+      "native_steps": 12,
+      "native_travel": 3.7767047838219937e-06
+    },
+    {
+      "index": 147,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5194021257487,
+        545.9300970264021,
+        -1074.8215188882928
+      ],
+      "metal_point": [
+        341.5193786621094,
+        545.9300537109375,
+        -1074.821533203125
+      ],
+      "position_error": 5.00976207094193e-08,
+      "threshold": 3.692006939107676e-08,
+      "error_in_thresholds": 1.356921087519067,
+      "native_steps": 13,
+      "native_travel": 8.30701561299227e-06
+    },
+    {
+      "index": 148,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5197044824959,
+        545.9298363654159,
+        -1074.8214410078851
+      ],
+      "metal_point": [
+        341.5196838378906,
+        545.9298095703125,
+        -1074.8214111328125
+      ],
+      "position_error": 4.407205311638593e-08,
+      "threshold": 3.7268452886750645e-08,
+      "error_in_thresholds": 1.1825565512555538,
+      "native_steps": 11,
+      "native_travel": 8.385401899518894e-06
+    },
+    {
+      "index": 149,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5201822990267,
+        545.9298421358479,
+        -1074.8214594234769
+      ],
+      "metal_point": [
+        341.5201721191406,
+        545.9298095703125,
+        -1074.8214111328125
+      ],
+      "position_error": 5.774228710257211e-08,
+      "threshold": 3.625618256493384e-08,
+      "error_in_thresholds": 1.5926190519136214,
+      "native_steps": 10,
+      "native_travel": 8.157641077110112e-06
+    },
+    {
+      "index": 150,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5206547653819,
+        545.9298379525012,
+        -1074.8214742830496
+      ],
+      "metal_point": [
+        341.5206604003906,
+        545.9298095703125,
+        -1074.821533203125
+      ],
+      "position_error": 6.41035534042402e-08,
+      "threshold": 3.538827233550225e-08,
+      "error_in_thresholds": 1.8114349521361113,
+      "native_steps": 10,
+      "native_travel": 7.962361275488005e-06
+    },
+    {
+      "index": 151,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5211271292538,
+        545.9298320723624,
+        -1074.821488563902
+      ],
+      "metal_point": [
+        341.5211181640625,
+        545.9298095703125,
+        -1074.821533203125
+      ],
+      "position_error": 4.9597235058842707e-08,
+      "threshold": 3.4627793230197947e-08,
+      "error_in_thresholds": 1.4322955762479928,
+      "native_steps": 10,
+      "native_travel": 7.791253476794537e-06
+    },
+    {
+      "index": 152,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5216013753573,
+        545.9298295478178,
+        -1074.821504046947
+      ],
+      "metal_point": [
+        341.5215759277344,
+        545.9298095703125,
+        -1074.821533203125
+      ],
+      "position_error": 4.25311181924205e-08,
+      "threshold": 3.395712594208345e-08,
+      "error_in_thresholds": 1.2524946388266387,
+      "native_steps": 10,
+      "native_travel": 7.640353336968775e-06
+    },
+    {
+      "index": 153,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52171888564857,
+        545.9284408407277,
+        -1074.821037684396
+      ],
+      "metal_point": [
+        341.521728515625,
+        545.9284057617188,
+        -1074.821044921875
+      ],
+      "position_error": 3.622052299881203e-08,
+      "threshold": 3.9955198216999094e-08,
+      "error_in_thresholds": 0.9065284272173093,
+      "native_steps": 17,
+      "native_travel": 8.989919598824794e-06
+    },
+    {
+      "index": 154,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5220924592393,
+        545.9274153131794,
+        -1074.820703166955
+      ],
+      "metal_point": [
+        341.5220947265625,
+        545.9274291992188,
+        -1074.8206787109375
+      ],
+      "position_error": 2.7553250705296875e-08,
+      "threshold": 4.420173237499651e-08,
+      "error_in_thresholds": 0.6233522811174446,
+      "native_steps": 14,
+      "native_travel": 9.945389784374213e-06
+    },
+    {
+      "index": 155,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227341035784,
+        545.9274470229365,
+        -1074.8207360129104
+      ],
+      "metal_point": [
+        341.5227355957031,
+        545.9273681640625,
+        -1074.8206787109375
+      ],
+      "position_error": 9.520590170996745e-08,
+      "threshold": 4.361924668331459e-08,
+      "error_in_thresholds": 2.1826580913050475,
+      "native_steps": 12,
+      "native_travel": 9.81433050374578e-06
+    },
+    {
+      "index": 156,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52282936940713,
+        545.9177385738064,
+        -1074.8174506558064
+      ],
+      "metal_point": [
+        341.5228271484375,
+        545.917724609375,
+        -1074.8175048828125
+      ],
+      "position_error": 5.472677721300424e-08,
+      "threshold": 8.793340225638038e-08,
+      "error_in_thresholds": 0.6223661976985919,
+      "native_steps": 33,
+      "native_travel": 1.978501550768558e-05
+    },
+    {
+      "index": 157,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5241205614496,
+        545.917560344567,
+        -1074.8174347636636
+      ],
+      "metal_point": [
+        341.5241394042969,
+        545.917236328125,
+        -1074.8173828125
+      ],
+      "position_error": 3.2099154962185435e-07,
+      "threshold": 8.857169556625374e-08,
+      "error_in_thresholds": 3.6240872162342765,
+      "native_steps": 45,
+      "native_travel": 1.992863150240709e-05
+    },
+    {
+      "index": 158,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5252188955397,
+        545.9201281689463,
+        -1074.8183424262954
+      ],
+      "metal_point": [
+        341.5252380371094,
+        545.9200439453125,
+        -1074.818359375
+      ],
+      "position_error": 8.595569085186321e-08,
+      "threshold": 7.696142105567114e-08,
+      "error_in_thresholds": 1.116867252096163,
+      "native_steps": 38,
+      "native_travel": 1.7316319737526005e-05
+    },
+    {
+      "index": 159,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.525328706693,
+        545.9270904440277,
+        -1074.820704609439
+      ],
+      "metal_point": [
+        341.5253601074219,
+        545.9269409179688,
+        -1074.8206787109375
+      ],
+      "position_error": 1.5133499047632992e-07,
+      "threshold": 4.526642671599071e-08,
+      "error_in_thresholds": 3.34320602387795,
+      "native_steps": 22,
+      "native_travel": 1.0184946011097908e-05
+    },
+    {
+      "index": 160,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52592741188045,
+        545.9273756000579,
+        -1074.8208218287268
+      ],
+      "metal_point": [
+        341.5252685546875,
+        545.9305419921875,
+        -1074.8218994140625
+      ],
+      "position_error": 3.329107445781146e-06,
+      "threshold": 4.438701070611965e-08,
+      "error_in_thresholds": 75.00183934040328,
+      "native_steps": 33,
+      "native_travel": 9.987077408876919e-06
+    },
+    {
+      "index": 161,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52556497418055,
+        545.9309456592398,
+        -1074.8220186643123
+      ],
+      "metal_point": [
+        341.5256042480469,
+        545.9308471679688,
+        -1074.822021484375
+      ],
+      "position_error": 1.0358432917670503e-07,
+      "threshold": 2.810967821384769e-08,
+      "error_in_thresholds": 3.685005868394332,
+      "native_steps": 8,
+      "native_travel": 6.324677598115729e-06
+    },
+    {
+      "index": 162,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5259515554357,
+        545.9309845020365,
+        -1074.8220451397654
+      ],
+      "metal_point": [
+        341.52593994140625,
+        545.9309692382812,
+        -1074.822021484375
+      ],
+      "position_error": 2.97402228489244e-08,
+      "threshold": 2.840211678301758e-08,
+      "error_in_thresholds": 1.0471128992296415,
+      "native_steps": 9,
+      "native_travel": 6.390476276178954e-06
+    },
+    {
+      "index": 163,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52634904934627,
+        545.930984498893,
+        -1074.8220588322004
+      ],
+      "metal_point": [
+        341.5263671875,
+        545.9309692382812,
+        -1074.822021484375
+      ],
+      "position_error": 4.3198283330335215e-08,
+      "threshold": 2.8973445377153848e-08,
+      "error_in_thresholds": 1.4909612152787994,
+      "native_steps": 11,
+      "native_travel": 6.519025209859615e-06
+    },
+    {
+      "index": 164,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52674471337195,
+        545.930988286248,
+        -1074.82207374582
+      ],
+      "metal_point": [
+        341.5267639160156,
+        545.9309692382812,
+        -1074.822021484375
+      ],
+      "position_error": 5.74665768265701e-08,
+      "threshold": 2.9615430391671994e-08,
+      "error_in_thresholds": 1.94042686756732,
+      "native_steps": 13,
+      "native_travel": 6.663471838126197e-06
+    },
+    {
+      "index": 165,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5271424766308,
+        545.9309873315246,
+        -1074.8220871253295
+      ],
+      "metal_point": [
+        341.52716064453125,
+        545.9309692382812,
+        -1074.822021484375
+      ],
+      "position_error": 6.881941307505398e-08,
+      "threshold": 3.0364681653932426e-08,
+      "error_in_thresholds": 2.266429592754891,
+      "native_steps": 15,
+      "native_travel": 6.832053372134794e-06
+    },
+    {
+      "index": 166,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52585666587277,
+        545.9337131437909,
+        -1074.8229661705768
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.9337158203125,
+        -1074.822998046875
+      ],
+      "position_error": 3.8047062154449844e-08,
+      "threshold": 1.6784157306140385e-08,
+      "error_in_thresholds": 2.2668437539327964,
+      "native_steps": 8,
+      "native_travel": 3.776435393881586e-06
+    },
+    {
+      "index": 167,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52586084822394,
+        545.934019280199,
+        -1074.823070015409
+      ],
+      "metal_point": [
+        341.52587890625,
+        545.9340209960938,
+        -1074.8231201171875
+      ],
+      "position_error": 5.203552417149859e-08,
+      "threshold": 1.5601367822180352e-08,
+      "error_in_thresholds": 3.335318080092956,
+      "native_steps": 8,
+      "native_travel": 3.5103077599905787e-06
+    },
+    {
+      "index": 168,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51935165485776,
+        545.9301331815365,
+        -1074.8209178389598
+      ],
+      "metal_point": [
+        341.5193176269531,
+        545.9301147460938,
+        -1074.8209228515625
+      ],
+      "position_error": 3.8109593363651223e-08,
+      "threshold": 3.774746131224429e-08,
+      "error_in_thresholds": 1.0095935471901383,
+      "native_steps": 13,
+      "native_travel": 8.493178795254963e-06
+    },
+    {
+      "index": 169,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51963812916784,
+        545.9298385823655,
+        -1074.8208012503412
+      ],
+      "metal_point": [
+        341.5196228027344,
+        545.9298095703125,
+        -1074.82080078125
+      ],
+      "position_error": 3.204581814683246e-08,
+      "threshold": 3.831040401369616e-08,
+      "error_in_thresholds": 0.8364782092972949,
+      "native_steps": 9,
+      "native_travel": 8.619840903081634e-06
+    },
+    {
+      "index": 170,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5201142742186,
+        545.9298228047334,
+        -1074.8208108806778
+      ],
+      "metal_point": [
+        341.5201110839844,
+        545.9298095703125,
+        -1074.82080078125
+      ],
+      "position_error": 1.655340933981557e-08,
+      "threshold": 3.7398322878900714e-08,
+      "error_in_thresholds": 0.44262437632342677,
+      "native_steps": 10,
+      "native_travel": 8.414622647752659e-06
+    },
+    {
+      "index": 171,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52051643592364,
+        545.9296437184845,
+        -1074.8207478616332
+      ],
+      "metal_point": [
+        341.5205078125,
+        545.9296264648438,
+        -1074.82080078125
+      ],
+      "position_error": 5.500515823229042e-08,
+      "threshold": 3.7420111771004076e-08,
+      "error_in_thresholds": 1.4699357011250982,
+      "native_steps": 10,
+      "native_travel": 8.419525148475915e-06
+    },
+    {
+      "index": 172,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52060582823,
+        545.9286160385437,
+        -1074.8203098048675
+      ],
+      "metal_point": [
+        341.5205993652344,
+        545.9285888671875,
+        -1074.8203125
+      ],
+      "position_error": 2.7401526762316335e-08,
+      "threshold": 4.178941479810889e-08,
+      "error_in_thresholds": 0.6557049648744147,
+      "native_steps": 14,
+      "native_travel": 9.402618329574499e-06
+    },
+    {
+      "index": 173,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52117555837594,
+        545.9286194553408,
+        -1074.8203308991308
+      ],
+      "metal_point": [
+        341.52117919921875,
+        545.9285888671875,
+        -1074.8203125
+      ],
+      "position_error": 3.503966772960717e-08,
+      "threshold": 4.096208639616632e-08,
+      "error_in_thresholds": 0.8554170652031672,
+      "native_steps": 14,
+      "native_travel": 9.21646943913742e-06
+    },
+    {
+      "index": 174,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5217032952424,
+        545.9284632468679,
+        -1074.820282026246
+      ],
+      "metal_point": [
+        341.5216979980469,
+        545.928466796875,
+        -1074.8203125
+      ],
+      "position_error": 3.04040859579433e-08,
+      "threshold": 4.1048138745327176e-08,
+      "error_in_thresholds": 0.7406934123512343,
+      "native_steps": 13,
+      "native_travel": 9.235831217698613e-06
+    },
+    {
+      "index": 175,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5220797290318,
+        545.9274043779187,
+        -1074.8198404705292
+      ],
+      "metal_point": [
+        341.5220947265625,
+        545.9274291992188,
+        -1074.81982421875
+      ],
+      "position_error": 3.2464544916371865e-08,
+      "threshold": 4.559515554439171e-08,
+      "error_in_thresholds": 0.7120174178321247,
+      "native_steps": 13,
+      "native_travel": 1.0258909997488132e-05
+    },
+    {
+      "index": 176,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227349223543,
+        545.9274313999584,
+        -1074.8198746410856
+      ],
+      "metal_point": [
+        341.5227355957031,
+        545.9273681640625,
+        -1074.81982421875
+      ],
+      "position_error": 7.898479431867198e-08,
+      "threshold": 4.502493717906997e-08,
+      "error_in_thresholds": 1.754245519644798,
+      "native_steps": 11,
+      "native_travel": 1.013061086529074e-05
+    },
+    {
+      "index": 177,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5233794054387,
+        545.9273287564971,
+        -1074.8198527834875
+      ],
+      "metal_point": [
+        341.52337646484375,
+        545.9273071289062,
+        -1074.81982421875
+      ],
+      "position_error": 3.510662746546038e-08,
+      "threshold": 4.5244395646384045e-08,
+      "error_in_thresholds": 0.7759331728031629,
+      "native_steps": 9,
+      "native_travel": 1.0179989020436409e-05
+    },
+    {
+      "index": 178,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5240369622582,
+        545.9272961608008,
+        -1074.8198614442945
+      ],
+      "metal_point": [
+        341.5240478515625,
+        545.9273071289062,
+        -1074.81982421875
+      ],
+      "position_error": 3.936185886360849e-08,
+      "threshold": 4.530826148412626e-08,
+      "error_in_thresholds": 0.8687567691688834,
+      "native_steps": 10,
+      "native_travel": 1.0194358833928406e-05
+    },
+    {
+      "index": 179,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52470082997024,
+        545.9272416408756,
+        -1074.8198609118122
+      ],
+      "metal_point": [
+        341.5246887207031,
+        545.92724609375,
+        -1074.81982421875
+      ],
+      "position_error": 3.7983677452229445e-08,
+      "threshold": 4.5656647331640616e-08,
+      "error_in_thresholds": 0.8319418895637195,
+      "native_steps": 12,
+      "native_travel": 1.0272745649619136e-05
+    },
+    {
+      "index": 180,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52534665593316,
+        545.9273548745051,
+        -1074.8199317663207
+      ],
+      "metal_point": [
+        341.5253601074219,
+        545.9273071289062,
+        -1074.8199462890625
+      ],
+      "position_error": 5.0475102447076986e-08,
+      "threshold": 4.538922831209418e-08,
+      "error_in_thresholds": 1.1120502446089757,
+      "native_steps": 15,
+      "native_travel": 1.021257637022119e-05
+    },
+    {
+      "index": 181,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52526531634686,
+        545.9306888068571,
+        -1074.8213600693339
+      ],
+      "metal_point": [
+        341.5252685546875,
+        545.9307250976562,
+        -1074.8214111328125
+      ],
+      "position_error": 6.125925889879392e-08,
+      "threshold": 2.9807092747298325e-08,
+      "error_in_thresholds": 2.0551906694874282,
+      "native_steps": 14,
+      "native_travel": 6.706595868142122e-06
+    },
+    {
+      "index": 182,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52560535018273,
+        545.930986113382,
+        -1074.8214994035484
+      ],
+      "metal_point": [
+        341.5256042480469,
+        545.9309692382812,
+        -1074.821533203125
+      ],
+      "position_error": 3.690831516514704e-08,
+      "threshold": 2.8758316978080482e-08,
+      "error_in_thresholds": 1.2833962151984926,
+      "native_steps": 8,
+      "native_travel": 6.470621320068107e-06
+    },
+    {
+      "index": 183,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52745453341043,
+        545.9269585642668,
+        -1074.8198342652393
+      ],
+      "metal_point": [
+        341.5274658203125,
+        545.9269409179688,
+        -1074.81982421875
+      ],
+      "position_error": 2.268733427117562e-08,
+      "threshold": 4.918844358623317e-08,
+      "error_in_thresholds": 0.4612330176985989,
+      "native_steps": 24,
+      "native_travel": 1.1067399806902462e-05
+    },
+    {
+      "index": 184,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5279159950995,
+        545.9274761102843,
+        -1074.8200723210302
+      ],
+      "metal_point": [
+        341.5279235839844,
+        545.9274291992188,
+        -1074.820068359375
+      ],
+      "position_error": 4.656814800590819e-08,
+      "threshold": 4.754711134404798e-08,
+      "error_in_thresholds": 0.9794106663797918,
+      "native_steps": 20,
+      "native_travel": 1.0698100052410794e-05
+    },
+    {
+      "index": 185,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52856872443186,
+        545.9274644516396,
+        -1074.820089803407
+      ],
+      "metal_point": [
+        341.5285949707031,
+        545.9274291992188,
+        -1074.820068359375
+      ],
+      "position_error": 4.775626709337168e-08,
+      "threshold": 4.867448582411952e-08,
+      "error_in_thresholds": 0.9811355227445909,
+      "native_steps": 22,
+      "native_travel": 1.095175931042689e-05
+    },
+    {
+      "index": 186,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5290617535325,
+        545.9277385000529,
+        -1074.8202244246058
+      ],
+      "metal_point": [
+        341.529052734375,
+        545.9277954101562,
+        -1074.8201904296875
+      ],
+      "position_error": 6.533312267679436e-08,
+      "threshold": 4.842863585166605e-08,
+      "error_in_thresholds": 1.3490597355850724,
+      "native_steps": 29,
+      "native_travel": 1.089644306662486e-05
+    },
+    {
+      "index": 187,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52986515261387,
+        545.9274629841416,
+        -1074.8201338355182
+      ],
+      "metal_point": [
+        341.5296936035156,
+        545.927734375,
+        -1074.8201904296875
+      ],
+      "position_error": 3.1837284160430326e-07,
+      "threshold": 5.121769017001013e-08,
+      "error_in_thresholds": 6.216071840559542,
+      "native_steps": 46,
+      "native_travel": 1.1523980288252277e-05
+    },
+    {
+      "index": 188,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52970117376987,
+        545.928619398099,
+        -1074.8206245816036
+      ],
+      "metal_point": [
+        341.530517578125,
+        545.9274291992188,
+        -1074.8201904296875
+      ],
+      "position_error": 1.4718508617623324e-06,
+      "threshold": 4.6204763146460854e-08,
+      "error_in_thresholds": 31.85495956546358,
+      "native_steps": 38,
+      "native_travel": 1.0396071707953689e-05
+    },
+    {
+      "index": 189,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51944937512405,
+        545.9303894733343,
+        -1074.820417640494
+      ],
+      "metal_point": [
+        341.51947021484375,
+        545.930419921875,
+        -1074.8204345703125
+      ],
+      "position_error": 3.9644423986619107e-08,
+      "threshold": 3.750518109267848e-08,
+      "error_in_thresholds": 1.05703859657828,
+      "native_steps": 11,
+      "native_travel": 8.438665745852656e-06
+    },
+    {
+      "index": 190,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.519565931564,
+        545.9298359327538,
+        -1074.8201317947787
+      ],
+      "metal_point": [
+        341.5195617675781,
+        545.9298095703125,
+        -1074.8201904296875
+      ],
+      "position_error": 6.291343980419506e-08,
+      "threshold": 3.9604944460561306e-08,
+      "error_in_thresholds": 1.588524883978676,
+      "native_steps": 11,
+      "native_travel": 8.911112503626291e-06
+    },
+    {
+      "index": 191,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5200625440977,
+        545.9298386086862,
+        -1074.8201503041223
+      ],
+      "metal_point": [
+        341.5200500488281,
+        545.9298095703125,
+        -1074.8201904296875
+      ],
+      "position_error": 4.988523557984153e-08,
+      "threshold": 3.8585096680998676e-08,
+      "error_in_thresholds": 1.2928627856570238,
+      "native_steps": 10,
+      "native_travel": 8.6816467532247e-06
+    },
+    {
+      "index": 192,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5193704577985,
+        545.9273309332006,
+        -1074.818813320855
+      ],
+      "metal_point": [
+        341.5204772949219,
+        545.9296875,
+        -1074.820068359375
+      ],
+      "position_error": 2.822521949947616e-06,
+      "threshold": 5.1075647620810316e-08,
+      "error_in_thresholds": 55.26159885239721,
+      "native_steps": 36,
+      "native_travel": 1.149202071468232e-05
+    },
+    {
+      "index": 193,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51865210642046,
+        545.9238848624235,
+        -1074.8169840432436
+      ],
+      "metal_point": [
+        341.5200500488281,
+        545.9273071289062,
+        -1074.81884765625
+      ],
+      "position_error": 4.042922078984481e-06,
+      "threshold": 6.800304950516548e-08,
+      "error_in_thresholds": 59.4520702880741,
+      "native_steps": 36,
+      "native_travel": 1.530068613866223e-05
+    },
+    {
+      "index": 194,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5207233748698,
+        545.9273636861958,
+        -1074.8188770798793
+      ],
+      "metal_point": [
+        341.5207214355469,
+        545.9273071289062,
+        -1074.81884765625
+      ],
+      "position_error": 6.228783212260092e-08,
+      "threshold": 4.8871921362064915e-08,
+      "error_in_thresholds": 1.2745116293084728,
+      "native_steps": 18,
+      "native_travel": 1.0996182306464603e-05
+    },
+    {
+      "index": 195,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5214000059996,
+        545.9273938466641,
+        -1074.8189161835091
+      ],
+      "metal_point": [
+        341.5213928222656,
+        545.9273681640625,
+        -1074.8189697265625
+      ],
+      "position_error": 5.841493404028347e-08,
+      "threshold": 4.793683732387522e-08,
+      "error_in_thresholds": 1.2185813103525203,
+      "native_steps": 17,
+      "native_travel": 1.0785788397871922e-05
+    },
+    {
+      "index": 196,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5220923239142,
+        545.9275274490736,
+        -1074.8190099946241
+      ],
+      "metal_point": [
+        341.5220947265625,
+        545.927490234375,
+        -1074.8189697265625
+      ],
+      "position_error": 5.359738797794322e-08,
+      "threshold": 4.665521396864525e-08,
+      "error_in_thresholds": 1.1487973887326608,
+      "native_steps": 12,
+      "native_travel": 1.0497423142945179e-05
+    },
+    {
+      "index": 197,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52274922363205,
+        545.9275249122705,
+        -1074.81903129658
+      ],
+      "metal_point": [
+        341.5227355957031,
+        545.927490234375,
+        -1074.8189697265625
+      ],
+      "position_error": 7.027956009112294e-08,
+      "threshold": 4.622916079838711e-08,
+      "error_in_thresholds": 1.5202430430788811,
+      "native_steps": 10,
+      "native_travel": 1.0401561179637098e-05
+    },
+    {
+      "index": 198,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52340764417306,
+        545.9275446915324,
+        -1074.8190643365597
+      ],
+      "metal_point": [
+        341.5234069824219,
+        545.927490234375,
+        -1074.819091796875
+      ],
+      "position_error": 5.956301842584272e-08,
+      "threshold": 4.586685371967739e-08,
+      "error_in_thresholds": 1.2986070243638606,
+      "native_steps": 9,
+      "native_travel": 1.032004208692741e-05
+    },
+    {
+      "index": 199,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5240649801139,
+        545.927470543607,
+        -1074.8190481541048
+      ],
+      "metal_point": [
+        341.5240783691406,
+        545.9274291992188,
+        -1074.8189697265625
+      ],
+      "position_error": 8.756179739113437e-08,
+      "threshold": 4.6141521635696903e-08,
+      "error_in_thresholds": 1.8976790163632815,
+      "native_steps": 10,
+      "native_travel": 1.0381842368031802e-05
+    },
+    {
+      "index": 200,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5247279906028,
+        545.9274500766204,
+        -1074.8190602775032
+      ],
+      "metal_point": [
+        341.5247497558594,
+        545.9273681640625,
+        -1074.8189697265625
+      ],
+      "position_error": 1.2112078518212006e-07,
+      "threshold": 4.633124205088499e-08,
+      "error_in_thresholds": 2.614235660876406,
+      "native_steps": 12,
+      "native_travel": 1.042452946144912e-05
+    },
+    {
+      "index": 201,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5252522596485,
+        545.9283235595875,
+        -1074.8195357366744
+      ],
+      "metal_point": [
+        341.5252685546875,
+        545.9282836914062,
+        -1074.8194580078125
+      ],
+      "position_error": 8.678106127750005e-08,
+      "threshold": 4.228662656583775e-08,
+      "error_in_thresholds": 2.052210552723735,
+      "native_steps": 21,
+      "native_travel": 9.514490977313492e-06
+    },
+    {
+      "index": 202,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52526962094026,
+        545.9308779331675,
+        -1074.8208739291258
+      ],
+      "metal_point": [
+        341.5252685546875,
+        545.9308471679688,
+        -1074.8209228515625
+      ],
+      "position_error": 5.6446994936914135e-08,
+      "threshold": 2.99585441830753e-08,
+      "error_in_thresholds": 1.8841701583351018,
+      "native_steps": 8,
+      "native_travel": 6.740672441191943e-06
+    },
+    {
+      "index": 203,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52566209678,
+        545.9309767794795,
+        -1074.820939210653
+      ],
+      "metal_point": [
+        341.5256652832031,
+        545.9309692382812,
+        -1074.8209228515625
+      ],
+      "position_error": 1.7864496878394583e-08,
+      "threshold": 2.984942664833401e-08,
+      "error_in_thresholds": 0.5984871029136386,
+      "native_steps": 9,
+      "native_travel": 6.716120995875149e-06
+    },
+    {
+      "index": 204,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5268855392616,
+        545.9287861338263,
+        -1074.8198342292603
+      ],
+      "metal_point": [
+        341.5268859863281,
+        545.9288330078125,
+        -1074.81982421875
+      ],
+      "position_error": 4.680965465183283e-08,
+      "threshold": 4.157420763971996e-08,
+      "error_in_thresholds": 1.125930169433005,
+      "native_steps": 18,
+      "native_travel": 9.35419671893699e-06
+    },
+    {
+      "index": 205,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52762916794876,
+        545.9283881999835,
+        -1074.8196514699832
+      ],
+      "metal_point": [
+        341.5276184082031,
+        545.928466796875,
+        -1074.8197021484375
+      ],
+      "position_error": 9.192949409283256e-08,
+      "threshold": 4.445474318092049e-08,
+      "error_in_thresholds": 2.0679344320740047,
+      "native_steps": 20,
+      "native_travel": 1.0002317215707108e-05
+    },
+    {
+      "index": 206,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52810111154275,
+        545.9286332766884,
+        -1074.819796062389
+      ],
+      "metal_point": [
+        341.5281066894531,
+        545.9285888671875,
+        -1074.81982421875
+      ],
+      "position_error": 5.1638806986995316e-08,
+      "threshold": 4.411675890285206e-08,
+      "error_in_thresholds": 1.1705031890648923,
+      "native_steps": 18,
+      "native_travel": 9.926270753141711e-06
+    },
+    {
+      "index": 207,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52870823447483,
+        545.9285857621658,
+        -1074.8197920968391
+      ],
+      "metal_point": [
+        341.5287170410156,
+        545.9285888671875,
+        -1074.81982421875
+      ],
+      "position_error": 3.26676355712143e-08,
+      "threshold": 4.544099338896127e-08,
+      "error_in_thresholds": 0.7189023200172835,
+      "native_steps": 19,
+      "native_travel": 1.0224223512516284e-05
+    },
+    {
+      "index": 208,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5287949349263,
+        545.9293494052316,
+        -1074.8201949646334
+      ],
+      "metal_point": [
+        341.52880859375,
+        545.9293212890625,
+        -1074.8201904296875
+      ],
+      "position_error": 3.084528217366599e-08,
+      "threshold": 4.233668119415726e-08,
+      "error_in_thresholds": 0.728571094937948,
+      "native_steps": 16,
+      "native_travel": 9.525753268685382e-06
+    },
+    {
+      "index": 209,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52931352496586,
+        545.9293642960968,
+        -1074.820220627971
+      ],
+      "metal_point": [
+        341.5293273925781,
+        545.9293212890625,
+        -1074.8201904296875
+      ],
+      "position_error": 5.307553838347915e-08,
+      "threshold": 4.3420321906512124e-08,
+      "error_in_thresholds": 1.2223663034501582,
+      "native_steps": 24,
+      "native_travel": 9.769572428965225e-06
+    },
+    {
+      "index": 210,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51945303506545,
+        545.9305066685175,
+        -1074.8198502257037
+      ],
+      "metal_point": [
+        341.51947021484375,
+        545.9305419921875,
+        -1074.81982421875
+      ],
+      "position_error": 4.6004988564460126e-08,
+      "threshold": 3.820587747093659e-08,
+      "error_in_thresholds": 1.204133803744106,
+      "native_steps": 11,
+      "native_travel": 8.59632243096073e-06
+    },
+    {
+      "index": 211,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5194553488804,
+        545.9297768310222,
+        -1074.8193962167443
+      ],
+      "metal_point": [
+        341.51947021484375,
+        545.9298095703125,
+        -1074.8194580078125
+      ],
+      "position_error": 6.981564159856077e-08,
+      "threshold": 4.1464237639999215e-08,
+      "error_in_thresholds": 1.6837555824543093,
+      "native_steps": 13,
+      "native_travel": 9.329453468999821e-06
+    },
+    {
+      "index": 212,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5181946582766,
+        545.9265713908396,
+        -1074.8173584318897
+      ],
+      "metal_point": [
+        341.5181579589844,
+        545.926513671875,
+        -1074.8172607421875
+      ],
+      "position_error": 1.1645930510351503e-07,
+      "threshold": 5.867200700061026e-08,
+      "error_in_thresholds": 1.9849211073059716,
+      "native_steps": 32,
+      "native_travel": 1.3201201575137305e-05
+    },
+    {
+      "index": 213,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5193253335254,
+        545.927383649969,
+        -1074.8179027536446
+      ],
+      "metal_point": [
+        341.5193176269531,
+        545.9273681640625,
+        -1074.81787109375
+      ],
+      "position_error": 3.5231493400859515e-08,
+      "threshold": 5.28223931870536e-08,
+      "error_in_thresholds": 0.6669802573332575,
+      "native_steps": 15,
+      "native_travel": 1.1885038467087057e-05
+    },
+    {
+      "index": 214,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51933571502565,
+        545.9257417693334,
+        -1074.8168815695408
+      ],
+      "metal_point": [
+        341.5193176269531,
+        545.9257202148438,
+        -1074.81689453125
+      ],
+      "position_error": 3.025421985543628e-08,
+      "threshold": 6.066707106774993e-08,
+      "error_in_thresholds": 0.4986926074220707,
+      "native_steps": 19,
+      "native_travel": 1.365009099024373e-05
+    },
+    {
+      "index": 215,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5198497870448,
+        545.9248948829406,
+        -1074.8163723656826
+      ],
+      "metal_point": [
+        341.51983642578125,
+        545.9248046875,
+        -1074.8162841796875
+      ],
+      "position_error": 1.2387536760892174e-07,
+      "threshold": 6.408848782086041e-08,
+      "error_in_thresholds": 1.9328801758465124,
+      "native_steps": 22,
+      "native_travel": 1.4419909759693591e-05
+    },
+    {
+      "index": 216,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51966490034545,
+        545.9209581428894,
+        -1074.8139166436163
+      ],
+      "metal_point": [
+        341.51971435546875,
+        545.921142578125,
+        -1074.8140869140625
+      ],
+      "position_error": 2.4984391149303624e-07,
+      "threshold": 8.381024895492002e-08,
+      "error_in_thresholds": 2.9810663326799407,
+      "native_steps": 30,
+      "native_travel": 1.8857306014857e-05
+    },
+    {
+      "index": 217,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5220832565511,
+        545.927539701081,
+        -1074.8180948555548
+      ],
+      "metal_point": [
+        341.5220642089844,
+        545.927490234375,
+        -1074.818115234375
+      ],
+      "position_error": 5.545861473040303e-08,
+      "threshold": 4.8579399371174787e-08,
+      "error_in_thresholds": 1.1416076659710641,
+      "native_steps": 12,
+      "native_travel": 1.0930364858514324e-05
+    },
+    {
+      "index": 218,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227531013581,
+        545.9275324872542,
+        -1074.818113443196
+      ],
+      "metal_point": [
+        341.5227355957031,
+        545.927490234375,
+        -1074.818115234375
+      ],
+      "position_error": 4.469800364197034e-08,
+      "threshold": 4.8177917977183755e-08,
+      "error_in_thresholds": 0.9277695159666002,
+      "native_steps": 17,
+      "native_travel": 1.0840031544866343e-05
+    },
+    {
+      "index": 219,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5234704957037,
+        545.9284495113675,
+        -1074.818708709246
+      ],
+      "metal_point": [
+        341.5234680175781,
+        545.9284057617188,
+        -1074.8187255859375
+      ],
+      "position_error": 4.5856816919391616e-08,
+      "threshold": 4.321706051105371e-08,
+      "error_in_thresholds": 1.0610813502149858,
+      "native_steps": 9,
+      "native_travel": 9.723838614987083e-06
+    },
+    {
+      "index": 220,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52407626238835,
+        545.9284351728741,
+        -1074.8187206574696
+      ],
+      "metal_point": [
+        341.5240783691406,
+        545.928466796875,
+        -1074.8187255859375
+      ],
+      "position_error": 3.1323242359711976e-08,
+      "threshold": 4.321027802025741e-08,
+      "error_in_thresholds": 0.7249025878756745,
+      "native_steps": 10,
+      "native_travel": 9.722312554557915e-06
+    },
+    {
+      "index": 221,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5246790330121,
+        545.9284750864203,
+        -1074.818766255663
+      ],
+      "metal_point": [
+        341.5246887207031,
+        545.928466796875,
+        -1074.8187255859375
+      ],
+      "position_error": 4.162258406439029e-08,
+      "threshold": 4.308610532839556e-08,
+      "error_in_thresholds": 0.9660326396909041,
+      "native_steps": 13,
+      "native_travel": 9.694373698888998e-06
+    },
+    {
+      "index": 222,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5252516245662,
+        545.9286633048814,
+        -1074.8189030872602
+      ],
+      "metal_point": [
+        341.5252685546875,
+        545.9286499023438,
+        -1074.81884765625
+      ],
+      "position_error": 5.809401077775264e-08,
+      "threshold": 4.235559195926972e-08,
+      "error_in_thresholds": 1.3715782991208672,
+      "native_steps": 24,
+      "native_travel": 9.530008190835685e-06
+    },
+    {
+      "index": 223,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5253052295609,
+        545.9309307677721,
+        -1074.8203156991437
+      ],
+      "metal_point": [
+        341.5252990722656,
+        545.930908203125,
+        -1074.8203125
+      ],
+      "position_error": 2.3054117494802174e-08,
+      "threshold": 3.096047845959811e-08,
+      "error_in_thresholds": 0.7446305303352031,
+      "native_steps": 9,
+      "native_travel": 6.966107653409573e-06
+    },
+    {
+      "index": 224,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52571512380047,
+        545.9309877504537,
+        -1074.8203652732325
+      ],
+      "metal_point": [
+        341.5257263183594,
+        545.9309692382812,
+        -1074.8203125
+      ],
+      "position_error": 5.569859764246677e-08,
+      "threshold": 3.1047884586727564e-08,
+      "error_in_thresholds": 1.7939578938745786,
+      "native_steps": 9,
+      "native_travel": 6.9857740320137e-06
+    },
+    {
+      "index": 225,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5266913083227,
+        545.9295333282748,
+        -1074.8194939936393
+      ],
+      "metal_point": [
+        341.5267333984375,
+        545.929443359375,
+        -1074.8194580078125
+      ],
+      "position_error": 1.0316938164135927e-07,
+      "threshold": 3.930509866298885e-08,
+      "error_in_thresholds": 2.6248345672900553,
+      "native_steps": 20,
+      "native_travel": 8.84364719917249e-06
+    },
+    {
+      "index": 226,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5269674187598,
+        545.93009018546,
+        -1074.8198499698428
+      ],
+      "metal_point": [
+        341.5269470214844,
+        545.9301147460938,
+        -1074.81982421875
+      ],
+      "position_error": 4.00556410531546e-08,
+      "threshold": 3.700286884067345e-08,
+      "error_in_thresholds": 1.082500960280289,
+      "native_steps": 13,
+      "native_travel": 8.325645489151525e-06
+    },
+    {
+      "index": 227,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5275580467823,
+        545.9298937160615,
+        -1074.8197480781405
+      ],
+      "metal_point": [
+        341.527587890625,
+        545.9298706054688,
+        -1074.8197021484375
+      ],
+      "position_error": 5.805655490304293e-08,
+      "threshold": 3.887460021034961e-08,
+      "error_in_thresholds": 1.4934315617112508,
+      "native_steps": 15,
+      "native_travel": 8.746785047328662e-06
+    },
+    {
+      "index": 228,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52842771450656,
+        545.9292758562433,
+        -1074.819393619194
+      ],
+      "metal_point": [
+        341.5279541015625,
+        545.9300537109375,
+        -1074.81982421875
+      ],
+      "position_error": 9.83754340175706e-07,
+      "threshold": 4.329378963286136e-08,
+      "error_in_thresholds": 22.72275881871531,
+      "native_steps": 32,
+      "native_travel": 9.741102667393805e-06
+    },
+    {
+      "index": 229,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52849492803085,
+        545.9299939149197,
+        -1074.819842695133
+      ],
+      "metal_point": [
+        341.5285339355469,
+        545.929931640625,
+        -1074.81982421875
+      ],
+      "position_error": 7.399386942517177e-08,
+      "threshold": 4.019874466133305e-08,
+      "error_in_thresholds": 1.840700998216645,
+      "native_steps": 14,
+      "native_travel": 9.044717548799934e-06
+    },
+    {
+      "index": 230,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52879422844103,
+        545.9302583700218,
+        -1074.820017544132
+      ],
+      "metal_point": [
+        341.52880859375,
+        545.9302368164062,
+        -1074.820068359375
+      ],
+      "position_error": 5.569925354376192e-08,
+      "threshold": 3.969208934427123e-08,
+      "error_in_thresholds": 1.403283487060905,
+      "native_steps": 14,
+      "native_travel": 8.930720102461024e-06
+    },
+    {
+      "index": 231,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5194473003966,
+        545.9306113839749,
+        -1074.8192688841284
+      ],
+      "metal_point": [
+        341.51947021484375,
+        545.9306640625,
+        -1074.8193359375
+      ],
+      "position_error": 8.62269491576438e-08,
+      "threshold": 3.9145559855398166e-08,
+      "error_in_thresholds": 2.202726170634985,
+      "native_steps": 12,
+      "native_travel": 8.807750967464585e-06
+    },
+    {
+      "index": 232,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5179430633086,
+        545.9275179947989,
+        -1074.8169739859682
+      ],
+      "metal_point": [
+        341.5179138183594,
+        545.927490234375,
+        -1074.81689453125
+      ],
+      "position_error": 8.701254312412509e-08,
+      "threshold": 5.696609361282262e-08,
+      "error_in_thresholds": 1.5274444429262963,
+      "native_steps": 24,
+      "native_travel": 1.2817371062885087e-05
+    },
+    {
+      "index": 233,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51861379616474,
+        545.9274884405074,
+        -1074.8169756621746
+      ],
+      "metal_point": [
+        341.5185852050781,
+        545.9274291992188,
+        -1074.81689453125
+      ],
+      "position_error": 1.019991713545093e-07,
+      "threshold": 5.579610187158583e-08,
+      "error_in_thresholds": 1.8280698459770428,
+      "native_steps": 19,
+      "native_travel": 1.2554122921106808e-05
+    },
+    {
+      "index": 234,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51927868167684,
+        545.9274380377716,
+        -1074.8169620188887
+      ],
+      "metal_point": [
+        341.519287109375,
+        545.9274291992188,
+        -1074.8170166015625
+      ],
+      "position_error": 5.4621318684784394e-08,
+      "threshold": 5.4870140965747685e-08,
+      "error_in_thresholds": 0.9954652516544724,
+      "native_steps": 15,
+      "native_travel": 1.2345781717293227e-05
+    },
+    {
+      "index": 235,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51994240288434,
+        545.9273670190519,
+        -1074.8169333878413
+      ],
+      "metal_point": [
+        341.5199279785156,
+        545.9273681640625,
+        -1074.81689453125
+      ],
+      "position_error": 4.0491538130852285e-08,
+      "threshold": 5.418995926592227e-08,
+      "error_in_thresholds": 0.7472147733522226,
+      "native_steps": 12,
+      "native_travel": 1.2192740834832509e-05
+    },
+    {
+      "index": 236,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52038371634217,
+        545.9266147462378,
+        -1074.8164031034034
+      ],
+      "metal_point": [
+        341.5199890136719,
+        545.9254760742188,
+        -1074.8155517578125
+      ],
+      "position_error": 1.4409355838423311e-06,
+      "threshold": 5.74545707410674e-08,
+      "error_in_thresholds": 25.079563997375384,
+      "native_steps": 15,
+      "native_travel": 1.2927278416740163e-05
+    },
+    {
+      "index": 237,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5196795248573,
+        545.9211837550238,
+        -1074.812440725748
+      ],
+      "metal_point": [
+        341.5196838378906,
+        545.9212036132812,
+        -1074.8125
+      ],
+      "position_error": 6.11922945250977e-08,
+      "threshold": 8.653146976494994e-08,
+      "error_in_thresholds": 0.7071680937734861,
+      "native_steps": 39,
+      "native_travel": 1.9469580697113732e-05
+    },
+    {
+      "index": 238,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52206920654055,
+        545.9275288791675,
+        -1074.8171240241707
+      ],
+      "metal_point": [
+        341.5220642089844,
+        545.927490234375,
+        -1074.817138671875
+      ],
+      "position_error": 4.0653052410560764e-08,
+      "threshold": 5.0966210304732764e-08,
+      "error_in_thresholds": 0.7976471502882311,
+      "native_steps": 14,
+      "native_travel": 1.146739731856487e-05
+    },
+    {
+      "index": 239,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5227558485784,
+        545.927529729173,
+        -1074.8171482951548
+      ],
+      "metal_point": [
+        341.52276611328125,
+        545.927490234375,
+        -1074.817138671875
+      ],
+      "position_error": 4.094360662370392e-08,
+      "threshold": 5.0523689712207576e-08,
+      "error_in_thresholds": 0.8103843337041771,
+      "native_steps": 22,
+      "native_travel": 1.1367830185246702e-05
+    },
+    {
+      "index": 240,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5234950150965,
+        545.9286185694525,
+        -1074.8179632988056
+      ],
+      "metal_point": [
+        341.52349853515625,
+        545.9285888671875,
+        -1074.8179931640625
+      ],
+      "position_error": 4.1276940747000514e-08,
+      "threshold": 4.4412474527152146e-08,
+      "error_in_thresholds": 0.929399705521144,
+      "native_steps": 13,
+      "native_travel": 9.992806768609231e-06
+    },
+    {
+      "index": 241,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5241032120439,
+        545.9285553016234,
+        -1074.8179383745037
+      ],
+      "metal_point": [
+        341.52410888671875,
+        545.9280395507812,
+        -1074.8175048828125
+      ],
+      "position_error": 6.579641421683758e-07,
+      "threshold": 4.467339582654578e-08,
+      "error_in_thresholds": 14.7283216329259,
+      "native_steps": 21,
+      "native_travel": 1.0051514060972798e-05
+    },
+    {
+      "index": 242,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52460521594844,
+        545.92966682327,
+        -1074.8187616547566
+      ],
+      "metal_point": [
+        341.52459716796875,
+        545.9296264648438,
+        -1074.8187255859375
+      ],
+      "position_error": 5.343976523136248e-08,
+      "threshold": 3.8783759414649876e-08,
+      "error_in_thresholds": 1.3778902828893003,
+      "native_steps": 11,
+      "native_travel": 8.726345868296222e-06
+    },
+    {
+      "index": 243,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5251386884495,
+        545.9296450592905,
+        -1074.8187642514213
+      ],
+      "metal_point": [
+        341.525146484375,
+        545.9296264648438,
+        -1074.8187255859375
+      ],
+      "position_error": 4.2584726795234446e-08,
+      "threshold": 3.9105398679181933e-08,
+      "error_in_thresholds": 1.0889730889741513,
+      "native_steps": 15,
+      "native_travel": 8.798714702815933e-06
+    },
+    {
+      "index": 244,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52534084509074,
+        545.930988763786,
+        -1074.8197455620343
+      ],
+      "metal_point": [
+        341.5253601074219,
+        545.9309692382812,
+        -1074.8197021484375
+      ],
+      "position_error": 5.0148392053539966e-08,
+      "threshold": 3.212831419276647e-08,
+      "error_in_thresholds": 1.5608784125010402,
+      "native_steps": 9,
+      "native_travel": 7.228870693372454e-06
+    },
+    {
+      "index": 245,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52579188760865,
+        545.9309314021514,
+        -1074.8197195067983
+      ],
+      "metal_point": [
+        341.5257873535156,
+        545.930908203125,
+        -1074.8197021484375
+      ],
+      "position_error": 2.863952495797782e-08,
+      "threshold": 3.2826901022471855e-08,
+      "error_in_thresholds": 0.872440713741832,
+      "native_steps": 11,
+      "native_travel": 7.3860527300561665e-06
+    },
+    {
+      "index": 246,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5262404607765,
+        545.9309018279823,
+        -1074.8197135152873
+      ],
+      "metal_point": [
+        341.5262451171875,
+        545.930908203125,
+        -1074.8197021484375
+      ],
+      "position_error": 1.3515070435430754e-08,
+      "threshold": 3.34823290882824e-08,
+      "error_in_thresholds": 0.40364785854041846,
+      "native_steps": 9,
+      "native_travel": 7.533524044863539e-06
+    },
+    {
+      "index": 247,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52668448388346,
+        545.9308913689412,
+        -1074.8197212278417
+      ],
+      "metal_point": [
+        341.52667236328125,
+        545.930908203125,
+        -1074.8197021484375
+      ],
+      "position_error": 2.7523169854564697e-08,
+      "threshold": 3.413411472761263e-08,
+      "error_in_thresholds": 0.8063244081235821,
+      "native_steps": 9,
+      "native_travel": 7.68017581371284e-06
+    },
+    {
+      "index": 248,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5271367388984,
+        545.9308684679573,
+        -1074.8197202015074
+      ],
+      "metal_point": [
+        341.527099609375,
+        545.930908203125,
+        -1074.8197021484375
+      ],
+      "position_error": 5.595795486423627e-08,
+      "threshold": 3.4955208543611595e-08,
+      "error_in_thresholds": 1.6008474043123146,
+      "native_steps": 10,
+      "native_travel": 7.864921922312608e-06
+    },
+    {
+      "index": 249,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5275823025692,
+        545.9308619979803,
+        -1074.8197308601798
+      ],
+      "metal_point": [
+        341.527587890625,
+        545.9308471679688,
+        -1074.8197021484375
+      ],
+      "position_error": 3.2026482276834514e-08,
+      "threshold": 3.577406210041784e-08,
+      "error_in_thresholds": 0.8952431006279392,
+      "native_steps": 10,
+      "native_travel": 8.049163972594012e-06
+    },
+    {
+      "index": 250,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5280197443263,
+        545.9308687688679,
+        -1074.8197508397654
+      ],
+      "metal_point": [
+        341.52801513671875,
+        545.9308471679688,
+        -1074.8197021484375
+      ],
+      "position_error": 5.2213449088501986e-08,
+      "threshold": 3.659823551666715e-08,
+      "error_in_thresholds": 1.4266657490829997,
+      "native_steps": 10,
+      "native_travel": 8.234602991250106e-06
+    },
+    {
+      "index": 251,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5284633760507,
+        545.9308660693773,
+        -1074.819764165213
+      ],
+      "metal_point": [
+        341.5284729003906,
+        545.9308471679688,
+        -1074.8197021484375
+      ],
+      "position_error": 6.399321544711294e-08,
+      "threshold": 3.7557573855226784e-08,
+      "error_in_thresholds": 1.7038697891878654,
+      "native_steps": 10,
+      "native_travel": 8.450454117426025e-06
+    },
+    {
+      "index": 252,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51943669525184,
+        545.9307106230343,
+        -1074.8186752597962
+      ],
+      "metal_point": [
+        341.5194091796875,
+        545.9306640625,
+        -1074.818603515625
+      ],
+      "position_error": 8.773975627240693e-08,
+      "threshold": 4.0283364854185195e-08,
+      "error_in_thresholds": 2.1780642354480797,
+      "native_steps": 14,
+      "native_travel": 9.063757092191668e-06
+    },
+    {
+      "index": 253,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.51857453503834,
+        545.9286601434732,
+        -1074.8169379657397
+      ],
+      "metal_point": [
+        341.5185546875,
+        545.9286499023438,
+        -1074.81689453125
+      ],
+      "position_error": 4.769546053995699e-08,
+      "threshold": 5.2362759340113616e-08,
+      "error_in_thresholds": 0.9108660647571881,
+      "native_steps": 18,
+      "native_travel": 1.1781620851525561e-05
+    },
+    {
+      "index": 254,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5191991752703,
+        545.9286728231217,
+        -1074.8169700439769
+      ],
+      "metal_point": [
+        341.5191650390625,
+        545.9286499023438,
+        -1074.81689453125
+      ],
+      "position_error": 8.396628770494365e-08,
+      "threshold": 5.110359633529294e-08,
+      "error_in_thresholds": 1.6430602487159056,
+      "native_steps": 15,
+      "native_travel": 1.1498309175440909e-05
+    },
+    {
+      "index": 255,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5195011272753,
+        545.9280394055634,
+        -1074.8164529509156
+      ],
+      "metal_point": [
+        341.5195007324219,
+        545.9280395507812,
+        -1074.81640625
+      ],
+      "position_error": 4.560821346718942e-08,
+      "threshold": 5.389824323224919e-08,
+      "error_in_thresholds": 0.846191095146872,
+      "native_steps": 16,
+      "native_travel": 1.2127104727256065e-05
+    },
+    {
+      "index": 256,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5199845834679,
+        545.9276111330091,
+        -1074.8161129498083
+      ],
+      "metal_point": [
+        341.5199890136719,
+        545.9276123046875,
+        -1074.816162109375
+      ],
+      "position_error": 4.8215517797693676e-08,
+      "threshold": 5.544523676711247e-08,
+      "error_in_thresholds": 0.869606130463724,
+      "native_steps": 16,
+      "native_travel": 1.2475178272600304e-05
+    },
+    {
+      "index": 257,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5206287101329,
+        545.927461138427,
+        -1074.816010228441
+      ],
+      "metal_point": [
+        341.5206298828125,
+        545.9274291992188,
+        -1074.8160400390625
+      ],
+      "position_error": 4.268104763864804e-08,
+      "threshold": 5.541270845289138e-08,
+      "error_in_thresholds": 0.7702393337249154,
+      "native_steps": 14,
+      "native_travel": 1.2467859401900558e-05
+    },
+    {
+      "index": 258,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5213294418668,
+        545.9274367717132,
+        -1074.816014076297
+      ],
+      "metal_point": [
+        341.5213317871094,
+        545.9274291992188,
+        -1074.8160400390625
+      ],
+      "position_error": 2.6509814360520712e-08,
+      "threshold": 5.478221632441694e-08,
+      "error_in_thresholds": 0.4839127756995301,
+      "native_steps": 15,
+      "native_travel": 1.2325998672993809e-05
+    },
+    {
+      "index": 259,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5221365950915,
+        545.9279356209205,
+        -1074.8164573121696
+      ],
+      "metal_point": [
+        341.5221252441406,
+        545.9279174804688,
+        -1074.81640625
+      ],
+      "position_error": 5.406722422614061e-08,
+      "threshold": 5.1313994071561516e-08,
+      "error_in_thresholds": 1.0536545674215008,
+      "native_steps": 14,
+      "native_travel": 1.154564866610134e-05
+    },
+    {
+      "index": 260,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5228045799563,
+        545.9279046096055,
+        -1074.8164544993654
+      ],
+      "metal_point": [
+        341.5227966308594,
+        545.9279174804688,
+        -1074.81640625
+      ],
+      "position_error": 4.9380165693991775e-08,
+      "threshold": 5.107394435115487e-08,
+      "error_in_thresholds": 0.9668367368394801,
+      "native_steps": 33,
+      "native_travel": 1.1491637479009844e-05
+    },
+    {
+      "index": 261,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52353813473997,
+        545.9291874011014,
+        -1074.8175480501045
+      ],
+      "metal_point": [
+        341.5235290527344,
+        545.9291381835938,
+        -1074.8175048828125
+      ],
+      "position_error": 6.454377051190494e-08,
+      "threshold": 4.356584366827649e-08,
+      "error_in_thresholds": 1.4815223367039723,
+      "native_steps": 11,
+      "native_travel": 9.802314825362208e-06
+    },
+    {
+      "index": 262,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52411889735555,
+        545.9290853453983,
+        -1074.8174830676282
+      ],
+      "metal_point": [
+        341.5241394042969,
+        545.9288940429688,
+        -1074.8172607421875
+      ],
+      "position_error": 2.871255771930334e-07,
+      "threshold": 4.4069803348907334e-08,
+      "error_in_thresholds": 6.515245255800589,
+      "native_steps": 19,
+      "native_travel": 9.915705753504148e-06
+    },
+    {
+      "index": 263,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52462572964197,
+        545.9298440689585,
+        -1074.8181323756833
+      ],
+      "metal_point": [
+        341.5246276855469,
+        545.9298095703125,
+        -1074.818115234375
+      ],
+      "position_error": 3.76680624514132e-08,
+      "threshold": 3.985156580841418e-08,
+      "error_in_thresholds": 0.9452090949826629,
+      "native_steps": 10,
+      "native_travel": 8.96660230689319e-06
+    },
+    {
+      "index": 264,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5251544532508,
+        545.9298432298614,
+        -1074.8181498914082
+      ],
+      "metal_point": [
+        341.525146484375,
+        545.9298095703125,
+        -1074.818115234375
+      ],
+      "position_error": 4.781745200244067e-08,
+      "threshold": 4.0054182993099135e-08,
+      "error_in_thresholds": 1.1938191826476414,
+      "native_steps": 14,
+      "native_travel": 9.012191173447303e-06
+    },
+    {
+      "index": 265,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52542311396724,
+        545.9308678814319,
+        -1074.8190124529788
+      ],
+      "metal_point": [
+        341.5254211425781,
+        545.9308471679688,
+        -1074.8189697265625
+      ],
+      "position_error": 4.640964256055337e-08,
+      "threshold": 3.450971223635478e-08,
+      "error_in_thresholds": 1.344828442575723,
+      "native_steps": 10,
+      "native_travel": 7.764685253179824e-06
+    },
+    {
+      "index": 266,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52583107515517,
+        545.9310011280055,
+        -1074.8191374726334
+      ],
+      "metal_point": [
+        341.52581787109375,
+        545.9309692382812,
+        -1074.819091796875
+      ],
+      "position_error": 5.5908323886268586e-08,
+      "threshold": 3.412571682324284e-08,
+      "error_in_thresholds": 1.6383047475852501,
+      "native_steps": 9,
+      "native_travel": 7.678286285229637e-06
+    },
+    {
+      "index": 267,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5263222319732,
+        545.9308788088117,
+        -1074.8190525280481
+      ],
+      "metal_point": [
+        341.52630615234375,
+        545.930908203125,
+        -1074.819091796875
+      ],
+      "position_error": 5.041012315044008e-08,
+      "threshold": 3.53265691532222e-08,
+      "error_in_thresholds": 1.426974777307014,
+      "native_steps": 14,
+      "native_travel": 7.948478059474994e-06
+    },
+    {
+      "index": 268,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52673799186516,
+        545.9309522978257,
+        -1074.8191280510337
+      ],
+      "metal_point": [
+        341.5267639160156,
+        545.930908203125,
+        -1074.819091796875
+      ],
+      "position_error": 6.122640525591086e-08,
+      "threshold": 3.547957769740787e-08,
+      "error_in_thresholds": 1.7256802146318682,
+      "native_steps": 10,
+      "native_travel": 7.98290498191677e-06
+    },
+    {
+      "index": 269,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5272423251959,
+        545.9308459408438,
+        -1074.8190568536395
+      ],
+      "metal_point": [
+        341.5271911621094,
+        545.930908203125,
+        -1074.819091796875
+      ],
+      "position_error": 8.577801023393951e-08,
+      "threshold": 3.680636008420917e-08,
+      "error_in_thresholds": 2.3305214109107295,
+      "native_steps": 13,
+      "native_travel": 8.281431018947061e-06
+    },
+    {
+      "index": 270,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52762132968826,
+        545.930964266803,
+        -1074.8191684494104
+      ],
+      "metal_point": [
+        341.5276184082031,
+        545.9309692382812,
+        -1074.8192138671875
+      ],
+      "position_error": 4.47093429588503e-08,
+      "threshold": 3.685222721956303e-08,
+      "error_in_thresholds": 1.213205994103833,
+      "native_steps": 11,
+      "native_travel": 8.291751124401681e-06
+    },
+    {
+      "index": 271,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.5281798639677,
+        545.9308023004031,
+        -1074.8190528088032
+      ],
+      "metal_point": [
+        341.528076171875,
+        545.930908203125,
+        -1074.8192138671875
+      ],
+      "position_error": 2.1374729027996811e-07,
+      "threshold": 3.873262688913676e-08,
+      "error_in_thresholds": 5.518533274073318,
+      "native_steps": 14,
+      "native_travel": 8.714841050055768e-06
+    },
+    {
+      "index": 272,
+      "native_hit": true,
+      "metal_hit": true,
+      "native_point": [
+        341.52849652074104,
+        545.9309820827762,
+        -1074.8192134365536
+      ],
+      "metal_point": [
+        341.5285339355469,
+        545.9309692382812,
+        -1074.8192138671875
+      ],
+      "position_error": 3.8633313494884263e-08,
+      "threshold": 3.851361701774812e-08,
+      "error_in_thresholds": 1.0031079001767345,
+      "native_steps": 11,
+      "native_travel": 8.665563828993327e-06
+    }
+  ]
+}

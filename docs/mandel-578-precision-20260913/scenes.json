@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "scenes": [
+    {
+      "id": "246",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/mandelbulb_pow2V3 tglad.fract",
+      "sha256": "c58b9234c9a0492c62ec14bce1eacf0ddc5a3f88b78f256e1de1034a945f6194"
+    },
+    {
+      "id": "578",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract",
+      "sha256": "ed6528d2335f47f90415a3d3874c0f93c78fd073f9cebbd56bbd502a7ab38a13"
+    }
+  ]
+}

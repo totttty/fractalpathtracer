@@ -2,10 +2,20 @@ import unittest
 
 import numpy as np
 
-from run_mandel_first_hit_parity import compare_hits
+from run_mandel_first_hit_parity import compare_hits, probe_framing
 
 
 class FirstHitParityTests(unittest.TestCase):
+    def test_authored_framing_and_legacy_default(self):
+        scene = '[main_parameters]\nimage_width 1600;\nimage_height 1200;\n'
+        self.assertEqual(probe_framing(scene), (300, 158, .94))
+        width, height, extent = probe_framing(scene, 300)
+        self.assertEqual((width, height), (300, 225))
+        self.assertAlmostEqual(extent, .64)
+        for invalid in (0, 15, 4097):
+            with self.assertRaises(ValueError):
+                probe_framing(scene, invalid)
+
     def test_coordinate_permutation_and_world_scale(self):
         native = [[1, 1, 2, 3, 4, .01, .5, 7]]
         result = compare_hits(native, [[10, 30, 20, 1]], [0, 0, 0], 10)

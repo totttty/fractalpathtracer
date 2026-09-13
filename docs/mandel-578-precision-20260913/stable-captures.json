@@ -1,0 +1,276 @@
+{
+  "identity": {
+    "manifest": {
+      "version": 1,
+      "scenes": [
+        {
+          "id": "246",
+          "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/mandelbulb_pow2V3 tglad.fract",
+          "sha256": "c58b9234c9a0492c62ec14bce1eacf0ddc5a3f88b78f256e1de1034a945f6194"
+        },
+        {
+          "id": "578",
+          "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract",
+          "sha256": "ed6528d2335f47f90415a3d3874c0f93c78fd073f9cebbd56bbd502a7ab38a13"
+        }
+      ]
+    },
+    "harnesses": {
+      "run_mandel_support_suite.py": "b3173fca7771ad6d0d3e8e53393bfb48dd70199ffe11c10e6072d5226a4e4eeb",
+      "run_release_canaries.py": "21387d8ec538178aefef7fcb7f0b454f6b488820330a0d922b0e3d7d3cb089a5",
+      "mandel_reference_cache.py": "c3d6e90f5d58f1f9d3b7436ab2e32ecee3904cfcdd63f3af986b28d507420453"
+    },
+    "executables": {
+      "/Volumes/Ventura/Projects/FPT-metal-release/target/release/fpt-metal": "f4462f7f9e64bcf9efbadbfe490193837c349375534481f8d9ef819735955438"
+    },
+    "settings": {
+      "max_axis": 300,
+      "samples": 32,
+      "aspect": "authored",
+      "chunk_samples": 1,
+      "timeout": 120,
+      "native_timeout": 120,
+      "overlap_native": false,
+      "native_mc_samples": null,
+      "reference_cache": null,
+      "modes": [
+        "geometry",
+        "authored"
+      ],
+      "orientation": "native; no postprocessing flips/crops",
+      "reference_backend": "not_requested",
+      "bounces": "FPT scene/config default; metadata records effective configuration"
+    },
+    "environment": {},
+    "lightmaps": {
+      "246": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "578": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "246",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/mandelbulb_pow2V3 tglad.fract",
+      "sha256": "c58b9234c9a0492c62ec14bce1eacf0ddc5a3f88b78f256e1de1034a945f6194",
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/246/geometry/mandelbulb_pow2V3 tglad.png",
+            "sha256": "024f63d4fe90fcbeaea75a67bc40dc3ba0510c58dab8732a5079d0d515b6af2b",
+            "rgb_sha256": "d6e9d8744e5bb7a5946e9f52d006d538a70138ded52701a6fb9e6f46bc61ade4",
+            "wall_seconds": 1.8534600829989358
+          },
+          "screening": {
+            "mean_luminance_255": 32.50524444444444,
+            "dark_fraction": 0.7889,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/246/geometry/mandelbulb_pow2V3 tglad.png.render.json",
+            "sha256": "df1d54b93680366489de72d6c78e81ddc7e469d289ada097bb40a381d1520794"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "populated",
+            "mandel_ambient": null,
+            "elapsed_ms": 462.493896484375,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/246/authored/mandelbulb_pow2V3 tglad.png",
+            "sha256": "f9dcd917cceb9af2b54ff33afa44fbb1a890450648ba537d86f12b55c7b7e4ec",
+            "rgb_sha256": "b70ec293397b5003bb6129857dc2e5ec30b2827e854b0d66ca3c68459b3d2ae7",
+            "wall_seconds": 5.610574540998641
+          },
+          "screening": {
+            "mean_luminance_255": 21.990122222222222,
+            "dark_fraction": 0.7898,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/246/authored/mandelbulb_pow2V3 tglad.png.render.json",
+            "sha256": "bf6295a88e7bb7ba12d1ed07dd53b7dfed3da28b846dc82bb28ad566405f7d41"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "populated",
+            "mandel_ambient": {
+              "direction_count": 108,
+              "exhaustion_policy": "invalid/stalled/exhausted visibility is a magenta diagnostic, never assumed clear",
+              "lighting_policy": "primary-hit compatibility AO; replaces generic ambient and secondary environment; direct/indirect sun retained",
+              "lightmap_path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+              "lightmap_sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7",
+              "lightmap_size": [
+                512,
+                512
+              ],
+              "max_visibility_steps": 4096,
+              "mode": "authored-multi-ray-lightmap",
+              "quality": 4,
+              "range_per_camera_distance": 0.23286719027292208,
+              "rotation_degrees": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "strength": 2.0,
+              "tint": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "elapsed_ms": 4131.745934486389,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        }
+      },
+      "size": [
+        300,
+        300
+      ],
+      "native_sampling": {
+        "enabled": false,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {
+        "ambient_occlusion": "2",
+        "ambient_occlusion_enabled": "true",
+        "ambient_occlusion_mode": "1"
+      },
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "ok"
+    },
+    {
+      "id": "578",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract",
+      "sha256": "ed6528d2335f47f90415a3d3874c0f93c78fd073f9cebbd56bbd502a7ab38a13",
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/578/geometry/menger-FabsAddTgladFold4D.png",
+            "sha256": "b3b83e05e0931743a8bf9c0121e1dc723b7b512a24ecd12eb8dbe560ef68504d",
+            "rgb_sha256": "f2f514444b67818b7ad54cf06a545db0681cdcdb86358bb828f230a6fca68a28",
+            "wall_seconds": 1.5724188330023026
+          },
+          "screening": {
+            "mean_luminance_255": 77.61677037037038,
+            "dark_fraction": 0.4613037037037037,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/578/geometry/menger-FabsAddTgladFold4D.png.render.json",
+            "sha256": "404e10664e157bb1d45774d4fad558a3496175d7b4ebec4b6d4d5d0aabac9bc2"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "populated",
+            "mandel_ambient": null,
+            "elapsed_ms": 260.11407375335693,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/578/authored/menger-FabsAddTgladFold4D.png",
+            "sha256": "96fc051b4ef7db8af9aba1808b91ca70b7087923173a3dcabbd63681a8134188",
+            "rgb_sha256": "799f08f6ce8193a41bc8a83453c6559e3df822853b10b009711b92efd7b11981",
+            "wall_seconds": 1.5221772500008228
+          },
+          "screening": {
+            "mean_luminance_255": 39.148177777777775,
+            "dark_fraction": 0.006711111111111111,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/578/authored/menger-FabsAddTgladFold4D.png.render.json",
+            "sha256": "fd9c553c69f028398763d6dbbab2e16a75e75198b29f44fe33e71c37b9a6f979"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 1382.436990737915,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        }
+      },
+      "size": [
+        300,
+        225
+      ],
+      "native_sampling": {
+        "enabled": false,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {
+        "ambient_occlusion_enabled": "true"
+      },
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "ok"
+    }
+  ],
+  "visual_parity_certified": false,
+  "limitations": [
+    "MAE compares different authored integrators, not isolated geometry.",
+    "General FPT audit fingerprints AO maps only; eligible native cache entries additionally bind native resources/preferences.",
+    "Timeouts do not prove a scene unsupported.",
+    "No renderer changes or performance claims in this support audit."
+  ],
+  "counts": {
+    "geometry": 2,
+    "authored": 2,
+    "mandel": 0,
+    "compilation_passed": 2,
+    "completed_scenes": 2,
+    "native_cache_hits": 0,
+    "native_deferred": 0
+  },
+  "suite_wall_seconds": 10.709762209000473
+}

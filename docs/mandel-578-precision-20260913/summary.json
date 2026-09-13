@@ -1,0 +1,111 @@
+{
+  "checkpoint": "e271594",
+  "production_changed": false,
+  "gallery_changed": false,
+  "gallery_reviewed_count": 423,
+  "promoted_scenes": [],
+  "scene578_status": "blocked",
+  "images": [
+    {
+      "label": "Native diffuse",
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-geometry-outliers-20260913/578/scene.png",
+      "sha256": "9be86c344ffff15423c959305831ce9dcda125f8fbb378ce459985df2f039b7c",
+      "local": "row0-col0.png"
+    },
+    {
+      "label": "Accepted production FPT",
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/baseline/578/geometry/menger-FabsAddTgladFold4D.png",
+      "sha256": "75ab74a6f536f503beee482304a8c644bfff8e95db74400b464304d5f58ea4d7",
+      "local": "row0-col1.png"
+    },
+    {
+      "label": "Stable-fold experiment",
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/stable/578/geometry/menger-FabsAddTgladFold4D.png",
+      "sha256": "b3b83e05e0931743a8bf9c0121e1dc723b7b512a24ecd12eb8dbe560ef68504d",
+      "local": "row0-col2.png"
+    },
+    {
+      "label": "Native diffuse",
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-geometry-outliers-20260913/578/scene.png",
+      "sha256": "9be86c344ffff15423c959305831ce9dcda125f8fbb378ce459985df2f039b7c",
+      "local": "row1-col0.png"
+    },
+    {
+      "label": "Deterministic FPT control",
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/deterministic/geometry/render.png",
+      "sha256": "9190b43e6ddc1928040a0f656f6fdc5d89f7fe4b003f208cb17357dbdebc4d42",
+      "local": "row1-col1.png"
+    },
+    {
+      "label": "Scalar-travel experiment",
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-hybrid-20260913/parametric/geometry/render.png",
+      "sha256": "37b15e729c1c79b77c7ef99d1fbb895a99ee74efb6740e45393b2a4374171f2e",
+      "local": "row1-col2.png"
+    }
+  ],
+  "restoration_gate": [
+    {
+      "scene": "246",
+      "mode": "geometry",
+      "byte_exact": true,
+      "baseline_sha256": "86a9e1d99e65c61b137f50f61208597bebb0b9607396dade54a25dce1bdc8936",
+      "restored_sha256": "86a9e1d99e65c61b137f50f61208597bebb0b9607396dade54a25dce1bdc8936"
+    },
+    {
+      "scene": "246",
+      "mode": "authored",
+      "byte_exact": true,
+      "baseline_sha256": "c00a73a3c992723bdf3512992373ab7ee3b0e16b434f6a8f6f561996cf00a9e2",
+      "restored_sha256": "c00a73a3c992723bdf3512992373ab7ee3b0e16b434f6a8f6f561996cf00a9e2"
+    },
+    {
+      "scene": "578",
+      "mode": "geometry",
+      "byte_exact": true,
+      "baseline_sha256": "75ab74a6f536f503beee482304a8c644bfff8e95db74400b464304d5f58ea4d7",
+      "restored_sha256": "75ab74a6f536f503beee482304a8c644bfff8e95db74400b464304d5f58ea4d7"
+    },
+    {
+      "scene": "578",
+      "mode": "authored",
+      "byte_exact": true,
+      "baseline_sha256": "0f688e463b12800356446c4358fb9bb23322517f98609567fd8007dfb9f9a978",
+      "restored_sha256": "0f688e463b12800356446c4358fb9bb23322517f98609567fd8007dfb9f9a978"
+    }
+  ],
+  "diagnostic_patches": [
+    {
+      "patch": "stable-fold.patch",
+      "base_sha256": "43a7539c9b223a3551c97c931357ea58af5a41076fcbe8c2535a0498dcc94ca4",
+      "candidate_sha256": "2e231bf1552165f99926e700804a4b2076e223524feeb556943ae3256bab10a3"
+    },
+    {
+      "patch": "termination.patch",
+      "base_sha256": "43a7539c9b223a3551c97c931357ea58af5a41076fcbe8c2535a0498dcc94ca4",
+      "candidate_sha256": "bd870473df8a3364899085f71dc1213f53ba92c3617e3910923a468bd9db9f86"
+    },
+    {
+      "patch": "scalar-travel.patch",
+      "base_sha256": "43a7539c9b223a3551c97c931357ea58af5a41076fcbe8c2535a0498dcc94ca4",
+      "candidate_sha256": "702b7f9f8fae70f2109f46f253ce7d2f7c76e865eb9a38e0dbc3197b645716fa"
+    }
+  ],
+  "normal_stencil": {
+    "points": 273,
+    "any_axis_collapsed": 263,
+    "all_axes_collapsed": 0,
+    "per_axis": [
+      0,
+      122,
+      263
+    ],
+    "median_delta": 3.320256291772239e-05
+  },
+  "notes": [
+    "Point field probe is historical 300x158; first-hit and full images are authored 300x225.",
+    "Termination shader intentionally overrides probe mode -6 to return distance, threshold, iteration, reason instead of hit data.",
+    "Reason 1=hit, 2=float-position stagnation, 3=range, 4=nonfinite, 5=step budget.",
+    "Scalar-travel diagnostic overrides mode -6 only; production kernels were not changed.",
+    "No timing claim and no push."
+  ]
+}

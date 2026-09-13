@@ -1,0 +1,140 @@
+{
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "a1249ea50d9cac79be145a8aa4b4f60946b97b7aa8edf7c7d01bd6d8ff5f2ba0",
+      "bytes": 6344
+    },
+    {
+      "path": "baseline-captures.json",
+      "sha256": "943a140c39d2882f7839808f265cc99ef73d144f2178a924dfe9fd7cb660a17e",
+      "bytes": 11349
+    },
+    {
+      "path": "baseline-field.json",
+      "sha256": "b1ab577bcb8911554c71318349239e65d92c48e51886df0d37219d4249e88276",
+      "bytes": 9094
+    },
+    {
+      "path": "comparison.png",
+      "sha256": "b4c5487dab1fd4de1cf39848a125c90922243f9c2905487475b98b6c20b90d89",
+      "bytes": 442967
+    },
+    {
+      "path": "deterministic-authored.json",
+      "sha256": "e00805773cd8ea07602eea995f529a1edc33401e8627d42c40ce26738f922c15",
+      "bytes": 1625
+    },
+    {
+      "path": "deterministic-geometry.json",
+      "sha256": "d18c98f63f4a2e0fc260111c7e2c3911dca86c108974c94f2bec572247b8d761",
+      "bytes": 1620
+    },
+    {
+      "path": "first-hit.json",
+      "sha256": "8853c3ec18f1eae25ba2114ae98b05934ca5b02b928ccdc6791d76cb6321df7e",
+      "bytes": 1052382
+    },
+    {
+      "path": "normal-inputs.json",
+      "sha256": "bef26616019a4f87065c4e0cedc4a191220b9155ceaa068b71b8a1379bdfc570",
+      "bytes": 17083
+    },
+    {
+      "path": "normals.json",
+      "sha256": "400366a67de68ad9c594aeddc53767b4ded393a865903e715edad16fce4561be",
+      "bytes": 15874
+    },
+    {
+      "path": "parametric-authored.json",
+      "sha256": "ff64d1574d9ac86ef09da53e9127bc5c8c35061e4bdca5f9a729d207c19c250f",
+      "bytes": 1620
+    },
+    {
+      "path": "parametric-geometry.json",
+      "sha256": "19dad79dd528f1e45fab35d253f513885c78b874d244820f0a952a1767a404b4",
+      "bytes": 1616
+    },
+    {
+      "path": "restored-captures.json",
+      "sha256": "0672c218b4276ed189fd82657bab01702c2b6f122d3261757b76cee517fa0a7e",
+      "bytes": 11311
+    },
+    {
+      "path": "row0-col0.png",
+      "sha256": "9be86c344ffff15423c959305831ce9dcda125f8fbb378ce459985df2f039b7c",
+      "bytes": 81128
+    },
+    {
+      "path": "row0-col1.png",
+      "sha256": "75ab74a6f536f503beee482304a8c644bfff8e95db74400b464304d5f58ea4d7",
+      "bytes": 66278
+    },
+    {
+      "path": "row0-col2.png",
+      "sha256": "b3b83e05e0931743a8bf9c0121e1dc723b7b512a24ecd12eb8dbe560ef68504d",
+      "bytes": 67109
+    },
+    {
+      "path": "row1-col0.png",
+      "sha256": "9be86c344ffff15423c959305831ce9dcda125f8fbb378ce459985df2f039b7c",
+      "bytes": 81128
+    },
+    {
+      "path": "row1-col1.png",
+      "sha256": "9190b43e6ddc1928040a0f656f6fdc5d89f7fe4b003f208cb17357dbdebc4d42",
+      "bytes": 50786
+    },
+    {
+      "path": "row1-col2.png",
+      "sha256": "37b15e729c1c79b77c7ef99d1fbb895a99ee74efb6740e45393b2a4374171f2e",
+      "bytes": 62353
+    },
+    {
+      "path": "scalar-travel-comparison.json",
+      "sha256": "2aa53fdde530376db3eeda22db5f53435502c825eb0bf41dd50e0f7d92a5a650",
+      "bytes": 142251
+    },
+    {
+      "path": "scalar-travel.patch",
+      "sha256": "c59bed6fc3909e06ec4144ec3c260879de5474bbe0aaa327bf951d0a5ced4a01",
+      "bytes": 1427
+    },
+    {
+      "path": "scenes.json",
+      "sha256": "cb49ecca14b7b599c6661203434b55a2e78d3b120eee866f507f9fdbfd9de760",
+      "bytes": 496
+    },
+    {
+      "path": "stable-captures.json",
+      "sha256": "694bb20b6f37ef3610fe400ac8cea247a42d7dad26129adaee06708da8a05658",
+      "bytes": 11314
+    },
+    {
+      "path": "stable-field.json",
+      "sha256": "3d1f74d75e15bfb3f9412475d128ccc8816fdddc6fd60adabf7c6d9e80935cb5",
+      "bytes": 9162
+    },
+    {
+      "path": "stable-fold.patch",
+      "sha256": "ebf87767a4919102c7d759f63f06bc9e248d09c3bbb8c7578340bdf1b2b4d0cf",
+      "bytes": 1497
+    },
+    {
+      "path": "summary.json",
+      "sha256": "059e65f5049866d396438c4a35eb157b86ce1fc0053595bf0dfcc12dc09720ba",
+      "bytes": 4493
+    },
+    {
+      "path": "termination.json",
+      "sha256": "a01d06d7c3aae62f6c4027d534d37af9aaecc4ad19f6c313f17faf1b15ca2dbd",
+      "bytes": 16617
+    },
+    {
+      "path": "termination.patch",
+      "sha256": "c24d29ba6fa074715a025121e647059dac73d73edc9be1778dbe3df232dd71f2",
+      "bytes": 1712
+    }
+  ]
+}

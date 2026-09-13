@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     systemData.decimalPoint = ".";
     QLocale::setDefault(systemData.locale);
     if (argc != 4 && argc != 5) {
-        std::cerr << "usage: native_distance_probe scene.fract points.tsv NEW-output.tsv [primary|boolean-primary|boolean-normal|march|analytic-field|metal85-delta|orbit85|rays|ifs10-config]\n";
+        std::cerr << "usage: native_distance_probe scene.fract points.tsv NEW-output.tsv [primary|boolean-primary|boolean-normal|march|hybrid-march|analytic-field|metal85-delta|orbit85|rays|ifs10-config]\n";
         return 2;
     }
     if (std::ifstream(argv[3]).good()) return 3;
@@ -69,7 +69,8 @@ int main(int argc, char **argv) {
     bool rays = mode == "rays";
     bool boolean_points = mode == "boolean-primary" || mode == "boolean-normal";
     bool primary = mode == "primary" || mode == "boolean-primary";
-    bool march = mode == "march";
+    bool hybrid_march = mode == "hybrid-march";
+    bool march = mode == "march" || hybrid_march;
     bool analytic_field = mode == "analytic-field";
     bool ifs_config = mode == "ifs10-config";
     if (ifs_config && parameters->Get<int>("formula_1") != 10) return 11;
@@ -96,8 +97,16 @@ int main(int argc, char **argv) {
     if (!input || !output) return 6;
     output << std::setprecision(17);
     if (march) {
-        // Deliberately narrow until other native render-data paths are wired.
-        if (parameters->Get<int>("formula_1") != 11
+        // Explicit plain-field contracts only; do not infer support from a
+        // successfully linked native worker without its scene dependencies.
+        if (hybrid_march) {
+            if (!parameters->Get<bool>("hybrid_fractal_enable")
+                || parameters->Get<int>("formula_1") != 7
+                || parameters->Get<int>("formula_2") != 1045) return 15;
+            for (int i = 3; i <= NUMBER_OF_FRACTALS; ++i) {
+                if (parameters->Get<int>(QString("formula_%1").arg(i)) != 0) return 15;
+            }
+        } else if (parameters->Get<int>("formula_1") != 11
             || parameters->Get<bool>("hybrid_fractal_enable")) return 15;
         for (const auto &key : parameters->GetListOfParameters()) {
             if ((key.startsWith("primitive_") && key.endsWith("_enabled"))
