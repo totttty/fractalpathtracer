@@ -1372,25 +1372,37 @@ fn boolean_color_index_source(
         ));
         if formula_order > 0 {
             let operation = scene.boolean_operators[index - 1];
-            let candidate = if operation == 2 {
-                format!("-distance{index}")
+            if operation == 2 {
+                selections.push(format!(
+                    "    if (selected_distance < detail_size) {{\n        if (distance{index} < 2.25f * detail_size) selected_formula = {index};\n        selected_distance = distance{index} < 1.5f * detail_size\n            ? 1.5f * detail_size : max(1.5f * detail_size - distance{index}, selected_distance);\n    }}"
+                ));
             } else {
-                format!("distance{index}")
-            };
-            let comparison = match operation {
-                0 | 2 => ">",
-                1 => "<",
-                other => bail!("unsupported boolean operator {other}"),
-            };
-            selections.push(format!(
+                let candidate = format!("distance{index}");
+                let comparison = match operation {
+                    0 => ">",
+                    1 => "<",
+                    other => bail!("unsupported boolean operator {other}"),
+                };
+                selections.push(format!(
                 "    if ({candidate} {comparison} selected_distance) {{ selected_distance = {candidate}; selected_formula = {index}; }}"
             ));
+            }
         }
         color_cases.push(format!(
             "        case {index}: return mandelBooleanColorIndex{index}(point{index}, cfg);"
         ));
     }
     let first_index = formulas[0].0;
+    // Colour ownership follows the same unsigned boundary test as traversal.
+    let detail_declaration = if formulas
+        .iter()
+        .skip(1)
+        .any(|(index, _)| scene.boolean_operators[index - 1] == 2)
+    {
+        "    float detail_size = mandelbulberMarchThreshold(p, cfg) / world_scale;\n"
+    } else {
+        ""
+    };
     Ok(format!(
         r#"{evaluators}
 static float mandelbulberGeneratedColorIndex(float3 p,
@@ -1401,7 +1413,7 @@ static float mandelbulberGeneratedColorIndex(float3 p,
 {transforms}
     int selected_formula = {first_index};
     float selected_distance = distance{first_index};
-{selections}
+{detail_declaration}{selections}
     switch (selected_formula) {{
 {color_cases}
         default: return 0.0f;
@@ -1578,22 +1590,48 @@ fn specialize_fpt_shader_boolean(
     for ((index, _), call) in formulas.iter().skip(1).zip(calls.iter().skip(1)) {
         combination.push_str(call);
         combination.push('\n');
-        let operation = match scene.boolean_operators[index - 1] {
-            0 => format!("    distance = max(distance, distance{index});\n"),
-            1 => format!("    distance = min(distance, distance{index});\n"),
-            2 => format!("    distance = max(distance, -distance{index});\n"),
-            operator => bail!(
-                "unsupported boolean operator {operator} for slot {}",
-                index + 1
-            ),
-        };
+        let operation = boolean_combination_source(*index, scene.boolean_operators[index - 1])?;
         combination.push_str(&operation);
     }
     let specialized_kernel_define = mandel_specialized_kernel_define(base_source);
+    let subtraction = formulas
+        .iter()
+        .skip(1)
+        .any(|(index, _)| scene.boolean_operators[index - 1] == 2);
+    let field_name = if subtraction {
+        "mandelBooleanFieldSampleContext"
+    } else {
+        "mandelbulberGeneratedFieldSample"
+    };
+    let context_parameters = if subtraction {
+        ", float detail_world, bool normal_calculation"
+    } else {
+        ""
+    };
+    let detail_declaration = if subtraction {
+        "    float detail_size = detail_world / world_scale;\n"
+    } else {
+        ""
+    };
+    let context_define = if subtraction {
+        "#define FPT_MANDEL_BOOLEAN_SUBTRACT 1\nstatic float mandelbulberMarchThreshold(float3 p, constant FptRenderConfig &cfg);\n"
+    } else {
+        ""
+    };
+    let context_wrapper = if subtraction {
+        r#"static float4 mandelbulberGeneratedFieldSample(float3 p,
+    constant FptRenderConfig &cfg, int iteration_multiplier, int iteration_budget) {
+    return mandelBooleanFieldSampleContext(p, cfg, iteration_multiplier,
+        iteration_budget, mandelbulberMarchThreshold(p, cfg), false);
+}
+"#
+    } else {
+        ""
+    };
     let fragment = format!(
         r#"#define FPT_MANDEL_GENERATED_FIELD 1
 {specialized_kernel_define}
-{orbit_state}
+{context_define}{orbit_state}
 
 {declarations}
 struct MandelBooleanMatrix {{
@@ -1630,25 +1668,41 @@ static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
     return counts;
 }}
 
-static float4 mandelbulberGeneratedFieldSample(float3 p,
+static float4 {field_name}(float3 p,
                                                 constant FptRenderConfig &cfg,
                                                 int iteration_multiplier,
-                                                int iteration_budget) {{
+                                                int iteration_budget{context_parameters}) {{
     (void)iteration_multiplier;
     (void)iteration_budget;
     float world_scale = max(setv(cfg, 0), 1.0f);
-    float3 scaled = p / world_scale;
+{detail_declaration}    float3 scaled = p / world_scale;
     float3 point = float3(scaled.x, scaled.z, scaled.y);
 {combination}
     return float4(distance * world_scale, 0.0f, 0.0f, 0.0f);
 }}
 
-{marker}"#,
+{context_wrapper}{marker}"#,
         orbit_state = orbit_state_declaration()
     );
     let specialized = base_source.replacen(marker, &fragment, 1);
     dump_specialized_shader_if_requested(&specialized)?;
     Ok(specialized)
+}
+
+fn boolean_combination_source(index: usize, operator: u32) -> Result<String> {
+    Ok(match operator {
+        0 => format!("    distance = max(distance, distance{index});\n"),
+        1 => format!("    distance = min(distance, distance{index});\n"),
+        // Mandelbulber fractal DEs are unsigned. Signed-SDF subtraction would
+        // reduce to a no-op after each formula's nonnegative clamp.
+        2 => format!(
+            "    if (distance < detail_size) {{\n        float boundary = 1.5f * detail_size;\n        if (distance{index} < boundary && !normal_calculation) {{\n            distance = boundary;\n        }} else {{\n            distance = max(boundary - distance{index}, distance);\n        }}\n    }}\n"
+        ),
+        other => bail!(
+            "unsupported boolean operator {other} for slot {}",
+            index + 1
+        ),
+    })
 }
 
 fn boolean_point_scale(settings_scale: f64) -> f32 {
@@ -7736,6 +7790,94 @@ kernel void also_discarded(uint gid [[thread_position_in_grid]]) {
     fn boolean_formula_scale_is_an_object_size() {
         assert!((boolean_point_scale(2.0) - 0.5).abs() < f32::EPSILON);
         assert!((boolean_point_scale(0.0625) - 16.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn boolean_subtraction_requires_unsigned_distance_context() {
+        let source = boolean_combination_source(1, 2).unwrap();
+        assert!(source.contains("distance < detail_size"));
+        assert!(source.contains("normal_calculation"));
+        assert!(!source.contains("max(distance, -distance1)"));
+        assert_eq!(
+            boolean_combination_source(1, 0).unwrap(),
+            "    distance = max(distance, distance1);\n"
+        );
+        assert_eq!(
+            boolean_combination_source(1, 1).unwrap(),
+            "    distance = min(distance, distance1);\n"
+        );
+        assert!(boolean_combination_source(1, 3).is_err());
+    }
+
+    #[test]
+    fn boolean_subtraction_metal_respects_threshold_and_normal_context() {
+        use crate::ffi::*;
+        use std::ffi::CStr;
+        let operation = boolean_combination_source(1, 2).unwrap();
+        let shader = format!(
+            r#"#include <metal_stdlib>
+using namespace metal;
+kernel void mandelbulber_field_sample_kernel(
+    device const float4 *points [[buffer(0)]],
+    device float4 *samples [[buffer(1)]], uint gid [[thread_position_in_grid]]) {{
+    float4 p = points[gid];
+    float distance = p.x, distance1 = p.y, detail_size = p.z;
+    bool normal_calculation = p.w != 0.0f;
+{operation}
+    samples[gid] = float4(distance, 0, 0, 0);
+}}"#
+        );
+        // Outer interior/exterior, subtractor interior/exterior, exact strict
+        // boundaries, and the normal sampler's fixed centre footprint.
+        let cases = [
+            ([0.0, 0.0, 1.0, 0.0], 1.5),
+            ([0.25, 0.25, 1.0, 0.0], 1.5),
+            ([0.25, 0.25, 1.0, 1.0], 1.25),
+            ([0.25, 1.0, 1.0, 1.0], 0.5),
+            ([0.25, 1.5, 1.0, 0.0], 0.25),
+            ([0.25, 2.0, 1.0, 0.0], 0.25),
+            ([1.0, 0.0, 1.0, 0.0], 1.0),
+            ([2.0, 0.0, 1.0, 0.0], 2.0),
+        ];
+        let mut points = Vec::<[f32; 4]>::new();
+        let mut expected = Vec::new();
+        for scale in [0.001, 1.0, 1024.0] {
+            for (p, result) in cases {
+                points.push([p[0] * scale, p[1] * scale, p[2] * scale, p[3]]);
+                expected.push(result * scale);
+            }
+        }
+        let mut cfg = FptRenderConfig::default();
+        cfg.sdf_id = SDF_MANDELBULBER;
+        let mut output = vec![FptMandelbulberFieldSample::default(); points.len()];
+        let mut error = [0i8; 4096];
+        let status = unsafe {
+            fpt_mandelbulber_sample_field(
+                c"unused.metallib".as_ptr(),
+                shader.as_ptr().cast(),
+                shader.len(),
+                &cfg,
+                points.as_ptr().cast(),
+                points.len(),
+                output.as_mut_ptr(),
+                error.as_mut_ptr(),
+                error.len(),
+            )
+        };
+        assert_eq!(
+            status,
+            0,
+            "{}",
+            unsafe { CStr::from_ptr(error.as_ptr()) }.to_string_lossy()
+        );
+        for (actual, expected) in output.iter().zip(expected) {
+            assert!(
+                (actual.distance - expected).abs() <= expected.abs().max(1e-6) * 2e-6,
+                "{} != {}",
+                actual.distance,
+                expected
+            );
+        }
     }
 
     #[test]

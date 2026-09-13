@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     systemData.decimalPoint = ".";
     QLocale::setDefault(systemData.locale);
     if (argc != 4 && argc != 5) {
-        std::cerr << "usage: native_distance_probe scene.fract points.tsv NEW-output.tsv [primary|march|analytic-field|metal85-delta|orbit85|rays|ifs10-config]\n";
+        std::cerr << "usage: native_distance_probe scene.fract points.tsv NEW-output.tsv [primary|boolean-primary|boolean-normal|march|analytic-field|metal85-delta|orbit85|rays|ifs10-config]\n";
         return 2;
     }
     if (std::ifstream(argv[3]).good()) return 3;
@@ -67,17 +67,29 @@ int main(int argc, char **argv) {
     std::string mode = argc == 5 ? argv[4] : "distance";
     bool metal_delta = mode == "metal85-delta", orbit = mode == "orbit85";
     bool rays = mode == "rays";
-    bool primary = mode == "primary";
+    bool boolean_points = mode == "boolean-primary" || mode == "boolean-normal";
+    bool primary = mode == "primary" || mode == "boolean-primary";
     bool march = mode == "march";
     bool analytic_field = mode == "analytic-field";
     bool ifs_config = mode == "ifs10-config";
     if (ifs_config && parameters->Get<int>("formula_1") != 10) return 11;
     if (analytic_field && fractals.GetDEType(-1) != fractal::analyticDEType) return 11;
-    if (argc == 5 && !march && !analytic_field && !primary && !rays && !ifs_config && ((!metal_delta && !orbit) || parameters->Get<int>("formula_1") != 85)) return 11;
+    if (argc == 5 && !boolean_points && !march && !analytic_field && !primary && !rays && !ifs_config && ((!metal_delta && !orbit) || parameters->Get<int>("formula_1") != 85)) return 11;
     // This adapter intentionally has no textures, primitive or object-tree data.
-    if (config.objectsTreeEnable || config.booleanOperatorsEnabled) {
+    if (config.objectsTreeEnable || (config.booleanOperatorsEnabled && !boolean_points)) {
         std::cerr << "probe only supports plain single/hybrid fractal fields\n";
         return 5;
+    }
+    if (boolean_points) {
+        if (!config.booleanOperatorsEnabled) return 15;
+        for (const auto &key : parameters->GetListOfParameters()) {
+            if ((key.startsWith("primitive_") && key.endsWith("_enabled"))
+                || key.endsWith("_use_displacement_texture")
+                || key.endsWith("_perlin_noise_displacement_enable")
+                || key.endsWith("_texture_fractalize")) {
+                if (parameters->Get<bool>(key)) return 15;
+            }
+        }
     }
     std::ifstream input(argv[2]);
     std::ofstream output(argv[3]);

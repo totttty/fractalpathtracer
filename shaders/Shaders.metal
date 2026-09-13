@@ -987,9 +987,15 @@ static float4 mandelbulberFieldSample(float3 p,
     int iteration_budget = cfg.vset_values[130] > 0.0f
         ? mandelbulberScreenIterationBudget(p, cfg, iteration_multiplier)
         : 0;
+#ifdef FPT_MANDEL_BOOLEAN_SUBTRACT
+    return mandelBooleanFieldSampleContext(mandelbulberGlobalPoint(p, cfg),
+        cfg, iteration_multiplier, iteration_budget,
+        mandelbulberMarchThreshold(p, cfg), false);
+#else
     return mandelbulberGeneratedFieldSample(
         mandelbulberGlobalPoint(p, cfg), cfg, iteration_multiplier,
         iteration_budget);
+#endif
 }
 #endif
 
@@ -999,7 +1005,7 @@ static float mandelbulberMarchThreshold(float3 position, constant FptRenderConfi
 static float mandelbulberNormalDistance(float3 p,
                                         constant FptRenderConfig &cfg,
                                         float detail_size = -1.0f) {
-#if defined(FPT_MANDEL_SCENE_LIMITS) || defined(FPT_MANDEL_INTERIOR)
+#if defined(FPT_MANDEL_SCENE_LIMITS) || defined(FPT_MANDEL_INTERIOR) || defined(FPT_MANDEL_BOOLEAN_SUBTRACT)
     if (detail_size < 0.0f) detail_size = mandelbulberMarchThreshold(p, cfg);
 #endif
 #ifdef FPT_MANDEL_SCENE_LIMITS
@@ -1008,7 +1014,12 @@ static float mandelbulberNormalDistance(float3 p,
     if (limit_distance > detail_size) return limit_distance;
 #endif
     int iteration_multiplier = cfg.vset_values[115] > 1.5f ? 5 : 1;
+#ifdef FPT_MANDEL_BOOLEAN_SUBTRACT
+    float distance = mandelBooleanFieldSampleContext(mandelbulberGlobalPoint(p, cfg),
+        cfg, iteration_multiplier, 0, detail_size, true).x;
+#else
     float distance = mandelbulberFieldSample(p, cfg, iteration_multiplier).x;
+#endif
 #ifdef FPT_MANDEL_INTERIOR
     if (cfg.renderer_backend == RENDERER_SDF && distance < 0.9f * detail_size) {
         distance = detail_size - distance;
@@ -1085,6 +1096,11 @@ static float mandelbulberPrimitiveUnionDistance(
 static float mandelbulberTopologyDistance(
     float fractal_distance, float3 p, float iso_distance,
     constant FptRenderConfig &cfg) {
+#ifdef FPT_MANDEL_BOOLEAN_SUBTRACT
+    // Meshing supplies its own iso-distance; never inherit a camera footprint.
+    fractal_distance = mandelBooleanFieldSampleContext(mandelbulberGlobalPoint(p, cfg),
+        cfg, 1, 0, iso_distance, true).x;
+#endif
     float distance = fractal_distance - iso_distance;
 #ifdef FPT_MANDEL_PERLIN
     distance = fptFractalDisplace(fractal_distance, p, cfg) - iso_distance;

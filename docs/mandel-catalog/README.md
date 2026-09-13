@@ -8,6 +8,9 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 ## Status
 
+Latest targeted follow-up: [boolean geometry correction and outlier controls](../mandel-geometry-outliers-20260913/README.md).
+This restores subtraction cavities without changing the frozen gallery's membership.
+
 | Status | Count | Meaning |
 | --- | ---: | --- |
 | Reviewed | 423 | Explicit capture-specific visual acceptance, with limitations allowed |

@@ -1,0 +1,462 @@
+{
+  "scope": "Continuous FPT Metal geometry correction; not NAADF voxel or whole-gallery certification",
+  "baseline_identity": {
+    "manifest": {
+      "version": 1,
+      "scenes": [
+        {
+          "id": "01",
+          "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddConditional4D.fract",
+          "sha256": "fde8d0d0b9c328abcfcbb328a029420f769d764d9a00618712864cae205cb92e"
+        },
+        {
+          "id": "14",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/two pseudo klienian.fract",
+          "sha256": "dac246366d4906985891dc91eac3ce874d8a801a5e4ec16dcd8e39fa06259249"
+        },
+        {
+          "id": "202",
+          "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/boolean_boxFoldBulb_quat.fract",
+          "sha256": "3b38ca7e04f6cf03297dfc3119bd05c3b6e190c370e6d6dd45822e40d2fbd77f"
+        },
+        {
+          "id": "420",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/dune.fract",
+          "sha256": "a4b8e8a92ae0c54b1e5b032f0baecdcfc931ee811c0887e766371b147d1efc35"
+        },
+        {
+          "id": "547",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/planet.fract",
+          "sha256": "cbdbf82ff8cae89691df944730eafeb89794bc6da52f9e1832f8a18e7bb1a923"
+        },
+        {
+          "id": "578",
+          "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract",
+          "sha256": "ed6528d2335f47f90415a3d3874c0f93c78fd073f9cebbd56bbd502a7ab38a13"
+        },
+        {
+          "id": "615",
+          "path": "boolean001.fract",
+          "sha256": "c892c291bd8ab719bb01eb6460b02dd4e4602014c4eebb343eca38c12a4b6340"
+        },
+        {
+          "id": "616",
+          "path": "boolean002.fract",
+          "sha256": "7ccb285c0b034391dd23d052db5017218ceb0a1ad8d4b27bfdd2a429c64f6f9e"
+        }
+      ]
+    },
+    "harnesses": {
+      "run_mandel_support_suite.py": "b3173fca7771ad6d0d3e8e53393bfb48dd70199ffe11c10e6072d5226a4e4eeb",
+      "run_release_canaries.py": "21387d8ec538178aefef7fcb7f0b454f6b488820330a0d922b0e3d7d3cb089a5",
+      "mandel_reference_cache.py": "c3d6e90f5d58f1f9d3b7436ab2e32ecee3904cfcdd63f3af986b28d507420453"
+    },
+    "executables": {
+      "/Volumes/Ventura/Projects/FPT-metal-release/reports/fpt-metal-before-boolean-20260913": "698f2967631d743065e1b9101921a52f70e954560ef0aecb6a88b5e17ec294e1"
+    },
+    "settings": {
+      "max_axis": 300,
+      "samples": 32,
+      "aspect": "authored",
+      "chunk_samples": 1,
+      "timeout": 120,
+      "native_timeout": 120,
+      "overlap_native": false,
+      "native_mc_samples": null,
+      "reference_cache": null,
+      "modes": [
+        "geometry",
+        "authored"
+      ],
+      "orientation": "native; no postprocessing flips/crops",
+      "reference_backend": "not_requested",
+      "bounces": "FPT scene/config default; metadata records effective configuration"
+    },
+    "environment": {},
+    "lightmaps": {
+      "01": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "14": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "202": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "420": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "547": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "578": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "615": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "616": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      }
+    }
+  },
+  "candidate_identity": {
+    "manifest": {
+      "version": 1,
+      "scenes": [
+        {
+          "id": "01",
+          "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddConditional4D.fract",
+          "sha256": "fde8d0d0b9c328abcfcbb328a029420f769d764d9a00618712864cae205cb92e"
+        },
+        {
+          "id": "14",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/two pseudo klienian.fract",
+          "sha256": "dac246366d4906985891dc91eac3ce874d8a801a5e4ec16dcd8e39fa06259249"
+        },
+        {
+          "id": "202",
+          "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/boolean_boxFoldBulb_quat.fract",
+          "sha256": "3b38ca7e04f6cf03297dfc3119bd05c3b6e190c370e6d6dd45822e40d2fbd77f"
+        },
+        {
+          "id": "420",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/dune.fract",
+          "sha256": "a4b8e8a92ae0c54b1e5b032f0baecdcfc931ee811c0887e766371b147d1efc35"
+        },
+        {
+          "id": "547",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/planet.fract",
+          "sha256": "cbdbf82ff8cae89691df944730eafeb89794bc6da52f9e1832f8a18e7bb1a923"
+        },
+        {
+          "id": "578",
+          "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract",
+          "sha256": "ed6528d2335f47f90415a3d3874c0f93c78fd073f9cebbd56bbd502a7ab38a13"
+        },
+        {
+          "id": "615",
+          "path": "boolean001.fract",
+          "sha256": "c892c291bd8ab719bb01eb6460b02dd4e4602014c4eebb343eca38c12a4b6340"
+        },
+        {
+          "id": "616",
+          "path": "boolean002.fract",
+          "sha256": "7ccb285c0b034391dd23d052db5017218ceb0a1ad8d4b27bfdd2a429c64f6f9e"
+        }
+      ]
+    },
+    "harnesses": {
+      "run_mandel_support_suite.py": "b3173fca7771ad6d0d3e8e53393bfb48dd70199ffe11c10e6072d5226a4e4eeb",
+      "run_release_canaries.py": "21387d8ec538178aefef7fcb7f0b454f6b488820330a0d922b0e3d7d3cb089a5",
+      "mandel_reference_cache.py": "c3d6e90f5d58f1f9d3b7436ab2e32ecee3904cfcdd63f3af986b28d507420453"
+    },
+    "executables": {
+      "/Volumes/Ventura/Projects/FPT-metal-release/target/release/fpt-metal": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0"
+    },
+    "settings": {
+      "max_axis": 300,
+      "samples": 32,
+      "aspect": "authored",
+      "chunk_samples": 1,
+      "timeout": 120,
+      "native_timeout": 120,
+      "overlap_native": false,
+      "native_mc_samples": null,
+      "reference_cache": null,
+      "modes": [
+        "geometry",
+        "authored"
+      ],
+      "orientation": "native; no postprocessing flips/crops",
+      "reference_backend": "not_requested",
+      "bounces": "FPT scene/config default; metadata records effective configuration"
+    },
+    "environment": {},
+    "lightmaps": {
+      "01": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "14": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "202": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "420": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "547": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "578": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "615": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "616": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      }
+    }
+  },
+  "regression": {
+    "01": {
+      "geometry": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      },
+      "authored": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      }
+    },
+    "14": {
+      "geometry": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      },
+      "authored": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      }
+    },
+    "202": {
+      "geometry": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      },
+      "authored": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      }
+    },
+    "420": {
+      "geometry": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      },
+      "authored": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      }
+    },
+    "547": {
+      "geometry": {
+        "mae": 0.05548300266852303,
+        "rmse": 0.1833072805509094,
+        "max_error": 0.996078431372549,
+        "changed_pixels": 7183
+      },
+      "authored": {
+        "mae": 0.07310433022650217,
+        "rmse": 0.2237896406479217,
+        "max_error": 1.0,
+        "changed_pixels": 8125
+      }
+    },
+    "578": {
+      "geometry": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      },
+      "authored": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      }
+    },
+    "615": {
+      "geometry": {
+        "mae": 0.14323711180724755,
+        "rmse": 0.24121520586707698,
+        "max_error": 0.9764705882352941,
+        "changed_pixels": 36319
+      },
+      "authored": {
+        "mae": 0.29081025125369014,
+        "rmse": 0.430772650005043,
+        "max_error": 1.0,
+        "changed_pixels": 40844
+      }
+    },
+    "616": {
+      "geometry": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      },
+      "authored": {
+        "mae": 0.0,
+        "rmse": 0.0,
+        "max_error": 0.0,
+        "changed_pixels": 0
+      }
+    }
+  },
+  "comparisons": {
+    "615-geometry": {
+      "captures": [
+        "images/615-geometry-0.png",
+        "images/615-geometry-1.png",
+        "images/615-geometry-2.png"
+      ],
+      "before": {
+        "mae": 0.11943102448079823,
+        "rmse": 0.20357635420428738,
+        "max_error": 0.9647058823529412,
+        "changed_pixels": 46988
+      },
+      "after": {
+        "mae": 0.11547967668329659,
+        "rmse": 0.2381228571464207,
+        "max_error": 1.0,
+        "changed_pixels": 42929
+      },
+      "source_sha256": "c892c291bd8ab719bb01eb6460b02dd4e4602014c4eebb343eca38c12a4b6340"
+    },
+    "547-geometry": {
+      "captures": [
+        "images/547-geometry-0.png",
+        "images/547-geometry-1.png",
+        "images/547-geometry-2.png"
+      ],
+      "before": {
+        "mae": 0.069563367753413,
+        "rmse": 0.19990283275485526,
+        "max_error": 0.996078431372549,
+        "changed_pixels": 9837
+      },
+      "after": {
+        "mae": 0.029618285183896045,
+        "rmse": 0.11199524751672185,
+        "max_error": 1.0,
+        "changed_pixels": 8120
+      },
+      "source_sha256": "cbdbf82ff8cae89691df944730eafeb89794bc6da52f9e1832f8a18e7bb1a923"
+    },
+    "616-geometry": {
+      "captures": [
+        "images/616-geometry-0.png",
+        "images/616-geometry-1.png",
+        "images/616-geometry-2.png"
+      ],
+      "before": {
+        "mae": 0.029102047930283224,
+        "rmse": 0.06129818441698279,
+        "max_error": 0.7411764705882353,
+        "changed_pixels": 56978
+      },
+      "after": {
+        "mae": 0.029102047930283224,
+        "rmse": 0.06129818441698279,
+        "max_error": 0.7411764705882353,
+        "changed_pixels": 56978
+      },
+      "source_sha256": "7ccb285c0b034391dd23d052db5017218ceb0a1ad8d4b27bfdd2a429c64f6f9e"
+    },
+    "578-geometry": {
+      "captures": [
+        "images/578-geometry-0.png",
+        "images/578-geometry-1.png",
+        "images/578-geometry-2.png"
+      ],
+      "before": {
+        "mae": 0.47035055918663765,
+        "rmse": 0.5944250783207224,
+        "max_error": 1.0,
+        "changed_pixels": 64662
+      },
+      "after": {
+        "mae": 0.47035055918663765,
+        "rmse": 0.5944250783207224,
+        "max_error": 1.0,
+        "changed_pixels": 64662
+      },
+      "source_sha256": "ed6528d2335f47f90415a3d3874c0f93c78fd073f9cebbd56bbd502a7ab38a13"
+    },
+    "615-authored": {
+      "captures": [
+        "images/615-authored-0.png",
+        "images/615-authored-1.png",
+        "images/615-authored-2.png"
+      ],
+      "before": {
+        "mae": 0.3299757899214913,
+        "rmse": 0.4653660858107712,
+        "max_error": 1.0,
+        "changed_pixels": 50646
+      },
+      "after": {
+        "mae": 0.18438676825102165,
+        "rmse": 0.31902641601469306,
+        "max_error": 1.0,
+        "changed_pixels": 50601
+      },
+      "source_sha256": "c892c291bd8ab719bb01eb6460b02dd4e4602014c4eebb343eca38c12a4b6340"
+    },
+    "547-authored": {
+      "captures": [
+        "images/547-authored-0.png",
+        "images/547-authored-1.png",
+        "images/547-authored-2.png"
+      ],
+      "before": {
+        "mae": 0.0736263294272344,
+        "rmse": 0.15094370609747843,
+        "max_error": 1.0,
+        "changed_pixels": 48083
+      },
+      "after": {
+        "mae": 0.09616093643242965,
+        "rmse": 0.20042931475223033,
+        "max_error": 1.0,
+        "changed_pixels": 48395
+      },
+      "source_sha256": "cbdbf82ff8cae89691df944730eafeb89794bc6da52f9e1832f8a18e7bb1a923"
+    }
+  },
+  "input_reports": {
+    "reports/mandel-boolean-fix-20260913/baseline/summary.json": "cb20c606cce58f47f579fdd713ae908cf00c6e95eefdeeb2f901cd1956cf55a6",
+    "reports/mandel-boolean-fix-20260913/final/summary.json": "007d1b1c6f815ae35b6356a270b67eed381e0a0a8e114ff0bfe148f186bb7ab6",
+    "reports/mandel-boolean-fix-20260913/candidate/summary.json": "6cfb370741c6b308e8556f4aad0c5921a9bc7e530aea22745dc85026aca46c5f",
+    "reports/mandel-geometry-outliers-20260913/summary.json": "4a739bfedd631a69f5082fdd93d0e9af272265b6b5a0c2f137d769dae9fcbe45",
+    "reports/mandel-boolean-fix-20260913/native-547/summary.json": "0da5e0225b5f254312bb0f3cf4eac60eeb7328b86b190d599bfb5dc096938aeb"
+  }
+}
