@@ -69,6 +69,11 @@ and **8** native timeouts. All 36 FPT captures succeeded; no renderer fixes
 were introduced. All **95 experimental scenes** now have source-bound deferred
 incomplete comparisons. There are no untouched routine or warning candidates;
 the historical flags remain recorded rather than erased.
+The [bounded release wrap-up](release-wrapup-2026-09-13.md) provides
+[preview-only evidence](../mandel-release-status/README.md) for the remaining
+95 comparisons and retests the 21 historical execution failures. It does not
+change catalogue statuses: reduced-resolution/native-sampling screens and
+96px/1-SPP execution retries are not reviewed-gallery evidence.
 Colour differences alone are not a blocker. Geometry, missing assets and
 failed render contracts must remain visible. [Explicit decisions](reviews.json)
 are tied to the complete [capture evidence](review-evidence.json), including

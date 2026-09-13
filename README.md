@@ -70,6 +70,13 @@ labelled with their original settings; they have not been rerendered here.
 
 ### Reviewed Showcase
 
+[Release status and unreviewed previews](docs/mandel-release-status/README.md)
+cover the remaining scenes separately from the reviewed gallery. The
+[bounded wrap-up report](docs/mandel-catalog/release-wrapup-2026-09-13.md)
+records reduced-resolution reference recovery, execution retries and known-issue
+groups. Screening success is not visual acceptance; scene 095 and fog/cloud
+fixes remain deferred.
+
 [Browse 423 visually accepted scenes](docs/mandel-showcase/README.md), with
 paginated native/FPT thumbnails and per-scene neutral/beauty comparisons.
 The first additional 50-scene review promoted **37** and held **13** for
