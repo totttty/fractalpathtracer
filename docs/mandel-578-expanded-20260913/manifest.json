@@ -1,0 +1,115 @@
+{
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "03b28aae8f250b37cc76eef7e4072da48f12660cf6d642889404b59577a5bdde",
+      "bytes": 6593
+    },
+    {
+      "path": "command.json",
+      "sha256": "ecc562d8db4ad99e286156a1737325966fd4ca3a8e5bf899e4dcda3877e91b46",
+      "bytes": 793
+    },
+    {
+      "path": "comparison-0.png",
+      "sha256": "9be86c344ffff15423c959305831ce9dcda125f8fbb378ce459985df2f039b7c",
+      "bytes": 81128
+    },
+    {
+      "path": "comparison-1.png",
+      "sha256": "75ab74a6f536f503beee482304a8c644bfff8e95db74400b464304d5f58ea4d7",
+      "bytes": 66278
+    },
+    {
+      "path": "comparison-2.png",
+      "sha256": "a4eac7282869d9f47bbd51846336c64d2c318c6cf53d47b969156f1fdf6eb293",
+      "bytes": 80721
+    },
+    {
+      "path": "comparison.png",
+      "sha256": "bb86cf9d36a691a823cea35677be299fdf03c25ed9d6174b1fe91d213956e06f",
+      "bytes": 224753
+    },
+    {
+      "path": "config.tsv",
+      "sha256": "ded1ae2eff021ba8f353f99a8734e724a714b05c4955573a00877a37bb4efea9",
+      "bytes": 910
+    },
+    {
+      "path": "controls-0.png",
+      "sha256": "0cf83a4212abf64a0e62fe41edca31e6ae0a9dad9c77b5e94c9b86db337d05d4",
+      "bytes": 80734
+    },
+    {
+      "path": "controls-1.png",
+      "sha256": "c3b7ea4d4bf896494638b9c08074c5b50f04237dc256a2c95dd7b86aa50565d5",
+      "bytes": 80830
+    },
+    {
+      "path": "controls-2.png",
+      "sha256": "6ae00289be634536756532a5bb65ada60ca5f5c8026c66f38b19997028a66487",
+      "bytes": 80734
+    },
+    {
+      "path": "controls.png",
+      "sha256": "67c640bc824d6b9cb1ae20e775843e1627b18c2c3e45ff511acef93a9e403edc",
+      "bytes": 169718
+    },
+    {
+      "path": "effective-config.json",
+      "sha256": "0fc3c5ff9977a07074f27dacb96031077c6bd619319b0e3c2395d3062e925cc3",
+      "bytes": 3120
+    },
+    {
+      "path": "final-three.json",
+      "sha256": "3e556f75802a5c8ed63295df39eda9899237cebd21a7d9c60f158911ad0ad762",
+      "bytes": 34511
+    },
+    {
+      "path": "final-two.json",
+      "sha256": "0f0226e5e7d1c75c2213a2f249b7d27381263c8cf4185b4f190fc40dff6a8f61",
+      "bytes": 34509
+    },
+    {
+      "path": "hit-inputs.tsv",
+      "sha256": "9ac00bbcc281e07aed6573424c0b37a66e69d0b03b9fc66fcc05eac38a70e20a",
+      "bytes": 17423
+    },
+    {
+      "path": "native-hits.tsv",
+      "sha256": "e165e2ae0b7f081c18933ddf83efe89be5a65a5cbee2760675338f9b824f8a7a",
+      "bytes": 72590
+    },
+    {
+      "path": "native-points.tsv",
+      "sha256": "fd8f8b6db6d16cb194f5f5914ccee359ed3d724f0ae3acecbe40e5ae344aaeec",
+      "bytes": 10575
+    },
+    {
+      "path": "native.tsv",
+      "sha256": "56ede0547eae716487bc8a63ec0ae9d122a5eb55762f226255f0a355e6212bf9",
+      "bytes": 3314
+    },
+    {
+      "path": "rounded-camera.json",
+      "sha256": "837f5878f16ec0dd5ce0cd61a58fd14e93792f8c4236be47e85f1da3a0a01faf",
+      "bytes": 34511
+    },
+    {
+      "path": "rounded-formula.json",
+      "sha256": "3e5b6200f78af84897d1fe3220d489f2281bb8a00f3e817528afc1932aeeeaf1",
+      "bytes": 33579
+    },
+    {
+      "path": "summary.json",
+      "sha256": "db00c4d81120c73b25a5da9fabef5185f14b132881f3cf3b1ca58d530dbb742e",
+      "bytes": 11632
+    },
+    {
+      "path": "verified-fpt.json",
+      "sha256": "3604c76539cc0a922fb60e44acfdeb26408c55187798365c0b562d68b884503d",
+      "bytes": 38763
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+[
+  "python3",
+  "scripts/run_mandel_hybrid_precision.py",
+  "--scene",
+  "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/examples/Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-FabsAddTgladFold4D.fract",
+  "--mandelbulber-root",
+  "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2",
+  "--native-probe",
+  "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-expanded-20260913/native-final/native-distance-probe",
+  "--points",
+  "reports/mandel-578-point-diagnosis-20260913/native-points.tsv",
+  "--size",
+  "300x225",
+  "--out",
+  "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-578-expanded-20260913/verified-fpt",
+  "--metal-probe",
+  "target/release/examples/mandel_normal_probe",
+  "--verify-hits"
+]

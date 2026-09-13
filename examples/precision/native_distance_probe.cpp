@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     systemData.decimalPoint = ".";
     QLocale::setDefault(systemData.locale);
     if (argc != 4 && argc != 5) {
-        std::cerr << "usage: native_distance_probe scene.fract points.tsv NEW-output.tsv [primary|boolean-primary|boolean-normal|march|hybrid-march|analytic-field|metal85-delta|orbit85|rays|ifs10-config]\n";
+        std::cerr << "usage: native_distance_probe scene.fract points.tsv NEW-output.tsv [primary|boolean-primary|boolean-normal|march|hybrid-march|hybrid-config|analytic-field|metal85-delta|orbit85|rays|ifs10-config]\n";
         return 2;
     }
     if (std::ifstream(argv[3]).good()) return 3;
@@ -70,12 +70,13 @@ int main(int argc, char **argv) {
     bool boolean_points = mode == "boolean-primary" || mode == "boolean-normal";
     bool primary = mode == "primary" || mode == "boolean-primary";
     bool hybrid_march = mode == "hybrid-march";
+    bool hybrid_config = mode == "hybrid-config";
     bool march = mode == "march" || hybrid_march;
     bool analytic_field = mode == "analytic-field";
     bool ifs_config = mode == "ifs10-config";
     if (ifs_config && parameters->Get<int>("formula_1") != 10) return 11;
     if (analytic_field && fractals.GetDEType(-1) != fractal::analyticDEType) return 11;
-    if (argc == 5 && !boolean_points && !march && !analytic_field && !primary && !rays && !ifs_config && ((!metal_delta && !orbit) || parameters->Get<int>("formula_1") != 85)) return 11;
+    if (argc == 5 && !hybrid_config && !boolean_points && !march && !analytic_field && !primary && !rays && !ifs_config && ((!metal_delta && !orbit) || parameters->Get<int>("formula_1") != 85)) return 11;
     // This adapter intentionally has no textures, primitive or object-tree data.
     if (config.objectsTreeEnable || (config.booleanOperatorsEnabled && !boolean_points)) {
         std::cerr << "probe only supports plain single/hybrid fractal fields\n";
@@ -96,10 +97,10 @@ int main(int argc, char **argv) {
     std::ofstream output(argv[3]);
     if (!input || !output) return 6;
     output << std::setprecision(17);
-    if (march) {
+    if (march || hybrid_config) {
         // Explicit plain-field contracts only; do not infer support from a
         // successfully linked native worker without its scene dependencies.
-        if (hybrid_march) {
+        if (hybrid_march || hybrid_config) {
             if (!parameters->Get<bool>("hybrid_fractal_enable")
                 || parameters->Get<int>("formula_1") != 7
                 || parameters->Get<int>("formula_2") != 1045) return 15;
@@ -119,6 +120,45 @@ int main(int argc, char **argv) {
         const int height = parameters->Get<int>("image_height");
         if (height <= 0 || config.maxRaymarchingSteps <= 0 || config.maxRaymarchingSteps > 10000) return 15;
         config.resolution = 1.0 / height;
+        if (hybrid_config) {
+            auto vector = [&](const char *key, const CVector3 &v) {
+                output << key << '\t' << v.x << '\t' << v.y << '\t' << v.z << '\n';
+            };
+            auto four = [&](const char *key, const CVector4 &v) {
+                output << key << '\t' << v.x << '\t' << v.y << '\t' << v.z << '\t' << v.w << '\n';
+            };
+            vector("camera", config.camera);
+            vector("target", config.target);
+            output << "controls\t" << config.N << '\t' << config.minN << '\t'
+                << config.maxRaymarchingSteps << '\t' << config.DEFactor << '\t'
+                << config.detailLevel << '\t' << config.fov << '\t' << config.viewDistanceMax
+                << '\t' << parameters->Get<double>("smoothness") << '\n';
+            output << "sequence";
+            for (int i = 0; i < config.N; ++i) output << '\t' << fractals.GetSequence(i);
+            output << '\n';
+            for (int i = 0; i < 2; ++i) {
+                output << "slot" << i << '\t' << fractals.GetBailout(i) << '\t'
+                    << fractals.GetInitialWAxis(i) << '\t' << fractals.GetWeight(i) << '\t'
+                    << fractals.IsAddCConstant(i) << '\t' << fractals.UseAdditionalBailoutCond(i)
+                    << '\t' << fractals.IsCheckForBailout(i) << '\n';
+            }
+            const auto &a = *fractals.GetFractal(0);
+            const auto &b = *fractals.GetFractal(1);
+            output << "scale\t" << a.transformCommon.scale3 << '\n';
+            four("limits", b.transformCommon.additionConstant0000);
+            output << "axes\t" << b.transformCommon.functionEnabledAx << '\t'
+                << b.transformCommon.functionEnabledAy << '\t' << b.transformCommon.functionEnabledAz
+                << '\t' << b.transformCommon.functionEnabledAw << '\n';
+            output << "starts\t" << b.transformCommon.startIterationsA << '\t'
+                << b.transformCommon.startIterationsB << '\t' << b.transformCommon.startIterationsC
+                << '\t' << b.transformCommon.startIterationsD << '\n';
+            output << "stops\t" << b.transformCommon.stopIterationsA << '\t'
+                << b.transformCommon.stopIterationsB << '\t' << b.transformCommon.stopIterationsC
+                << '\t' << b.transformCommon.stopIterationsD << '\n';
+            output << "foldColor\t" << a.foldColor.auxColorEnabledFalse << '\t'
+                << b.foldColor.auxColorEnabledFalse << '\n';
+            return output.good() ? 0 : 10;
+        }
         auto render = std::make_shared<sParamRender>(config);
         auto field = std::make_shared<cNineFractals>(formulas, parameters);
         auto data = std::make_shared<sRenderData>();
