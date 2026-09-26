@@ -1,0 +1,19 @@
+{
+  "reused_captures_verified": 2,
+  "new_capture_attempts": 22,
+  "previous_review_rows_preserved": 631,
+  "previous_scene_assets_preserved": 1894,
+  "gallery_files_verified": 1957,
+  "report_files_verified": 54,
+  "local_links_verified": 8509,
+  "reviewed": 427,
+  "incomplete": 2,
+  "experimental_inventory_verified": 95,
+  "remaining_queue_verified": 89,
+  "renderer_and_scene_inputs_unchanged": true,
+  "counts": {
+    "reviewed": 427,
+    "blocked": 230,
+    "experimental": 89
+  }
+}

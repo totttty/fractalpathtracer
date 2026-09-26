@@ -77,7 +77,26 @@ records reduced-resolution reference recovery, execution retries and known-issue
 groups. Screening success is not visual acceptance; scene 095 and fog/cloud
 fixes remain deferred.
 
-[Browse 423 visually accepted scenes](docs/mandel-showcase/README.md), with
+[Fast remaining-scene screening](docs/mandel-fast-expansion-20260914/README.md)
+adds fresh 150px/4-SPP FPT tests for all 116 scenes without completed visual
+reviews, with matching-resolution native comparisons where available and a
+[shortlist for full-quality review](docs/mandel-fast-expansion-20260914/shortlist.md).
+These previews are separate from the reviewed showcase below.
+
+[The ten-scene confirmation batch](docs/mandel-confirmation-20260914/README.md)
+adds scene 662 at full gallery settings. Nine incomplete comparisons remain
+deferred after bounded attempts; no renderer changes were made.
+
+[Missing-capture recovery](docs/mandel-recovery-20260914/README.md) subsequently
+reused 16 verified captures and retried eight missing modes with 120-second
+limits. All eight timed out, leaving the gallery at 424 at that checkpoint. Native progress
+estimates are retained to guide future budgets.
+
+[Experimental-95 recovery](docs/mandel-experimental95-20260914/README.md) inventories
+all 95 experimental scenes and attempts eight at full gallery settings: 3 accepted,
+3 visual holds and 2 incomplete. 89 experimental scenes remain.
+
+[Browse 427 visually accepted scenes](docs/mandel-showcase/README.md), with
 paginated native/FPT thumbnails and per-scene neutral/beauty comparisons.
 The first additional 50-scene review promoted **37** and held **13** for
 further work. The [next 50-scene batch](docs/mandel-catalog/review-batch02-2026-09-11.md)

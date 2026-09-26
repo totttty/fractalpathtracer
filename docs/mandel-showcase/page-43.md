@@ -4,6 +4,38 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [727: quick-dudley_001](727.md)
+
+[![Native / FPT authored](images/727-thumb.webp)](727.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The sweeping layered foreground, central recessed form and upper-left vertical structure align. FPT changes reflective colour toward brighter orange and cyan while retaining the principal contours, openings and authored crop. Exact reflective transport is not certified.
+
+## [728: quick-dudley_mod_001](728.md)
+
+[![Native / FPT authored](images/728-thumb.webp)](728.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The layered crossing foreground band, curved upper forms and right-hand folded structure align. FPT changes the native pink metallic reflections to darker gold/brown and sharper background detail, but retains the main geometry and framing. Fine optical transport is not certified.
+
+## [733: sierpinski 3D 002](733.md)
+
+[![Native / FPT authored](images/733-thumb.webp)](733.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The diagonal layered lattice and large curved upper-right band retain their framing and visible openings. Native blue atmospheric softness becomes a sharp multicoloured high-contrast lattice; broad structure remains visible, but haze, highlights and subpixel strands are not matched.
+
+## [734: smooth_mandelbox_001](734.md)
+
+[![Native / FPT authored](images/734-thumb.webp)](734.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The repeated rectangular tunnel, curved side walls and central bright region remain recognisable and aligned. FPT is greener and reveals different reflective inner bands; optical reflection and highlight intensity are not matched, but the main form remains readable.
+
 ## [737: stereoscopic 003](737.md)
 
 [![Native / FPT authored](images/737-thumb.webp)](737.md)

@@ -36,6 +36,14 @@ accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
 The tall orange ridged cliff and stepped lower outcrops align. FPT removes the native brown atmospheric veil and uses stronger orange contrast, but the foreground structure remains readable. Distant haze is not certified.
 
+## [475: mandelbox19](475.md)
+
+[![Native / FPT authored](images/475-thumb.webp)](475.md)
+
+accepted-with-limitations | experimental-95-2026-09-14 | 32 SPP
+
+The receding tunnel, rounded left overhang, central ledges and dense repeated wall/floor details correspond across the three views. FPT authored rendering retains readable red-lit foreground forms but is sharper and more saturated magenta, with a darker central distance and much less native haze. Background atmosphere and fine-detail appearance differ; the main geometry and foreground illumination remain legible, so this capture is accepted with those limitations.
+
 ## [478: mandelbox23 rotations](478.md)
 
 [![Native / FPT authored](images/478-thumb.webp)](478.md)
@@ -43,6 +51,14 @@ The tall orange ridged cliff and stepped lower outcrops align. FPT removes the n
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
 The diagonal row of decorated rounded forms, central rectangular inset and curved surrounding walls align. FPT is more uniformly orange/brown and less metallic than native, but the major structures remain legible. Exact highlights and materials are not certified.
+
+## [484: mandelbox29](484.md)
+
+[![Native / FPT authored](images/484-thumb.webp)](484.md)
+
+accepted-with-limitations | experimental-95-2026-09-14 | 32 SPP
+
+The tilted carved slabs, repeated arch/opening motifs, central dark recess and large circular upper opening correspond across the three captures. FPT authored rendering retains the native warm-lit slab faces and shadowed recess but is sharper, more orange/red and more contrasty, with harder clipped highlights and a darker background. Native depth-of-field softness is not reproduced. The main carved geometry remains readable; exact blur, lighting and material parity is not claimed.
 
 ## [486: mandelbox32 - spiral](486.md)
 
@@ -67,19 +83,3 @@ The two decorated spiral forms, surrounding layered walls and authored crop alig
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
 The crossing chains of rounded forms, upper-left layered cluster and broad enclosing surfaces align. FPT removes much of the native haze and changes reflective colour to pink/gold, but foreground structure remains readable. Atmosphere and distant reflective detail are not certified.
-
-## [494: mandelbox44_2](494.md)
-
-[![Native / FPT authored](images/494-thumb.webp)](494.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The repeated stacked bulb-like columns, right foreground column and camera placement align. Both authored views are dark; FPT reduces the native brown veil and strengthens purple contrast, with the main column contours still readable. Atmosphere and deep background illumination are not certified.
-
-## [500: mandelbox50 - hearts](500.md)
-
-[![Native / FPT authored](images/500-thumb.webp)](500.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The paired heart-shaped forms, overlapping placement and layered surface bands align. Both views are bright; FPT changes the background from hazy red to green and sharpens the patterned hearts, while the defining contours remain readable. Bloom and fine material response are not certified.

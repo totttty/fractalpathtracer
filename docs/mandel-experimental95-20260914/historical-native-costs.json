@@ -1,0 +1,905 @@
+{
+  "scope": "Full-resolution native producer estimates from historical attempts, not guaranteed completion times.",
+  "rows": [
+    {
+      "id": "186",
+      "progress_percent": 98.22,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 2.2,
+      "estimated_total_seconds": 121.10000000000001,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/186/mandel/stdout.log",
+      "source_sha256": "7cc8f23698a2ebcce7af1dc57d9aa9460511cdf67a3398104d6d4d390b7e6923"
+    },
+    {
+      "id": "464",
+      "progress_percent": 94.0,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 7.5,
+      "estimated_total_seconds": 126.4,
+      "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+      "log": "reports/mandel-review-batch12-20260913/captures/464/mandel/stdout.log",
+      "source_sha256": "3f0c6dd7a64d2ed8ef4c73dc3e9cc1d385d7ccb012286626ff0a63d317683c52"
+    },
+    {
+      "id": "674",
+      "progress_percent": 90.53,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 12.3,
+      "estimated_total_seconds": 131.3,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/674/mandel/stdout.log",
+      "source_sha256": "b2cedf90163877c8ccf8e6c49f4378d25a1320ba8172c47daa873484fd0bf5b8"
+    },
+    {
+      "id": "182",
+      "progress_percent": 89.67,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 13.5,
+      "estimated_total_seconds": 132.5,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/182/mandel/stdout.log",
+      "source_sha256": "35be6696b65c24bf9bb1e2d5ed41e953fee662abf8d692db86547991879b9bc2"
+    },
+    {
+      "id": "495",
+      "progress_percent": 89.35,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 13.9,
+      "estimated_total_seconds": 132.8,
+      "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch08-20260912/captures/495/mandel/stdout.log",
+      "source_sha256": "7244590a041b2ab25b4fb750c635e65e86bce33bc74c479cbb0d07ae29205c3d"
+    },
+    {
+      "id": "416",
+      "progress_percent": 88.17,
+      "elapsed_seconds": 119.8,
+      "producer_remaining_seconds": 15.3,
+      "estimated_total_seconds": 135.1,
+      "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch04-20260911/captures/416/mandel/stdout.log",
+      "source_sha256": "034d38efc21b1451cbbff0f1d66bbb83a334de8c35985786e89cb5955677ca2f"
+    },
+    {
+      "id": "437",
+      "progress_percent": 87.56,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 17.0,
+      "estimated_total_seconds": 136.9,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/437/mandel/stdout.log",
+      "source_sha256": "47f669bcf1aac84eae033252213579009a571a72a4756ba94b0bf276c7e47f90"
+    },
+    {
+      "id": "701",
+      "progress_percent": 86.67,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 17.9,
+      "estimated_total_seconds": 136.9,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/701/mandel/stdout.log",
+      "source_sha256": "f3cfaf110c580e0b08687a954cfb9bcc1196b41369fe2c35a98b15f519ab80b4"
+    },
+    {
+      "id": "739",
+      "progress_percent": 67.56,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 17.4,
+      "estimated_total_seconds": 137.3,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/739/mandel/stdout.log",
+      "source_sha256": "bb1736da19ba38f5bdc6dcf9ae12a8435b050d9dacf51427c0656bca3f2f1b33"
+    },
+    {
+      "id": "442",
+      "progress_percent": 84.62,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 21.3,
+      "estimated_total_seconds": 140.3,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/442/mandel/stdout.log",
+      "source_sha256": "137b7dec4a924ff6e61f186f1f92030118e5770640afcaa7b3f49d1e43bf3a44"
+    },
+    {
+      "id": "525",
+      "progress_percent": 83.43,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 23.3,
+      "estimated_total_seconds": 142.3,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/525/mandel/stdout.log",
+      "source_sha256": "d1ba87871f6af49cfb8034836a9a6ff89efe1a230bf5ca68d653dd5124b9a94b"
+    },
+    {
+      "id": "514",
+      "progress_percent": 80.33,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 28.2,
+      "estimated_total_seconds": 147.2,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/514/mandel/stdout.log",
+      "source_sha256": "c1e3aa2e58189773ea459eceb9424a4934da01814067f78fbbc5bf3934b83712"
+    },
+    {
+      "id": "475",
+      "progress_percent": 79.88,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 28.7,
+      "estimated_total_seconds": 148.6,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/475/mandel/stdout.log",
+      "source_sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936"
+    },
+    {
+      "id": "646",
+      "progress_percent": 79.88,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 29.7,
+      "estimated_total_seconds": 148.7,
+      "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch04-20260911/captures/646/mandel/stdout.log",
+      "source_sha256": "cd6e79405c78d5041f1b2ad570716aa1dafd0bad2920f597e0e1cfec0bcf2b56"
+    },
+    {
+      "id": "484",
+      "progress_percent": 77.51,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 32.6,
+      "estimated_total_seconds": 151.5,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/484/mandel/stdout.log",
+      "source_sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479"
+    },
+    {
+      "id": "097",
+      "progress_percent": 75.33,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 38.7,
+      "estimated_total_seconds": 158.60000000000002,
+      "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch04-20260911/captures/097/mandel/stdout.log",
+      "source_sha256": "2767c40b70dce2dc23a673f5af055e81ed5189b81cd64e4a1ed9b0ac292bc021"
+    },
+    {
+      "id": "678",
+      "progress_percent": 73.78,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 41.6,
+      "estimated_total_seconds": 161.5,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/678/mandel/stdout.log",
+      "source_sha256": "02724a85d8801ebedbbce003d294cf9c7b72083c8d34c25b20d6ee5672c10c97"
+    },
+    {
+      "id": "680",
+      "progress_percent": 71.6,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 45.2,
+      "estimated_total_seconds": 164.10000000000002,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/680/mandel/stdout.log",
+      "source_sha256": "8d24ba6ee4dc248f4ef71005d443fb054f681330d6b1205af86907dc97f89fc9"
+    },
+    {
+      "id": "744",
+      "progress_percent": 66.33,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 48.1,
+      "estimated_total_seconds": 167.1,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/744/mandel/stdout.log",
+      "source_sha256": "a2b17eceb45c07ae671e5fece8b51d78b9381518bfd779a45fccd63692b029c3"
+    },
+    {
+      "id": "489",
+      "progress_percent": 69.82,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 51.2,
+      "estimated_total_seconds": 170.2,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/489/mandel/stdout.log",
+      "source_sha256": "dec362431f409a7b76729a039fcb77959b54484a2a429b5b0f3143596a078a24"
+    },
+    {
+      "id": "490",
+      "progress_percent": 69.23,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 51.4,
+      "estimated_total_seconds": 170.3,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/490/mandel/stdout.log",
+      "source_sha256": "81e52847b656749fe85f214c6945dfee8b3f052c6c06d696896dd12fdfd9f51e"
+    },
+    {
+      "id": "436",
+      "progress_percent": 68.0,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 54.4,
+      "estimated_total_seconds": 173.3,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/436/mandel/stdout.log",
+      "source_sha256": "7315e0c14f933d2ddd8923fed51e7f1eb59e1a0939995edacfdd75e8f7c363be"
+    },
+    {
+      "id": "172",
+      "progress_percent": 67.11,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 58.2,
+      "estimated_total_seconds": 177.2,
+      "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch08-20260912/captures/172/mandel/stdout.log",
+      "source_sha256": "aad1812e33004e8247bffc2004649d54d64f3eb4ab939b023e7e77f559fd0e9c"
+    },
+    {
+      "id": "705",
+      "progress_percent": 64.44,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 63.8,
+      "estimated_total_seconds": 182.8,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/705/mandel/stdout.log",
+      "source_sha256": "1e26888bb4e16fce11b74a7f3d7c9ee69f18cf3fcd6230f280ee3dc022eb7065"
+    },
+    {
+      "id": "461",
+      "progress_percent": 62.67,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 68.5,
+      "estimated_total_seconds": 188.4,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/461/mandel/stdout.log",
+      "source_sha256": "09e75666d855e8dd3fcd1ae54de3d61e60e0cf599d9dcfe000d30a4d99ef1108"
+    },
+    {
+      "id": "539",
+      "progress_percent": 62.13,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 71.4,
+      "estimated_total_seconds": 190.4,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/539/mandel/stdout.log",
+      "source_sha256": "57475159a7a5486d65fe05b517e7d27549f4fe9485a0a5d8bfe0905754c5ab6e"
+    },
+    {
+      "id": "641",
+      "progress_percent": 62.72,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 71.7,
+      "estimated_total_seconds": 190.60000000000002,
+      "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch04-20260911/captures/641/mandel/stdout.log",
+      "source_sha256": "6c4c68f789ebb4633fdd6a4ea1f854c0f73c186ddb8575e8ed4e671246ff7e2b"
+    },
+    {
+      "id": "731",
+      "progress_percent": 60.95,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 76.1,
+      "estimated_total_seconds": 196.0,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/731/mandel/stdout.log",
+      "source_sha256": "5b7d9b012527a0b596b3898b5e56201380dfcc2993c512374847851696c26519"
+    },
+    {
+      "id": "502",
+      "progress_percent": 57.4,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 86.2,
+      "estimated_total_seconds": 205.10000000000002,
+      "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch08-20260912/captures/502/mandel/stdout.log",
+      "source_sha256": "e146336244bbd1ac941880152d68915962f823de92ff4239866c4666def3a79d"
+    },
+    {
+      "id": "419",
+      "progress_percent": 56.8,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 93.1,
+      "estimated_total_seconds": 213.0,
+      "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch04-20260911/captures/419/mandel/stdout.log",
+      "source_sha256": "7dec3e1eaf910d6628d1040eeb897dec5744731f64350427499dce4770dc5a52"
+    },
+    {
+      "id": "555",
+      "progress_percent": 54.44,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 97.3,
+      "estimated_total_seconds": 216.3,
+      "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch10-20260912/captures/555/mandel/stdout.log",
+      "source_sha256": "e04aa847e21d66e7de28fbaa483bed1f2ba971316eea76e2089a2817fbd94e2b"
+    },
+    {
+      "id": "295",
+      "progress_percent": 51.5,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 108.5,
+      "estimated_total_seconds": 227.4,
+      "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch10-20260912/captures/295/mandel/stdout.log",
+      "source_sha256": "035ba82d0606cba849b7fe2e1d96896637813cc385590d3fdaee2f263f83656f"
+    },
+    {
+      "id": "538",
+      "progress_percent": 45.56,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 131.3,
+      "estimated_total_seconds": 250.3,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/538/mandel/stdout.log",
+      "source_sha256": "a5e182225913df9b7830a65929a9fc505a80aa3cd55dfe274ba736228e18bc95"
+    },
+    {
+      "id": "501",
+      "progress_percent": 46.75,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 132.4,
+      "estimated_total_seconds": 252.3,
+      "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch08-20260912/captures/501/mandel/stdout.log",
+      "source_sha256": "698e091e072478b55ae96a7f1900a9db0ddfd289f15dde8ce921b6695f3f3702"
+    },
+    {
+      "id": "432",
+      "progress_percent": 44.0,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 140.5,
+      "estimated_total_seconds": 259.5,
+      "report": "reports/mandel-recovery-20260914/native/summary.json",
+      "log": "reports/mandel-recovery-20260914/native/432/mandel/stdout.log",
+      "source_sha256": "cff79f4382a881ed390acbbca70e976341c963e7a1eb24dab4e7f30b345dfc41"
+    },
+    {
+      "id": "654",
+      "progress_percent": 44.97,
+      "elapsed_seconds": 118.8,
+      "producer_remaining_seconds": 142.4,
+      "estimated_total_seconds": 261.2,
+      "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch04-20260911/captures/654/mandel/stdout.log",
+      "source_sha256": "c351002df5f2d2f2323e8c2ff249b7b50c69d0c57c73f2be824a55e4e2188f33"
+    },
+    {
+      "id": "694",
+      "progress_percent": 45.56,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 142.4,
+      "estimated_total_seconds": 261.4,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/694/mandel/stdout.log",
+      "source_sha256": "0a2453ded101bc3cf0761f855e19cf016823ebeefe42ac5834281ef58849ba3c"
+    },
+    {
+      "id": "491",
+      "progress_percent": 40.24,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 173.8,
+      "estimated_total_seconds": 292.8,
+      "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch08-20260912/captures/491/mandel/stdout.log",
+      "source_sha256": "c41fad78d4c256a36f79fbe3309730e0fb93b46f9cc81181d68d5d586832353d"
+    },
+    {
+      "id": "439",
+      "progress_percent": 33.14,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 232.8,
+      "estimated_total_seconds": 351.70000000000005,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/439/mandel/stdout.log",
+      "source_sha256": "1d4866d9d1948e96df56e3d49cf635a2b93f053dcef3dbeaba55b2f83f399bdb"
+    },
+    {
+      "id": "543",
+      "progress_percent": 34.32,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 234.5,
+      "estimated_total_seconds": 354.4,
+      "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+      "log": "reports/mandel-review-batch12-20260913/captures/543/mandel/stdout.log",
+      "source_sha256": "dc428154d2f8932e54365ed5eda0b4223a2984790bf5145e2a4296c3d6c13558"
+    },
+    {
+      "id": "515",
+      "progress_percent": 32.0,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 251.0,
+      "estimated_total_seconds": 370.0,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/515/mandel/stdout.log",
+      "source_sha256": "5ce1a6388137785692fa12215be720b28a277de440eedadbd065cde3a7dbd062"
+    },
+    {
+      "id": "697",
+      "progress_percent": 27.81,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 273.7,
+      "estimated_total_seconds": 392.7,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/697/mandel/stdout.log",
+      "source_sha256": "18c1a99bbb0b21ba491b37c96aa1fb5814160eba617f30de03e97f7dd8061da8"
+    },
+    {
+      "id": "298",
+      "progress_percent": 29.5,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 275.5,
+      "estimated_total_seconds": 394.5,
+      "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch10-20260912/captures/298/mandel/stdout.log",
+      "source_sha256": "7d66782795ab67a9a87a10fe100387d2fc916d5df0b387bb073f221551483d69"
+    },
+    {
+      "id": "477",
+      "progress_percent": 27.56,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 292.5,
+      "estimated_total_seconds": 412.4,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/477/mandel/stdout.log",
+      "source_sha256": "1b8b55ccfc9a70ad9bbd4858ed222327a1a1d425b5c06f2d10ca32cf46e54eaa"
+    },
+    {
+      "id": "443",
+      "progress_percent": 27.81,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 294.5,
+      "estimated_total_seconds": 413.5,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/443/mandel/stdout.log",
+      "source_sha256": "1f113355ea0c5b7f515c040c536059e3cb8cae7cf7d3708de1858b9ed2264b82"
+    },
+    {
+      "id": "743",
+      "progress_percent": 26.63,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 325.2,
+      "estimated_total_seconds": 444.2,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/743/mandel/stdout.log",
+      "source_sha256": "9c4e6605ccb9a4439f00f1b908f60dc09336712b0c448e8064ff691d8b8fe08e"
+    },
+    {
+      "id": "480",
+      "progress_percent": 23.08,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 344.8,
+      "estimated_total_seconds": 463.70000000000005,
+      "report": "reports/mandel-recovery-20260914/native/summary.json",
+      "log": "reports/mandel-recovery-20260914/native/480/mandel/stdout.log",
+      "source_sha256": "b2fd04cd6c1ff7d616a7fd41c6210626dcf140776a3cebb74c9abf1dfad770eb"
+    },
+    {
+      "id": "561",
+      "progress_percent": 22.49,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 362.3,
+      "estimated_total_seconds": 481.3,
+      "report": "reports/mandel-recovery-20260914/native/summary.json",
+      "log": "reports/mandel-recovery-20260914/native/561/mandel/stdout.log",
+      "source_sha256": "d0ef2d67dac4e774d462e650f3dc7a836a1fcd12d7c7782618b9bd15afc166ea"
+    },
+    {
+      "id": "485",
+      "progress_percent": 17.75,
+      "elapsed_seconds": 119.1,
+      "producer_remaining_seconds": 414.8,
+      "estimated_total_seconds": 533.9,
+      "report": "reports/mandel-recovery-20260914/native/summary.json",
+      "log": "reports/mandel-recovery-20260914/native/485/mandel/stdout.log",
+      "source_sha256": "6e3674459bf0dde8766d1e9b132d35fb16f89d4c0e29db1fa7f031b13cf291cf"
+    },
+    {
+      "id": "523",
+      "progress_percent": 21.89,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 421.5,
+      "estimated_total_seconds": 540.5,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/523/mandel/stdout.log",
+      "source_sha256": "13d0fff0d7b4bd764d127e7940e9a30e4b0e412b364de73fee67fbabe55bd64a"
+    },
+    {
+      "id": "537",
+      "progress_percent": 20.71,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 440.2,
+      "estimated_total_seconds": 559.2,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/537/mandel/stdout.log",
+      "source_sha256": "b173dda1b5f0cd29a8121b16c3177452a9b59b9e2386478338c7cf0e4386e9c0"
+    },
+    {
+      "id": "466",
+      "progress_percent": 17.16,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 491.8,
+      "estimated_total_seconds": 610.8,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/466/mandel/stdout.log",
+      "source_sha256": "0e7ec181f2d06cc03702f7687dc066a396d06bf6c4306f1eb734d36990d9a01f"
+    },
+    {
+      "id": "470",
+      "progress_percent": 16.89,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 496.6,
+      "estimated_total_seconds": 615.5,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/470/mandel/stdout.log",
+      "source_sha256": "7dd1ef4b53ad4d1ef3e1593eee059ffb1fa35023f317918d25c434985c325143"
+    },
+    {
+      "id": "408",
+      "progress_percent": 20.12,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 498.0,
+      "estimated_total_seconds": 617.0,
+      "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+      "log": "reports/mandel-review-batch12-20260913/captures/408/mandel/stdout.log",
+      "source_sha256": "edfb3ff38457df33f24fc3c2aa31bb719a5f300817e3bb6ac787983505c514e3"
+    },
+    {
+      "id": "481",
+      "progress_percent": 17.75,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 501.3,
+      "estimated_total_seconds": 620.3,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/481/mandel/stdout.log",
+      "source_sha256": "feee33ac3b450bf19560982680174d7011aa06656760f5d487618622d375981c"
+    },
+    {
+      "id": "698",
+      "progress_percent": 15.98,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 565.4,
+      "estimated_total_seconds": 684.4,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/698/mandel/stdout.log",
+      "source_sha256": "c3f9e8a1a7dbad3166942a84dbabe491c9115e557925f330d571d2bbbe9a71e4"
+    },
+    {
+      "id": "530",
+      "progress_percent": 15.98,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 572.1,
+      "estimated_total_seconds": 691.0,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/530/mandel/stdout.log",
+      "source_sha256": "8b83b54342080421f63079eba50b4c4a3a1fd7b7cd9e6eee20cb0f50b26b2b5e"
+    },
+    {
+      "id": "473",
+      "progress_percent": 14.2,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 712.2,
+      "estimated_total_seconds": 832.1,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/473/mandel/stdout.log",
+      "source_sha256": "c532b9970fd9e42cc80f752d7d67d87b3d7d53c6f926e6a682d0c93fcd67ccea"
+    },
+    {
+      "id": "469",
+      "progress_percent": 12.0,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 798.5,
+      "estimated_total_seconds": 918.4,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/469/mandel/stdout.log",
+      "source_sha256": "3c87f2e6ec4d9ba6c316c516e6919c0b4fa3dce3bb88b349f68cce2c80aa3446"
+    },
+    {
+      "id": "549",
+      "progress_percent": 12.43,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 812.5,
+      "estimated_total_seconds": 931.5,
+      "report": "reports/mandel-recovery-20260914/native/summary.json",
+      "log": "reports/mandel-recovery-20260914/native/549/mandel/stdout.log",
+      "source_sha256": "dba82fdecb1c0ddad1f434a0d85fb05cbeef33e03150432f74efb262fb90cd8c"
+    },
+    {
+      "id": "653",
+      "progress_percent": 12.67,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 825.8,
+      "estimated_total_seconds": 945.6999999999999,
+      "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+      "log": "reports/mandel-review-batch12-20260913/captures/653/mandel/stdout.log",
+      "source_sha256": "5f9b1585d112ae9cfd8aa2248b57ee69260a8c00a7035f7e3c1b3346d72f345a"
+    },
+    {
+      "id": "449",
+      "progress_percent": 12.67,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 838.4,
+      "estimated_total_seconds": 957.4,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/449/mandel/stdout.log",
+      "source_sha256": "78ee01ed76fd0dd678f3bfb681a4a14e03eb9e3b2c7abf15796d1cd90c201135"
+    },
+    {
+      "id": "562",
+      "progress_percent": 7.69,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 861.1,
+      "estimated_total_seconds": 981.0,
+      "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch10-20260912/captures/562/mandel/stdout.log",
+      "source_sha256": "7006d41d9191cf614fbc59889a40d46fa2bbbbac90837164c74ba2f94a5a4c95"
+    },
+    {
+      "id": "465",
+      "progress_percent": 13.02,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 866.2,
+      "estimated_total_seconds": 985.2,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/465/mandel/stdout.log",
+      "source_sha256": "0838aff5d584045338c705a3cf54f813861a10a28169931d5ce16002f01b3483"
+    },
+    {
+      "id": "407",
+      "progress_percent": 89.94,
+      "elapsed_seconds": 899.6,
+      "producer_remaining_seconds": 98.7,
+      "estimated_total_seconds": 998.3000000000001,
+      "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch03-20260911/captures/407/mandel/stdout.log",
+      "source_sha256": "0ec9ebe96a4a9feaac7ef0a832be50c41c7bc6ccf4266f1b6f3a91adfd7f6a1d"
+    },
+    {
+      "id": "405",
+      "progress_percent": 88.76,
+      "elapsed_seconds": 899.8,
+      "producer_remaining_seconds": 113.3,
+      "estimated_total_seconds": 1013.0999999999999,
+      "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch03-20260911/captures/405/mandel/stdout.log",
+      "source_sha256": "df55932878ea8f2022a2ec79f975db2bf06889dda30bf4cf76fa24c744e06087"
+    },
+    {
+      "id": "426",
+      "progress_percent": 10.06,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 955.6,
+      "estimated_total_seconds": 1075.5,
+      "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+      "log": "reports/mandel-review-batch12-20260913/captures/426/mandel/stdout.log",
+      "source_sha256": "c1b8797683d5e6a2d88312ec54ec5f07a2294b3e1ac033723a4fe5dd5e2942d0"
+    },
+    {
+      "id": "741",
+      "progress_percent": 11.83,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 957.4,
+      "estimated_total_seconds": 1076.4,
+      "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+      "log": "reports/mandel-review-batch12-20260913/captures/741/mandel/stdout.log",
+      "source_sha256": "6a4fc8fb0425e1a073bdd021d0fa7cc2adcfb8500a5bc19ed8030bf915247099"
+    },
+    {
+      "id": "505",
+      "progress_percent": 12.43,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 968.3,
+      "estimated_total_seconds": 1088.2,
+      "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch08-20260912/captures/505/mandel/stdout.log",
+      "source_sha256": "c57c89054e2e850aca19eb62dc1aac19194c8907b1807c7ac9fbd2bacab7799a"
+    },
+    {
+      "id": "526",
+      "progress_percent": 8.28,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 1124.2,
+      "estimated_total_seconds": 1243.1000000000001,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/526/mandel/stdout.log",
+      "source_sha256": "61473b940973c4f7533ec2a0941ca947517229602d758fe3e567a912a455145a"
+    },
+    {
+      "id": "397",
+      "progress_percent": 67.46,
+      "elapsed_seconds": 899.1,
+      "producer_remaining_seconds": 407.7,
+      "estimated_total_seconds": 1306.8,
+      "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch03-20260911/captures/397/mandel/stdout.log",
+      "source_sha256": "79499ae14e5965bc5f56e10dd50b716240fa77d5acd8cf76aca63ca9491effed"
+    },
+    {
+      "id": "550",
+      "progress_percent": 5.92,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 1221.8,
+      "estimated_total_seconds": 1341.7,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/550/mandel/stdout.log",
+      "source_sha256": "0bd04015a3fb9e819808a9da468b29cb2249b27c03ad4b2d79892624e1d8d2e5"
+    },
+    {
+      "id": "450",
+      "progress_percent": 7.0,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 1291.0,
+      "estimated_total_seconds": 1410.0,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/450/mandel/stdout.log",
+      "source_sha256": "d691d28717310e84d4a561a68a05e2d9baec37cbd0204c254d9738866a049554"
+    },
+    {
+      "id": "620",
+      "progress_percent": 66.27,
+      "elapsed_seconds": 899.6,
+      "producer_remaining_seconds": 511.4,
+      "estimated_total_seconds": 1411.0,
+      "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch03-20260911/captures/620/mandel/stdout.log",
+      "source_sha256": "094a1b2deeb0c40e09b432ddc713806b9bde9872ca4dfc178ad439a87e8f1b2a"
+    },
+    {
+      "id": "503",
+      "progress_percent": 7.69,
+      "elapsed_seconds": 119.1,
+      "producer_remaining_seconds": 1329.8,
+      "estimated_total_seconds": 1448.8999999999999,
+      "report": "reports/mandel-recovery-20260914/native/summary.json",
+      "log": "reports/mandel-recovery-20260914/native/503/mandel/stdout.log",
+      "source_sha256": "4a13c5c0db09f2bfa1e370ce6c38e04b9c07dd553b9b7a86237d8fdaade0fffd"
+    },
+    {
+      "id": "553",
+      "progress_percent": 7.1,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": 1332.5,
+      "estimated_total_seconds": 1452.4,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/553/mandel/stdout.log",
+      "source_sha256": "f843098355f06188b29854c82463a78fc3388c9e86d97709eb9f354cd9c260a8"
+    },
+    {
+      "id": "482",
+      "progress_percent": 7.56,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 1383.4,
+      "estimated_total_seconds": 1502.4,
+      "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch07-20260912/captures/482/mandel/stdout.log",
+      "source_sha256": "3ee0ebaa3bc3e558ae55b375f24617c6c59b3bc0e74ea668667a2e7946583fda"
+    },
+    {
+      "id": "554",
+      "progress_percent": 5.92,
+      "elapsed_seconds": 119.8,
+      "producer_remaining_seconds": 1413.8,
+      "estimated_total_seconds": 1533.6,
+      "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch10-20260912/captures/554/mandel/stdout.log",
+      "source_sha256": "35cef2c6cc5073cb158b5cbe256b97bd5b87923d5008b86b0719bc78d8855f50"
+    },
+    {
+      "id": "540",
+      "progress_percent": 5.92,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 1537.2,
+      "estimated_total_seconds": 1656.2,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/540/mandel/stdout.log",
+      "source_sha256": "60ed9ed159f3288c7749e1c25a9140c5c33049332b1a5af4fed4d0f823cdd916"
+    },
+    {
+      "id": "425",
+      "progress_percent": 7.0,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 1608.6,
+      "estimated_total_seconds": 1727.6,
+      "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+      "log": "reports/mandel-review-batch12-20260913/captures/425/mandel/stdout.log",
+      "source_sha256": "852211c2811c847d28f0f183ae6a2389f49a2e2f747b155b6592b267e95a40d6"
+    },
+    {
+      "id": "506",
+      "progress_percent": 5.92,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 1658.0,
+      "estimated_total_seconds": 1776.9,
+      "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch08-20260912/captures/506/mandel/stdout.log",
+      "source_sha256": "dd225350ce4e6d4e9ddd6d3ef2caeaa05afab31ed09f144bc0b6fad27643304c"
+    },
+    {
+      "id": "467",
+      "progress_percent": 4.73,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 1879.8,
+      "estimated_total_seconds": 1998.7,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/467/mandel/stdout.log",
+      "source_sha256": "62a73c049fd94f5638989bd2e5e7c8ca39f6d0fc0184e2ac13a68b6e2efb57fd"
+    },
+    {
+      "id": "558",
+      "progress_percent": 5.92,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 2160.2,
+      "estimated_total_seconds": 2279.2,
+      "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch10-20260912/captures/558/mandel/stdout.log",
+      "source_sha256": "28eab29ab12443c301332752eac6c2f23790f863d355a9cdfaa37e109b789444"
+    },
+    {
+      "id": "463",
+      "progress_percent": 3.0,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 3383.1,
+      "estimated_total_seconds": 3502.1,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/463/mandel/stdout.log",
+      "source_sha256": "b06a81913faa538729ec745a1c03e4d78d324a10f02afda8b736a1c97d1aab82"
+    },
+    {
+      "id": "524",
+      "progress_percent": 1.78,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 6805.1,
+      "estimated_total_seconds": 6924.1,
+      "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch09-20260912/captures/524/mandel/stdout.log",
+      "source_sha256": "94e55a983299f4c6d7ae0010cb6274ddfccb81d0a6b98d3b1a1f5672076bea9b"
+    },
+    {
+      "id": "404",
+      "progress_percent": 8.28,
+      "elapsed_seconds": 899.3,
+      "producer_remaining_seconds": 10001.7,
+      "estimated_total_seconds": 10901.0,
+      "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch03-20260911/captures/404/mandel/stdout.log",
+      "source_sha256": "e3e016442f0c38c15567aa159e01c279cfeb2cdf8965d7af72c6e302cb586e8e"
+    },
+    {
+      "id": "454",
+      "progress_percent": 0.59,
+      "elapsed_seconds": 119.8,
+      "producer_remaining_seconds": 19496.9,
+      "estimated_total_seconds": 19616.7,
+      "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+      "log": "reports/mandel-review-batch06-20260912/captures/454/mandel/stdout.log",
+      "source_sha256": "0542c246d0c295c0e8b3435840bc68978a07224c4c89575be6f3d6256a2cf1f8"
+    },
+    {
+      "id": "441",
+      "progress_percent": 0.0,
+      "elapsed_seconds": 119.9,
+      "producer_remaining_seconds": null,
+      "estimated_total_seconds": null,
+      "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+      "log": "reports/mandel-review-batch05-20260911/captures/441/mandel/stdout.log",
+      "source_sha256": "0361cdb23741644f83491137bc5bfa3838f17ab9a3ccd5e8d5144f8497cd3641"
+    },
+    {
+      "id": "541",
+      "progress_percent": 0.0,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": null,
+      "estimated_total_seconds": null,
+      "report": "reports/mandel-recovery-20260914/native/summary.json",
+      "log": "reports/mandel-recovery-20260914/native/541/mandel/stdout.log",
+      "source_sha256": "a178bedb9e2840df95fe8f616ba05d5e6b5ca7d80a9d1f5d1e9a65af8a3e8e13"
+    },
+    {
+      "id": "695",
+      "progress_percent": 0.0,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": null,
+      "estimated_total_seconds": null,
+      "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+      "log": "reports/mandel-review-batch12-20260913/captures/695/mandel/stdout.log",
+      "source_sha256": "ab3595287f547eb96698e8283318607971de6cc30e8b29ec7d0af8f85ab00fd4"
+    }
+  ]
+}

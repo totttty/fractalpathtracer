@@ -1,0 +1,2068 @@
+{
+  "identity": {
+    "manifest": {
+      "version": 1,
+      "root": "Mandelbulber examples (supplied explicitly)",
+      "provisional": false,
+      "scope": "Experimental-95 batch: seven near-complete historical native references with successful fast FPT previews; full authored native references and current-binary FPT captures.",
+      "scenes": [
+        {
+          "id": "432",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid19.fract",
+          "sha256": "cff79f4382a881ed390acbbca70e976341c963e7a1eb24dab4e7f30b345dfc41",
+          "aliases": [],
+          "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+          "formula_parameters": {
+            "formula_1": "8",
+            "formula_2": "7",
+            "formula_iterations_1": "2",
+            "formula_iterations_2": "2"
+          },
+          "declared_file_parameters": {},
+          "volume_parameters": {}
+        },
+        {
+          "id": "416",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/clouds 2_v3.fract",
+          "sha256": "034d38efc21b1451cbbff0f1d66bbb83a334de8c35985786e89cb5955677ca2f",
+          "aliases": [],
+          "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+          "formula_parameters": {
+            "formula_1": "5"
+          },
+          "declared_file_parameters": {},
+          "volume_parameters": {
+            "basic_fog_color": "9c00 d400 ff00",
+            "basic_fog_enabled": "true",
+            "basic_fog_visibility": "7,16411716660293",
+            "clouds_ambient_light": "0,1",
+            "clouds_center": "0 -6 1,07349934650449",
+            "clouds_color": "ff00 ff00 ff00",
+            "clouds_DE_approaching": "0,5",
+            "clouds_DE_multiplier": "0,5",
+            "clouds_density": "0,471",
+            "clouds_enable": "true",
+            "clouds_noise_iterations": "10",
+            "clouds_opacity": "5",
+            "clouds_period": "0,642143404019232",
+            "clouds_plane_shape": "true",
+            "clouds_random_seed": "12358",
+            "clouds_sharp_edges": "true",
+            "distance_fog_shadows": "true",
+            "fog_color_1": "ff00 ff00 ff00",
+            "fog_color_2": "ff00 ff00 ff00",
+            "volumetric_fog_colour_1_distance": "0,0625",
+            "volumetric_fog_colour_2_distance": "0,125",
+            "volumetric_fog_density": "0,283142367363742",
+            "volumetric_fog_distance_factor": "0,0625",
+            "volumetric_fog_distance_from_surface": "6,25E-17",
+            "volumetric_fog_enabled": "true"
+          }
+        },
+        {
+          "id": "674",
+          "path": "mandelbulb_bermarte 001.fract",
+          "sha256": "b2cedf90163877c8ccf8e6c49f4378d25a1320ba8172c47daa873484fd0bf5b8",
+          "aliases": [],
+          "collection": "root examples",
+          "formula_parameters": {
+            "formula_1": "94"
+          },
+          "declared_file_parameters": {},
+          "volume_parameters": {
+            "fog_color_3": "ff00 bc00 5000",
+            "volumetric_fog_colour_1_distance": "3,76704608313825E-05",
+            "volumetric_fog_colour_2_distance": "7,5340921662765E-05",
+            "volumetric_fog_distance_factor": "7,5340921662765E-05",
+            "volumetric_fog_enabled": "true"
+          }
+        },
+        {
+          "id": "701",
+          "path": "msltoe toroidal multi 001.fract",
+          "sha256": "f3cfaf110c580e0b08687a954cfb9bcc1196b41369fe2c35a98b15f519ab80b4",
+          "aliases": [],
+          "collection": "root examples",
+          "formula_parameters": {
+            "formula_1": "96"
+          },
+          "declared_file_parameters": {},
+          "volume_parameters": {
+            "iteration_fog_brightness_boost": "100",
+            "iteration_fog_enable": "true",
+            "iteration_fog_opacity": "8,317640000000001",
+            "iteration_fog_opacity_trim": "0"
+          }
+        },
+        {
+          "id": "739",
+          "path": "subsurface scattering 001.fract",
+          "sha256": "bb1736da19ba38f5bdc6dcf9ae12a8435b050d9dacf51427c0656bca3f2f1b33",
+          "aliases": [],
+          "collection": "root examples",
+          "formula_parameters": {
+            "formula_1": "3"
+          },
+          "declared_file_parameters": {},
+          "volume_parameters": {}
+        },
+        {
+          "id": "525",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 4 - water.fract",
+          "sha256": "d1ba87871f6af49cfb8034836a9a6ff89efe1a230bf5ca68d653dd5124b9a94b",
+          "aliases": [],
+          "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+          "formula_parameters": {},
+          "declared_file_parameters": {},
+          "volume_parameters": {
+            "fog_color_1": "6142 231f 0000",
+            "fog_color_2": "ef64 cbe5 3e7d",
+            "fog_color_3": "a108 a108 a108",
+            "volumetric_fog_colour_1_distance": "0,000234968310780649",
+            "volumetric_fog_colour_2_distance": "0,000469936621561298",
+            "volumetric_fog_distance_factor": "0,000469936621561298",
+            "volumetric_fog_enabled": "true"
+          }
+        },
+        {
+          "id": "475",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox19.fract",
+          "sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+          "aliases": [],
+          "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+          "formula_parameters": {
+            "formula_1": "8"
+          },
+          "declared_file_parameters": {},
+          "volume_parameters": {
+            "basic_fog_color": "d00a c0bc 90ad",
+            "basic_fog_enabled": "true",
+            "basic_fog_visibility": "0,0687391981482506"
+          }
+        },
+        {
+          "id": "484",
+          "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox29.fract",
+          "sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+          "aliases": [],
+          "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+          "formula_parameters": {
+            "formula_1": "8"
+          },
+          "declared_file_parameters": {},
+          "volume_parameters": {
+            "basic_fog_color": "ffff f62a b285",
+            "basic_fog_enabled": "true",
+            "basic_fog_visibility": "0,112201845430196"
+          }
+        }
+      ]
+    },
+    "harnesses": {
+      "run_mandel_support_suite.py": "b3173fca7771ad6d0d3e8e53393bfb48dd70199ffe11c10e6072d5226a4e4eeb",
+      "run_release_canaries.py": "21387d8ec538178aefef7fcb7f0b454f6b488820330a0d922b0e3d7d3cb089a5",
+      "mandel_reference_cache.py": "c3d6e90f5d58f1f9d3b7436ab2e32ecee3904cfcdd63f3af986b28d507420453"
+    },
+    "executables": {
+      "/Volumes/Ventura/Projects/FPT-metal-release/target/release/fpt-metal": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+      "/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2": "ecf9de8f749c6c7956573d8c7e7b7ea151562f0db48856d51095f8892071bda8"
+    },
+    "settings": {
+      "max_axis": 300,
+      "samples": 32,
+      "aspect": "authored",
+      "chunk_samples": 1,
+      "timeout": 120,
+      "native_timeout": 420,
+      "overlap_native": true,
+      "native_mc_samples": null,
+      "reference_cache": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-native-reference-cache",
+      "modes": [
+        "geometry",
+        "authored",
+        "mandel"
+      ],
+      "orientation": "native; no postprocessing flips/crops",
+      "reference_backend": "CPU",
+      "bounces": "FPT scene/config default; metadata records effective configuration"
+    },
+    "environment": {
+      "FPT_MANDEL_TILED_DISPATCH": "1",
+      "FPT_MANDEL_TILE_ROWS": "8"
+    },
+    "lightmaps": {
+      "416": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "674": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "701": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "739": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "525": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "475": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      },
+      "484": {
+        "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+        "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "432",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid19.fract",
+      "sha256": "cff79f4382a881ed390acbbca70e976341c963e7a1eb24dab4e7f30b345dfc41",
+      "aliases": [],
+      "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+      "formula_parameters": {
+        "formula_1": "8",
+        "formula_2": "7",
+        "formula_iterations_1": "2",
+        "formula_iterations_2": "2"
+      },
+      "declared_file_parameters": {},
+      "volume_parameters": {},
+      "modes": {
+        "mandel": {
+          "status": "timeout",
+          "error": "Command '['/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2', '-n', '-C', '-O', 'opencl_enabled=0#file_lightmap=/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg', '-f', 'png', '-r', '300x225', '-o', '/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-experimental95-20260914/first/432/mandel/scene.png', '/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid19.fract']' timed out after 599.9998199170004 seconds",
+          "stderr_tail": "Info: \"Removed 1 old files from /Users/jordantotty/mandelbulber/httpCache. Saved 0 MB\"\nInfo: \"Removed 1 old files from /Users/jordantotty/mandelbulber/openclCache. Saved 0 MB\"\n",
+          "timeout_seconds": 600,
+          "deferred": true,
+          "reference_cache": {
+            "status": "miss"
+          },
+          "producer_progress": {
+            "percent": 96.89,
+            "elapsed": "9m 58.8s",
+            "remaining_estimate": "18.9s"
+          }
+        },
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/432-geometry.png",
+            "sha256": "eaaf9369ed885fd98796c01b3e445208ea1f3656caa1ad2b45a4e5a5172f72d4",
+            "rgb_sha256": "13a1b2e95664b436c81bcb2fe180c221dbc0a40e92bd3f9409943f0e7325d37d",
+            "wall_seconds": 1.399413999999524,
+            "relative_path": "images/432-geometry.png"
+          },
+          "screening": {
+            "mean_luminance_255": 173.5476,
+            "dark_fraction": 0.008903703703703704,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/432-geometry.render.json",
+            "sha256": "d4a599bcdc522c45be153a12288a6da2b5d79d5c4afe56ee25349856dbea90dd",
+            "relative_path": "images/432-geometry.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 1027.0410776138306,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/432-authored.png",
+            "sha256": "dbc50321e270445a8c277c655841216c65f7cdee51471812a48d7601d6ee72a4",
+            "rgb_sha256": "ca68d7cbaf24986f0545e78decfb6f7a5355dc361dcb67291e4164745b093359",
+            "wall_seconds": 12.16328366700327,
+            "relative_path": "images/432-authored.png"
+          },
+          "screening": {
+            "mean_luminance_255": 72.00176296296296,
+            "dark_fraction": 0.12302222222222223,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/432-authored.render.json",
+            "sha256": "84ba0394068e0e43acef63321a90746b924471ffe92c272529caa88f0a4fdee6",
+            "relative_path": "images/432-authored.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 5270.6218957901,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        }
+      },
+      "size": [
+        300,
+        225
+      ],
+      "native_sampling": {
+        "enabled": true,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {},
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "incomplete",
+      "capture_provenance": {
+        "geometry": {
+          "origin": "baseline",
+          "reused": true,
+          "timeout_seconds": 30
+        },
+        "authored": {
+          "origin": "baseline",
+          "reused": true,
+          "timeout_seconds": 30
+        },
+        "mandel": {
+          "origin": "first",
+          "reused": false,
+          "timeout_seconds": 600
+        }
+      }
+    },
+    {
+      "id": "416",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/clouds 2_v3.fract",
+      "sha256": "034d38efc21b1451cbbff0f1d66bbb83a334de8c35985786e89cb5955677ca2f",
+      "aliases": [],
+      "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+      "formula_parameters": {
+        "formula_1": "5"
+      },
+      "declared_file_parameters": {},
+      "volume_parameters": {
+        "basic_fog_color": "9c00 d400 ff00",
+        "basic_fog_enabled": "true",
+        "basic_fog_visibility": "7,16411716660293",
+        "clouds_ambient_light": "0,1",
+        "clouds_center": "0 -6 1,07349934650449",
+        "clouds_color": "ff00 ff00 ff00",
+        "clouds_DE_approaching": "0,5",
+        "clouds_DE_multiplier": "0,5",
+        "clouds_density": "0,471",
+        "clouds_enable": "true",
+        "clouds_noise_iterations": "10",
+        "clouds_opacity": "5",
+        "clouds_period": "0,642143404019232",
+        "clouds_plane_shape": "true",
+        "clouds_random_seed": "12358",
+        "clouds_sharp_edges": "true",
+        "distance_fog_shadows": "true",
+        "fog_color_1": "ff00 ff00 ff00",
+        "fog_color_2": "ff00 ff00 ff00",
+        "volumetric_fog_colour_1_distance": "0,0625",
+        "volumetric_fog_colour_2_distance": "0,125",
+        "volumetric_fog_density": "0,283142367363742",
+        "volumetric_fog_distance_factor": "0,0625",
+        "volumetric_fog_distance_from_surface": "6,25E-17",
+        "volumetric_fog_enabled": "true"
+      },
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/416-geometry.png",
+            "sha256": "c57a67ed47bc96823717e14032e5b0ff3ed809d7ca789e6e7d75760f632ccd06",
+            "rgb_sha256": "0a17bf9d42a805c086190e53c889000bfb573572a8985ea2b3a7c6be06d19473",
+            "wall_seconds": 0.9062729169963859,
+            "relative_path": "images/416-geometry.png"
+          },
+          "screening": {
+            "mean_luminance_255": 17.74500986193294,
+            "dark_fraction": 0.8492110453648916,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/416-geometry.render.json",
+            "sha256": "56f503b5af8ce912c9a3ebaf329a6ffb2c8f7f7cfaf11abe57e1ac66a1f1e135",
+            "relative_path": "images/416-geometry.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 607.598066329956,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/416-authored.png",
+            "sha256": "8effe49308dc65c031e781106dcd1702562865ec529b9609cd35fc11ace869ac",
+            "rgb_sha256": "7611a567bcc91bdf5996a7a75bc18dbf45670f2145779b2643b3b6751899f563",
+            "wall_seconds": 1.428921625003568,
+            "relative_path": "images/416-authored.png"
+          },
+          "screening": {
+            "mean_luminance_255": 174.41597633136095,
+            "dark_fraction": 0.025779092702169625,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/416-authored.render.json",
+            "sha256": "76e102901e1df0f32bce85907a98b56b67f6391884075d7481f92bffec90803c",
+            "relative_path": "images/416-authored.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 1084.4210386276245,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "mandel": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/416-mandel.png",
+            "sha256": "3d236a733dacf709840e744cc64340b96b6997d89f24971eb8a9e31406de7d39",
+            "rgb_sha256": "e9c9e3316ff88d4d25f5d381adadf40f6b5a9e6dd548003c67c05302c633b5f3",
+            "wall_seconds": 173.94323412499944,
+            "relative_path": "images/416-mandel.png"
+          },
+          "screening": {
+            "mean_luminance_255": 120.6971597633136,
+            "dark_fraction": 0.0,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "deferred": false,
+          "reference_cache": {
+            "status": "miss"
+          },
+          "producer_progress": {
+            "percent": 99.41,
+            "elapsed": "2m 53.4s",
+            "remaining_estimate": "1.0s"
+          }
+        }
+      },
+      "size": [
+        300,
+        169
+      ],
+      "native_sampling": {
+        "enabled": false,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {
+        "basic_fog_color": "9c00 d400 ff00",
+        "basic_fog_enabled": "true",
+        "basic_fog_visibility": "7,16411716660293",
+        "clouds_ambient_light": "0,1",
+        "clouds_center": "0 -6 1,07349934650449",
+        "clouds_color": "ff00 ff00 ff00",
+        "clouds_DE_approaching": "0,5",
+        "clouds_DE_multiplier": "0,5",
+        "clouds_density": "0,471",
+        "clouds_enable": "true",
+        "clouds_noise_iterations": "10",
+        "clouds_opacity": "5",
+        "clouds_period": "0,642143404019232",
+        "clouds_plane_shape": "true",
+        "clouds_random_seed": "12358",
+        "clouds_sharp_edges": "true",
+        "distance_fog_shadows": "true",
+        "fog_color_1": "ff00 ff00 ff00",
+        "fog_color_2": "ff00 ff00 ff00",
+        "volumetric_fog_colour_1_distance": "0,0625",
+        "volumetric_fog_colour_2_distance": "0,125",
+        "volumetric_fog_density": "0,283142367363742",
+        "volumetric_fog_distance_factor": "0,0625",
+        "volumetric_fog_distance_from_surface": "6,25E-17",
+        "volumetric_fog_enabled": "true"
+      },
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "ok",
+      "appearance_difference": {
+        "mae": 0.3644402934086192,
+        "rmse": 0.4293383333977829,
+        "max_error": 0.9254901960784314,
+        "changed_pixels": 50700
+      },
+      "capture_provenance": {
+        "geometry": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "authored": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "mandel": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 420
+        }
+      }
+    },
+    {
+      "id": "674",
+      "path": "mandelbulb_bermarte 001.fract",
+      "sha256": "b2cedf90163877c8ccf8e6c49f4378d25a1320ba8172c47daa873484fd0bf5b8",
+      "aliases": [],
+      "collection": "root examples",
+      "formula_parameters": {
+        "formula_1": "94"
+      },
+      "declared_file_parameters": {},
+      "volume_parameters": {
+        "fog_color_3": "ff00 bc00 5000",
+        "volumetric_fog_colour_1_distance": "3,76704608313825E-05",
+        "volumetric_fog_colour_2_distance": "7,5340921662765E-05",
+        "volumetric_fog_distance_factor": "7,5340921662765E-05",
+        "volumetric_fog_enabled": "true"
+      },
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/674-geometry.png",
+            "sha256": "f0ec6bb105584a80ea3f5a5df7a47a12d49c8552a6fc35f34bd7b72d6cfc907c",
+            "rgb_sha256": "34e5313a390ef4d748160c8980ccc0f6c28ff31e1342d6c1c5a51fca1d1240c8",
+            "wall_seconds": 1.6657531250020838,
+            "relative_path": "images/674-geometry.png"
+          },
+          "screening": {
+            "mean_luminance_255": 127.6722090729783,
+            "dark_fraction": 0.07238658777120316,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/674-geometry.render.json",
+            "sha256": "56f984d1a6327f24d6f16ff983c676325b4d1c3f0671f8b9252e34386d1fa697",
+            "relative_path": "images/674-geometry.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 1485.33296585083,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/674-authored.png",
+            "sha256": "394babf243aa8eeb0e8d58d9cd294f8a6c8f7f5566897ee070f244b42e2e1925",
+            "rgb_sha256": "19b653e15df85edf16b08ba4e24aa79f461b5f25921c09a52f52c1d193ccc220",
+            "wall_seconds": 52.961912874998234,
+            "relative_path": "images/674-authored.png"
+          },
+          "screening": {
+            "mean_luminance_255": 145.99747534516766,
+            "dark_fraction": 0.011045364891518738,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/674-authored.render.json",
+            "sha256": "c6d3599088efb29e2fb95c367a755000cffbf38d1f79a1788fb436f8674f919b",
+            "relative_path": "images/674-authored.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 52463.87302875519,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "mandel": {
+          "status": "timeout",
+          "error": "Command '['/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2', '-n', '-C', '-O', 'opencl_enabled=0#file_lightmap=/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg', '-f', 'png', '-r', '300x169', '-o', '/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-experimental95-20260914/next/674/mandel/scene.png', '/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/examples/mandelbulb_bermarte 001.fract']' timed out after 419.9999317080001 seconds",
+          "stderr_tail": "Info: \"Removed 1 old files from /Users/jordantotty/mandelbulber/httpCache. Saved 0 MB\"\nInfo: \"Removed 1 old files from /Users/jordantotty/mandelbulber/openclCache. Saved 0 MB\"\n",
+          "timeout_seconds": 420,
+          "deferred": true,
+          "reference_cache": {
+            "status": "miss"
+          },
+          "producer_progress": {
+            "percent": 95.27,
+            "elapsed": "6m 59.6s",
+            "remaining_estimate": "20.1s"
+          }
+        }
+      },
+      "size": [
+        300,
+        169
+      ],
+      "native_sampling": {
+        "enabled": false,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {
+        "fog_color_3": "ff00 bc00 5000",
+        "volumetric_fog_colour_1_distance": "3,76704608313825E-05",
+        "volumetric_fog_colour_2_distance": "7,5340921662765E-05",
+        "volumetric_fog_distance_factor": "7,5340921662765E-05",
+        "volumetric_fog_enabled": "true"
+      },
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "incomplete",
+      "capture_provenance": {
+        "geometry": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "authored": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "mandel": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 420
+        }
+      }
+    },
+    {
+      "id": "701",
+      "path": "msltoe toroidal multi 001.fract",
+      "sha256": "f3cfaf110c580e0b08687a954cfb9bcc1196b41369fe2c35a98b15f519ab80b4",
+      "aliases": [],
+      "collection": "root examples",
+      "formula_parameters": {
+        "formula_1": "96"
+      },
+      "declared_file_parameters": {},
+      "volume_parameters": {
+        "iteration_fog_brightness_boost": "100",
+        "iteration_fog_enable": "true",
+        "iteration_fog_opacity": "8,317640000000001",
+        "iteration_fog_opacity_trim": "0"
+      },
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/701-geometry.png",
+            "sha256": "992764c08ee5ab6b69e0ccd3b2498f236e7e54fac66a926005cb00d37abfd62b",
+            "rgb_sha256": "5a810e7345bd1133d06b55db9c60cf1e7aec94a2f7454aff4eddbf764abea23d",
+            "wall_seconds": 3.1989612500037765,
+            "relative_path": "images/701-geometry.png"
+          },
+          "screening": {
+            "mean_luminance_255": 149.07975555555555,
+            "dark_fraction": 0.014011111111111111,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/701-geometry.render.json",
+            "sha256": "e24b663d061d411e3137a67d6c8149346e9700efd4c1c9a9601e47c9adb3678c",
+            "relative_path": "images/701-geometry.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 2794.777989387512,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/701-authored.png",
+            "sha256": "bcd9347ae83561dfc512ec08d7843bee0538518bbc290b91b8f8d6cf316d3f38",
+            "rgb_sha256": "e6bf3d47babd9d34c87c491731173237b5f0a48151a14c5227b21f29cb3451cf",
+            "wall_seconds": 17.706154499996046,
+            "relative_path": "images/701-authored.png"
+          },
+          "screening": {
+            "mean_luminance_255": 71.52305555555556,
+            "dark_fraction": 0.022266666666666667,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/701-authored.render.json",
+            "sha256": "8075b5c64ff7256acee54a5d45f4c470912de7adb927148890fbd8347c710725",
+            "relative_path": "images/701-authored.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 17444.7740316391,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "mandel": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/701-mandel.png",
+            "sha256": "9e66c9505e09a958e1bc3f4984880889f95cfbd7af6bc51b29a1f6759e5d0f9d",
+            "rgb_sha256": "8eb3112a2cfcaaf911cc02e764db499c4a434842a5e7d26e87ddfe3b226aff81",
+            "wall_seconds": 352.3193694169968,
+            "relative_path": "images/701-mandel.png"
+          },
+          "screening": {
+            "mean_luminance_255": 99.53413333333333,
+            "dark_fraction": 0.025766666666666667,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "deferred": false,
+          "reference_cache": {
+            "status": "miss"
+          },
+          "producer_progress": {
+            "percent": 99.67,
+            "elapsed": "5m 51.9s",
+            "remaining_estimate": "1.1s"
+          }
+        }
+      },
+      "size": [
+        300,
+        300
+      ],
+      "native_sampling": {
+        "enabled": false,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {
+        "iteration_fog_brightness_boost": "100",
+        "iteration_fog_enable": "true",
+        "iteration_fog_opacity": "8,317640000000001"
+      },
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "ok",
+      "appearance_difference": {
+        "mae": 0.20888992011619462,
+        "rmse": 0.3062422377800777,
+        "max_error": 1.0,
+        "changed_pixels": 86618
+      },
+      "capture_provenance": {
+        "geometry": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "authored": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "mandel": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 420
+        }
+      }
+    },
+    {
+      "id": "739",
+      "path": "subsurface scattering 001.fract",
+      "sha256": "bb1736da19ba38f5bdc6dcf9ae12a8435b050d9dacf51427c0656bca3f2f1b33",
+      "aliases": [],
+      "collection": "root examples",
+      "formula_parameters": {
+        "formula_1": "3"
+      },
+      "declared_file_parameters": {},
+      "volume_parameters": {},
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/739-geometry.png",
+            "sha256": "436d6399b4d30b6d125a47213195da81bde91813ffe3a03698dd867c259a41cd",
+            "rgb_sha256": "fc0307379ef3f23bbda4834857ab26c7da70a95c41c1ed037abe64d89cd71395",
+            "wall_seconds": 2.2053166670011706,
+            "relative_path": "images/739-geometry.png"
+          },
+          "screening": {
+            "mean_luminance_255": 92.68162962962963,
+            "dark_fraction": 0.5435111111111111,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/739-geometry.render.json",
+            "sha256": "65c95c97ad50f9ce634edf724b14ef42394035a6a3e800856a88a7a0e02e4f82",
+            "relative_path": "images/739-geometry.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 2021.8210220336914,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/739-authored.png",
+            "sha256": "231dd039f6f31f0bbaab15e7d7ab5dfaae277f1a0a706f5a3a7fa6f3912467a1",
+            "rgb_sha256": "205d464a563cc0ffae2d5e0a5038f923ceac03f8c5450c1b724a8c5f1a66a9e5",
+            "wall_seconds": 9.026503292006964,
+            "relative_path": "images/739-authored.png"
+          },
+          "screening": {
+            "mean_luminance_255": 44.18557037037037,
+            "dark_fraction": 0.5515111111111111,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/739-authored.render.json",
+            "sha256": "6c0aa6f84120a9cd6a345f78a77aa0e22442d18fa6101e91a07119aa97f01296",
+            "relative_path": "images/739-authored.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 8859.34603214264,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "mandel": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/739-mandel.png",
+            "sha256": "73a8f0f2bfa1eaa5ae92bb787bd8909c228e29d07ffdc0051c12f14947419d98",
+            "rgb_sha256": "1c90caf69cfd05059cd904d3bfd0a21123ec9171d37185a6621be690fffec45d",
+            "wall_seconds": 206.30313062499772,
+            "relative_path": "images/739-mandel.png"
+          },
+          "screening": {
+            "mean_luminance_255": 54.3386962962963,
+            "dark_fraction": 0.33871111111111113,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "deferred": false,
+          "reference_cache": {
+            "status": "miss"
+          },
+          "producer_progress": {
+            "percent": 99.11,
+            "elapsed": "3m 25.7s",
+            "remaining_estimate": "1.0s"
+          }
+        }
+      },
+      "size": [
+        300,
+        225
+      ],
+      "native_sampling": {
+        "enabled": false,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {},
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "ok",
+      "appearance_difference": {
+        "mae": 0.0974716243040426,
+        "rmse": 0.19048612502444434,
+        "max_error": 1.0,
+        "changed_pixels": 67500
+      },
+      "capture_provenance": {
+        "geometry": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "authored": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "mandel": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 420
+        }
+      }
+    },
+    {
+      "id": "525",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 4 - water.fract",
+      "sha256": "d1ba87871f6af49cfb8034836a9a6ff89efe1a230bf5ca68d653dd5124b9a94b",
+      "aliases": [],
+      "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+      "formula_parameters": {},
+      "declared_file_parameters": {},
+      "volume_parameters": {
+        "fog_color_1": "6142 231f 0000",
+        "fog_color_2": "ef64 cbe5 3e7d",
+        "fog_color_3": "a108 a108 a108",
+        "volumetric_fog_colour_1_distance": "0,000234968310780649",
+        "volumetric_fog_colour_2_distance": "0,000469936621561298",
+        "volumetric_fog_distance_factor": "0,000469936621561298",
+        "volumetric_fog_enabled": "true"
+      },
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/525-geometry.png",
+            "sha256": "7ea0fb2d873706a3e971f69b5f591add9cd64c49cd0ad0f0bc2bc28b575fe110",
+            "rgb_sha256": "fb4ed9404488e4e17d5cc804a0309588a190402770fc8200af524973ca60c77f",
+            "wall_seconds": 1.1233138329989742,
+            "relative_path": "images/525-geometry.png"
+          },
+          "screening": {
+            "mean_luminance_255": 97.67668639053254,
+            "dark_fraction": 0.1368441814595661,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/525-geometry.render.json",
+            "sha256": "6e339f0683f1a20967946a6ddc284d948c65afcbb304cd2444f6737da234c1ee",
+            "relative_path": "images/525-geometry.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 996.472954750061,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/525-authored.png",
+            "sha256": "b371b8be08ec21344e85ddf5fcf1b6cf6e667a9830465593057b9d2397b7e6f7",
+            "rgb_sha256": "6552584bd7f0b14a882af0d99c9ff265fa256b56451c2508c018ca696326e62a",
+            "wall_seconds": 8.845761208001932,
+            "relative_path": "images/525-authored.png"
+          },
+          "screening": {
+            "mean_luminance_255": 35.523510848126236,
+            "dark_fraction": 0.2242603550295858,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/525-authored.render.json",
+            "sha256": "e171961dcc6090e0ce745f02ce83cf18a1f21b9d7c2a003886fe4db6f79e5185",
+            "relative_path": "images/525-authored.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": {
+              "direction_count": 108,
+              "exhaustion_policy": "invalid/stalled/exhausted visibility is a magenta diagnostic, never assumed clear",
+              "lighting_policy": "primary-hit compatibility AO; replaces generic ambient and secondary environment; direct/indirect sun retained",
+              "lightmap_path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+              "lightmap_sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7",
+              "lightmap_size": [
+                512,
+                512
+              ],
+              "max_visibility_steps": 4096,
+              "mode": "authored-multi-ray-lightmap",
+              "quality": 4,
+              "range_per_camera_distance": 0.9999977669797162,
+              "rotation_degrees": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "strength": 1.0,
+              "tint": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "elapsed_ms": 8704.314112663269,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "mandel": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/525-mandel.png",
+            "sha256": "3e87fc4b3d429eb7640f279d92765159e8cd88cab5448e3a8972823b63e41ae7",
+            "rgb_sha256": "c2d4f5f3eae3684ce6a74ec96852546398b8e04076640d2275abe3f4db197d7d",
+            "wall_seconds": 121.81773129200155,
+            "relative_path": "images/525-mandel.png"
+          },
+          "screening": {
+            "mean_luminance_255": 89.81621301775148,
+            "dark_fraction": 0.0,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "deferred": false,
+          "reference_cache": {
+            "status": "miss"
+          },
+          "producer_progress": {
+            "percent": 97.63,
+            "elapsed": "2m 1.0s",
+            "remaining_estimate": "2.9s"
+          }
+        }
+      },
+      "size": [
+        300,
+        169
+      ],
+      "native_sampling": {
+        "enabled": false,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {
+        "ambient_occlusion_enabled": "true",
+        "ambient_occlusion_mode": "1",
+        "fog_color_1": "6142 231f 0000",
+        "fog_color_2": "ef64 cbe5 3e7d",
+        "fog_color_3": "a108 a108 a108",
+        "volumetric_fog_colour_1_distance": "0,000234968310780649",
+        "volumetric_fog_colour_2_distance": "0,000469936621561298",
+        "volumetric_fog_distance_factor": "0,000469936621561298",
+        "volumetric_fog_enabled": "true"
+      },
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "ok",
+      "appearance_difference": {
+        "mae": 0.20890544146652743,
+        "rmse": 0.2624064728583855,
+        "max_error": 0.9568627450980393,
+        "changed_pixels": 50700
+      },
+      "capture_provenance": {
+        "geometry": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "authored": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "mandel": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 420
+        }
+      }
+    },
+    {
+      "id": "475",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox19.fract",
+      "sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+      "aliases": [],
+      "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+      "formula_parameters": {
+        "formula_1": "8"
+      },
+      "declared_file_parameters": {},
+      "volume_parameters": {
+        "basic_fog_color": "d00a c0bc 90ad",
+        "basic_fog_enabled": "true",
+        "basic_fog_visibility": "0,0687391981482506"
+      },
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/475-geometry.png",
+            "sha256": "baadd2d2fb70c6382565b6e127d63a38762e67b7aeb3dc91918087c6f19d3086",
+            "rgb_sha256": "80a18931a8568c9c702cddebfabdb8183f269959c897dda181d20d1f7284abac",
+            "wall_seconds": 1.2103630420024274,
+            "relative_path": "images/475-geometry.png"
+          },
+          "screening": {
+            "mean_luminance_255": 40.68783037475345,
+            "dark_fraction": 0.24357001972386588,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/475-geometry.render.json",
+            "sha256": "af74c0cccf3bbcf9ff0d8324bb587a8a915103eb2b4329225ca2fae0b0076dc2",
+            "relative_path": "images/475-geometry.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 1056.697964668274,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/475-authored.png",
+            "sha256": "871061031ee487042fbeff3d626815bad4a1e74ea183e0cf5bc72bbd5458fe9d",
+            "rgb_sha256": "4505a60325f8219850c06d46f6597cfeda1e7001e58150ddd58063d74ed01672",
+            "wall_seconds": 12.17749412500416,
+            "relative_path": "images/475-authored.png"
+          },
+          "screening": {
+            "mean_luminance_255": 32.903491124260356,
+            "dark_fraction": 0.25564102564102564,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/475-authored.render.json",
+            "sha256": "f4d4f784924d5486aeca2d521d024de0fd4c8b8a251b64b528f1102c0abb9898",
+            "relative_path": "images/475-authored.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": {
+              "direction_count": 237,
+              "exhaustion_policy": "invalid/stalled/exhausted visibility is a magenta diagnostic, never assumed clear",
+              "lighting_policy": "primary-hit compatibility AO; replaces generic ambient and secondary environment; direct/indirect sun retained",
+              "lightmap_path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+              "lightmap_sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7",
+              "lightmap_size": [
+                512,
+                512
+              ],
+              "max_visibility_steps": 4096,
+              "mode": "authored-multi-ray-lightmap",
+              "quality": 6,
+              "range_per_camera_distance": 1.2000590318664277,
+              "rotation_degrees": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "strength": 4.0,
+              "tint": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "elapsed_ms": 12005.452990531921,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "mandel": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/475-mandel.png",
+            "sha256": "6a81ad7df261dce4c43cfb2c2472a355ddc26a63cbff193ac877fdcc219bac22",
+            "rgb_sha256": "39bd0e2a3c24e479d303fbe92b00b8357e3737ad2e4e8dd77023cbe4f8413096",
+            "wall_seconds": 178.19068400000106,
+            "relative_path": "images/475-mandel.png"
+          },
+          "screening": {
+            "mean_luminance_255": 68.25875739644971,
+            "dark_fraction": 1.972386587771203e-05,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "deferred": false,
+          "reference_cache": {
+            "status": "miss"
+          },
+          "producer_progress": {
+            "percent": 98.82,
+            "elapsed": "2m 57.4s",
+            "remaining_estimate": "2.1s"
+          }
+        }
+      },
+      "size": [
+        300,
+        169
+      ],
+      "native_sampling": {
+        "enabled": true,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {
+        "ambient_occlusion": "4",
+        "ambient_occlusion_enabled": "true",
+        "ambient_occlusion_mode": "1",
+        "ambient_occlusion_quality": "6",
+        "basic_fog_color": "d00a c0bc 90ad",
+        "basic_fog_enabled": "true",
+        "basic_fog_visibility": "0,0687391981482506"
+      },
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "ok",
+      "appearance_difference": {
+        "mae": 0.15001358755204908,
+        "rmse": 0.18362597611874865,
+        "max_error": 0.7254901960784313,
+        "changed_pixels": 50700
+      },
+      "capture_provenance": {
+        "geometry": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "authored": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "mandel": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 420
+        }
+      }
+    },
+    {
+      "id": "484",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox29.fract",
+      "sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+      "aliases": [],
+      "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+      "formula_parameters": {
+        "formula_1": "8"
+      },
+      "declared_file_parameters": {},
+      "volume_parameters": {
+        "basic_fog_color": "ffff f62a b285",
+        "basic_fog_enabled": "true",
+        "basic_fog_visibility": "0,112201845430196"
+      },
+      "modes": {
+        "geometry": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/484-geometry.png",
+            "sha256": "2714a6c5c49dbee26aa6af7f5abdd18dbbb7c92282fe0f4bd87d8ca61ce652df",
+            "rgb_sha256": "6ad57caa6bd55d99ecce0283d4f77c0b3205b2c80d088c6b460e30829434a207",
+            "wall_seconds": 7.713471875002142,
+            "relative_path": "images/484-geometry.png"
+          },
+          "screening": {
+            "mean_luminance_255": 142.40272189349113,
+            "dark_fraction": 0.045463510848126235,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/484-geometry.render.json",
+            "sha256": "5968e66b6fa5ea365d163295666a18c5fbf473a1ed819fd0c688f421e41722e9",
+            "relative_path": "images/484-geometry.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 698.7630128860474,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "authored": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/484-authored.png",
+            "sha256": "cec695bdda390a68d60497be731d4020f272c7389ee72b33a3174ee1d352aa49",
+            "rgb_sha256": "adc7f1fa7c7fcbd45f82508b570fb5cf92770cf41c48c83a7b4ab9f7be85ceb3",
+            "wall_seconds": 5.638864333996025,
+            "relative_path": "images/484-authored.png"
+          },
+          "screening": {
+            "mean_luminance_255": 83.70374753451676,
+            "dark_fraction": 0.3439644970414201,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "metadata": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/484-authored.render.json",
+            "sha256": "4a41e480a2bdf6a852b56e84222bc32f94071182767f18e79b54ad4c6f424ffe",
+            "relative_path": "images/484-authored.render.json"
+          },
+          "pipeline": {
+            "mandel_kernel_mode": "specialized",
+            "mandel_compile_mode": "optimized",
+            "mandel_cache_status": "hit",
+            "mandel_ambient": null,
+            "elapsed_ms": 2573.279023170471,
+            "samples": 32,
+            "sdf_bounce_cap": 0
+          }
+        },
+        "mandel": {
+          "status": "ok",
+          "capture": {
+            "path": "/Volumes/Ventura/Projects/FPT-metal-release/docs/mandel-experimental95-20260914/images/484-mandel.png",
+            "sha256": "42a29f6199f83456e03e605777f5117d16f89e8dd5cbaa71db76aad20ce8eb8a",
+            "rgb_sha256": "518cad76dd1dd6c4cc095ecaae8493f91f4d4c31618d34f00d153543b0876a22",
+            "wall_seconds": 330.64206779099914,
+            "relative_path": "images/484-mandel.png"
+          },
+          "screening": {
+            "mean_luminance_255": 107.77153846153846,
+            "dark_fraction": 0.012465483234714005,
+            "single_color": false,
+            "review_flags": [],
+            "note": "Advisory only; cannot establish geometry completeness or reference parity."
+          },
+          "deferred": false,
+          "reference_cache": {
+            "status": "miss"
+          },
+          "producer_progress": {
+            "percent": 98.82,
+            "elapsed": "5m 23.4s",
+            "remaining_estimate": "3.6s"
+          }
+        }
+      },
+      "size": [
+        300,
+        169
+      ],
+      "native_sampling": {
+        "enabled": true,
+        "requested_cap": null,
+        "authored_maximum": 100,
+        "authored_minimum": 10,
+        "effective_maximum": 100,
+        "effective_minimum": 10,
+        "overrides": {},
+        "note": "MC maximum, not guaranteed SPP; authored AA/adaptive sampling still applies."
+      },
+      "reference_overrides": {},
+      "authored_effect_flags": {
+        "basic_fog_color": "ffff f62a b285",
+        "basic_fog_enabled": "true",
+        "basic_fog_visibility": "0,112201845430196"
+      },
+      "compilation": "passed",
+      "geometry_fidelity": "requires_visual_review",
+      "appearance_fidelity": "requires_visual_review",
+      "status": "ok",
+      "appearance_difference": {
+        "mae": 0.1539969834087481,
+        "rmse": 0.2167745235283434,
+        "max_error": 0.9921568627450981,
+        "changed_pixels": 50700
+      },
+      "capture_provenance": {
+        "geometry": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "authored": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 120
+        },
+        "mandel": {
+          "origin": "next",
+          "reused": false,
+          "timeout_seconds": 420
+        }
+      }
+    }
+  ],
+  "visual_parity_certified": false,
+  "limitations": [
+    "MAE compares different authored integrators, not isolated geometry.",
+    "General FPT audit fingerprints AO maps only; eligible native cache entries additionally bind native resources/preferences.",
+    "Timeouts do not prove a scene unsupported.",
+    "No renderer changes or performance claims in this support audit."
+  ],
+  "counts": {
+    "geometry": 8,
+    "authored": 8,
+    "mandel": 6,
+    "compilation_passed": 8,
+    "completed_scenes": 8,
+    "native_cache_hits": 0,
+    "native_deferred": 2
+  },
+  "suite_wall_seconds": 2385.2854268340016,
+  "origin_reports": {
+    "baseline": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/summary.json",
+      "sha256": "a36156f2084f50bc05ffbdcf76255605419a847065380bfea77626492a8a22bc",
+      "identity": {
+        "manifest": {
+          "version": 1,
+          "root": "Mandelbulber examples (supplied explicitly)",
+          "provisional": false,
+          "scope": "Full gallery settings confirmation of the ten fast-screening shortlist scenes. Native references retain authored sampling; bounded attempts, no scene fixes.",
+          "scenes": [
+            {
+              "id": "432",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid19.fract",
+              "sha256": "cff79f4382a881ed390acbbca70e976341c963e7a1eb24dab4e7f30b345dfc41",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8",
+                "formula_2": "7",
+                "formula_iterations_1": "2",
+                "formula_iterations_2": "2"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {}
+            },
+            {
+              "id": "443",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid35.fract",
+              "sha256": "1f113355ea0c5b7f515c040c536059e3cb8cae7cf7d3708de1858b9ed2264b82",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8",
+                "formula_2": "7",
+                "formula_iterations_1": "25",
+                "formula_iterations_2": "2"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "basic_fog_color": "ffff ffff ffff",
+                "basic_fog_visibility": "0,000190546071796325",
+                "fog_color_1": "0000 0000 0000",
+                "iteration_fog_color_1": "0000 0000 0000",
+                "iteration_fog_color_1_maxiter": "82",
+                "iteration_fog_color_2": "0000 7530 ffff",
+                "iteration_fog_color_2_maxiter": "165",
+                "volumetric_fog_colour_1_distance": "0,291826950081074",
+                "volumetric_fog_colour_2_distance": "0,583653900162147",
+                "volumetric_fog_density": "0,2",
+                "volumetric_fog_distance_factor": "0,583653900162147",
+                "volumetric_fog_enabled": "true"
+              }
+            },
+            {
+              "id": "480",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox25_3.fract",
+              "sha256": "b2fd04cd6c1ff7d616a7fd41c6210626dcf140776a3cebb74c9abf1dfad770eb",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "volumetric_fog_colour_1_distance": "0,00241688745638325",
+                "volumetric_fog_colour_2_distance": "0,0048337749127665",
+                "volumetric_fog_density": "0,2",
+                "volumetric_fog_distance_factor": "0,0048337749127665",
+                "volumetric_fog_enabled": "true"
+              }
+            },
+            {
+              "id": "485",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox30.fract",
+              "sha256": "6e3674459bf0dde8766d1e9b132d35fb16f89d4c0e29db1fa7f031b13cf291cf",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {}
+            },
+            {
+              "id": "503",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox53.fract",
+              "sha256": "4a13c5c0db09f2bfa1e370ce6c38e04b9c07dd553b9b7a86237d8fdaade0fffd",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "volumetric_fog_colour_1_distance": "0,00664273880894044",
+                "volumetric_fog_colour_2_distance": "0,0132854776178809",
+                "volumetric_fog_density": "0,1",
+                "volumetric_fog_distance_factor": "0,0132854776178809",
+                "volumetric_fog_enabled": "true"
+              }
+            },
+            {
+              "id": "521",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 2 - slice 4.fract",
+              "sha256": "4098156c0452ec3949d0884c6b4a84de910cb03996991db2d8430e27a8bfb1fd",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "3"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "fog_color_1": "0000 0000 0000",
+                "volumetric_fog_colour_1_distance": "5,00608591860149E-06",
+                "volumetric_fog_colour_2_distance": "1,0012171837203E-05",
+                "volumetric_fog_distance_factor": "1,0012171837203E-05",
+                "volumetric_fog_enabled": "true"
+              }
+            },
+            {
+              "id": "541",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/monte carlo DOF 005.fract",
+              "sha256": "a178bedb9e2840df95fe8f616ba05d5e6b5ca7d80a9d1f5d1e9a65af8a3e8e13",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {}
+            },
+            {
+              "id": "549",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/primitive objects - water.fract",
+              "sha256": "dba82fdecb1c0ddad1f434a0d85fb05cbeef33e03150432f74efb262fb90cd8c",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "7"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "volumetric_fog_density": "0"
+              }
+            },
+            {
+              "id": "561",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/xenodreambuie2.fract",
+              "sha256": "d0ef2d67dac4e774d462e650f3dc7a836a1fcd12d7c7782618b9bd15afc166ea",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "11"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "basic_fog_visibility": "8,12830516164099E-13",
+                "fog_color_1": "0000 0000 0000",
+                "iteration_fog_color_1": "0000 0000 0000",
+                "iteration_fog_color_2_maxiter": "165",
+                "volumetric_fog_density": "0"
+              }
+            },
+            {
+              "id": "662",
+              "path": "mandelbox002.fract",
+              "sha256": "b16c0d7634af65156e2798ff19e76d8194e981c0a073a604c380747f2e62c498",
+              "aliases": [],
+              "collection": "root examples",
+              "formula_parameters": {
+                "formula_1": "8"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "volumetric_fog_colour_1_distance": "0,003122718144373626",
+                "volumetric_fog_colour_2_distance": "0,006245436288747253",
+                "volumetric_fog_distance_factor": "0,006245436288747253",
+                "volumetric_fog_enabled": "true"
+              }
+            }
+          ]
+        },
+        "harnesses": {
+          "run_mandel_support_suite.py": "b3173fca7771ad6d0d3e8e53393bfb48dd70199ffe11c10e6072d5226a4e4eeb",
+          "run_release_canaries.py": "21387d8ec538178aefef7fcb7f0b454f6b488820330a0d922b0e3d7d3cb089a5",
+          "mandel_reference_cache.py": "c3d6e90f5d58f1f9d3b7436ab2e32ecee3904cfcdd63f3af986b28d507420453"
+        },
+        "executables": {
+          "/Volumes/Ventura/Projects/FPT-metal-release/target/release/fpt-metal": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+          "/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2": "ecf9de8f749c6c7956573d8c7e7b7ea151562f0db48856d51095f8892071bda8"
+        },
+        "settings": {
+          "max_axis": 300,
+          "samples": 32,
+          "aspect": "authored",
+          "chunk_samples": 1,
+          "timeout": 30,
+          "native_timeout": 30,
+          "overlap_native": true,
+          "native_mc_samples": null,
+          "reference_cache": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-native-reference-cache",
+          "modes": [
+            "geometry",
+            "authored",
+            "mandel"
+          ],
+          "orientation": "native; no postprocessing flips/crops",
+          "reference_backend": "CPU",
+          "bounces": "FPT scene/config default; metadata records effective configuration"
+        },
+        "environment": {
+          "FPT_MANDEL_TILED_DISPATCH": "1",
+          "FPT_MANDEL_TILE_ROWS": "8"
+        },
+        "lightmaps": {
+          "432": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "443": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "480": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "485": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "503": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "521": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "541": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "549": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "561": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "662": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          }
+        }
+      }
+    },
+    "first": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-experimental95-20260914/first/summary.json",
+      "sha256": "0e34e27815fdaeaa0c99de3a1b131b5b22c8a1c6426f04dba6804f38fbf7b72e",
+      "identity": {
+        "manifest": {
+          "version": 1,
+          "root": "Mandelbulber examples (supplied explicitly)",
+          "provisional": false,
+          "scope": "Experimental-95 first confirmation: native scene 432 with a budget based on full-resolution progress; reuse completed FPT modes.",
+          "scenes": [
+            {
+              "id": "432",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid19.fract",
+              "sha256": "cff79f4382a881ed390acbbca70e976341c963e7a1eb24dab4e7f30b345dfc41",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8",
+                "formula_2": "7",
+                "formula_iterations_1": "2",
+                "formula_iterations_2": "2"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {}
+            }
+          ]
+        },
+        "harnesses": {
+          "run_mandel_support_suite.py": "b3173fca7771ad6d0d3e8e53393bfb48dd70199ffe11c10e6072d5226a4e4eeb",
+          "run_release_canaries.py": "21387d8ec538178aefef7fcb7f0b454f6b488820330a0d922b0e3d7d3cb089a5",
+          "mandel_reference_cache.py": "c3d6e90f5d58f1f9d3b7436ab2e32ecee3904cfcdd63f3af986b28d507420453"
+        },
+        "executables": {
+          "/Volumes/Ventura/Projects/FPT-metal-release/target/release/fpt-metal": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+          "/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2": "ecf9de8f749c6c7956573d8c7e7b7ea151562f0db48856d51095f8892071bda8"
+        },
+        "settings": {
+          "max_axis": 300,
+          "samples": 32,
+          "aspect": "authored",
+          "chunk_samples": 1,
+          "timeout": 120,
+          "native_timeout": 600,
+          "overlap_native": true,
+          "native_mc_samples": null,
+          "reference_cache": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-native-reference-cache",
+          "modes": [
+            "mandel"
+          ],
+          "orientation": "native; no postprocessing flips/crops",
+          "reference_backend": "CPU",
+          "bounces": "FPT scene/config default; metadata records effective configuration"
+        },
+        "environment": {
+          "FPT_MANDEL_TILED_DISPATCH": "1",
+          "FPT_MANDEL_TILE_ROWS": "8"
+        },
+        "lightmaps": {
+          "432": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          }
+        }
+      }
+    },
+    "next": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-experimental95-20260914/next/summary.json",
+      "sha256": "264cb88f7578c49843bd08216c74f2c7ec0d243ae697716d6a5f3fc291b3822f",
+      "identity": {
+        "manifest": {
+          "version": 1,
+          "root": "Mandelbulber examples (supplied explicitly)",
+          "provisional": false,
+          "scope": "Experimental-95 batch: seven near-complete historical native references with successful fast FPT previews; full authored native references and current-binary FPT captures.",
+          "scenes": [
+            {
+              "id": "416",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/clouds 2_v3.fract",
+              "sha256": "034d38efc21b1451cbbff0f1d66bbb83a334de8c35985786e89cb5955677ca2f",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "5"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "basic_fog_color": "9c00 d400 ff00",
+                "basic_fog_enabled": "true",
+                "basic_fog_visibility": "7,16411716660293",
+                "clouds_ambient_light": "0,1",
+                "clouds_center": "0 -6 1,07349934650449",
+                "clouds_color": "ff00 ff00 ff00",
+                "clouds_DE_approaching": "0,5",
+                "clouds_DE_multiplier": "0,5",
+                "clouds_density": "0,471",
+                "clouds_enable": "true",
+                "clouds_noise_iterations": "10",
+                "clouds_opacity": "5",
+                "clouds_period": "0,642143404019232",
+                "clouds_plane_shape": "true",
+                "clouds_random_seed": "12358",
+                "clouds_sharp_edges": "true",
+                "distance_fog_shadows": "true",
+                "fog_color_1": "ff00 ff00 ff00",
+                "fog_color_2": "ff00 ff00 ff00",
+                "volumetric_fog_colour_1_distance": "0,0625",
+                "volumetric_fog_colour_2_distance": "0,125",
+                "volumetric_fog_density": "0,283142367363742",
+                "volumetric_fog_distance_factor": "0,0625",
+                "volumetric_fog_distance_from_surface": "6,25E-17",
+                "volumetric_fog_enabled": "true"
+              }
+            },
+            {
+              "id": "674",
+              "path": "mandelbulb_bermarte 001.fract",
+              "sha256": "b2cedf90163877c8ccf8e6c49f4378d25a1320ba8172c47daa873484fd0bf5b8",
+              "aliases": [],
+              "collection": "root examples",
+              "formula_parameters": {
+                "formula_1": "94"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "fog_color_3": "ff00 bc00 5000",
+                "volumetric_fog_colour_1_distance": "3,76704608313825E-05",
+                "volumetric_fog_colour_2_distance": "7,5340921662765E-05",
+                "volumetric_fog_distance_factor": "7,5340921662765E-05",
+                "volumetric_fog_enabled": "true"
+              }
+            },
+            {
+              "id": "701",
+              "path": "msltoe toroidal multi 001.fract",
+              "sha256": "f3cfaf110c580e0b08687a954cfb9bcc1196b41369fe2c35a98b15f519ab80b4",
+              "aliases": [],
+              "collection": "root examples",
+              "formula_parameters": {
+                "formula_1": "96"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "iteration_fog_brightness_boost": "100",
+                "iteration_fog_enable": "true",
+                "iteration_fog_opacity": "8,317640000000001",
+                "iteration_fog_opacity_trim": "0"
+              }
+            },
+            {
+              "id": "739",
+              "path": "subsurface scattering 001.fract",
+              "sha256": "bb1736da19ba38f5bdc6dcf9ae12a8435b050d9dacf51427c0656bca3f2f1b33",
+              "aliases": [],
+              "collection": "root examples",
+              "formula_parameters": {
+                "formula_1": "3"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {}
+            },
+            {
+              "id": "525",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 4 - water.fract",
+              "sha256": "d1ba87871f6af49cfb8034836a9a6ff89efe1a230bf5ca68d653dd5124b9a94b",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {},
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "fog_color_1": "6142 231f 0000",
+                "fog_color_2": "ef64 cbe5 3e7d",
+                "fog_color_3": "a108 a108 a108",
+                "volumetric_fog_colour_1_distance": "0,000234968310780649",
+                "volumetric_fog_colour_2_distance": "0,000469936621561298",
+                "volumetric_fog_distance_factor": "0,000469936621561298",
+                "volumetric_fog_enabled": "true"
+              }
+            },
+            {
+              "id": "475",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox19.fract",
+              "sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "basic_fog_color": "d00a c0bc 90ad",
+                "basic_fog_enabled": "true",
+                "basic_fog_visibility": "0,0687391981482506"
+              }
+            },
+            {
+              "id": "484",
+              "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox29.fract",
+              "sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+              "aliases": [],
+              "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
+              "formula_parameters": {
+                "formula_1": "8"
+              },
+              "declared_file_parameters": {},
+              "volume_parameters": {
+                "basic_fog_color": "ffff f62a b285",
+                "basic_fog_enabled": "true",
+                "basic_fog_visibility": "0,112201845430196"
+              }
+            }
+          ]
+        },
+        "harnesses": {
+          "run_mandel_support_suite.py": "b3173fca7771ad6d0d3e8e53393bfb48dd70199ffe11c10e6072d5226a4e4eeb",
+          "run_release_canaries.py": "21387d8ec538178aefef7fcb7f0b454f6b488820330a0d922b0e3d7d3cb089a5",
+          "mandel_reference_cache.py": "c3d6e90f5d58f1f9d3b7436ab2e32ecee3904cfcdd63f3af986b28d507420453"
+        },
+        "executables": {
+          "/Volumes/Ventura/Projects/FPT-metal-release/target/release/fpt-metal": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+          "/Volumes/Ventura/Projects/mandelbulber2/build-opencl/mandelbulber2.app/Contents/MacOS/mandelbulber2": "ecf9de8f749c6c7956573d8c7e7b7ea151562f0db48856d51095f8892071bda8"
+        },
+        "settings": {
+          "max_axis": 300,
+          "samples": 32,
+          "aspect": "authored",
+          "chunk_samples": 1,
+          "timeout": 120,
+          "native_timeout": 420,
+          "overlap_native": true,
+          "native_mc_samples": null,
+          "reference_cache": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-native-reference-cache",
+          "modes": [
+            "geometry",
+            "authored",
+            "mandel"
+          ],
+          "orientation": "native; no postprocessing flips/crops",
+          "reference_backend": "CPU",
+          "bounces": "FPT scene/config default; metadata records effective configuration"
+        },
+        "environment": {
+          "FPT_MANDEL_TILED_DISPATCH": "1",
+          "FPT_MANDEL_TILE_ROWS": "8"
+        },
+        "lightmaps": {
+          "416": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "674": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "701": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "739": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "525": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "475": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          },
+          "484": {
+            "path": "/Volumes/Ventura/Projects/mandelbulber2/mandelbulber2/deploy/share/mandelbulber2/textures/lightmap.jpg",
+            "sha256": "44253c6e1fc09ec929c503302608c8208d1f84bc9b4b9cdabd7215524daf8be7"
+          }
+        }
+      }
+    }
+  },
+  "reuse_policy": "Only scene 432 geometry/authored are reused, after source, settings, command, binary, environment and artifact validation. Per-mode provenance retains original time limits."
+}

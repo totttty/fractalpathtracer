@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [494: mandelbox44_2](494.md)
+
+[![Native / FPT authored](images/494-thumb.webp)](494.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The repeated stacked bulb-like columns, right foreground column and camera placement align. Both authored views are dark; FPT reduces the native brown veil and strengthens purple contrast, with the main column contours still readable. Atmosphere and deep background illumination are not certified.
+
+## [500: mandelbox50 - hearts](500.md)
+
+[![Native / FPT authored](images/500-thumb.webp)](500.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The paired heart-shaped forms, overlapping placement and layered surface bands align. Both views are bright; FPT changes the background from hazy red to green and sharpens the patterned hearts, while the defining contours remain readable. Bloom and fine material response are not certified.
+
 ## [507: mandelbox57](507.md)
 
 [![Native / FPT authored](images/507-thumb.webp)](507.md)
@@ -67,19 +83,3 @@ Cave walls and pillar positions align, with the structure clearly readable. Patt
 accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
 Broad silhouette, placement and main surface forms align. FPT green is darker and more saturated than the native chrome response.
-
-## [570: coastalbrot_smilin](570.md)
-
-[![Native / FPT authored](images/570-thumb.webp)](570.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Bowl-like structure, large openings and framing align. Reflections, brightness and fine edge detail differ.
-
-## [571: continuum](571.md)
-
-[![Native / FPT authored](images/571-thumb.webp)](571.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Broad geometry and framing closely align. Gold is darker and less glossy in FPT, without hiding the repeated forms.

@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-09-14T01:39:10.356843+00:00",
+  "logical_cpus": 10,
+  "native_processes": [
+    {
+      "pid": 28622,
+      "cpu_percent": 26.2
+    }
+  ],
+  "other_process_cpu_percent": 876.9,
+  "note": "One instantaneous process-load observation; confirms only one native renderer. Other application work is active. This does not establish the cause of slower rendering."
+}

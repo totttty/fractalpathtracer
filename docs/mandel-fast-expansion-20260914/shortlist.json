@@ -1,0 +1,106 @@
+{
+  "scope": "Visual preview triage by Codex; candidates for full-quality review, not acceptance or parity.",
+  "evidence_sha256": "dc9df9fa8cec73f189a52f8c8ca873fe9f48403cdacc43a71ba309f80a72d39f",
+  "rows": [
+    {
+      "id": "432",
+      "source_sha256": "cff79f4382a881ed390acbbca70e976341c963e7a1eb24dab4e7f30b345dfc41",
+      "capture_sha256": {
+        "mandel": "3d01403ac2981534be1ef2d653d10f1c5ca74efda12f97fd032a31075dfce6bd",
+        "geometry": "b62c539593f9a6cbb1a0ba66336941e7c525c41ba8fd46149645314774ce4a8c",
+        "authored": "b06680a211637b6ccfdd038f6f6d6aad8137df16da4d85dce777c5eca52d0f2f"
+      },
+      "note": "The central polygonal openings and surrounding curved bands correspond at thumbnail scale; the green/cyan palette remains recognizable. Fine detail requires a cleaner native reference."
+    },
+    {
+      "id": "443",
+      "source_sha256": "1f113355ea0c5b7f515c040c536059e3cb8cae7cf7d3708de1858b9ed2264b82",
+      "capture_sha256": {
+        "mandel": "035b6e8b563932ca6fd465138597fd8aa3746e5594bd3bd3e862a404eaf2e7a5",
+        "geometry": "f06a361913a2dcc25ea8e29a4855acd225fba68a2b6f40b3243b4a3a10525a03",
+        "authored": "9e85ae12ffa9d84cf9f5e4ecdeff06b11b6101fd68c9c7de3741f3ebf51bf37a"
+      },
+      "note": "The repeated conical forms and green/purple distribution are readable in both views. Highlights and small-scale density differ."
+    },
+    {
+      "id": "480",
+      "source_sha256": "b2fd04cd6c1ff7d616a7fd41c6210626dcf140776a3cebb74c9abf1dfad770eb",
+      "capture_sha256": {
+        "mandel": "01e622f8777d986d56930fbf3c882ee2f5503b05c8c806f0102843cc4095e2e0",
+        "geometry": "53c80f9b20b92a5b0a51f34de5f2ff5af6c8b9641696c0f9710a9223811cfcc5",
+        "authored": "0af5b31ac5972979d91c97dfa592f728ed1eb0164ca02bcccfebaf399b3449ab"
+      },
+      "note": "The enclosing stepped structure, central opening and blue reflective regions correspond at coarse scale. Native noise prevents fine-detail assessment."
+    },
+    {
+      "id": "485",
+      "source_sha256": "6e3674459bf0dde8766d1e9b132d35fb16f89d4c0e29db1fa7f031b13cf291cf",
+      "capture_sha256": {
+        "mandel": "8325f347f340aaeb3dbb5cdfbeef1631510392e0879ec416c5ee568de8bfe46f",
+        "geometry": "38f43935a9410746cb0678ca51fc7ddeabf2e9664586dce6903ad643fb5e128a",
+        "authored": "a6cad7d45928d9afc68fa795bc0585925a00bed67163a77a000d2adec00c5679"
+      },
+      "note": "Large branching forms and green/red placement appear consistent. Reflection intensity and fine texture remain approximate."
+    },
+    {
+      "id": "503",
+      "source_sha256": "4a13c5c0db09f2bfa1e370ce6c38e04b9c07dd553b9b7a86237d8fdaade0fffd",
+      "capture_sha256": {
+        "mandel": "1a53abf1a603c21da342b85eb6b01fc36b68e4645df2b1be449c505123e84e1b",
+        "geometry": "890d46a0ab5e8d638a73cfbd836ed6fb764aae5750e1d804bfe3e9655622b0a6",
+        "authored": "866a54724ca73f86c8ce4a7363849a5815a82371a2084522906112523848342c"
+      },
+      "note": "The central cut shape and blue edge network remain clearly readable. This is a promising structural comparison, with brightness and reflection differences."
+    },
+    {
+      "id": "521",
+      "source_sha256": "4098156c0452ec3949d0884c6b4a84de910cb03996991db2d8430e27a8bfb1fd",
+      "capture_sha256": {
+        "mandel": "18411e7051751616d60a31190706c30574056ebf6916aa4a11f8f0a91826786e",
+        "geometry": "3155db419a87d18b47084af8ad2f2e6ca89309b8752d5a2dc3efbf62db80d16f",
+        "authored": "613c7123ec9fc48bd54130fa2ab532b5a18a2ea55235c457bd349680fc9d15e0"
+      },
+      "note": "The green terrain, main dark region and concentric surface features correspond. Contrast and small ridges need full-quality review."
+    },
+    {
+      "id": "541",
+      "source_sha256": "a178bedb9e2840df95fe8f616ba05d5e6b5ca7d80a9d1f5d1e9a65af8a3e8e13",
+      "capture_sha256": {
+        "mandel": "5fa0db5b90684befd4e5bef329ee3d4006ee96ccb34ced981310ab47ba768abd",
+        "geometry": "cb0deb8438ca727f4eb6252a486282b454d3dfefe0c5ee9cc109ff4f225fb751",
+        "authored": "d7451201b6332f516e3a37582bae412a0a073d568aa4666b672d371a35708ed9"
+      },
+      "note": "The large curved foreground opening and copper/white highlights correspond closely at preview scale. Depth of field and fine surface detail remain unverified."
+    },
+    {
+      "id": "549",
+      "source_sha256": "dba82fdecb1c0ddad1f434a0d85fb05cbeef33e03150432f74efb262fb90cd8c",
+      "capture_sha256": {
+        "mandel": "c0f2c58729ff6753a6cbaf21407e274963e5ca548946b2be6026b39efb935b7e",
+        "geometry": "1f660a8d22101765a9b710ca11765f7497e9aa4b1df739528ad2ba6f6fb13ec5",
+        "authored": "d62c31308e2c95aa4dd863c6fbc2c78832f49436a7db5916a2889f211d083f8f"
+      },
+      "note": "The perforated architectural walls, openings and pale green palette are present in both views. Water and reflection appearance differ."
+    },
+    {
+      "id": "561",
+      "source_sha256": "d0ef2d67dac4e774d462e650f3dc7a836a1fcd12d7c7782618b9bd15afc166ea",
+      "capture_sha256": {
+        "mandel": "5dde6bd614c3445288d3170f2dfd295c95cde281612327b946107d005351ffd8",
+        "geometry": "66247dfe937de35f443e4edb0386f68af708aceb112049bbe622e6024c9b5749",
+        "authored": "749dd039f71bd10a9fc7970d0fcbb124694d5e1243a1b50c8bfdacbebe3a7ad6"
+      },
+      "note": "The sweeping folded structures and copper surfaces correspond at coarse scale. FPT shifts the surrounding blue tones toward brown and changes the lighting balance."
+    },
+    {
+      "id": "662",
+      "source_sha256": "b16c0d7634af65156e2798ff19e76d8194e981c0a073a604c380747f2e62c498",
+      "capture_sha256": {
+        "mandel": "836cb42bb566752d3ced7eb334af2b0db1f6607f24c844a77420234d9e180388",
+        "geometry": "05a0bbcb75a2522141e2106029acb2f67821811ba4029e418eeacdf9aea06a22",
+        "authored": "b7bfff5000635f1c8eb1051c6431ff2ed5e9cb40ce17ff5ddc9a00293cbfb611"
+      },
+      "note": "The yellow-edged square cavities, dark interiors and blue surroundings correspond clearly at preview scale. A historical execution failure now has a complete native/FPT comparison."
+    }
+  ]
+}

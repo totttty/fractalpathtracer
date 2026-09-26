@@ -1,0 +1,16 @@
+{
+  "previous_review_rows_preserved": 630,
+  "previous_scene_assets_preserved": 1891,
+  "gallery_files_verified": 1939,
+  "report_files_verified": 48,
+  "local_links_verified": 8444,
+  "reviewed": 424,
+  "incomplete": 9,
+  "review_and_publication_tests_passed": 16,
+  "renderer_and_scene_inputs_unchanged": true,
+  "counts": {
+    "reviewed": 424,
+    "blocked": 227,
+    "experimental": 95
+  }
+}

@@ -4,6 +4,30 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [667: mandelbox_vary_scale_4D_001](667.md)
+
+[![Native / FPT authored](images/667-thumb.webp)](667.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The sweeping corridor, large left-wall apertures, bright upper opening and right-hand blocklike details align broadly. FPT removes the pale blue atmospheric veil and has stronger gold/green reflections, but the foreground structure remains readable. Distant haze and exact material transport are not certified.
+
+## [668: mandelbulb - 256iters](668.md)
+
+[![Native / FPT authored](images/668-thumb.webp)](668.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The outer Mandelbulb lobes, upper central concentric feature and lower repeated protrusions align broadly. FPT is more uniformly green and less sparkling than native; both images have noisy fine detail, so microscopic geometry and reflective appearance are not certified.
+
+## [669: mandelbulb001](669.md)
+
+[![Native / FPT authored](images/669-thumb.webp)](669.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The folded central Mandelbulb surface, left cluster, upper ridges and sky boundary align. FPT changes green/gold reflections to a stronger rainbow palette; both have intense highlights, but the principal structure stays readable. Fine specular/colour parity is not certified.
+
 ## [671: mandelbulb2_001](671.md)
 
 [![Native / FPT authored](images/671-thumb.webp)](671.md)
@@ -59,27 +83,3 @@ The sweeping curved corridor, right-hand rounded slots and concentrated central 
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 The large crossing beams, repeated angular recesses and red panels broadly align. FPT removes the pale native veil/blur and has stronger dark red contrast, but the foreground structural layout stays readable. Distant optical effects and fine reflective detail are not certified.
-
-## [691: monte carlo DOF 001](691.md)
-
-[![Native / FPT authored](images/691-thumb.webp)](691.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The nested perforated frames, central bright opening and purple/pink surfaces align broadly. FPT is sharper and brighter while native strongly blurs the foreground, so depth-of-field and fine near-surface detail are not certified. The large-scale framing and structure remain readable.
-
-## [702: msltoe_donut_001](702.md)
-
-[![Native / FPT authored](images/702-thumb.webp)](702.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The clustered rounded forms and large crossing tubular arcs align broadly. Native haze and its large central light bloom are replaced by sharper, differently distributed FPT highlights. Foreground structure remains readable; bloom, atmosphere and fine reflective transport are not certified.
-
-## [703: msltoe_julia_bulb_eiffie_001](703.md)
-
-[![Native / FPT authored](images/703-thumb.webp)](703.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The prominent pink rounded cluster, lower-left diagonal branch and surrounding field of small forms align broadly. Native shallow-focus sparkling gold becomes sharper yellow/orange FPT surfaces. Broad placement survives; depth of field and tiny reflective details are not certified.

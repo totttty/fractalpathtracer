@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [600: aexion001](600.md)
+
+[![Native / FPT authored](images/600-thumb.webp)](600.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Terrain silhouettes and framing align. Native sun disk is absent and FPT is greener/flatter; scene structure remains readable.
+
+## [602: aexion_octopus_001](602.md)
+
+[![Native / FPT authored](images/602-thumb.webp)](602.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Refreshed water surface is restored and the central object's placement aligns. Wave detail, reflected lighting and shadows differ; 32-SPP water noise remains visible.
+
 ## [603: amazing surf mod1 001](603.md)
 
 [![Native / FPT authored](images/603-thumb.webp)](603.md)
@@ -67,19 +83,3 @@ Curved perforated surface, surrounding grid and foreground reflective forms alig
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 Tree canopy silhouette, trunk, rolling grass terrain and cast shadow align. FPT canopy shadows are darker and the trunk is browner, but the main forms remain visible.
-
-## [628: fabs_box_mod1_001](628.md)
-
-[![Native / FPT authored](images/628-thumb.webp)](628.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Central bright opening, layered folded surfaces and lower-right opening align. FPT is sharper and more red/purple, with differing reflections and depth of field; broad structural landmarks remain readable.
-
-## [629: flight_anim_menger sponge_3](629.md)
-
-[![Native / FPT authored](images/629-thumb.webp)](629.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Main square window, repeated perforations, inner chamber and light position align. FPT omits the strong grey atmospheric veil and uses darker colourful surfaces; fog and complete material parity are not certified.

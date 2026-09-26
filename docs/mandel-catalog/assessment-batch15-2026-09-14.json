@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "reviewed_at": "2026-09-14",
+  "reviewer": "Codex visual comparison of complete 300px authored native / FPT neutral / FPT authored triplets",
+  "rows": [
+    {
+      "id": "416",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The island group and water horizon correspond, but the native scene is dominated by dense clouds and atmospheric shafts of light. FPT replaces that sky with a flat cyan gradient and renders the islands with strong rainbow reflections. The missing cloud and atmospheric illumination structure is a material appearance failure, not a colour-only difference."
+    },
+    {
+      "id": "701",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The rounded toroidal crown, paired curved lobes, scalloped outer silhouette and central foreground spike correspond in the native, neutral and authored views. Both authored renders have very bright upper lobes against a dark foreground. FPT shifts the gold appearance to saturated red/magenta, expands some clipped highlight patches and shows more lower-surface detail against a darker teal background. The principal forms remain readable; exact colour, highlight and background-lighting parity is not claimed."
+    },
+    {
+      "id": "739",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The layered ring, central opening and top/bottom points correspond well, and the neutral capture makes the folds readable. The native authored object has broad warm translucency and glowing illumination through its layers. FPT instead has dark opaque purple/green surfaces with only a small bright central patch. This loses the scene-defining subsurface-lighting structure, so geometry correspondence alone is insufficient for acceptance."
+    },
+    {
+      "id": "525",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The canyon walls, water channel and distant central ridges correspond in the neutral view. Native authored illumination creates a bright golden water surface and luminous atmospheric depth. FPT leaves the water and much of the foreground wall nearly dark, with substantially weaker readable ripples and no comparable distant glow. This materially changes water visibility and scene illumination, beyond a palette difference."
+    },
+    {
+      "id": "475",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The receding tunnel, rounded left overhang, central ledges and dense repeated wall/floor details correspond across the three views. FPT authored rendering retains readable red-lit foreground forms but is sharper and more saturated magenta, with a darker central distance and much less native haze. Background atmosphere and fine-detail appearance differ; the main geometry and foreground illumination remain legible, so this capture is accepted with those limitations."
+    },
+    {
+      "id": "484",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The tilted carved slabs, repeated arch/opening motifs, central dark recess and large circular upper opening correspond across the three captures. FPT authored rendering retains the native warm-lit slab faces and shadowed recess but is sharper, more orange/red and more contrasty, with harder clipped highlights and a darker background. Native depth-of-field softness is not reproduced. The main carved geometry remains readable; exact blur, lighting and material parity is not claimed."
+    }
+  ],
+  "evidence_sha256": "fff430e1acb0bce745ccbef557c9070dda0cf64069cf0a4a14e784f221390ab3"
+}

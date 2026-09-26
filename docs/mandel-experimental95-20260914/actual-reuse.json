@@ -1,0 +1,14 @@
+{
+  "rows": [
+    {
+      "id": "432",
+      "mode": "geometry",
+      "capture_sha256": "eaaf9369ed885fd98796c01b3e445208ea1f3656caa1ad2b45a4e5a5172f72d4"
+    },
+    {
+      "id": "432",
+      "mode": "authored",
+      "capture_sha256": "dbc50321e270445a8c277c655841216c65f7cdee51471812a48d7601d6ee72a4"
+    }
+  ]
+}

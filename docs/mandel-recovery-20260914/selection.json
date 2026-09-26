@@ -1,0 +1,40 @@
+{
+  "policy": "521 authored first. Native candidates ordered by reduced-reference elapsed seconds times four times authored maximum MC samples. This is a rough scheduling heuristic; full-size progress demonstrates it substantially underestimates cost. 443 remains excluded because both sides are incomplete.",
+  "native_order": [
+    {
+      "id": "480",
+      "preview_seconds": 0.40088291600113735,
+      "authored_mc_maximum": 100
+    },
+    {
+      "id": "485",
+      "preview_seconds": 0.5080329170014011,
+      "authored_mc_maximum": 100
+    },
+    {
+      "id": "503",
+      "preview_seconds": 0.9956840829981957,
+      "authored_mc_maximum": 100
+    },
+    {
+      "id": "561",
+      "preview_seconds": 0.6531904579969705,
+      "authored_mc_maximum": 200
+    },
+    {
+      "id": "432",
+      "preview_seconds": 1.6093651249975665,
+      "authored_mc_maximum": 100
+    },
+    {
+      "id": "549",
+      "preview_seconds": 5.345165791994077,
+      "authored_mc_maximum": 100
+    },
+    {
+      "id": "541",
+      "preview_seconds": 1.4725959170027636,
+      "authored_mc_maximum": 400
+    }
+  ]
+}

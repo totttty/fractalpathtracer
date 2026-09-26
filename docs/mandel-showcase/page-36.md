@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [570: coastalbrot_smilin](570.md)
+
+[![Native / FPT authored](images/570-thumb.webp)](570.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Bowl-like structure, large openings and framing align. Reflections, brightness and fine edge detail differ.
+
+## [571: continuum](571.md)
+
+[![Native / FPT authored](images/571-thumb.webp)](571.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Broad geometry and framing closely align. Gold is darker and less glossy in FPT, without hiding the repeated forms.
+
 ## [572: hybrid77-stereo](572.md)
 
 [![Native / FPT authored](images/572-thumb.webp)](572.md)
@@ -67,19 +83,3 @@ Perforated slab, central cavity and nested hole layout align. Pink material and 
 accepted-with-limitations | captured-2026-09-13 | 32 SPP
 
 The small perforated gold structure, camera framing and broad red environment band align. FPT is darker/oranger and omits the small native white source at the upper left. Acceptance covers the readable central object at authored scale, not source-disc or exact lighting parity; the dark neutral screen mostly reflects the small object coverage.
-
-## [584: menger-mod1_001_8k](584.md)
-
-[![Native / FPT authored](images/584-thumb.webp)](584.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Panoramic curved block corridors and large openings align. FPT is gold rather than red/black with different sky and reflection colours, but the structure remains readable.
-
-## [585: mountains_and_valleys](585.md)
-
-[![Native / FPT authored](images/585-thumb.webp)](585.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Rounded peaks, foreground cavities and silhouette align. Both authored captures use dark green material; FPT loses the sharp bright reflective flecks but retains the principal forms.

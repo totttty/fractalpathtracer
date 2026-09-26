@@ -1,0 +1,54 @@
+{
+  "scope": "Scheduling evidence from last native progress logs. Estimates are not guaranteed completion times; unknown estimates sort last.",
+  "rows": [
+    {
+      "id": "432",
+      "progress_percent": 44.0,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 140.5,
+      "producer_estimated_total_seconds": 259.5
+    },
+    {
+      "id": "480",
+      "progress_percent": 23.08,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": 344.8,
+      "producer_estimated_total_seconds": 463.70000000000005
+    },
+    {
+      "id": "561",
+      "progress_percent": 22.49,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 362.3,
+      "producer_estimated_total_seconds": 481.3
+    },
+    {
+      "id": "485",
+      "progress_percent": 17.75,
+      "elapsed_seconds": 119.1,
+      "producer_remaining_seconds": 414.8,
+      "producer_estimated_total_seconds": 533.9
+    },
+    {
+      "id": "549",
+      "progress_percent": 12.43,
+      "elapsed_seconds": 119.0,
+      "producer_remaining_seconds": 812.5,
+      "producer_estimated_total_seconds": 931.5
+    },
+    {
+      "id": "503",
+      "progress_percent": 7.69,
+      "elapsed_seconds": 119.1,
+      "producer_remaining_seconds": 1329.8,
+      "producer_estimated_total_seconds": 1448.8999999999999
+    },
+    {
+      "id": "541",
+      "progress_percent": 0.0,
+      "elapsed_seconds": 118.9,
+      "producer_remaining_seconds": null,
+      "producer_estimated_total_seconds": null
+    }
+  ]
+}

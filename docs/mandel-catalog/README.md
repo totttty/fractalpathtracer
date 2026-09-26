@@ -8,14 +8,16 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 ## Status
 
-Latest targeted follow-up: [boolean geometry correction and outlier controls](../mandel-geometry-outliers-20260913/README.md).
-This restores subtraction cavities without changing the frozen gallery's membership.
+Latest coverage follow-up: [experimental-95 recovery](../mandel-experimental95-20260914/README.md).
+Eight experimental candidates received full-quality attempts: **3 accepted**,
+**3 visual holds**, **2 incomplete**. All 95 source identities and 90 historical
+native timing records were checked to prepare the remaining queue.
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| Reviewed | 423 | Explicit capture-specific visual acceptance, with limitations allowed |
-| Experimental | 95 | Opt-in scenes with deferred incomplete comparisons; execution success is not visual acceptance |
-| Blocked | 228 | 207 visual needs-work decisions and 21 historical screening failures requiring investigation/retest |
+| Reviewed | 427 | Explicit capture-specific visual acceptance, with limitations allowed |
+| Experimental | 89 | Opt-in scenes with deferred incomplete comparisons; execution success is not visual acceptance |
+| Blocked | 230 | 210 visual needs-work decisions and 20 historical screening failures still awaiting completed review |
 
 The ranked gallery still contains all 50 rows for transparency, including
 blocked scenes **32, 37, 46 and 48**. Of the additional 50, **37** are promoted
@@ -77,6 +79,14 @@ The [bounded release wrap-up](release-wrapup-2026-09-13.md) provides
 95 comparisons and retests the 21 historical execution failures. It does not
 change catalogue statuses: reduced-resolution/native-sampling screens and
 96px/1-SPP execution retries are not reviewed-gallery evidence.
+
+The [fast expansion pass of 14 September](../mandel-fast-expansion-20260914/README.md)
+adds fresh 150px/4-SPP FPT tests for all 116 scenes without completed visual
+reviews. Matching-resolution native comparisons and a
+[visual shortlist](../mandel-fast-expansion-20260914/shortlist.md) help select
+the next full-quality review batch. These screening results preserve the
+423-scene reviewed gallery and all previous catalogue decisions.
+
 Colour differences alone are not a blocker. Geometry, missing assets and
 failed render contracts must remain visible. [Explicit decisions](reviews.json)
 are tied to the complete [capture evidence](review-evidence.json), including

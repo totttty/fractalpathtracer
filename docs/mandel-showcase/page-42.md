@@ -4,6 +4,38 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [691: monte carlo DOF 001](691.md)
+
+[![Native / FPT authored](images/691-thumb.webp)](691.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The nested perforated frames, central bright opening and purple/pink surfaces align broadly. FPT is sharper and brighter while native strongly blurs the foreground, so depth-of-field and fine near-surface detail are not certified. The large-scale framing and structure remain readable.
+
+## [701: msltoe toroidal multi 001](701.md)
+
+[![Native / FPT authored](images/701-thumb.webp)](701.md)
+
+accepted-with-limitations | experimental-95-2026-09-14 | 32 SPP
+
+The rounded toroidal crown, paired curved lobes, scalloped outer silhouette and central foreground spike correspond in the native, neutral and authored views. Both authored renders have very bright upper lobes against a dark foreground. FPT shifts the gold appearance to saturated red/magenta, expands some clipped highlight patches and shows more lower-surface detail against a darker teal background. The principal forms remain readable; exact colour, highlight and background-lighting parity is not claimed.
+
+## [702: msltoe_donut_001](702.md)
+
+[![Native / FPT authored](images/702-thumb.webp)](702.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The clustered rounded forms and large crossing tubular arcs align broadly. Native haze and its large central light bloom are replaced by sharper, differently distributed FPT highlights. Foreground structure remains readable; bloom, atmosphere and fine reflective transport are not certified.
+
+## [703: msltoe_julia_bulb_eiffie_001](703.md)
+
+[![Native / FPT authored](images/703-thumb.webp)](703.md)
+
+accepted-with-limitations | captured-2026-09-12 | 32 SPP
+
+The prominent pink rounded cluster, lower-left diagonal branch and surrounding field of small forms align broadly. Native shallow-focus sparkling gold becomes sharper yellow/orange FPT surfaces. Broad placement survives; depth of field and tiny reflective details are not certified.
+
 ## [704: msltoe_julia_bulb_mod2_001](704.md)
 
 [![Native / FPT authored](images/704-thumb.webp)](704.md)
@@ -51,35 +83,3 @@ The decorated rounded body, central vertical divisions and clustered gold forms 
 accepted-with-limitations | captured-2026-09-12 | 32 SPP
 
 The stacked rounded forms, large foreground bowl and layered crossing bands align. FPT removes native reflective sparkle and changes the background to orange, but the main silhouettes, overlaps and surface structure remain readable. Environment and exact reflection patterns are not certified.
-
-## [727: quick-dudley_001](727.md)
-
-[![Native / FPT authored](images/727-thumb.webp)](727.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The sweeping layered foreground, central recessed form and upper-left vertical structure align. FPT changes reflective colour toward brighter orange and cyan while retaining the principal contours, openings and authored crop. Exact reflective transport is not certified.
-
-## [728: quick-dudley_mod_001](728.md)
-
-[![Native / FPT authored](images/728-thumb.webp)](728.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The layered crossing foreground band, curved upper forms and right-hand folded structure align. FPT changes the native pink metallic reflections to darker gold/brown and sharper background detail, but retains the main geometry and framing. Fine optical transport is not certified.
-
-## [733: sierpinski 3D 002](733.md)
-
-[![Native / FPT authored](images/733-thumb.webp)](733.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The diagonal layered lattice and large curved upper-right band retain their framing and visible openings. Native blue atmospheric softness becomes a sharp multicoloured high-contrast lattice; broad structure remains visible, but haze, highlights and subpixel strands are not matched.
-
-## [734: smooth_mandelbox_001](734.md)
-
-[![Native / FPT authored](images/734-thumb.webp)](734.md)
-
-accepted-with-limitations | captured-2026-09-12 | 32 SPP
-
-The repeated rectangular tunnel, curved side walls and central bright region remain recognisable and aligned. FPT is greener and reveals different reflective inner bands; optical reflection and highlight intensity are not matched, but the main form remains readable.

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "reviewed_at": "2026-09-14",
+  "reviewer": "Codex visual comparison of full-size native CPU, neutral FPT and authored FPT captures",
+  "rows": [
+    {
+      "id": "662",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The hollow square towers, large foreground openings and central angled structure correspond. FPT is sharper and more reflective, with stronger gold saturation and darker cavities; native depth blur and blue atmospheric softness are not matched. The main forms remain readable. Fine-detail and exact authored-appearance parity are not certified."
+    }
+  ],
+  "evidence_sha256": "853ff3d1f1be0fdefeaa628c873b1d1637987142f04750c3e29328db51f3bfd7"
+}

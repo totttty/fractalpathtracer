@@ -1,0 +1,103 @@
+{
+  "fpt": [
+    [
+      "432",
+      "geometry",
+      "eaaf9369ed885fd98796c01b3e445208ea1f3656caa1ad2b45a4e5a5172f72d4"
+    ],
+    [
+      "432",
+      "authored",
+      "dbc50321e270445a8c277c655841216c65f7cdee51471812a48d7601d6ee72a4"
+    ],
+    [
+      "480",
+      "geometry",
+      "c7bfda801f1bd94ec0f9cdbea1f70aecd6bb711a9c118f1e4778f541a5652faf"
+    ],
+    [
+      "480",
+      "authored",
+      "f510565e15467ba567d23c1beae85dac05377ca73a48313c5338f21a67595728"
+    ],
+    [
+      "485",
+      "geometry",
+      "574db59d853bb0b1690e2cb6a014690b1b515bf6bb1b92d8b96201796ea0422b"
+    ],
+    [
+      "485",
+      "authored",
+      "08f217e83d50210656f5c1045101426539d5acfae887419fe2d4f96f06106fd2"
+    ],
+    [
+      "503",
+      "geometry",
+      "6770d9b213ee3cd1e03f373ba644a927f2ed9f3a34869bdaa62e9db9ece9bf51"
+    ],
+    [
+      "503",
+      "authored",
+      "57de552afc77e462ea60af68e16c57775997a0b6c43de94054bd404a4a0b2d33"
+    ],
+    [
+      "521",
+      "geometry",
+      "40c9d8f8f07dd4a9566cecc9696b695a3cddf532661c04a65f9aba8c1a7d98a9"
+    ],
+    [
+      "541",
+      "geometry",
+      "c1722c5858815004428a229b149b0308c0bdb48f0961917a54bd8a93f9f662c6"
+    ],
+    [
+      "541",
+      "authored",
+      "dce21beddc8bf543601f653c1872951f36ba9cfe17d4c92827144854aaf16efe"
+    ],
+    [
+      "549",
+      "geometry",
+      "699833e6972a6889bc4313f85165d3a4affc881b31383912a746b0e8524da814"
+    ],
+    [
+      "549",
+      "authored",
+      "305281c337697ca73772252cf945128502a8082fc157a8ccab82fb5465808865"
+    ],
+    [
+      "561",
+      "geometry",
+      "805da084fb54b032095227edf86214d4dc572d74697f299d39bc91dc9de79723"
+    ],
+    [
+      "561",
+      "authored",
+      "1397ffdcc8ca97f44b2d250795ce799dbf033c4ff9d0851a34e1fce983a68ad5"
+    ]
+  ],
+  "native_521": {
+    "status": "ok",
+    "capture": {
+      "path": "reports/mandel-recovery-20260914/reused-native-521/scene.png",
+      "sha256": "a6a16a383c28616967672db21f1fd98ef2194ef3cabdb764e5ff18500f7a8d10",
+      "rgb_sha256": "babf404f4b900bb0a642fc5e2aadd1c6fa39dc8cc9a1f66da7901bbff8e505e6",
+      "wall_seconds": 0.0
+    },
+    "screening": {
+      "mean_luminance_255": 97.86360946745562,
+      "dark_fraction": 0.012189349112426036,
+      "single_color": false,
+      "review_flags": [],
+      "note": "Advisory only; cannot establish geometry completeness or reference parity."
+    },
+    "deferred": false,
+    "original_wall_seconds": 8.358761125004094,
+    "reference_cache": {
+      "status": "hit",
+      "key": "e334f087d1014c5f884090895a2a9b987c6377878412d3cecf98a24f23f67cd4",
+      "original_wall_seconds": 8.358761125004094,
+      "manifest_sha256": "84d3ec92d96903051f19c9a5cbba7fea4428b9b54ddb25c98fdf573ef6112767"
+    }
+  }
+}

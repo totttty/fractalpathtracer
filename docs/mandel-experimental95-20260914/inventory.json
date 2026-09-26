@@ -1,0 +1,3515 @@
+{
+  "version": 1,
+  "scope": "Inventory of the 95 experimental scenes at the start of this batch. Capture availability is not visual acceptance. Historical FPT captures retain their renderer identity.",
+  "rows": [
+    {
+      "id": "097",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/SphereInvBoxMenger.fract",
+      "sha256": "2767c40b70dce2dc23a673f5af055e81ed5189b81cd64e4a1ed9b0ac292bc021",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/097/geometry/SphereInvBoxMenger.png",
+          "capture_sha256": "f4797442e961c4f6fcf5e7c548af099caaf8f79e59b71146b7c3822b4622c375",
+          "current_fpt_binary": false,
+          "wall_seconds": 6.001094791000469
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/097/authored/SphereInvBoxMenger.png",
+          "capture_sha256": "ef18e8c9d8bfbcf75b06893a66da3553e08e5c2717e6105ab9ac2d32148983e0",
+          "current_fpt_binary": false,
+          "wall_seconds": 22.805500041000414
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.8964944580002339,
+        "authored": 3.4502153330031433
+      }
+    },
+    {
+      "id": "172",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/abox_mod1_add.fract",
+      "sha256": "aad1812e33004e8247bffc2004649d54d64f3eb4ab939b023e7e77f559fd0e9c",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/172/geometry/abox_mod1_add.png",
+          "capture_sha256": "327cabce242c5922bc72aa9f031393661410b8001a503e3e1a51511b27060464",
+          "current_fpt_binary": false,
+          "wall_seconds": 67.54939058400123
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/172/authored/abox_mod1_add.png",
+          "capture_sha256": "25c0e4cf8b92aabab1ab119ae2cca2c2ae38fbabae22c5a8da1b194f7d87c2d1",
+          "current_fpt_binary": false,
+          "wall_seconds": 515.0132401670016
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "timeout"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 5.10367070799839,
+        "authored": null
+      }
+    },
+    {
+      "id": "182",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/amazingIFS hex.fract",
+      "sha256": "35be6696b65c24bf9bb1e2d5ed41e953fee662abf8d692db86547991879b9bc2",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/182/geometry/amazingIFS hex.png",
+          "capture_sha256": "bd964f0f65ba52c041760247f93b8bb756d59124373e7fdf83a0b53fa038c695",
+          "current_fpt_binary": false,
+          "wall_seconds": 6.356264207999629
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/182/authored/amazingIFS hex.png",
+          "capture_sha256": "53e4dad66789fa360be4256d47f37b568eb4f98f5119aed04791d9e1acadc6c8",
+          "current_fpt_binary": false,
+          "wall_seconds": 122.24325420799869
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.6997588749945862,
+        "authored": 9.782791916004498
+      }
+    },
+    {
+      "id": "186",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/amazing_surf_m3d DE_LinearCube.fract",
+      "sha256": "7cc8f23698a2ebcce7af1dc57d9aa9460511cdf67a3398104d6d4d390b7e6923",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/186/geometry/amazing_surf_m3d DE_LinearCube.png",
+          "capture_sha256": "5019690351ec41177f5572a3e482f5a9984612382c2babd2d37b91d1baa3519c",
+          "current_fpt_binary": false,
+          "wall_seconds": 48.68083491600191
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/186/authored/amazing_surf_m3d DE_LinearCube.png",
+          "capture_sha256": "931cf9478b16dc5d5378d57cc399d4670ea2534d99933aa59c775c16a0736f33",
+          "current_fpt_binary": false,
+          "wall_seconds": 327.7117943750018
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "timeout"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 4.333893291994173,
+        "authored": null
+      }
+    },
+    {
+      "id": "295",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudo kleinian abox13.fract",
+      "sha256": "035ba82d0606cba849b7fe2e1d96896637813cc385590d3fdaee2f263f83656f",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/295/geometry/pseudo kleinian abox13.png",
+          "capture_sha256": "94ddaa2c7520283a4410504779a7212313b6ae49e5ed9e4fc56ebb7e8c2d2e9b",
+          "current_fpt_binary": false,
+          "wall_seconds": 65.44385695799429
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/295/authored/pseudo kleinian abox13.png",
+          "capture_sha256": "8744d21e6ced761821fee830d56e1411350215742cf07b8f3ec9d670c94dbaad",
+          "current_fpt_binary": false,
+          "wall_seconds": 510.5832533749999
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "timeout"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 5.772890041997016,
+        "authored": null
+      }
+    },
+    {
+      "id": "298",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudoKleinianMod2_boxBulb2.fract",
+      "sha256": "7d66782795ab67a9a87a10fe100387d2fc916d5df0b387bb073f221551483d69",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/298/geometry/pseudoKleinianMod2_boxBulb2.png",
+          "capture_sha256": "0f6b7ee7e81258b7f26389ceab5bd23cd65c271644dbaed21f9d4efcce62ba25",
+          "current_fpt_binary": false,
+          "wall_seconds": 52.17831650000153
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/298/authored/pseudoKleinianMod2_boxBulb2.png",
+          "capture_sha256": "f396d15e4c9f8089b0b3c53bd5bf511b15c5bef3da73faab648810c21fde2afd",
+          "current_fpt_binary": false,
+          "wall_seconds": 642.2583588749985
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "timeout"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 4.837680041993735,
+        "authored": null
+      }
+    },
+    {
+      "id": "307",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudoKleinianMod4.fract",
+      "sha256": "243f3b55d101588b42437330a9ef1f7adb661af69fc3b22c59710abdc8167244",
+      "full_quality": {
+        "mandel": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/307/mandel/scene.png",
+          "capture_sha256": "8f5fd0f2c6ccb71371e897a736bb8f1a0b2f9b4d547f41588199d4e25cb8525d",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.4608857089988305
+        },
+        "geometry": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/307/geometry/pseudoKleinianMod4.png",
+          "capture_sha256": "c3f9a325cf55c33d3f62327e72872820a0191bf0c93a5d324406266fc410f025",
+          "current_fpt_binary": false,
+          "wall_seconds": 199.18373495899868
+        },
+        "authored": null
+      },
+      "fast_status": {
+        "geometry": "timeout",
+        "authored": "timeout",
+        "mandel": "ok"
+      },
+      "missing_full_native": false,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": null,
+        "authored": null
+      }
+    },
+    {
+      "id": "396",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/IFS 34.fract",
+      "sha256": "abdc3f26ca7ecd26421e0689c5e5685502c53b73fbf1585a07fbd777689dc9cc",
+      "full_quality": {
+        "mandel": null,
+        "geometry": null,
+        "authored": null
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 3.804686750001565,
+        "authored": 0.47207424999942305
+      }
+    },
+    {
+      "id": "397",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/Riemann Sphere Msltoe 003.fract",
+      "sha256": "79499ae14e5965bc5f56e10dd50b716240fa77d5acd8cf76aca63ca9491effed",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/397/geometry/Riemann Sphere Msltoe 003.png",
+          "capture_sha256": "bd21e68e5b40c8c0936719740f4a4748426a397c24016bd64ccc9b3575371ca1",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.322498124998674
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/397/authored/Riemann Sphere Msltoe 003.png",
+          "capture_sha256": "426115b559a9d196fe72f4c2394b717ab25d94ff224d883d376b57ffd1c37bd8",
+          "current_fpt_binary": false,
+          "wall_seconds": 10.415118165999957
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.4971922080003424,
+        "authored": 3.031507457999396
+      }
+    },
+    {
+      "id": "404",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/aexion06.fract",
+      "sha256": "e3e016442f0c38c15567aa159e01c279cfeb2cdf8965d7af72c6e302cb586e8e",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/404/geometry/aexion06.png",
+          "capture_sha256": "070e894bc6a5fa63bddc93624e291d0c9da10a566daadd978563139806e1c446",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.3125867910002853
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/404/authored/aexion06.png",
+          "capture_sha256": "bbdde71943b1ac6f54a0354bef93cd345db8099f110cdab7ace6ca2b3b8c4199",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.8011739590001525
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.1683422499991138,
+        "authored": 1.413660083002469
+      }
+    },
+    {
+      "id": "405",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/benesi t1 pine tree.fract",
+      "sha256": "df55932878ea8f2022a2ec79f975db2bf06889dda30bf4cf76fa24c744e06087",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/405/geometry/benesi t1 pine tree.png",
+          "capture_sha256": "7b327ee5088c438e118a0f8f32e29eb248433a6117b540b58ed67b17fc876dde",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.6608279590000166
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/405/authored/benesi t1 pine tree.png",
+          "capture_sha256": "1d61f870568863d404992732f2b080c88b3e92a3abcd484862ab669257caff7d",
+          "current_fpt_binary": false,
+          "wall_seconds": 6.250965334002103
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.899474541998643,
+        "authored": 0.40579370799969183
+      }
+    },
+    {
+      "id": "407",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/blockify 2.fract",
+      "sha256": "0ec9ebe96a4a9feaac7ef0a832be50c41c7bc6ccf4266f1b6f3a91adfd7f6a1d",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/407/geometry/blockify 2.png",
+          "capture_sha256": "4d0b8105b29c7b0ddf2df186e4060d2ee61dc6875256d9bcc70bfba420d96d81",
+          "current_fpt_binary": false,
+          "wall_seconds": 13.43266995799786
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/407/authored/blockify 2.png",
+          "capture_sha256": "a1c635c93c5808531e7db5b3f6d865354f5d9b5944f827543f8599b0cce19e31",
+          "current_fpt_binary": false,
+          "wall_seconds": 29.15285704100097
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.700124124996364,
+        "authored": 2.1230579999973997
+      }
+    },
+    {
+      "id": "408",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/blockify.fract",
+      "sha256": "edfb3ff38457df33f24fc3c2aa31bb719a5f300817e3bb6ac787983505c514e3",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/408/geometry/blockify.png",
+          "capture_sha256": "898e1badbab18e8e7e303d5fb77b5d08a62c2bd228af59a54e4326672c5ae04f",
+          "current_fpt_binary": false,
+          "wall_seconds": 4.145657417000621
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/408/authored/blockify.png",
+          "capture_sha256": "9ced74b847dcb5375b0e53573f108ba7913cfc948dcf01e7a0da5324b16575c8",
+          "current_fpt_binary": false,
+          "wall_seconds": 12.534206250000352
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.7327665839984547,
+        "authored": 1.0516920419977396
+      }
+    },
+    {
+      "id": "416",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/clouds 2_v3.fract",
+      "sha256": "034d38efc21b1451cbbff0f1d66bbb83a334de8c35985786e89cb5955677ca2f",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/416/geometry/clouds 2_v3.png",
+          "capture_sha256": "c57a67ed47bc96823717e14032e5b0ff3ed809d7ca789e6e7d75760f632ccd06",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.7856191669998225
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/416/authored/clouds 2_v3.png",
+          "capture_sha256": "8effe49308dc65c031e781106dcd1702562865ec529b9609cd35fc11ace869ac",
+          "current_fpt_binary": false,
+          "wall_seconds": 0.7658529999998791
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.5742435840002145,
+        "authored": 0.1817629159995704
+      }
+    },
+    {
+      "id": "417",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/colored orbit trap menger sponge.fract",
+      "sha256": "73e49a5a28779c7d6fffe91953dffb455f799682a1af6739fed186077a038097",
+      "full_quality": {
+        "mandel": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/417/mandel/scene.png",
+          "capture_sha256": "1b1f114b205f5de961d62bcecce3dfe2dab44d9fa6f33c4243e3015f7935ce34",
+          "current_fpt_binary": false,
+          "wall_seconds": 24.55585570800031
+        },
+        "geometry": null,
+        "authored": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/417/authored/colored orbit trap menger sponge.png",
+          "capture_sha256": "cd98aa570e2737908e362eee053d0a567e81bfb030354773fd6208b92d0c6661",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.651885625000432
+        }
+      },
+      "fast_status": {
+        "geometry": "image_validation_failed",
+        "authored": "ok"
+      },
+      "missing_full_native": false,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": null,
+        "authored": 0.25307783400057815
+      }
+    },
+    {
+      "id": "419",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/distance_fog.fract",
+      "sha256": "7dec3e1eaf910d6628d1040eeb897dec5744731f64350427499dce4770dc5a52",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/419/geometry/distance_fog.png",
+          "capture_sha256": "a6fc352e0bd6f400650a8653946ea3a0d1bcdd7bf3920bf422c3d524cfb34257",
+          "current_fpt_binary": false,
+          "wall_seconds": 7.7847283339997375
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/419/authored/distance_fog.png",
+          "capture_sha256": "2270888cccd5eae00b24e04fe10c611fa901faee88beb8b3040d763dd76c6fbd",
+          "current_fpt_binary": false,
+          "wall_seconds": 6.692649332999281
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 8.403226250004082,
+        "authored": 0.6182677499964484
+      }
+    },
+    {
+      "id": "425",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hexgrid.fract",
+      "sha256": "852211c2811c847d28f0f183ae6a2389f49a2e2f747b155b6592b267e95a40d6",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/425/geometry/hexgrid.png",
+          "capture_sha256": "540783af547d7c6fae4868be758cff974fa9f3c5659ac4ff08920d9a23fdca67",
+          "current_fpt_binary": false,
+          "wall_seconds": 15.994396332999713
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/425/authored/hexgrid.png",
+          "capture_sha256": "754aa7ec1397ae1bd9b931b8e57d2edc3146fc5b8ceb1f5916a8fd3d4d8c0364",
+          "current_fpt_binary": false,
+          "wall_seconds": 57.760593958000754
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.373876834004477,
+        "authored": 2.4719908330007456
+      }
+    },
+    {
+      "id": "426",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hexgrid_v2.fract",
+      "sha256": "c1b8797683d5e6a2d88312ec54ec5f07a2294b3e1ac033723a4fe5dd5e2942d0",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/426/geometry/hexgrid_v2.png",
+          "capture_sha256": "224d43a05b4d745c618ad5f5f2750a28df88e46ddead2391d63fd6bf35a547ba",
+          "current_fpt_binary": false,
+          "wall_seconds": 4.521379791999607
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/426/authored/hexgrid_v2.png",
+          "capture_sha256": "8346187db810cc7cde5b001aeabadd687553bfb5a65bc281490230301c881eee",
+          "current_fpt_binary": false,
+          "wall_seconds": 11.061601999999766
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.7550582499970915,
+        "authored": 0.7765852079974138
+      }
+    },
+    {
+      "id": "432",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid19.fract",
+      "sha256": "cff79f4382a881ed390acbbca70e976341c963e7a1eb24dab4e7f30b345dfc41",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/432/geometry/hybrid19.png",
+          "capture_sha256": "eaaf9369ed885fd98796c01b3e445208ea1f3656caa1ad2b45a4e5a5172f72d4",
+          "current_fpt_binary": true,
+          "wall_seconds": 1.399413999999524
+        },
+        "authored": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/432/authored/hybrid19.png",
+          "capture_sha256": "dbc50321e270445a8c277c655841216c65f7cdee51471812a48d7601d6ee72a4",
+          "current_fpt_binary": true,
+          "wall_seconds": 12.16328366700327
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [],
+      "fast_capture_seconds": {
+        "geometry": 2.5541096669985563,
+        "authored": 0.44944699999905424
+      }
+    },
+    {
+      "id": "436",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid23.fract",
+      "sha256": "7315e0c14f933d2ddd8923fed51e7f1eb59e1a0939995edacfdd75e8f7c363be",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/436/geometry/hybrid23.png",
+          "capture_sha256": "3e666cea7913c6b9bf78dd896cb38ebab7dea56f422049b406d3cb6cb89f7f27",
+          "current_fpt_binary": false,
+          "wall_seconds": 7.592243084000074
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/436/authored/hybrid23.png",
+          "capture_sha256": "6f4920efb761563ac61be9da24cb7e8ddd6899cf0240d02a3c809a5c55e77dbf",
+          "current_fpt_binary": false,
+          "wall_seconds": 14.665864458000215
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.2745732920011505,
+        "authored": 0.6206302909995429
+      }
+    },
+    {
+      "id": "437",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid24.fract",
+      "sha256": "47f669bcf1aac84eae033252213579009a571a72a4756ba94b0bf276c7e47f90",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/437/geometry/hybrid24.png",
+          "capture_sha256": "7b11ed009e2fd677e1185ddefdddc0d5f645a9fe49b53178080686e1a6d466b7",
+          "current_fpt_binary": false,
+          "wall_seconds": 19.549447582998255
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/437/authored/hybrid24.png",
+          "capture_sha256": "3f5b7ead58f09caa24be2bdaa57abf4adc772e60a4f5de00b816f6a8e2af7a79",
+          "current_fpt_binary": false,
+          "wall_seconds": 135.5939782080004
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.3700270830013324,
+        "authored": 5.634897292002279
+      }
+    },
+    {
+      "id": "439",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid26.fract",
+      "sha256": "1d4866d9d1948e96df56e3d49cf635a2b93f053dcef3dbeaba55b2f83f399bdb",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/439/geometry/hybrid26.png",
+          "capture_sha256": "cf7e29193cd89f2d8b49b254b1479a4cfd76b36175779505f5725b2d6425c688",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.261798874998931
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/439/authored/hybrid26.png",
+          "capture_sha256": "f21e8a9dd7886c57e0e101343c0355d234791d3899aa950ac1cdeeb45a2974f6",
+          "current_fpt_binary": false,
+          "wall_seconds": 24.304991458000586
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.0657736669963924,
+        "authored": 1.6369502500019735
+      }
+    },
+    {
+      "id": "441",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid33.fract",
+      "sha256": "0361cdb23741644f83491137bc5bfa3838f17ab9a3ccd5e8d5144f8497cd3641",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/441/geometry/hybrid33.png",
+          "capture_sha256": "2b7b4c4d48f06e710a1dd5a37d100e51496911429b22ecd4c5c2fb5619fbe80c",
+          "current_fpt_binary": false,
+          "wall_seconds": 16.739609666999968
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/441/authored/hybrid33.png",
+          "capture_sha256": "e8a292d875baf566b8b8812d2736ceb90663e2e930422df532079ebeb4e73328",
+          "current_fpt_binary": false,
+          "wall_seconds": 147.6424796249994
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 3.059730832996138,
+        "authored": 8.970349832998181
+      }
+    },
+    {
+      "id": "442",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid34.fract",
+      "sha256": "137b7dec4a924ff6e61f186f1f92030118e5770640afcaa7b3f49d1e43bf3a44",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/442/geometry/hybrid34.png",
+          "capture_sha256": "b42a31ec8b19140d5065f8bc95a5b0a9658358d6ec93637a05bcdc7464ed0bbb",
+          "current_fpt_binary": false,
+          "wall_seconds": 24.547085457999856
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/442/authored/hybrid34.png",
+          "capture_sha256": "c77251930740b6f5a1d7ca745008fad25704854097b1b4ac9a898c04124a2343",
+          "current_fpt_binary": false,
+          "wall_seconds": 196.15283137500046
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.3001471250026952,
+        "authored": 7.135227250000753
+      }
+    },
+    {
+      "id": "443",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid35.fract",
+      "sha256": "1f113355ea0c5b7f515c040c536059e3cb8cae7cf7d3708de1858b9ed2264b82",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-confirmation-20260914/captures/summary.json",
+          "report_sha256": "a36156f2084f50bc05ffbdcf76255605419a847065380bfea77626492a8a22bc",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/443/geometry/hybrid35.png",
+          "capture_sha256": "509e80f519700b35c9173be7a5866c1d74a0053e6464c4a392c0bff96b4eaadc",
+          "current_fpt_binary": true,
+          "wall_seconds": 8.224984583997866
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/443/authored/hybrid35.png",
+          "capture_sha256": "c01da5a24c067089886ecfc3ecb1d7dcbfb9f8812724b9347aba83a2cca7221d",
+          "current_fpt_binary": false,
+          "wall_seconds": 54.12307475000125
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.705390790993988,
+        "authored": 2.327956582994375
+      }
+    },
+    {
+      "id": "449",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hypercomplex v2 001.fract",
+      "sha256": "78ee01ed76fd0dd678f3bfb681a4a14e03eb9e3b2c7abf15796d1cd90c201135",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/449/geometry/hypercomplex v2 001.png",
+          "capture_sha256": "a82be8afbb4cfe7067e84c9f89448ff6de153dbc82918fd5349278431979958d",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.897037458998966
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/449/authored/hypercomplex v2 001.png",
+          "capture_sha256": "d2c2f2434b89d647d0772d9b77bc0b95049dd8916d3054adb7efb654f055965e",
+          "current_fpt_binary": false,
+          "wall_seconds": 7.692203582999355
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.4458789589989465,
+        "authored": 0.5119389589963248
+      }
+    },
+    {
+      "id": "450",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/ifs-gen.fract",
+      "sha256": "d691d28717310e84d4a561a68a05e2d9baec37cbd0204c254d9738866a049554",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/450/geometry/ifs-gen.png",
+          "capture_sha256": "999faa65d3910bbc20b856fee2059dcff61e8d173a538829f1556488c442fc9d",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.6752490419985406
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/450/authored/ifs-gen.png",
+          "capture_sha256": "9004a799796cb46c2ca192ab5c7303f1615ce6d19c24404c5e5cf33ff7454da5",
+          "current_fpt_binary": false,
+          "wall_seconds": 13.35568295899975
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.5696142910019262,
+        "authored": 2.0196747920053895
+      }
+    },
+    {
+      "id": "454",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/iter fog 006.fract",
+      "sha256": "0542c246d0c295c0e8b3435840bc68978a07224c4c89575be6f3d6256a2cf1f8",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/454/geometry/iter fog 006.png",
+          "capture_sha256": "751dd5054878663e82ec7a44472d7df6627eaaebd4c65187f5ac5e6f66d6b452",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.911015916999986
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/454/authored/iter fog 006.png",
+          "capture_sha256": "9a26b40df0519857d0cfba5c279f9c939f998d1141e92460db89fab8cd182b16",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.372047291000058
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.5726458339995588,
+        "authored": 0.3390442499949131
+      }
+    },
+    {
+      "id": "461",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/iter fog 4.fract",
+      "sha256": "09e75666d855e8dd3fcd1ae54de3d61e60e0cf599d9dcfe000d30a4d99ef1108",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/461/geometry/iter fog 4.png",
+          "capture_sha256": "cac8d652a13c40319ac7f1f52a3856ca7275b00ef9856613c0de89e5ce6e26df",
+          "current_fpt_binary": false,
+          "wall_seconds": 9.845896165999875
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/461/authored/iter fog 4.png",
+          "capture_sha256": "aa5942f1b62eb4414a627b48e3aaac6349839add65ab703dd6d6af33ce72ba36",
+          "current_fpt_binary": false,
+          "wall_seconds": 39.412122916000044
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.5618927079995046,
+        "authored": 3.9048916250030743
+      }
+    },
+    {
+      "id": "463",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/light beam.fract",
+      "sha256": "b06a81913faa538729ec745a1c03e4d78d324a10f02afda8b736a1c97d1aab82",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/463/geometry/light beam.png",
+          "capture_sha256": "769cd4abc3b9f8307e46ace4795b8bdd45d9dca78c5c6f0e2c6ac9e198ce5cf9",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.1847075000000586
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/463/authored/light beam.png",
+          "capture_sha256": "9467f2385e7446ed1247909cbff0c794b2e4cdf790fa118c32ef8577fcedb89e",
+          "current_fpt_binary": false,
+          "wall_seconds": 4.985285792000013
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.4245407909984351,
+        "authored": 0.29312437499902444
+      }
+    },
+    {
+      "id": "464",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/light circle.fract",
+      "sha256": "3f0c6dd7a64d2ed8ef4c73dc3e9cc1d385d7ccb012286626ff0a63d317683c52",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/464/geometry/light circle.png",
+          "capture_sha256": "8dd7bd466fd2abb7a5d89c89f7198bb8002379f2d25bb5acb63b510bda8d5b24",
+          "current_fpt_binary": false,
+          "wall_seconds": 20.18078029099979
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/464/authored/light circle.png",
+          "capture_sha256": "97bf4280acb37d0a7bac5b2f6405caf9b33220a9510efd1939aade0a45ffc54b",
+          "current_fpt_binary": false,
+          "wall_seconds": 287.2065915410003
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "timeout"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.5851520840005833,
+        "authored": null
+      }
+    },
+    {
+      "id": "465",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/lightning tower.fract",
+      "sha256": "0838aff5d584045338c705a3cf54f813861a10a28169931d5ce16002f01b3483",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/465/geometry/lightning tower.png",
+          "capture_sha256": "6bd5612a38968b8c1cf236dffa3e148dc32df23fc3aa5253ad7b3d267efe6a6c",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.732160750000048
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/465/authored/lightning tower.png",
+          "capture_sha256": "0c66a4a0b1707b1f6ce8d2edb315719f3ff55cd6d10b00b3b90622af7316088c",
+          "current_fpt_binary": false,
+          "wall_seconds": 6.4101442910000515
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.237098292003793,
+        "authored": 0.5532606670021778
+      }
+    },
+    {
+      "id": "466",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/luminosity.fract",
+      "sha256": "0e7ec181f2d06cc03702f7687dc066a396d06bf6c4306f1eb734d36990d9a01f",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/466/geometry/luminosity.png",
+          "capture_sha256": "cded0f6ae76eb17ae23892af602463a5f72780d28550e0c7f04173ed4bb00cbd",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.082357540999965
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/466/authored/luminosity.png",
+          "capture_sha256": "38776129efd1063b789aec4dde097e30ad332d7c6202d142cd780dc6381b5fc6",
+          "current_fpt_binary": false,
+          "wall_seconds": 7.443197833000113
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.7223939999967115,
+        "authored": 0.5621251249976922
+      }
+    },
+    {
+      "id": "467",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandalay.fract",
+      "sha256": "62a73c049fd94f5638989bd2e5e7c8ca39f6d0fc0184e2ac13a68b6e2efb57fd",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/467/geometry/mandalay.png",
+          "capture_sha256": "7147e1a4922fb547a37a9fc6d6fca76bfb3407611b1b7624c0d6ea20d00ded80",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.9143387909998637
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/467/authored/mandalay.png",
+          "capture_sha256": "2df459a0d31659e6d32bf26dfbfd488ed83c62287ff4350d69400e5d0be4ab36",
+          "current_fpt_binary": false,
+          "wall_seconds": 10.455901124999855
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.7560204159963178,
+        "authored": 2.1871499170010793
+      }
+    },
+    {
+      "id": "469",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox10.fract",
+      "sha256": "3c87f2e6ec4d9ba6c316c516e6919c0b4fa3dce3bb88b349f68cce2c80aa3446",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/469/geometry/mandelbox10.png",
+          "capture_sha256": "f3574963d2b8168c351808ee13f81b20a77514e0df6faad2926165960432f846",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.6039123329996983
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/469/authored/mandelbox10.png",
+          "capture_sha256": "2d7da80cdef99c88a18c959173ee93e65f9cce5611e377055f3ecd6d1851ebf8",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.962264833000063
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.817174999996496,
+        "authored": 0.45263216699822806
+      }
+    },
+    {
+      "id": "470",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox11 - rotations.fract",
+      "sha256": "7dd1ef4b53ad4d1ef3e1593eee059ffb1fa35023f317918d25c434985c325143",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/470/geometry/mandelbox11 - rotations.png",
+          "capture_sha256": "95a4f17e2e3a3d5130203ebd19b411817439abca7ae6e8abc81783a0dafd5038",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.901981542000158
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/470/authored/mandelbox11 - rotations.png",
+          "capture_sha256": "721afd0efa27472cc47491aafd0502642cd677f3276218c2264da82af77178fa",
+          "current_fpt_binary": false,
+          "wall_seconds": 7.325867709000249
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.8551148749975255,
+        "authored": 0.5628803329964285
+      }
+    },
+    {
+      "id": "473",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox17.fract",
+      "sha256": "c532b9970fd9e42cc80f752d7d67d87b3d7d53c6f926e6a682d0c93fcd67ccea",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/473/geometry/mandelbox17.png",
+          "capture_sha256": "fc3fabe517bef8b740dafe16010423e76e856b95f73b8fd04a822b2760ddad37",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.8836288750003405
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/473/authored/mandelbox17.png",
+          "capture_sha256": "b26d1ff4925b1f01fbefa458de960e18726025a53ad9d82cad83336f17588dc1",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.7145952920000127
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.0073703340021893,
+        "authored": 0.4014516250026645
+      }
+    },
+    {
+      "id": "475",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox19.fract",
+      "sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/475/geometry/mandelbox19.png",
+          "capture_sha256": "baadd2d2fb70c6382565b6e127d63a38762e67b7aeb3dc91918087c6f19d3086",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.10166583299997
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/475/authored/mandelbox19.png",
+          "capture_sha256": "871061031ee487042fbeff3d626815bad4a1e74ea183e0cf5bc72bbd5458fe9d",
+          "current_fpt_binary": false,
+          "wall_seconds": 13.108780957999443
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.640850625000894,
+        "authored": 2.172203250003804
+      }
+    },
+    {
+      "id": "477",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox21.fract",
+      "sha256": "1b8b55ccfc9a70ad9bbd4858ed222327a1a1d425b5c06f2d10ca32cf46e54eaa",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/477/geometry/mandelbox21.png",
+          "capture_sha256": "de092bff53c3d79651cdd52b4794dfb5a6d7ba248df126649a09a81ef815780c",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.6364094999998997
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/477/authored/mandelbox21.png",
+          "capture_sha256": "f110bca46edbf2198ed91c11d134ea3afd3be7819ff749c3358ef1fa4c978598",
+          "current_fpt_binary": false,
+          "wall_seconds": 14.151874999999563
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.4196020000017597,
+        "authored": 2.004334375000326
+      }
+    },
+    {
+      "id": "480",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox25_3.fract",
+      "sha256": "b2fd04cd6c1ff7d616a7fd41c6210626dcf140776a3cebb74c9abf1dfad770eb",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/480/geometry/mandelbox25_3.png",
+          "capture_sha256": "c7bfda801f1bd94ec0f9cdbea1f70aecd6bb711a9c118f1e4778f541a5652faf",
+          "current_fpt_binary": true,
+          "wall_seconds": 0.8997909579993575
+        },
+        "authored": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/480/authored/mandelbox25_3.png",
+          "capture_sha256": "f510565e15467ba567d23c1beae85dac05377ca73a48313c5338f21a67595728",
+          "current_fpt_binary": true,
+          "wall_seconds": 4.717272916997899
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [],
+      "fast_capture_seconds": {
+        "geometry": 1.3201314580001053,
+        "authored": 0.2938934999983758
+      }
+    },
+    {
+      "id": "481",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox26 - rotations.fract",
+      "sha256": "feee33ac3b450bf19560982680174d7011aa06656760f5d487618622d375981c",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/481/geometry/mandelbox26 - rotations.png",
+          "capture_sha256": "2170e143a5da79e927a436ff1b9e1fba882913b617a9813723099e99e5eb01e0",
+          "current_fpt_binary": false,
+          "wall_seconds": 12.02917462500045
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/481/authored/mandelbox26 - rotations.png",
+          "capture_sha256": "5946fbaf66f55e349cb0d505c37f2ade2f5e6ed0e228a46183779413fcdd8bc0",
+          "current_fpt_binary": false,
+          "wall_seconds": 24.024019582999244
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 9.94023112499417,
+        "authored": 1.8892185000004247
+      }
+    },
+    {
+      "id": "482",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox27.fract",
+      "sha256": "3ee0ebaa3bc3e558ae55b375f24617c6c59b3bc0e74ea668667a2e7946583fda",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/482/geometry/mandelbox27.png",
+          "capture_sha256": "c7b6dd140f2b8908fb7a93ca3556af2d035db8d657c2ee443d05034f2e96d75b",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.6975978749997012
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/482/authored/mandelbox27.png",
+          "capture_sha256": "e04c5c28325fc1e9adea9b0bfc80812af94dfbdbabe3fbab596bc04b843e63d1",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.8553976670000338
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.7869408749975264,
+        "authored": 0.2947758750015055
+      }
+    },
+    {
+      "id": "484",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox29.fract",
+      "sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/484/geometry/mandelbox29.png",
+          "capture_sha256": "2714a6c5c49dbee26aa6af7f5abdd18dbbb7c92282fe0f4bd87d8ca61ce652df",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.753169292000166
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/484/authored/mandelbox29.png",
+          "capture_sha256": "cec695bdda390a68d60497be731d4020f272c7389ee72b33a3174ee1d352aa49",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.4768547909998233
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.534668041000259,
+        "authored": 0.29350054200040177
+      }
+    },
+    {
+      "id": "485",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox30.fract",
+      "sha256": "6e3674459bf0dde8766d1e9b132d35fb16f89d4c0e29db1fa7f031b13cf291cf",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/485/geometry/mandelbox30.png",
+          "capture_sha256": "574db59d853bb0b1690e2cb6a014690b1b515bf6bb1b92d8b96201796ea0422b",
+          "current_fpt_binary": true,
+          "wall_seconds": 1.1664979580018553
+        },
+        "authored": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/485/authored/mandelbox30.png",
+          "capture_sha256": "08f217e83d50210656f5c1045101426539d5acfae887419fe2d4f96f06106fd2",
+          "current_fpt_binary": true,
+          "wall_seconds": 3.864681125000061
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [],
+      "fast_capture_seconds": {
+        "geometry": 1.4402257920010015,
+        "authored": 0.34841920799954096
+      }
+    },
+    {
+      "id": "489",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox36.fract",
+      "sha256": "dec362431f409a7b76729a039fcb77959b54484a2a429b5b0f3143596a078a24",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/489/geometry/mandelbox36.png",
+          "capture_sha256": "90edf3344ad0620db1c9606670b13d93e5e71ea84e85f89c483308db49cdb602",
+          "current_fpt_binary": false,
+          "wall_seconds": 7.0450692499998695
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/489/authored/mandelbox36.png",
+          "capture_sha256": "56117e9d16c14c3312b84dfd63f66f5f187cc3a3aeb9d8b2979ae6d0dde8c443",
+          "current_fpt_binary": false,
+          "wall_seconds": 47.071651457999906
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.2679261669982225,
+        "authored": 3.084823624994897
+      }
+    },
+    {
+      "id": "490",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox37_2.fract",
+      "sha256": "81e52847b656749fe85f214c6945dfee8b3f052c6c06d696896dd12fdfd9f51e",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/490/geometry/mandelbox37_2.png",
+          "capture_sha256": "8bc4d5b9b655ca692f00f35441825714f16b78aa38b8da5be86a39a06419f9d6",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.9415097500004777
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/490/authored/mandelbox37_2.png",
+          "capture_sha256": "b5cf8e92acc77776f622333a3f49fee80f82f736de1690b0eb269d1c4bb6990b",
+          "current_fpt_binary": false,
+          "wall_seconds": 6.888544292000006
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.4144697079973412,
+        "authored": 1.7519990830041934
+      }
+    },
+    {
+      "id": "491",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox38_2.fract",
+      "sha256": "c41fad78d4c256a36f79fbe3309730e0fb93b46f9cc81181d68d5d586832353d",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/491/geometry/mandelbox38_2.png",
+          "capture_sha256": "faf2bc540267a38cce04b00b1af4c54e19e70f065ae6dcd8144960730c2245be",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.9859251249999943
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/491/authored/mandelbox38_2.png",
+          "capture_sha256": "c200c16c8f3692b0e2dbc80743bce01028abd51ad35ec0e8f150d74e6b54436e",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.3432387500015466
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.5139277499984019,
+        "authored": 0.297963000004529
+      }
+    },
+    {
+      "id": "495",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox45.fract",
+      "sha256": "7244590a041b2ab25b4fb750c635e65e86bce33bc74c479cbb0d07ae29205c3d",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/495/geometry/mandelbox45.png",
+          "capture_sha256": "9ab54e069d686140044f7e0174680e563e1cf692a6eabd6ce232731728f5df41",
+          "current_fpt_binary": false,
+          "wall_seconds": 19.758024374999877
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/495/authored/mandelbox45.png",
+          "capture_sha256": "b6ee4f1bb5f0c6dc947f1b47a9fde6cd1961be2b72757f1ab7f4bb8f4cfd1745",
+          "current_fpt_binary": false,
+          "wall_seconds": 349.496020999999
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.1768980839988217,
+        "authored": 12.038272999998298
+      }
+    },
+    {
+      "id": "501",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox51.fract",
+      "sha256": "698e091e072478b55ae96a7f1900a9db0ddfd289f15dde8ce921b6695f3f3702",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/501/geometry/mandelbox51.png",
+          "capture_sha256": "c4661b44968011cacc14c4f1dce74e9e8a4c0acf6a389d53c773d6fa2a32580a",
+          "current_fpt_binary": false,
+          "wall_seconds": 7.117330208002386
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/501/authored/mandelbox51.png",
+          "capture_sha256": "caa026241763c0829aac36b95ae108eb71383128b9af7cb5b54e6c1288438230",
+          "current_fpt_binary": false,
+          "wall_seconds": 37.72437450000143
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.7882306250030524,
+        "authored": 2.4655576669974835
+      }
+    },
+    {
+      "id": "502",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox52_2.fract",
+      "sha256": "e146336244bbd1ac941880152d68915962f823de92ff4239866c4666def3a79d",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/502/geometry/mandelbox52_2.png",
+          "capture_sha256": "e85e1e8afe7b9b9d8c5e1d138d2067237fb58efc30b387abc98663c455d75243",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.9092010839995055
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/502/authored/mandelbox52_2.png",
+          "capture_sha256": "0b675827801debc75f0a6505a766e4f9002de185ced53d51438fcf0eeb2459d2",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.80401837500176
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.6994684999954188,
+        "authored": 0.4599908339951071
+      }
+    },
+    {
+      "id": "503",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox53.fract",
+      "sha256": "4a13c5c0db09f2bfa1e370ce6c38e04b9c07dd553b9b7a86237d8fdaade0fffd",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/503/geometry/mandelbox53.png",
+          "capture_sha256": "6770d9b213ee3cd1e03f373ba644a927f2ed9f3a34869bdaa62e9db9ece9bf51",
+          "current_fpt_binary": true,
+          "wall_seconds": 0.9264492500005872
+        },
+        "authored": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/503/authored/mandelbox53.png",
+          "capture_sha256": "57de552afc77e462ea60af68e16c57775997a0b6c43de94054bd404a4a0b2d33",
+          "current_fpt_binary": true,
+          "wall_seconds": 3.2326916249949136
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [],
+      "fast_capture_seconds": {
+        "geometry": 1.5270014580019051,
+        "authored": 1.418417374996352
+      }
+    },
+    {
+      "id": "505",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox55.fract",
+      "sha256": "c57c89054e2e850aca19eb62dc1aac19194c8907b1807c7ac9fbd2bacab7799a",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/505/geometry/mandelbox55.png",
+          "capture_sha256": "0429a54d514e5860c21ad12335961c1e9c3dbc1f9c8ce36b0466ae755153b19a",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.3996224170005007
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/505/authored/mandelbox55.png",
+          "capture_sha256": "8318d5ccc73a330629f55beadf0fff295349e5471eb8e1ab5019b285457c7de6",
+          "current_fpt_binary": false,
+          "wall_seconds": 9.13245966699833
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.4264992919997894,
+        "authored": 0.6176356669966481
+      }
+    },
+    {
+      "id": "506",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox56.fract",
+      "sha256": "dd225350ce4e6d4e9ddd6d3ef2caeaa05afab31ed09f144bc0b6fad27643304c",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/506/geometry/mandelbox56.png",
+          "capture_sha256": "6c6c85f1eb7423ffa12a77d5a759d951b89483e88c6bc924c38e3dd81aeddc21",
+          "current_fpt_binary": false,
+          "wall_seconds": 11.206723207997129
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/506/authored/mandelbox56.png",
+          "capture_sha256": "c1ff2ed921f32e4e6c9f20f044eaf810500ef945c8b3f3d163b33fd82882861d",
+          "current_fpt_binary": false,
+          "wall_seconds": 72.6374768750029
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 4.140435125002114,
+        "authored": 4.0183136249979725
+      }
+    },
+    {
+      "id": "514",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb powe 6 - circle.fract",
+      "sha256": "c1e3aa2e58189773ea459eceb9424a4934da01814067f78fbbc5bf3934b83712",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/514/geometry/mandelbulb powe 6 - circle.png",
+          "capture_sha256": "f9f81dc375bd3c172103abcae0db6f254ed2a50ae6fccddffe0202345b7aa8f2",
+          "current_fpt_binary": false,
+          "wall_seconds": 4.064722666000307
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/514/authored/mandelbulb powe 6 - circle.png",
+          "capture_sha256": "0132cf8f2bac30b43d6bb4ea7bdd6935b5aacc6fdff84069cd565091ad5bd4c5",
+          "current_fpt_binary": false,
+          "wall_seconds": 58.58065120799802
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.3358469590020832,
+        "authored": 4.40917916699982
+      }
+    },
+    {
+      "id": "515",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 2 - iter fog 02.fract",
+      "sha256": "5ce1a6388137785692fa12215be720b28a277de440eedadbd065cde3a7dbd062",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/515/geometry/mandelbulb power 2 - iter fog 02.png",
+          "capture_sha256": "89b345a4964b65f2cf45ce7007e27e7e1bd9d43bab2c41ede54c3dfbbe4b3d73",
+          "current_fpt_binary": false,
+          "wall_seconds": 16.46067541699813
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/515/authored/mandelbulb power 2 - iter fog 02.png",
+          "capture_sha256": "f5d51427ffa63707a02f61423227b1d730a2f4fdc9c68d75da170647a00b9b6c",
+          "current_fpt_binary": false,
+          "wall_seconds": 59.28551304099892
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.834326249998412,
+        "authored": 4.295159583998611
+      }
+    },
+    {
+      "id": "523",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 2 - slice 6.fract",
+      "sha256": "13d0fff0d7b4bd764d127e7940e9a30e4b0e412b364de73fee67fbabe55bd64a",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/523/geometry/mandelbulb power 2 - slice 6.png",
+          "capture_sha256": "be7ce2729e3f4d9fb7f4b36a2f729b379aaaaa72536d4197c1992f1667ee30b1",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.8645359160000226
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/523/authored/mandelbulb power 2 - slice 6.png",
+          "capture_sha256": "23dc9d2197fbbc15cd1af2a1f4eef46c48b3f2175f399651bfaefa673f738886",
+          "current_fpt_binary": false,
+          "wall_seconds": 22.589265833001264
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.4014147909983876,
+        "authored": 1.4468272090016399
+      }
+    },
+    {
+      "id": "524",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 3.fract",
+      "sha256": "94e55a983299f4c6d7ae0010cb6274ddfccb81d0a6b98d3b1a1f5672076bea9b",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/524/geometry/mandelbulb power 3.png",
+          "capture_sha256": "873f0e44e9e170ade74be2fe7b763dda76adffa20eb2730817cea854c70e58d2",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.656287917001464
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/524/authored/mandelbulb power 3.png",
+          "capture_sha256": "0d740be17ace18575fa657eec2c67c8b0a9337097c2c7b0db53395535a446562",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.136393875000067
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.3652512499975273,
+        "authored": 0.29371804199763574
+      }
+    },
+    {
+      "id": "525",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 4 - water.fract",
+      "sha256": "d1ba87871f6af49cfb8034836a9a6ff89efe1a230bf5ca68d653dd5124b9a94b",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/525/geometry/mandelbulb power 4 - water.png",
+          "capture_sha256": "7ea0fb2d873706a3e971f69b5f591add9cd64c49cd0ad0f0bc2bc28b575fe110",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.375274582998827
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/525/authored/mandelbulb power 4 - water.png",
+          "capture_sha256": "b371b8be08ec21344e85ddf5fcf1b6cf6e667a9830465593057b9d2397b7e6f7",
+          "current_fpt_binary": false,
+          "wall_seconds": 9.273450707998563
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.6732115409977268,
+        "authored": 2.1087787079959526
+      }
+    },
+    {
+      "id": "526",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 8 - 3_2.fract",
+      "sha256": "61473b940973c4f7533ec2a0941ca947517229602d758fe3e567a912a455145a",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/526/geometry/mandelbulb power 8 - 3_2.png",
+          "capture_sha256": "33d6a5a27245cc2d388a34b17b01223566ce175ea5b9850c3f3958f7b3be0f83",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.431486583998776
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/526/authored/mandelbulb power 8 - 3_2.png",
+          "capture_sha256": "52092ec23e9283f8485ee7564dda2b482f084b88d4ad611fb2f64cad6bfc6bfe",
+          "current_fpt_binary": false,
+          "wall_seconds": 7.434654458000296
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.3754918330014334,
+        "authored": 1.532019708000007
+      }
+    },
+    {
+      "id": "530",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 8 - 8.fract",
+      "sha256": "8b83b54342080421f63079eba50b4c4a3a1fd7b7cd9e6eee20cb0f50b26b2b5e",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/530/geometry/mandelbulb power 8 - 8.png",
+          "capture_sha256": "5261eff1412f0f4dbf4db4aa73f055428b25d5edbfd668a46c648dfb5ccbda35",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.3547789580006793
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/530/authored/mandelbulb power 8 - 8.png",
+          "capture_sha256": "0bf3a42c21017789687b9455879a396df941fa629c3c9d46527bbe0bc0b8a2b1",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.071945374998904
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.6876158750019385,
+        "authored": 1.7894860830056132
+      }
+    },
+    {
+      "id": "537",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/menger sponge 004_2.fract",
+      "sha256": "b173dda1b5f0cd29a8121b16c3177452a9b59b9e2386478338c7cf0e4386e9c0",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/537/geometry/menger sponge 004_2.png",
+          "capture_sha256": "9e60d00082a51144b8694b3e48bdd869e35da03bdaf4b334499e9932162f95d2",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.7963372919984977
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/537/authored/menger sponge 004_2.png",
+          "capture_sha256": "a19ca830b972595d40e906dbce8d1abbbea71514be42ec34b6f44b325f2cdeb0",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.3244090830012283
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.2516183749976335,
+        "authored": 0.18602433399792062
+      }
+    },
+    {
+      "id": "538",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/menger v7.fract",
+      "sha256": "a5e182225913df9b7830a65929a9fc505a80aa3cd55dfe274ba736228e18bc95",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/538/geometry/menger v7.png",
+          "capture_sha256": "37f3032977a51849848c87172825b04c3ead414755159ae9be550b5c8e4168fa",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.544195166999998
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/538/authored/menger v7.png",
+          "capture_sha256": "4629d2f865abe53b3bc7cea3689ca354d3aca1b0459d964f536f42544312bef0",
+          "current_fpt_binary": false,
+          "wall_seconds": 8.166086458000791
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 2.873479125002632,
+        "authored": 3.2390446249992237
+      }
+    },
+    {
+      "id": "539",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/modified mandelbulb 001.fract",
+      "sha256": "57475159a7a5486d65fe05b517e7d27549f4fe9485a0a5d8bfe0905754c5ab6e",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/539/geometry/modified mandelbulb 001.png",
+          "capture_sha256": "57428e4adf5a2d78e567125ffb7081b35a5e2b73ca2b861f3c96a5f4bef1cabc",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.784738207999908
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/539/authored/modified mandelbulb 001.png",
+          "capture_sha256": "0e0beee19d158e81043c54a38997d6caf5092e95c9cd63095289224ade897714",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.5838651250014664
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.0886610000015935,
+        "authored": 0.31169429200235754
+      }
+    },
+    {
+      "id": "540",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/modulus mandelbulb.fract",
+      "sha256": "60ed9ed159f3288c7749e1c25a9140c5c33049332b1a5af4fed4d0f823cdd916",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/540/geometry/modulus mandelbulb.png",
+          "capture_sha256": "512cde376269fffdfbeda8ae00a3bf832dd4fac2c65ccec9c6d99d41c20d33b8",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.2792897919971438
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/540/authored/modulus mandelbulb.png",
+          "capture_sha256": "7ea496fb474aeeef0ae1b8a3e14af93c87d4966ee7805d124557e6807da7020a",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.6546958330000052
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.6769275000042398,
+        "authored": 0.3498418339950149
+      }
+    },
+    {
+      "id": "541",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/monte carlo DOF 005.fract",
+      "sha256": "a178bedb9e2840df95fe8f616ba05d5e6b5ca7d80a9d1f5d1e9a65af8a3e8e13",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/541/geometry/monte carlo DOF 005.png",
+          "capture_sha256": "c1722c5858815004428a229b149b0308c0bdb48f0961917a54bd8a93f9f662c6",
+          "current_fpt_binary": true,
+          "wall_seconds": 3.008440249999694
+        },
+        "authored": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/541/authored/monte carlo DOF 005.png",
+          "capture_sha256": "dce21beddc8bf543601f653c1872951f36ba9cfe17d4c92827144854aaf16efe",
+          "current_fpt_binary": true,
+          "wall_seconds": 23.48248795800464
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [],
+      "fast_capture_seconds": {
+        "geometry": 1.253211667004507,
+        "authored": 2.405914124996343
+      }
+    },
+    {
+      "id": "543",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/orbitTraps 003.fract",
+      "sha256": "dc428154d2f8932e54365ed5eda0b4223a2984790bf5145e2a4296c3d6c13558",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/543/geometry/orbitTraps 003.png",
+          "capture_sha256": "9ffe61134d28ec212a4402219e447157075230cc495b426869fb09c4e990e8fc",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.8100237920007203
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/543/authored/orbitTraps 003.png",
+          "capture_sha256": "2131ee5b1dccffb12e3d1bc08df74e3003670e593755558ca54e0c46fb306a19",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.3758995420002975
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.1993496249997406,
+        "authored": 1.253020333002496
+      }
+    },
+    {
+      "id": "549",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/primitive objects - water.fract",
+      "sha256": "dba82fdecb1c0ddad1f434a0d85fb05cbeef33e03150432f74efb262fb90cd8c",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/549/geometry/primitive objects - water.png",
+          "capture_sha256": "699833e6972a6889bc4313f85165d3a4affc881b31383912a746b0e8524da814",
+          "current_fpt_binary": true,
+          "wall_seconds": 1.0678207500022836
+        },
+        "authored": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/549/authored/primitive objects - water.png",
+          "capture_sha256": "305281c337697ca73772252cf945128502a8082fc157a8ccab82fb5465808865",
+          "current_fpt_binary": true,
+          "wall_seconds": 3.2213138329971116
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [],
+      "fast_capture_seconds": {
+        "geometry": 1.572248042000865,
+        "authored": 0.3435347910053679
+      }
+    },
+    {
+      "id": "550",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/pseudo kleinian 009 mc dof.fract",
+      "sha256": "0bd04015a3fb9e819808a9da468b29cb2249b27c03ad4b2d79892624e1d8d2e5",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/550/geometry/pseudo kleinian 009 mc dof.png",
+          "capture_sha256": "ea4ae8f37dab9b48de1c366a62226d9b43df95c705115a40982941408d3d9467",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.418538833000639
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/550/authored/pseudo kleinian 009 mc dof.png",
+          "capture_sha256": "933576060160a09e4d4746b1b9873a0c33946d633d6b990a4396dc0f59cb9b61",
+          "current_fpt_binary": false,
+          "wall_seconds": 11.038448833001894
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.1580925829985063,
+        "authored": 1.5853857499969308
+      }
+    },
+    {
+      "id": "553",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/repeat.fract",
+      "sha256": "f843098355f06188b29854c82463a78fc3388c9e86d97709eb9f354cd9c260a8",
+      "full_quality": {
+        "mandel": null,
+        "geometry": null,
+        "authored": null
+      },
+      "fast_status": {
+        "geometry": "execution_failed",
+        "authored": "execution_failed",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": null,
+        "authored": null
+      }
+    },
+    {
+      "id": "554",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/t difs grid v2.fract",
+      "sha256": "35cef2c6cc5073cb158b5cbe256b97bd5b87923d5008b86b0719bc78d8855f50",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/554/geometry/t difs grid v2.png",
+          "capture_sha256": "a71640053606ab3fb3d956c076176e92e69eea4d16b4a0760a2b278ac5794644",
+          "current_fpt_binary": false,
+          "wall_seconds": 4.153667250000581
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/554/authored/t difs grid v2.png",
+          "capture_sha256": "86bdb8047bba38f9ce1042b276764b43ba5f1fd2e3e9d7dd11bee9591bf3065d",
+          "current_fpt_binary": false,
+          "wall_seconds": 75.52276608399916
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.5821550420005224,
+        "authored": 4.71032600000035
+      }
+    },
+    {
+      "id": "555",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/volumetricLight001.fract",
+      "sha256": "e04aa847e21d66e7de28fbaa483bed1f2ba971316eea76e2089a2817fbd94e2b",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/555/geometry/volumetricLight001.png",
+          "capture_sha256": "cd963ef5487163ccdef48f11b2be8c7f66143afe4c7f99dd1fc60745cf7bcb89",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.795025249997707
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/555/authored/volumetricLight001.png",
+          "capture_sha256": "992e86e013e44550f187d993f3548184e0e2ebb08f52116e9cf662949c5c8130",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.093466708000051
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.248482208000496,
+        "authored": 0.29319533400121145
+      }
+    },
+    {
+      "id": "558",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/winter (sss).fract",
+      "sha256": "28eab29ab12443c301332752eac6c2f23790f863d355a9cdfaa37e109b789444",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/558/geometry/winter (sss).png",
+          "capture_sha256": "ff4e2447e086cf638fe8ad1d4adaadb4d95f5cfe3e9e93e65de50771bef5a582",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.8304417499966803
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/558/authored/winter (sss).png",
+          "capture_sha256": "8d6bebf3ede3669aec65d1f2272a2d773fd85f925221222e76a46888e646a56c",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.7816857090001577
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.2293785419969936,
+        "authored": 0.31124699999782024
+      }
+    },
+    {
+      "id": "561",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/xenodreambuie2.fract",
+      "sha256": "d0ef2d67dac4e774d462e650f3dc7a836a1fcd12d7c7782618b9bd15afc166ea",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/561/geometry/xenodreambuie2.png",
+          "capture_sha256": "805da084fb54b032095227edf86214d4dc572d74697f299d39bc91dc9de79723",
+          "current_fpt_binary": true,
+          "wall_seconds": 1.2842988329939544
+        },
+        "authored": {
+          "report": "reports/mandel-recovery-20260914/captures/summary.json",
+          "report_sha256": "522b792a373a6664cac1d7279a596ed6c517ffda3cb6c1744491a000da98db53",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-confirmation-20260914/captures/561/authored/xenodreambuie2.png",
+          "capture_sha256": "1397ffdcc8ca97f44b2d250795ce799dbf033c4ff9d0851a34e1fce983a68ad5",
+          "current_fpt_binary": true,
+          "wall_seconds": 4.302371541001776
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [],
+      "fast_capture_seconds": {
+        "geometry": 1.2507960419970914,
+        "authored": 0.2892493330000434
+      }
+    },
+    {
+      "id": "562",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/xenodreambuie3.fract",
+      "sha256": "7006d41d9191cf614fbc59889a40d46fa2bbbbac90837164c74ba2f94a5a4c95",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/562/geometry/xenodreambuie3.png",
+          "capture_sha256": "48c1597e3a32b4bf175d0c06f8da5c4e4f27ac08da8d8aca4caf258526638b5a",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.114204666999285
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch10-20260912/captures/summary.json",
+          "report_sha256": "bd8fee64deaca0e962a96676fcbad470ae7b2c05d94fa407c9d255b80b669ce0",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch10-20260912/captures/562/authored/xenodreambuie3.png",
+          "capture_sha256": "0be3452b835b4416e35d9792ee817589f3eb150e190ad57be1510dfdfb85632e",
+          "current_fpt_binary": false,
+          "wall_seconds": 9.852639209006156
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.3132232909993036,
+        "authored": 1.64218058300321
+      }
+    },
+    {
+      "id": "576",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/menger-4D.fract",
+      "sha256": "7b9be188d2049d4bf5f5723dc7d8d563a29e4c0a001d50b5b597f0fd6f42093a",
+      "full_quality": {
+        "mandel": null,
+        "geometry": null,
+        "authored": null
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.2807254590006778,
+        "authored": 0.14360887499788078
+      }
+    },
+    {
+      "id": "620",
+      "path": "chromatic_aberration.fract",
+      "sha256": "094a1b2deeb0c40e09b432ddc713806b9bde9872ca4dfc178ad439a87e8f1b2a",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/620/geometry/chromatic_aberration.png",
+          "capture_sha256": "d1991bf9a1d4f943d9b443e626c081dc308908fadda2bc248ac52ba5c5bd77a5",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.8697990000000573
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch03-20260911/captures/summary.json",
+          "report_sha256": "1af32a38fbfee775446aaeca411f46f465c8bc4f6730e68910ed8b521f472904",
+          "capture": "/Users/jordantotty/Desktop/mandel-review-runs/2026-09-11-batch03/captures/620/authored/chromatic_aberration.png",
+          "capture_sha256": "d496b018c3ad9c31e7443e6a8f276ce6599014c715533bba0c200462653ef44b",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.896773165999548
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.573350999999093,
+        "authored": 0.23698987500392832
+      }
+    },
+    {
+      "id": "641",
+      "path": "hex grid 002.fract",
+      "sha256": "6c4c68f789ebb4633fdd6a4ea1f854c0f73c186ddb8575e8ed4e671246ff7e2b",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/641/geometry/hex grid 002.png",
+          "capture_sha256": "56d6f4f8aae85abfeb2d6017ca6e2e88407684526cf19c168004a5c84b82832b",
+          "current_fpt_binary": false,
+          "wall_seconds": 58.905579207999835
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/641/authored/hex grid 002.png",
+          "capture_sha256": "3e01bcf11d0f2398c2ae6591e0d826b5424f2fcaeacadc710c2ac11681bf19a2",
+          "current_fpt_binary": false,
+          "wall_seconds": 417.7419240829995
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "timeout",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 4.494238416998996,
+        "authored": null
+      }
+    },
+    {
+      "id": "646",
+      "path": "hybrid006.fract",
+      "sha256": "cd6e79405c78d5041f1b2ad570716aa1dafd0bad2920f597e0e1cfec0bcf2b56",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/646/geometry/hybrid006.png",
+          "capture_sha256": "69817ed998abaa1b8a00ce7345790c9e982ab8dbf54949319fddac61837e2dd4",
+          "current_fpt_binary": false,
+          "wall_seconds": 26.55170037500011
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/646/authored/hybrid006.png",
+          "capture_sha256": "dbb36ba0ffb715d6955f0459791cf501b14468faa747548e102d0b9b435e687b",
+          "current_fpt_binary": false,
+          "wall_seconds": 180.85223329200016
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 4.910338415997103,
+        "authored": 11.120545792000485
+      }
+    },
+    {
+      "id": "653",
+      "path": "iteration fog.fract",
+      "sha256": "5f9b1585d112ae9cfd8aa2248b57ee69260a8c00a7035f7e3c1b3346d72f345a",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/653/geometry/iteration fog.png",
+          "capture_sha256": "84f816cb2ec83ed524badb6b764a24aff6a402e81789fded1bad19534e8ea464",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.5463717920001727
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/653/authored/iteration fog.png",
+          "capture_sha256": "63cf8b1a36df5f8d0d20bc9f373e11d3bd7cb006d9c747cd963e4f98ffcf6646",
+          "current_fpt_binary": false,
+          "wall_seconds": 6.99131537500034
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.20703125,
+        "authored": 1.5841563750000205
+      }
+    },
+    {
+      "id": "654",
+      "path": "jos_kleinian 001.fract",
+      "sha256": "c351002df5f2d2f2323e8c2ff249b7b50c69d0c57c73f2be824a55e4e2188f33",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/654/geometry/jos_kleinian 001.png",
+          "capture_sha256": "a48fa6f72275097c9f49c3cddbc5b6de05d7451ca25950f5bf2c86ef8293b15a",
+          "current_fpt_binary": false,
+          "wall_seconds": 9.839440665999973
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch04-20260911/captures/summary.json",
+          "report_sha256": "2a9c1af15ff6bbca5d226269d460d6530acf9060b9dba28cf65dc281fb7c9849",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch04-20260911/captures/654/authored/jos_kleinian 001.png",
+          "capture_sha256": "5c7e2d433ae94ec779151c5c5b8a978426ccc9e7ce91435c8ce82a08ea8fbab9",
+          "current_fpt_binary": false,
+          "wall_seconds": 74.14827745900038
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.5280512919998728,
+        "authored": 4.874273125002219
+      }
+    },
+    {
+      "id": "674",
+      "path": "mandelbulb_bermarte 001.fract",
+      "sha256": "b2cedf90163877c8ccf8e6c49f4378d25a1320ba8172c47daa873484fd0bf5b8",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/674/geometry/mandelbulb_bermarte 001.png",
+          "capture_sha256": "f0ec6bb105584a80ea3f5a5df7a47a12d49c8552a6fc35f34bd7b72d6cfc907c",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.454701415999807
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch05-20260911/captures/summary.json",
+          "report_sha256": "5e13d63abd122f99eccac5b96f5397be11a74114f2bc7eb79e7dd483727afb02",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch05-20260911/captures/674/authored/mandelbulb_bermarte 001.png",
+          "capture_sha256": "394babf243aa8eeb0e8d58d9cd294f8a6c8f7f5566897ee070f244b42e2e1925",
+          "current_fpt_binary": false,
+          "wall_seconds": 53.38915112500035
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.3615197090039146,
+        "authored": 4.065860667004017
+      }
+    },
+    {
+      "id": "678",
+      "path": "mandelbulb_power_2_001.fract",
+      "sha256": "02724a85d8801ebedbbce003d294cf9c7b72083c8d34c25b20d6ee5672c10c97",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/678/geometry/mandelbulb_power_2_001.png",
+          "capture_sha256": "eb844ae6e65ddf3e02555a241fc48c5447d5ab2dbd7f34d5efae26cc20f8abf5",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.57993645800002
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/678/authored/mandelbulb_power_2_001.png",
+          "capture_sha256": "bbf3848ab51f0b9ad481415301369b63c7a6249f532221e40072a09c9a09f595",
+          "current_fpt_binary": false,
+          "wall_seconds": 77.53048779200003
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.2902559159992961,
+        "authored": 4.562280625003041
+      }
+    },
+    {
+      "id": "680",
+      "path": "mandelnest pow 5.fract",
+      "sha256": "8d24ba6ee4dc248f4ef71005d443fb054f681330d6b1205af86907dc97f89fc9",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/680/geometry/mandelnest pow 5.png",
+          "capture_sha256": "221f543a6f2ef940db6e84386323b664c48ce971c4e93d62d9fe66f0cb4c22d9",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.3068782499999543
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch06-20260912/captures/summary.json",
+          "report_sha256": "be7499f999a4f25dd2dbd2919639f6810c5666acf855a26ef9aec1da6b16d14b",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch06-20260912/captures/680/authored/mandelnest pow 5.png",
+          "capture_sha256": "4fec9fd1450f0e952b3c71424b330fbac7ad546fec5c173eb6ea146d8e3edcbe",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.7236545830000978
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.2702646660036407,
+        "authored": 1.3625387080028304
+      }
+    },
+    {
+      "id": "694",
+      "path": "monte carlo DOF 004.fract",
+      "sha256": "0a2453ded101bc3cf0761f855e19cf016823ebeefe42ac5834281ef58849ba3c",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/694/geometry/monte carlo DOF 004.png",
+          "capture_sha256": "41e03d444ad13e8cc1c816d5903f3ac802905461fc095f2aa8e01bae55994fc7",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.4088507910000772
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/694/authored/monte carlo DOF 004.png",
+          "capture_sha256": "a952dfe0a8bec9367d70e46ad7aa7eddb208256df2a38b539450d9c05db8373e",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.5883349169998837
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.1476848329984932,
+        "authored": 1.1485075829987181
+      }
+    },
+    {
+      "id": "695",
+      "path": "monte carlo global illumination - cube scene.fract",
+      "sha256": "ab3595287f547eb96698e8283318607971de6cc30e8b29ec7d0af8f85ab00fd4",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/695/geometry/monte carlo global illumination - cube scene.png",
+          "capture_sha256": "31bbfa2ce04f9b8a9892c1f338fb5f7574231cd575ea2db21e510843a801a72d",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.8346096249997572
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/695/authored/monte carlo global illumination - cube scene.png",
+          "capture_sha256": "cd98aa570e2737908e362eee053d0a567e81bfb030354773fd6208b92d0c6661",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.5782367499996326
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 0.9911394579976331,
+        "authored": 0.23974004100455204
+      }
+    },
+    {
+      "id": "697",
+      "path": "monte carlo global illumination - luminosity gradient.fract",
+      "sha256": "18c1a99bbb0b21ba491b37c96aa1fb5814160eba617f30de03e97f7dd8061da8",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/697/geometry/monte carlo global illumination - luminosity gradient.png",
+          "capture_sha256": "736d391bf7f625273080b3b659435d30c1eaa7bd83b2a331f862ce701bfaed2c",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.253030208999917
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/697/authored/monte carlo global illumination - luminosity gradient.png",
+          "capture_sha256": "4f7c2f7d30bd64780ef1d7c24489e82de8adb2f8b939d91137dc22300d5b359f",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.3971951670000635
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.1460159159978502,
+        "authored": 0.45775537499866914
+      }
+    },
+    {
+      "id": "698",
+      "path": "monte carlo global illumination by volumetric effects.fract",
+      "sha256": "c3f9e8a1a7dbad3166942a84dbabe491c9115e557925f330d571d2bbbe9a71e4",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/698/geometry/monte carlo global illumination by volumetric effects.png",
+          "capture_sha256": "736d391bf7f625273080b3b659435d30c1eaa7bd83b2a331f862ce701bfaed2c",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.2570091249999678
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/698/authored/monte carlo global illumination by volumetric effects.png",
+          "capture_sha256": "84d4fb08817b884eebabb5442eb38680f25c46d9ac2a9ead3e006fea12820d66",
+          "current_fpt_binary": false,
+          "wall_seconds": 5.4614972500003205
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.2640419579984155,
+        "authored": 0.4505753330013249
+      }
+    },
+    {
+      "id": "701",
+      "path": "msltoe toroidal multi 001.fract",
+      "sha256": "f3cfaf110c580e0b08687a954cfb9bcc1196b41369fe2c35a98b15f519ab80b4",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/701/geometry/msltoe toroidal multi 001.png",
+          "capture_sha256": "992764c08ee5ab6b69e0ccd3b2498f236e7e54fac66a926005cb00d37abfd62b",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.111752499999966
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/701/authored/msltoe toroidal multi 001.png",
+          "capture_sha256": "bcd9347ae83561dfc512ec08d7843bee0538518bbc290b91b8f8d6cf316d3f38",
+          "current_fpt_binary": false,
+          "wall_seconds": 16.53088949999983
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.335407207996468,
+        "authored": 2.0221465840004385
+      }
+    },
+    {
+      "id": "705",
+      "path": "msltoe_julia_bulb_mod3_001.fract",
+      "sha256": "1e26888bb4e16fce11b74a7f3d7c9ee69f18cf3fcd6230f280ee3dc022eb7065",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/705/geometry/msltoe_julia_bulb_mod3_001.png",
+          "capture_sha256": "1ec724bc7ba0d869fe7b0c575a284f520ef4ed5f58481d6fc7d9019c1c7c87af",
+          "current_fpt_binary": false,
+          "wall_seconds": 4.74563791699984
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch07-20260912/captures/summary.json",
+          "report_sha256": "87344915c1749f33daad9e6384fc5d062046bb9d5a514bf7431b9031d63b2527",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch07-20260912/captures/705/authored/msltoe_julia_bulb_mod3_001.png",
+          "capture_sha256": "c92e364d9c9363c7be72425af406b3bae9667b41ec14aa66893bf53a8dd16706",
+          "current_fpt_binary": false,
+          "wall_seconds": 27.717725459000576
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.3885284999996657,
+        "authored": 2.484875916998135
+      }
+    },
+    {
+      "id": "712",
+      "path": "nebula 003.fract",
+      "sha256": "75c82132fdde95e479452cce71eedd9b69baad38aaee627a76fba22ef11c48b0",
+      "full_quality": {
+        "mandel": {
+          "report": "reports/mandel-review-batch08-20260912/captures/summary.json",
+          "report_sha256": "e34374253c233f23991ee360f125aa1099fab3e4bb582fd292b30e12600714ac",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch08-20260912/captures/712/mandel/scene.png",
+          "capture_sha256": "6ccda3ce7adec45f32ff19ebd1f2699a560c8fee4ef117c45eaf453d7e5bb26b",
+          "current_fpt_binary": false,
+          "wall_seconds": 6.693802957999651
+        },
+        "geometry": null,
+        "authored": null
+      },
+      "fast_status": {
+        "geometry": "execution_failed",
+        "authored": "execution_failed",
+        "mandel": "ok"
+      },
+      "missing_full_native": false,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": null,
+        "authored": null
+      }
+    },
+    {
+      "id": "731",
+      "path": "riemann_sphere_msltoe_001.fract",
+      "sha256": "5b7d9b012527a0b596b3898b5e56201380dfcc2993c512374847851696c26519",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/731/geometry/riemann_sphere_msltoe_001.png",
+          "capture_sha256": "aa6892d3cd3bfc12a1d698642a6b6c7be9aab6dc5c7083897fdaaabadd5dd10d",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.9579550000016752
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/731/authored/riemann_sphere_msltoe_001.png",
+          "capture_sha256": "c3ec66aa0c85502c35814199870bf35bacc4b42c14299e44bb8f94afd9f26887",
+          "current_fpt_binary": false,
+          "wall_seconds": 11.941764667000825
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 0.9869786249983008,
+        "authored": 0.9929412920027971
+      }
+    },
+    {
+      "id": "739",
+      "path": "subsurface scattering 001.fract",
+      "sha256": "bb1736da19ba38f5bdc6dcf9ae12a8435b050d9dacf51427c0656bca3f2f1b33",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/739/geometry/subsurface scattering 001.png",
+          "capture_sha256": "436d6399b4d30b6d125a47213195da81bde91813ffe3a03698dd867c259a41cd",
+          "current_fpt_binary": false,
+          "wall_seconds": 3.0723039580007026
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/739/authored/subsurface scattering 001.png",
+          "capture_sha256": "231dd039f6f31f0bbaab15e7d7ab5dfaae277f1a0a706f5a3a7fa6f3912467a1",
+          "current_fpt_binary": false,
+          "wall_seconds": 9.885765709001134
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.2521357919977163,
+        "authored": 1.7307619169951067
+      }
+    },
+    {
+      "id": "741",
+      "path": "texture transparency alpha.fract",
+      "sha256": "6a4fc8fb0425e1a073bdd021d0fa7cc2adcfb8500a5bc19ed8030bf915247099",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/741/geometry/texture transparency alpha.png",
+          "capture_sha256": "9591e0b155be3e6a8a86efd475e97b360c05e972214c90cd3ab463370ffe00da",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.395293125000535
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch12-20260913/captures/summary.json",
+          "report_sha256": "5b9ee57559e2682033db536a783788ab9c3f712f6124ca31088ced0f71e19fae",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch12-20260913/captures/741/authored/texture transparency alpha.png",
+          "capture_sha256": "e35226e122a61761506b45575e686a5a0bc8072144711880256d75c648da9674",
+          "current_fpt_binary": false,
+          "wall_seconds": 2.267144209000435
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.0144154169975081,
+        "authored": 1.102217333005683
+      }
+    },
+    {
+      "id": "743",
+      "path": "transparency reflectance roughness textures.fract",
+      "sha256": "9c4e6605ccb9a4439f00f1b908f60dc09336712b0c448e8064ff691d8b8fe08e",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/743/geometry/transparency reflectance roughness textures.png",
+          "capture_sha256": "60fdaafced255e55fbbcd5bb7381869c798010bb7d799ce45de537426b1bf77f",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.578848500001186
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/743/authored/transparency reflectance roughness textures.png",
+          "capture_sha256": "56cbcad5a3c3bc4e5de48df9c6a4642c1b5e8afbec06ae749fe91e9037f8285f",
+          "current_fpt_binary": false,
+          "wall_seconds": 0.7499040420007077
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok",
+        "mandel": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 1.1033157499987283,
+        "authored": 0.18727116700029
+      }
+    },
+    {
+      "id": "744",
+      "path": "transparent001.fract",
+      "sha256": "a2b17eceb45c07ae671e5fece8b51d78b9381518bfd779a45fccd63692b029c3",
+      "full_quality": {
+        "mandel": null,
+        "geometry": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/744/geometry/transparent001.png",
+          "capture_sha256": "262b8b616e6c3d36fc536debb82533cea17f036f641dfca515ca862f5025a32d",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.6346477499973844
+        },
+        "authored": {
+          "report": "reports/mandel-review-batch09-20260912/captures/summary.json",
+          "report_sha256": "2b7cf2db3a8bd859a17dc3cd46f289cdb7fc078ffb42f80fa283eb4c01045f5a",
+          "capture": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-review-batch09-20260912/captures/744/authored/transparent001.png",
+          "capture_sha256": "c2b4b72da416dbbaaafb375592d85217341464ed045f43092f3cfbafdddb2d7a",
+          "current_fpt_binary": false,
+          "wall_seconds": 1.8486479169987433
+        }
+      },
+      "fast_status": {
+        "geometry": "ok",
+        "authored": "ok"
+      },
+      "missing_full_native": true,
+      "missing_current_fpt_modes": [
+        "geometry",
+        "authored"
+      ],
+      "fast_capture_seconds": {
+        "geometry": 0.9191579580001417,
+        "authored": 1.0149430000019493
+      }
+    }
+  ]
+}

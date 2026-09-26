@@ -1,0 +1,25 @@
+{
+  "scope": "Incomplete triplets remain unpromoted; failures are not hidden or counted as visually reviewed.",
+  "rows": [
+    {
+      "id": "432",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid19.fract",
+      "sha256": "cff79f4382a881ed390acbbca70e976341c963e7a1eb24dab4e7f30b345dfc41",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    },
+    {
+      "id": "674",
+      "path": "mandelbulb_bermarte 001.fract",
+      "sha256": "b2cedf90163877c8ccf8e6c49f4378d25a1320ba8172c47daa873484fd0bf5b8",
+      "status": {
+        "mandel": "timeout",
+        "geometry": "ok",
+        "authored": "ok"
+      }
+    }
+  ]
+}

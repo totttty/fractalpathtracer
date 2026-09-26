@@ -1,0 +1,18 @@
+{
+  "scope": "Only the 95 experimental scenes; no scene-specific fixes.",
+  "selected": [
+    "432",
+    "416",
+    "674",
+    "701",
+    "739",
+    "525",
+    "475",
+    "484"
+  ],
+  "deferred_prepared": [
+    "480",
+    "561"
+  ],
+  "reason": "Historical full-size native logs identify seven roughly 135\u2013152 second estimates; all passed fast FPT previews. Budget 420 seconds accommodates slower current execution. 432 already running under 600-second budget. Failed diagnostics never count as comparisons."
+}

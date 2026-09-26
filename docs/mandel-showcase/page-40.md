@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [642: hybrid001](642.md)
+
+[![Native / FPT authored](images/642-thumb.webp)](642.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The large concentric curved sheets, central opening and smaller right-hand ring align. FPT replaces the native pink atmospheric veil with blue sky and darker gold surfaces; the broad structure is readable, but haze, thin-line brightness and exact reflective colour are not certified.
+
+## [647: hybrid007](647.md)
+
+[![Native / FPT authored](images/647-thumb.webp)](647.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The converging field of repeated rounded clusters, central upright and its shadow align. FPT uses more matte violet surfaces and a darker background than the native glossy pink/brown appearance; the repeated structure remains readable.
+
 ## [648: hybrid008 - collatz](648.md)
 
 [![Native / FPT authored](images/648-thumb.webp)](648.md)
@@ -44,6 +60,14 @@ accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 The central ornament, four pointed surrounding surfaces and major open gaps align. FPT changes the red/lavender native palette to blue/cyan and differs in reflection contrast, but keeps the principal structure illuminated and readable. Exact reflectance is not certified.
 
+## [662: mandelbox002](662.md)
+
+[![Native / FPT authored](images/662-thumb.webp)](662.md)
+
+accepted-with-limitations | refreshed-2026-09-14-confirmation | 32 SPP
+
+The hollow square towers, large foreground openings and central angled structure correspond. FPT is sharper and more reflective, with stronger gold saturation and darker cavities; native depth blur and blue atmospheric softness are not matched. The main forms remain readable. Fine-detail and exact authored-appearance parity are not certified.
+
 ## [664: mandelbox_menger](664.md)
 
 [![Native / FPT authored](images/664-thumb.webp)](664.md)
@@ -59,27 +83,3 @@ The nested angular walls, large central recess and rectangular surface slots ali
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 The perforated cube, large front opening and repeated smaller square cavities align in the neutral control. Authored FPT changes the soft pink/green material to strongly reflective gold/blue rings; broad geometry remains readable, while exact reflections and palette are not certified.
-
-## [667: mandelbox_vary_scale_4D_001](667.md)
-
-[![Native / FPT authored](images/667-thumb.webp)](667.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The sweeping corridor, large left-wall apertures, bright upper opening and right-hand blocklike details align broadly. FPT removes the pale blue atmospheric veil and has stronger gold/green reflections, but the foreground structure remains readable. Distant haze and exact material transport are not certified.
-
-## [668: mandelbulb - 256iters](668.md)
-
-[![Native / FPT authored](images/668-thumb.webp)](668.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The outer Mandelbulb lobes, upper central concentric feature and lower repeated protrusions align broadly. FPT is more uniformly green and less sparkling than native; both images have noisy fine detail, so microscopic geometry and reflective appearance are not certified.
-
-## [669: mandelbulb001](669.md)
-
-[![Native / FPT authored](images/669-thumb.webp)](669.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The folded central Mandelbulb surface, left cluster, upper ridges and sky boundary align. FPT changes green/gold reflections to a stronger rainbow palette; both have intense highlights, but the principal structure stays readable. Fine specular/colour parity is not certified.

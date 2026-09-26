@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [584: menger-mod1_001_8k](584.md)
+
+[![Native / FPT authored](images/584-thumb.webp)](584.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Panoramic curved block corridors and large openings align. FPT is gold rather than red/black with different sky and reflection colours, but the structure remains readable.
+
+## [585: mountains_and_valleys](585.md)
+
+[![Native / FPT authored](images/585-thumb.webp)](585.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Rounded peaks, foreground cavities and silhouette align. Both authored captures use dark green material; FPT loses the sharp bright reflective flecks but retains the principal forms.
+
 ## [587: neuron](587.md)
 
 [![Native / FPT authored](images/587-thumb.webp)](587.md)
@@ -67,19 +83,3 @@ Large folds and warm colours align. FPT contains sharper high-frequency detail a
 accepted-with-limitations | historical-2026-09-10 | 32 SPP
 
 Broad landscape and openings align. Native haze becomes sharper, saturated green/orange shading; fog remains out of scope.
-
-## [600: aexion001](600.md)
-
-[![Native / FPT authored](images/600-thumb.webp)](600.md)
-
-accepted-with-limitations | historical-2026-09-10 | 32 SPP
-
-Terrain silhouettes and framing align. Native sun disk is absent and FPT is greener/flatter; scene structure remains readable.
-
-## [602: aexion_octopus_001](602.md)
-
-[![Native / FPT authored](images/602-thumb.webp)](602.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-Refreshed water surface is restored and the central object's placement aligns. Wave detail, reflected lighting and shadows differ; 32-SPP water noise remains visible.

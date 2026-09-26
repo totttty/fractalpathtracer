@@ -4,6 +4,22 @@
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
 
+## [628: fabs_box_mod1_001](628.md)
+
+[![Native / FPT authored](images/628-thumb.webp)](628.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Central bright opening, layered folded surfaces and lower-right opening align. FPT is sharper and more red/purple, with differing reflections and depth of field; broad structural landmarks remain readable.
+
+## [629: flight_anim_menger sponge_3](629.md)
+
+[![Native / FPT authored](images/629-thumb.webp)](629.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+Main square window, repeated perforations, inner chamber and light position align. FPT omits the strong grey atmospheric veil and uses darker colourful surfaces; fog and complete material parity are not certified.
+
 ## [630: newtonPow3-PolyFoldSym-delta-gnj-016d](630.md)
 
 [![Native / FPT authored](images/630-thumb.webp)](630.md)
@@ -67,19 +83,3 @@ Newton coils and framing align. FPT interiors are smoother/darker orange and the
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 The diagonal hexagonal floor, curled central structure and reflective foreground forms align. FPT has stronger dark reflections and less blue haze; large openings and surface layout remain readable, without certifying exact reflective or atmospheric appearance.
-
-## [642: hybrid001](642.md)
-
-[![Native / FPT authored](images/642-thumb.webp)](642.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The large concentric curved sheets, central opening and smaller right-hand ring align. FPT replaces the native pink atmospheric veil with blue sky and darker gold surfaces; the broad structure is readable, but haze, thin-line brightness and exact reflective colour are not certified.
-
-## [647: hybrid007](647.md)
-
-[![Native / FPT authored](images/647-thumb.webp)](647.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The converging field of repeated rounded clusters, central upright and its shadow align. FPT uses more matte violet surfaces and a darker background than the native glossy pink/brown appearance; the repeated structure remains readable.

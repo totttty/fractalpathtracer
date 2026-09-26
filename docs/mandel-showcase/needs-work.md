@@ -460,6 +460,12 @@ Native clouds and golden haze dominate the islands and horizon; FPT exposes colo
 
 The broad islands and water are present, but native storm clouds and dark atmospheric occlusion are replaced by clear cyan sky and exposed multicoloured surfaces. Native obscured regions cannot be certified and the defining authored atmosphere is absent.
 
+## [416: clouds 2_v3](416.md)
+
+[![Native / FPT authored](images/416-thumb.webp)](416.md)
+
+The island group and water horizon correspond, but the native scene is dominated by dense clouds and atmospheric shafts of light. FPT replaces that sky with a flat cyan gradient and renders the islands with strong rainbow reflections. The missing cloud and atmospheric illumination structure is a material appearance failure, not a colour-only difference.
+
 ## [423: fish eye](423.md)
 
 [![Native / FPT authored](images/423-thumb.webp)](423.md)
@@ -675,6 +681,12 @@ Foreground branches broadly correspond, but the bright native open/cloudy upper 
 [![Native / FPT authored](images/522-thumb.webp)](522.md)
 
 The spiral ground motifs broadly align. Native bright distant haze and reflected illumination become nearly black in FPT, obscuring the upper half of the scene and flattening the relief.
+
+## [525: mandelbulb power 4 - water](525.md)
+
+[![Native / FPT authored](images/525-thumb.webp)](525.md)
+
+The canyon walls, water channel and distant central ridges correspond in the neutral view. Native authored illumination creates a bright golden water surface and luminous atmospheric depth. FPT leaves the water and much of the foreground wall nearly dark, with substantially weaker readable ripples and no comparable distant glow. This materially changes water visibility and scene illumination, beyond a palette difference.
 
 ## [527: mandelbulb power 8 - 4_2](527.md)
 
@@ -1233,6 +1245,12 @@ Angular beams broadly correspond, but the native anaglyph reference prevents exa
 [![Native / FPT authored](images/738-thumb.webp)](738.md)
 
 The central diamond outline and side filaments are present, but bright native red/green illumination becomes a dark olive surface and plain sky. Native stereo/effects complicate exact alignment; loss of defining light remains a hold.
+
+## [739: subsurface scattering 001](739.md)
+
+[![Native / FPT authored](images/739-thumb.webp)](739.md)
+
+The layered ring, central opening and top/bottom points correspond well, and the neutral capture makes the folds readable. The native authored object has broad warm translucency and glowing illumination through its layers. FPT instead has dark opaque purple/green surfaces with only a small bright central patch. This loses the scene-defining subsurface-lighting structure, so geometry correspondence alone is insufficient for acceptance.
 
 ## [742: the grid 002](742.md)
 

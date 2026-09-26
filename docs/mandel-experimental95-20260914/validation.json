@@ -1,0 +1,16 @@
+{
+  "source_hashes_verified": 95,
+  "historical_native_log_records_verified": 90,
+  "tests": [
+    {
+      "command": "/opt/homebrew/bin/python3.11 -m unittest discover -s scripts -p test_mandel_review.py",
+      "tests": 8,
+      "result": "passed"
+    },
+    {
+      "command": "/opt/homebrew/bin/python3.11 -m unittest discover -s scripts -p test_publish_mandel_gallery.py",
+      "tests": 8,
+      "result": "passed"
+    }
+  ]
+}

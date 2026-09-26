@@ -29,14 +29,14 @@
   "counts": {
     "total": 746,
     "statuses": {
-      "reviewed": 423,
-      "blocked": 228,
-      "experimental": 95
+      "reviewed": 427,
+      "blocked": 230,
+      "experimental": 89
     },
     "gallery_published": 50,
     "additional_reference_reviewed": 50,
     "historical_both_modes_passed": 675,
-    "explicit_visual_decisions": 630
+    "explicit_visual_decisions": 637
   },
   "scenes": [
     {
@@ -35090,8 +35090,10 @@
       "name": "clouds 2_v3",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/clouds%202_v3.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "The island group and water horizon correspond, but the native scene is dominated by dense clouds and atmospheric shafts of light. FPT replaces that sky with a flat cyan gradient and renders the islands with strong rainbow reflections. The missing cloud and atmospheric illumination structure is a material appearance failure, not a colour-only difference."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -35104,10 +35106,88 @@
           "capture_sha256": "7148a06db48615f9445920aee5953494bcc918433205e8d914b5187aac035f0d"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The island group and water horizon correspond, but the native scene is dominated by dense clouds and atmospheric shafts of light. FPT replaces that sky with a flat cyan gradient and renders the islands with strong rainbow reflections. The missing cloud and atmospheric illumination structure is a material appearance failure, not a colour-only difference.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "416",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "The island group and water horizon correspond, but the native scene is dominated by dense clouds and atmospheric shafts of light. FPT replaces that sky with a flat cyan gradient and renders the islands with strong rainbow reflections. The missing cloud and atmospheric illumination structure is a material appearance failure, not a colour-only difference.",
+        "source_sha256": "034d38efc21b1451cbbff0f1d66bbb83a334de8c35985786e89cb5955677ca2f",
+        "evidence_sha256": "1bc6a80cca52b11acdc5d2514577da2586be068b7eeb53291c2db509b0be47ae",
+        "reviewer": "Codex visual comparison of complete 300px authored native / FPT neutral / FPT authored triplets",
+        "reviewed_at": "2026-09-14"
+      },
+      "review_evidence": {
+        "id": "416",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/clouds 2_v3.fract",
+        "sha256": "034d38efc21b1451cbbff0f1d66bbb83a334de8c35985786e89cb5955677ca2f",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "6359aa1976b24634796fbeb7a9b97e5fb2f0c5ad",
+        "renderer_sha256": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+        "epoch": "experimental-95-2026-09-14",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "3d236a733dacf709840e744cc64340b96b6997d89f24971eb8a9e31406de7d39",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "c57a67ed47bc96823717e14032e5b0ff3ed809d7ca789e6e7d75760f632ccd06",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "56f503b5af8ce912c9a3ebaf329a6ffb2c8f7f7cfaf11abe57e1ac66a1f1e135"
+          },
+          "authored": {
+            "sha256": "8effe49308dc65c031e781106dcd1702562865ec529b9609cd35fc11ace869ac",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "76e102901e1df0f32bce85907a98b56b67f6391884075d7481f92bffec90803c"
+          }
+        },
+        "capture_provenance": {
+          "geometry": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "authored": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "mandel": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 420
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "3d236a733dacf709840e744cc64340b96b6997d89f24971eb8a9e31406de7d39",
+        "geometry": "c57a67ed47bc96823717e14032e5b0ff3ed809d7ca789e6e7d75760f632ccd06",
+        "authored": "8effe49308dc65c031e781106dcd1702562865ec529b9609cd35fc11ace869ac"
+      }
     },
     {
       "id": "417",
@@ -38498,7 +38578,7 @@
       "name": "mandelbox19",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/mandelbox19.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -38512,10 +38592,88 @@
           "capture_sha256": "2270832de7a52b487040e3467eb9f4a3cbf03249e049861b660e7bb98c759fa1"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The receding tunnel, rounded left overhang, central ledges and dense repeated wall/floor details correspond across the three views. FPT authored rendering retains readable red-lit foreground forms but is sharper and more saturated magenta, with a darker central distance and much less native haze. Background atmosphere and fine-detail appearance differ; the main geometry and foreground illumination remain legible, so this capture is accepted with those limitations.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "475",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "The receding tunnel, rounded left overhang, central ledges and dense repeated wall/floor details correspond across the three views. FPT authored rendering retains readable red-lit foreground forms but is sharper and more saturated magenta, with a darker central distance and much less native haze. Background atmosphere and fine-detail appearance differ; the main geometry and foreground illumination remain legible, so this capture is accepted with those limitations.",
+        "source_sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+        "evidence_sha256": "c55e01556b21fedca016a25dd2149b710d5db4e05c83ddc7d4368b7c0e69630b",
+        "reviewer": "Codex visual comparison of complete 300px authored native / FPT neutral / FPT authored triplets",
+        "reviewed_at": "2026-09-14"
+      },
+      "review_evidence": {
+        "id": "475",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox19.fract",
+        "sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "6359aa1976b24634796fbeb7a9b97e5fb2f0c5ad",
+        "renderer_sha256": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+        "epoch": "experimental-95-2026-09-14",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "6a81ad7df261dce4c43cfb2c2472a355ddc26a63cbff193ac877fdcc219bac22",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "baadd2d2fb70c6382565b6e127d63a38762e67b7aeb3dc91918087c6f19d3086",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "af74c0cccf3bbcf9ff0d8324bb587a8a915103eb2b4329225ca2fae0b0076dc2"
+          },
+          "authored": {
+            "sha256": "871061031ee487042fbeff3d626815bad4a1e74ea183e0cf5bc72bbd5458fe9d",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "f4d4f784924d5486aeca2d521d024de0fd4c8b8a251b64b528f1102c0abb9898"
+          }
+        },
+        "capture_provenance": {
+          "geometry": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "authored": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "mandel": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 420
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "6a81ad7df261dce4c43cfb2c2472a355ddc26a63cbff193ac877fdcc219bac22",
+        "geometry": "baadd2d2fb70c6382565b6e127d63a38762e67b7aeb3dc91918087c6f19d3086",
+        "authored": "871061031ee487042fbeff3d626815bad4a1e74ea183e0cf5bc72bbd5458fe9d"
+      }
     },
     {
       "id": "476",
@@ -38991,7 +39149,7 @@
       "name": "mandelbox29",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/mandelbox29.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -39005,10 +39163,88 @@
           "capture_sha256": "0c35087538b9b6a07741f6a5fe9d92b6718466afdca7caac1d5b99405ceb21e9"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The tilted carved slabs, repeated arch/opening motifs, central dark recess and large circular upper opening correspond across the three captures. FPT authored rendering retains the native warm-lit slab faces and shadowed recess but is sharper, more orange/red and more contrasty, with harder clipped highlights and a darker background. Native depth-of-field softness is not reproduced. The main carved geometry remains readable; exact blur, lighting and material parity is not claimed.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "484",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "The tilted carved slabs, repeated arch/opening motifs, central dark recess and large circular upper opening correspond across the three captures. FPT authored rendering retains the native warm-lit slab faces and shadowed recess but is sharper, more orange/red and more contrasty, with harder clipped highlights and a darker background. Native depth-of-field softness is not reproduced. The main carved geometry remains readable; exact blur, lighting and material parity is not claimed.",
+        "source_sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+        "evidence_sha256": "f5c3ebd1bc4f0c15aec76e579ffea61c22277a2c42c0042a03c6fbe4cba775bf",
+        "reviewer": "Codex visual comparison of complete 300px authored native / FPT neutral / FPT authored triplets",
+        "reviewed_at": "2026-09-14"
+      },
+      "review_evidence": {
+        "id": "484",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox29.fract",
+        "sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "6359aa1976b24634796fbeb7a9b97e5fb2f0c5ad",
+        "renderer_sha256": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+        "epoch": "experimental-95-2026-09-14",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "42a29f6199f83456e03e605777f5117d16f89e8dd5cbaa71db76aad20ce8eb8a",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "2714a6c5c49dbee26aa6af7f5abdd18dbbb7c92282fe0f4bd87d8ca61ce652df",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "5968e66b6fa5ea365d163295666a18c5fbf473a1ed819fd0c688f421e41722e9"
+          },
+          "authored": {
+            "sha256": "cec695bdda390a68d60497be731d4020f272c7389ee72b33a3174ee1d352aa49",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "4a41e480a2bdf6a852b56e84222bc32f94071182767f18e79b54ad4c6f424ffe"
+          }
+        },
+        "capture_provenance": {
+          "geometry": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "authored": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "mandel": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 420
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "42a29f6199f83456e03e605777f5117d16f89e8dd5cbaa71db76aad20ce8eb8a",
+        "geometry": "2714a6c5c49dbee26aa6af7f5abdd18dbbb7c92282fe0f4bd87d8ca61ce652df",
+        "authored": "cec695bdda390a68d60497be731d4020f272c7389ee72b33a3174ee1d352aa49"
+      }
     },
     {
       "id": "485",
@@ -41538,8 +41774,10 @@
       "name": "mandelbulb power 4 - water",
       "collection": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/Krzysztof%20Marczak%20collection%20-%20license%20Creative%20Commons%20%28CC-BY%204.0%29/mandelbulb%20power%204%20-%20water.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "The canyon walls, water channel and distant central ridges correspond in the neutral view. Native authored illumination creates a bright golden water surface and luminous atmospheric depth. FPT leaves the water and much of the foreground wall nearly dark, with substantially weaker readable ripples and no comparable distant glow. This materially changes water visibility and scene illumination, beyond a palette difference."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -41552,10 +41790,88 @@
           "capture_sha256": "f39c2c20a8faae649ab284ef71dbfb0a728424e1454a68091f0d40962554e123"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The canyon walls, water channel and distant central ridges correspond in the neutral view. Native authored illumination creates a bright golden water surface and luminous atmospheric depth. FPT leaves the water and much of the foreground wall nearly dark, with substantially weaker readable ripples and no comparable distant glow. This materially changes water visibility and scene illumination, beyond a palette difference.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "525",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "The canyon walls, water channel and distant central ridges correspond in the neutral view. Native authored illumination creates a bright golden water surface and luminous atmospheric depth. FPT leaves the water and much of the foreground wall nearly dark, with substantially weaker readable ripples and no comparable distant glow. This materially changes water visibility and scene illumination, beyond a palette difference.",
+        "source_sha256": "d1ba87871f6af49cfb8034836a9a6ff89efe1a230bf5ca68d653dd5124b9a94b",
+        "evidence_sha256": "9bd57c9aee3333e7eea25f2efbf542d3f7adc635056ba9f7031d1a37b3694f6b",
+        "reviewer": "Codex visual comparison of complete 300px authored native / FPT neutral / FPT authored triplets",
+        "reviewed_at": "2026-09-14"
+      },
+      "review_evidence": {
+        "id": "525",
+        "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbulb power 4 - water.fract",
+        "sha256": "d1ba87871f6af49cfb8034836a9a6ff89efe1a230bf5ca68d653dd5124b9a94b",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "6359aa1976b24634796fbeb7a9b97e5fb2f0c5ad",
+        "renderer_sha256": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+        "epoch": "experimental-95-2026-09-14",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "3e87fc4b3d429eb7640f279d92765159e8cd88cab5448e3a8972823b63e41ae7",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "7ea0fb2d873706a3e971f69b5f591add9cd64c49cd0ad0f0bc2bc28b575fe110",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "6e339f0683f1a20967946a6ddc284d948c65afcbb304cd2444f6737da234c1ee"
+          },
+          "authored": {
+            "sha256": "b371b8be08ec21344e85ddf5fcf1b6cf6e667a9830465593057b9d2397b7e6f7",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "e171961dcc6090e0ce745f02ce83cf18a1f21b9d7c2a003886fe4db6f79e5185"
+          }
+        },
+        "capture_provenance": {
+          "geometry": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "authored": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "mandel": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 420
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "3e87fc4b3d429eb7640f279d92765159e8cd88cab5448e3a8972823b63e41ae7",
+        "geometry": "7ea0fb2d873706a3e971f69b5f591add9cd64c49cd0ad0f0bc2bc28b575fe110",
+        "authored": "b371b8be08ec21344e85ddf5fcf1b6cf6e667a9830465593057b9d2397b7e6f7"
+      }
     },
     {
       "id": "526",
@@ -52209,10 +52525,8 @@
       "name": "mandelbox002",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/mandelbox002.fract",
-      "status": "blocked",
-      "blockers": [
-        "geometry: image_validation_failed in historical screening; needs retest"
-      ],
+      "status": "reviewed",
+      "blockers": [],
       "screening": {
         "geometry": {
           "status": "image_validation_failed",
@@ -52224,10 +52538,73 @@
           "capture_sha256": "6e8b7485986bc87ed1e2821603123e8c34b00b76d100f1d71742f94cb47da99b"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The hollow square towers, large foreground openings and central angled structure correspond. FPT is sharper and more reflective, with stronger gold saturation and darker cavities; native depth blur and blue atmospheric softness are not matched. The main forms remain readable. Fine-detail and exact authored-appearance parity are not certified.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "662",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "The hollow square towers, large foreground openings and central angled structure correspond. FPT is sharper and more reflective, with stronger gold saturation and darker cavities; native depth blur and blue atmospheric softness are not matched. The main forms remain readable. Fine-detail and exact authored-appearance parity are not certified.",
+        "source_sha256": "b16c0d7634af65156e2798ff19e76d8194e981c0a073a604c380747f2e62c498",
+        "evidence_sha256": "061c9d5b3acac8fa52d403610a93c58fcd3860d0314d1f4a657eb6cd78389398",
+        "reviewer": "Codex visual comparison of full-size native CPU, neutral FPT and authored FPT captures",
+        "reviewed_at": "2026-09-14"
+      },
+      "review_evidence": {
+        "id": "662",
+        "path": "mandelbox002.fract",
+        "sha256": "b16c0d7634af65156e2798ff19e76d8194e981c0a073a604c380747f2e62c498",
+        "dimensions": [
+          300,
+          169
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "6359aa1976b24634796fbeb7a9b97e5fb2f0c5ad",
+        "renderer_sha256": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+        "epoch": "refreshed-2026-09-14-confirmation",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "1c1212a7cf498c502fcfb94c2edd46708102e3c9e0b8d3ef22bd5ecb594ab142",
+            "dimensions": [
+              300,
+              169
+            ]
+          },
+          "geometry": {
+            "sha256": "5241f50eb52f7322c0c797fef8785baaaf0d8eee3518599f3b260e35fb0f4eed",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "1564f1327d8da657547e432a61a7e6acc901e442440f9d5cbc2a52c778d88270"
+          },
+          "authored": {
+            "sha256": "0bf1f5e22554536829600cdd2f9dc4aabc0a5549b6a1cc89806cf43286c87da2",
+            "dimensions": [
+              300,
+              169
+            ],
+            "metadata_sha256": "364dd0e4836f9d1d22c88cd1455aa463fb9fcd04fd0319aec01f4cdc40b4f264"
+          }
+        }
+      },
+      "historical_blockers": [
+        "geometry: image_validation_failed in historical screening; needs retest"
+      ],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "1c1212a7cf498c502fcfb94c2edd46708102e3c9e0b8d3ef22bd5ecb594ab142",
+        "geometry": "5241f50eb52f7322c0c797fef8785baaaf0d8eee3518599f3b260e35fb0f4eed",
+        "authored": "0bf1f5e22554536829600cdd2f9dc4aabc0a5549b6a1cc89806cf43286c87da2"
+      }
     },
     {
       "id": "663",
@@ -55132,7 +55509,7 @@
       "name": "msltoe toroidal multi 001",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/msltoe%20toroidal%20multi%20001.fract",
-      "status": "experimental",
+      "status": "reviewed",
       "blockers": [],
       "screening": {
         "geometry": {
@@ -55146,10 +55523,88 @@
           "capture_sha256": "bef8362a164d3d85141339d09efabf0bb4f536156d93293df79e040686efada0"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The rounded toroidal crown, paired curved lobes, scalloped outer silhouette and central foreground spike correspond in the native, neutral and authored views. Both authored renders have very bright upper lobes against a dark foreground. FPT shifts the gold appearance to saturated red/magenta, expands some clipped highlight patches and shows more lower-surface detail against a darker teal background. The principal forms remain readable; exact colour, highlight and background-lighting parity is not claimed.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "701",
+        "decision": "accepted-with-limitations",
+        "geometry": "acceptable",
+        "illumination": "acceptable",
+        "note": "The rounded toroidal crown, paired curved lobes, scalloped outer silhouette and central foreground spike correspond in the native, neutral and authored views. Both authored renders have very bright upper lobes against a dark foreground. FPT shifts the gold appearance to saturated red/magenta, expands some clipped highlight patches and shows more lower-surface detail against a darker teal background. The principal forms remain readable; exact colour, highlight and background-lighting parity is not claimed.",
+        "source_sha256": "f3cfaf110c580e0b08687a954cfb9bcc1196b41369fe2c35a98b15f519ab80b4",
+        "evidence_sha256": "d02657a68a063db683f0753fb72ac95b7ea1bdaa24540d2a338cc7999057aa7e",
+        "reviewer": "Codex visual comparison of complete 300px authored native / FPT neutral / FPT authored triplets",
+        "reviewed_at": "2026-09-14"
+      },
+      "review_evidence": {
+        "id": "701",
+        "path": "msltoe toroidal multi 001.fract",
+        "sha256": "f3cfaf110c580e0b08687a954cfb9bcc1196b41369fe2c35a98b15f519ab80b4",
+        "dimensions": [
+          300,
+          300
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "6359aa1976b24634796fbeb7a9b97e5fb2f0c5ad",
+        "renderer_sha256": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+        "epoch": "experimental-95-2026-09-14",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "9e66c9505e09a958e1bc3f4984880889f95cfbd7af6bc51b29a1f6759e5d0f9d",
+            "dimensions": [
+              300,
+              300
+            ]
+          },
+          "geometry": {
+            "sha256": "992764c08ee5ab6b69e0ccd3b2498f236e7e54fac66a926005cb00d37abfd62b",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "e24b663d061d411e3137a67d6c8149346e9700efd4c1c9a9601e47c9adb3678c"
+          },
+          "authored": {
+            "sha256": "bcd9347ae83561dfc512ec08d7843bee0538518bbc290b91b8f8d6cf316d3f38",
+            "dimensions": [
+              300,
+              300
+            ],
+            "metadata_sha256": "8075b5c64ff7256acee54a5d45f4c470912de7adb927148890fbd8347c710725"
+          }
+        },
+        "capture_provenance": {
+          "geometry": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "authored": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "mandel": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 420
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "9e66c9505e09a958e1bc3f4984880889f95cfbd7af6bc51b29a1f6759e5d0f9d",
+        "geometry": "992764c08ee5ab6b69e0ccd3b2498f236e7e54fac66a926005cb00d37abfd62b",
+        "authored": "bcd9347ae83561dfc512ec08d7843bee0538518bbc290b91b8f8d6cf316d3f38"
+      }
     },
     {
       "id": "702",
@@ -58090,8 +58545,10 @@
       "name": "subsurface scattering 001",
       "collection": "Mandelbulber example collection",
       "source_url": "https://github.com/buddhi1980/mandelbulber2/blob/230456cee40968cbaa7f301bba91daa4865a29db/mandelbulber2/deploy/share/mandelbulber2/examples/subsurface%20scattering%20001.fract",
-      "status": "experimental",
-      "blockers": [],
+      "status": "blocked",
+      "blockers": [
+        "The layered ring, central opening and top/bottom points correspond well, and the neutral capture makes the folds readable. The native authored object has broad warm translucency and glowing illumination through its layers. FPT instead has dark opaque purple/green surfaces with only a small bright central patch. This loses the scene-defining subsurface-lighting structure, so geometry correspondence alone is insufficient for acceptance."
+      ],
       "screening": {
         "geometry": {
           "status": "ok",
@@ -58104,10 +58561,88 @@
           "capture_sha256": "1344c1d46cdee564ed150efb7ae6b616527ede3b1ba18f96fde58a088047c3ad"
         }
       },
-      "review": "not-reviewed",
-      "review_note": "",
+      "review": "explicit-visual-review",
+      "review_note": "The layered ring, central opening and top/bottom points correspond well, and the neutral capture makes the folds readable. The native authored object has broad warm translucency and glowing illumination through its layers. FPT instead has dark opaque purple/green surfaces with only a small bright central patch. This loses the scene-defining subsurface-lighting structure, so geometry correspondence alone is insufficient for acceptance.",
       "gallery_published": false,
-      "naadf_cvox_validation": "not-established-by-this-catalogue"
+      "naadf_cvox_validation": "not-established-by-this-catalogue",
+      "visual_decision": {
+        "id": "739",
+        "decision": "needs-work",
+        "geometry": "acceptable",
+        "illumination": "needs-work",
+        "note": "The layered ring, central opening and top/bottom points correspond well, and the neutral capture makes the folds readable. The native authored object has broad warm translucency and glowing illumination through its layers. FPT instead has dark opaque purple/green surfaces with only a small bright central patch. This loses the scene-defining subsurface-lighting structure, so geometry correspondence alone is insufficient for acceptance.",
+        "source_sha256": "bb1736da19ba38f5bdc6dcf9ae12a8435b050d9dacf51427c0656bca3f2f1b33",
+        "evidence_sha256": "a8350c013402a1636fb51975dff5333e4d57345aeba3829083bfe131ab82a0db",
+        "reviewer": "Codex visual comparison of complete 300px authored native / FPT neutral / FPT authored triplets",
+        "reviewed_at": "2026-09-14"
+      },
+      "review_evidence": {
+        "id": "739",
+        "path": "subsurface scattering 001.fract",
+        "sha256": "bb1736da19ba38f5bdc6dcf9ae12a8435b050d9dacf51427c0656bca3f2f1b33",
+        "dimensions": [
+          300,
+          225
+        ],
+        "samples": 32,
+        "bounces": "FPT scene/config default; metadata records effective configuration",
+        "upstream_revision": "230456cee40968cbaa7f301bba91daa4865a29db",
+        "renderer_revision": "6359aa1976b24634796fbeb7a9b97e5fb2f0c5ad",
+        "renderer_sha256": "b12a1b744287c1bc0d2f6e604d0f113d663e9c216cdb4832cbd75f180729ebd0",
+        "epoch": "experimental-95-2026-09-14",
+        "reference_overrides": {},
+        "native_reference_reduced": false,
+        "native_sampling": "Authored native CPU settings; not equivalent to FPT SPP.",
+        "captures": {
+          "mandel": {
+            "sha256": "73a8f0f2bfa1eaa5ae92bb787bd8909c228e29d07ffdc0051c12f14947419d98",
+            "dimensions": [
+              300,
+              225
+            ]
+          },
+          "geometry": {
+            "sha256": "436d6399b4d30b6d125a47213195da81bde91813ffe3a03698dd867c259a41cd",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "65c95c97ad50f9ce634edf724b14ef42394035a6a3e800856a88a7a0e02e4f82"
+          },
+          "authored": {
+            "sha256": "231dd039f6f31f0bbaab15e7d7ab5dfaae277f1a0a706f5a3a7fa6f3912467a1",
+            "dimensions": [
+              300,
+              225
+            ],
+            "metadata_sha256": "6c0aa6f84120a9cd6a345f78a77aa0e22442d18fa6101e91a07119aa97f01296"
+          }
+        },
+        "capture_provenance": {
+          "geometry": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "authored": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 120
+          },
+          "mandel": {
+            "origin": "next",
+            "reused": false,
+            "timeout_seconds": 420
+          }
+        }
+      },
+      "historical_blockers": [],
+      "review_reference_overrides": {},
+      "review_capture_hashes": {
+        "mandel": "73a8f0f2bfa1eaa5ae92bb787bd8909c228e29d07ffdc0051c12f14947419d98",
+        "geometry": "436d6399b4d30b6d125a47213195da81bde91813ffe3a03698dd867c259a41cd",
+        "authored": "231dd039f6f31f0bbaab15e7d7ab5dfaae277f1a0a706f5a3a7fa6f3912467a1"
+      }
     },
     {
       "id": "740",
@@ -58555,7 +59090,7 @@
     "gallery": "0fa2686556f6970a297126213949e28dd5043323296dad29da8363d83f5f1d8b",
     "screening": "d8e7e987afe20d3ac83bcef1512946c6a21cd2f9e8e0b88fc245ad3b238c5f48",
     "additional": "6e683a94ec5cd0fc23edb4ec00c1227b975aef7f0d7626284f907ad0c05023a3",
-    "reviews": "fd12c3b72c70ceeec8e917da529d43624534c302e7761e6d7930f7a254b774f2",
-    "review_evidence": "4ff955d32304d221af46f6ce09821aa2e7deb9394554158fbb89bab977bd7329"
+    "reviews": "37c6ec68b868e9a6ffe591f2e787c26a19952a5701fd55d09f3a1d1e1cbb0073",
+    "review_evidence": "fff430e1acb0bce745ccbef557c9070dda0cf64069cf0a4a14e784f221390ab3"
   }
 }

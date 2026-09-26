@@ -1,0 +1,34 @@
+{
+  "publication_files_verified": 495,
+  "frozen_gallery_files_verified": 1936,
+  "source_hashes_verified": 116,
+  "local_links_verified": 336,
+  "harness_tests_passed": 21,
+  "renderer_and_existing_decisions_unchanged": true,
+  "reviewed_gallery_count": 423,
+  "stats": {
+    "scenes": 116,
+    "both_fpt_pass": 88,
+    "complete_triplets": 64,
+    "modes": {
+      "mandel": {
+        "not_requested": 48,
+        "ok": 68
+      },
+      "geometry": {
+        "ok": 100,
+        "image_validation_failed": 10,
+        "timeout": 1,
+        "execution_failed": 5
+      },
+      "authored": {
+        "missing_asset": 2,
+        "ok": 96,
+        "timeout": 7,
+        "unsupported_contract": 5,
+        "execution_failed": 6
+      }
+    },
+    "suite_wall_seconds": 580.9286106250001
+  }
+}
