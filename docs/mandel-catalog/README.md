@@ -8,6 +8,10 @@ not 746 bundled voxel assets or a claim of universal visual parity.
 
 ## Status
 
+Native reference caveats: the [native renderer audit](../mandel-native-renderer-audit-20260926/README.md)
+records that CPU references are only statistically reproducible, over-brighten MC global
+illumination (7 reviewed scenes), and omit chromatic aberration (scene 50). Reviews are unchanged.
+
 Latest coverage follow-up: [experimental-95 recovery](../mandel-experimental95-20260914/README.md).
 Eight experimental candidates received full-quality attempts: **3 accepted**,
 **3 visual holds**, **2 incomplete**. All 95 source identities and 90 historical
