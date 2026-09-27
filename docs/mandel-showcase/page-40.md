@@ -1,8 +1,64 @@
 # Reviewed Scenes: Page 40
 
-[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md) | [Page 32](page-32.md) | [Page 33](page-33.md) | [Page 34](page-34.md) | [Page 35](page-35.md) | [Page 36](page-36.md) | [Page 37](page-37.md) | [Page 38](page-38.md) | [Page 39](page-39.md) | [Page 40](page-40.md) | [Page 41](page-41.md) | [Page 42](page-42.md) | [Page 43](page-43.md)
+[Page 1](page-01.md) | [Page 2](page-02.md) | [Page 3](page-03.md) | [Page 4](page-04.md) | [Page 5](page-05.md) | [Page 6](page-06.md) | [Page 7](page-07.md) | [Page 8](page-08.md) | [Page 9](page-09.md) | [Page 10](page-10.md) | [Page 11](page-11.md) | [Page 12](page-12.md) | [Page 13](page-13.md) | [Page 14](page-14.md) | [Page 15](page-15.md) | [Page 16](page-16.md) | [Page 17](page-17.md) | [Page 18](page-18.md) | [Page 19](page-19.md) | [Page 20](page-20.md) | [Page 21](page-21.md) | [Page 22](page-22.md) | [Page 23](page-23.md) | [Page 24](page-24.md) | [Page 25](page-25.md) | [Page 26](page-26.md) | [Page 27](page-27.md) | [Page 28](page-28.md) | [Page 29](page-29.md) | [Page 30](page-30.md) | [Page 31](page-31.md) | [Page 32](page-32.md) | [Page 33](page-33.md) | [Page 34](page-34.md) | [Page 35](page-35.md) | [Page 36](page-36.md) | [Page 37](page-37.md) | [Page 38](page-38.md) | [Page 39](page-39.md) | [Page 40](page-40.md) | [Page 41](page-41.md) | [Page 42](page-42.md) | [Page 43](page-43.md) | [Page 44](page-44.md)
 
 Each thumbnail: native left, FPT authored right. Open a scene for full neutral/beauty comparisons, limitations and capture settings.
+
+## [631: newtonPow3-PolyFoldSym-delta-gnj-017b](631.md)
+
+[![Native / FPT authored](images/631-thumb.webp)](631.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Large Newton arcs and framing align. Native soft golden shading/haze becomes sharper saturated red/yellow detail; fine background fidelity is not certified.
+
+## [632: newtonPow3-ScaleRot-delta-gnj-007d](632.md)
+
+[![Native / FPT authored](images/632-thumb.webp)](632.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Branching Newton silhouette and major gaps align. FPT colours and environment gradient differ substantially but do not hide the structure.
+
+## [633: newtonPow3-delta-gnj-001b](633.md)
+
+[![Native / FPT authored](images/633-thumb.webp)](633.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Newton silhouette, framing and branching placement align. FPT is more saturated orange with different highlights and background lighting.
+
+## [634: newtonPow3-delta-gnj-002h](634.md)
+
+[![Native / FPT authored](images/634-thumb.webp)](634.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Broad Newton silhouette and openings align. Brighter yellow highlights and a different environment gradient remain.
+
+## [635: newtonPow3-rotfold-delta-gnj-003d](635.md)
+
+[![Native / FPT authored](images/635-thumb.webp)](635.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Newton coil placement and framing align clearly. Native gold becomes saturated orange/red; reflection and environment differences remain.
+
+## [636: newtonPow3-rotfold-delta-gnj-010g](636.md)
+
+[![Native / FPT authored](images/636-thumb.webp)](636.md)
+
+accepted-with-limitations | historical-2026-09-10 | 32 SPP
+
+Newton coils and framing align. FPT interiors are smoother/darker orange and the environment gradient differs.
+
+## [640: hex grid 001](640.md)
+
+[![Native / FPT authored](images/640-thumb.webp)](640.md)
+
+accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
+
+The diagonal hexagonal floor, curled central structure and reflective foreground forms align. FPT has stronger dark reflections and less blue haze; large openings and surface layout remain readable, without certifying exact reflective or atmospheric appearance.
 
 ## [642: hybrid001](642.md)
 
@@ -27,59 +83,3 @@ The converging field of repeated rounded clusters, central upright and its shado
 accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
 
 The rounded foreground ridges and large curled background forms align. FPT is more orange/green and omits the native blue-grey haze, but the main surface relief remains visible; atmosphere and fine reflective appearance are not certified.
-
-## [652: iq_bulb_001](652.md)
-
-[![Native / FPT authored](images/652-thumb.webp)](652.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The central branching ridges, side arches and major openings align. FPT is sharper and brown/white instead of the native blurred blue/silver appearance; depth of field, reflections and fine material behaviour remain approximate.
-
-## [655: kaliset001](655.md)
-
-[![Native / FPT authored](images/655-thumb.webp)](655.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The winding perforated bands, deep vertical walls and large foreground cavities align. FPT retains the vivid pink/yellow surface pattern with sharper edges and altered fine reflective streaks.
-
-## [656: keyframe_anim_mandelbox_boxes](656.md)
-
-[![Native / FPT authored](images/656-thumb.webp)](656.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The large tilted slab and clustered upper-right cavities align. FPT is brighter yellow with sharper blue/pink markings than the subdued native material; fine reflectance and depth-of-field appearance are not certified.
-
-## [661: mandelbox001](661.md)
-
-[![Native / FPT authored](images/661-thumb.webp)](661.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The central ornament, four pointed surrounding surfaces and major open gaps align. FPT changes the red/lavender native palette to blue/cyan and differs in reflection contrast, but keeps the principal structure illuminated and readable. Exact reflectance is not certified.
-
-## [662: mandelbox002](662.md)
-
-[![Native / FPT authored](images/662-thumb.webp)](662.md)
-
-accepted-with-limitations | refreshed-2026-09-14-confirmation | 32 SPP
-
-The hollow square towers, large foreground openings and central angled structure correspond. FPT is sharper and more reflective, with stronger gold saturation and darker cavities; native depth blur and blue atmospheric softness are not matched. The main forms remain readable. Fine-detail and exact authored-appearance parity are not certified.
-
-## [664: mandelbox_menger](664.md)
-
-[![Native / FPT authored](images/664-thumb.webp)](664.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The nested angular walls, large central recess and rectangular surface slots align. FPT changes pale black/white reflections to warm copper/pink and reduces contrast, but the major structure remains readable.
-
-## [665: mandelbox_menger_morph](665.md)
-
-[![Native / FPT authored](images/665-thumb.webp)](665.md)
-
-accepted-with-limitations | refreshed-2026-09-11 | 32 SPP
-
-The perforated cube, large front opening and repeated smaller square cavities align in the neutral control. Authored FPT changes the soft pink/green material to strongly reflective gold/blue rings; broad geometry remains readable, while exact reflections and palette are not certified.

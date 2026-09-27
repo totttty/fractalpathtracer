@@ -1,0 +1,20 @@
+{
+ "scope": "Provenance of the 10-scene gallery batch: native CPU references and FPT captures came from two suite runs with identical manifest, harness hashes and FPT binary; merged without re-rendering.",
+ "merged_from": {
+  "note": "Native CPU references and FPT captures came from two runs with the same manifest, harness hashes, FPT binary, 300px max edge and 32 SPP; merged without re-rendering.",
+  "native_cpu": {
+   "summary": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-triage-20260927/cpu-A/summary.json",
+   "sha256": "f21146b3698dbe1b2348ada59c298c7723bdcedfdb1f2fc89116db057933d809",
+   "native_timeout": 2800
+  },
+  "fpt": {
+   "summary": "/Volumes/Ventura/Projects/FPT-metal-release/reports/mandel-triage-20260927/gallery-A-fpt/summary.json",
+   "sha256": "8d964381a8be1679c5bd615879370c3e2eea2eb226d652f9b3100b9c30b7c638",
+   "timeout": 120
+  }
+ },
+ "fpt_binary_sha256": "5773e21cb00821b7fa75fd88454f0f3d62f09c8260d5a952b87a151226688c4a",
+ "fpt_source_revision": "6359aa1976b24634796fbeb7a9b97e5fb2f0c5ad",
+ "native_binary": "build-opencl mandelbulber2 (original, CPU mode)",
+ "raw_captures": "reports/mandel-triage-20260927"
+}

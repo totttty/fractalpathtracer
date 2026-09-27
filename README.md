@@ -96,7 +96,11 @@ estimates are retained to guide future budgets.
 all 95 experimental scenes and attempts eight at full gallery settings: 3 accepted,
 3 visual holds and 2 incomplete. 89 experimental scenes remain.
 
-[Browse 427 visually accepted scenes](docs/mandel-showcase/README.md), with
+[OpenCL-assisted triage](docs/mandel-opencl-triage-20260927/README.md) sorts all 89
+experimental scenes using fast native OpenCL previews and promotes 9 with full CPU
+references; scene 561 is held.
+
+[Browse 436 visually accepted scenes](docs/mandel-showcase/README.md), with
 paginated native/FPT thumbnails and per-scene neutral/beauty comparisons.
 The first additional 50-scene review promoted **37** and held **13** for
 further work. The [next 50-scene batch](docs/mandel-catalog/review-batch02-2026-09-11.md)

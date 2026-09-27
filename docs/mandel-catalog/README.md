@@ -12,7 +12,8 @@ Native reference caveats: the [native renderer audit](../mandel-native-renderer-
 records that CPU references are only statistically reproducible, over-brighten MC global
 illumination (7 reviewed scenes), and omit chromatic aberration (scene 50). Reviews are unchanged.
 
-Latest coverage follow-up: [experimental-95 recovery](../mandel-experimental95-20260914/README.md).
+Latest coverage follow-up: [OpenCL-assisted triage](../mandel-opencl-triage-20260927/README.md):
+9 accepted, 1 held; **436 accepted**, 79 experimental. Previous: [experimental-95 recovery](../mandel-experimental95-20260914/README.md).
 Eight experimental candidates received full-quality attempts: **3 accepted**,
 **3 visual holds**, **2 incomplete**. All 95 source identities and 90 historical
 native timing records were checked to prepare the remaining queue.

@@ -7008,6 +7008,116 @@
       "evidence_sha256": "f5c3ebd1bc4f0c15aec76e579ffea61c22277a2c42c0042a03c6fbe4cba775bf",
       "reviewer": "Codex visual comparison of complete 300px authored native / FPT neutral / FPT authored triplets",
       "reviewed_at": "2026-09-14"
+    },
+    {
+      "id": "182",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The hexagonal ring, the five ornamented nodes and the central node correspond exactly in the native, neutral and authored views. The ring gradient (magenta, blue, gold) and the shadows match. FPT renders the backdrop saturated orange instead of the native warm yellow; exact background colour parity is not claimed.",
+      "source_sha256": "35be6696b65c24bf9bb1e2d5ed41e953fee662abf8d692db86547991879b9bc2",
+      "evidence_sha256": "cfee8987f08bb741cb1817216741fe38fff6b627a4554120691c7973313d9998",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "514",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The butterfly-shaped central form, the dark inner cavity and the scalloped red-gold rim correspond closely in all three views. FPT colour, contrast and rim highlights are very close to native; small differences in fine-detail brightness remain.",
+      "source_sha256": "c1e3aa2e58189773ea459eceb9424a4934da01814067f78fbbc5bf3934b83712",
+      "evidence_sha256": "f81bcabcd9835158d704c2eaa195eb421d86c249580ff53f313b3f0083ffe336",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "678",
+      "decision": "accepted",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The spiral arms, the magenta-studded bands and the teal surroundings match the native reference in layout, palette and brightness. The differences are limited to fine sampling noise.",
+      "source_sha256": "02724a85d8801ebedbbce003d294cf9c7b72083c8d34c25b20d6ee5672c10c97",
+      "evidence_sha256": "675a3db253bc9a5e6c142d4f6f0e268013155188f407b376374e472896a7a4ab",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "680",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The blue petal structure and the orange-white central glow correspond in the native and authored views, and the neutral view confirms the geometry. FPT highlights on the outer petals are brighter and slightly more clipped. The native uses Monte Carlo global illumination, whose CPU brightness is recorded separately as over-counted; exact lighting parity is not claimed.",
+      "source_sha256": "8d24ba6ee4dc248f4ef71005d443fb054f681330d6b1205af86907dc97f89fc9",
+      "evidence_sha256": "dd2d86bc15e22c1a3e187c3ee6c6b8e60d4f211291cdff1aab85127c071a57c7",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "489",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The block-city floor, the overhanging slabs and the vertical seam at the image centre (present in the native as well) correspond. FPT is darker and browner than the native, and the native fog haze is weaker in FPT. The principal forms remain readable.",
+      "source_sha256": "dec362431f409a7b76729a039fcb77959b54484a2a429b5b0f3143596a078a24",
+      "evidence_sha256": "009da44c16c288fdaa1569019c6f94e2e7df22d7225d99719c972e83646cc6a4",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "477",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The cogwheel rings, the pink central body and the surrounding pale surfaces correspond closely. FPT is slightly brighter and less grainy than the native, with a similar pink and cream palette.",
+      "source_sha256": "1b8b55ccfc9a70ad9bbd4858ed222327a1a1d425b5c06f2d10ca32cf46e54eaa",
+      "evidence_sha256": "05b6ad961d3bd7b3b1999184cdbfe2ba670321c891f7ccf7d6f463b2ca4d2251",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "443",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The triangular spires, the green lattice and the dark background correspond. FPT greens are brighter and more saturated, and a few thin white streaks appear near the top-left edge. The overall appearance remains readable.",
+      "source_sha256": "1f113355ea0c5b7f515c040c536059e3cb8cae7cf7d3708de1858b9ed2264b82",
+      "evidence_sha256": "8f5ee110272ac5130581608d2bb8f9dfa7797ad68c5cabc8d3231d40e925584c",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "561",
+      "decision": "needs-work",
+      "geometry": "acceptable",
+      "illumination": "needs-work",
+      "note": "The twisted tendril forms correspond in all three views, so geometry is acceptable. The native scene has a blue-grey sky and haze behind bronze tendrils; FPT renders the whole frame in warm orange-brown with no blue backdrop. The missing background and atmosphere change the appearance materially.",
+      "source_sha256": "d0ef2d67dac4e774d462e650f3dc7a836a1fcd12d7c7782618b9bd15afc166ea",
+      "evidence_sha256": "d4592cccdf46f63345bf381c9b6575d6fd8cc53b077ce8acdcbad20b6ee36b9a",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "485",
+      "decision": "accepted-with-limitations",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The green filament network, the pinkish-grey surfaces and the smooth green lower-right region correspond closely. FPT is slightly more saturated; the fine structure and layout match.",
+      "source_sha256": "6e3674459bf0dde8766d1e9b132d35fb16f89d4c0e29db1fa7f031b13cf291cf",
+      "evidence_sha256": "ce4e38f30b7a95ed46668118a1c9c5411508913c89cbe76ebe26780effb2f1f2",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
+    },
+    {
+      "id": "469",
+      "decision": "accepted",
+      "geometry": "acceptable",
+      "illumination": "acceptable",
+      "note": "The copper pyramid with its ribbed underside and the olive-gold surrounding forms match the native reference in geometry, palette and lighting direction. The differences are limited to minor tone and noise.",
+      "source_sha256": "3c87f2e6ec4d9ba6c316c516e6919c0b4fa3dce3bb88b349f68cce2c80aa3446",
+      "evidence_sha256": "3c8e20d9ee5d70f23628f73094fd30878b3b238d1632139ee36e947c87f3985d",
+      "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+      "reviewed_at": "2026-09-27"
     }
   ]
 }

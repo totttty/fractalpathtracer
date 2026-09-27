@@ -1,0 +1,78 @@
+{
+ "version": 1,
+ "reviewed_at": "2026-09-27",
+ "reviewer": "Claude visual comparison of complete 300px authored native CPU / FPT neutral / FPT authored triplets",
+ "rows": [
+  {
+   "id": "182",
+   "decision": "accepted-with-limitations",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The hexagonal ring, the five ornamented nodes and the central node correspond exactly in the native, neutral and authored views. The ring gradient (magenta, blue, gold) and the shadows match. FPT renders the backdrop saturated orange instead of the native warm yellow; exact background colour parity is not claimed."
+  },
+  {
+   "id": "514",
+   "decision": "accepted-with-limitations",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The butterfly-shaped central form, the dark inner cavity and the scalloped red-gold rim correspond closely in all three views. FPT colour, contrast and rim highlights are very close to native; small differences in fine-detail brightness remain."
+  },
+  {
+   "id": "678",
+   "decision": "accepted",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The spiral arms, the magenta-studded bands and the teal surroundings match the native reference in layout, palette and brightness. The differences are limited to fine sampling noise."
+  },
+  {
+   "id": "680",
+   "decision": "accepted-with-limitations",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The blue petal structure and the orange-white central glow correspond in the native and authored views, and the neutral view confirms the geometry. FPT highlights on the outer petals are brighter and slightly more clipped. The native uses Monte Carlo global illumination, whose CPU brightness is recorded separately as over-counted; exact lighting parity is not claimed."
+  },
+  {
+   "id": "489",
+   "decision": "accepted-with-limitations",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The block-city floor, the overhanging slabs and the vertical seam at the image centre (present in the native as well) correspond. FPT is darker and browner than the native, and the native fog haze is weaker in FPT. The principal forms remain readable."
+  },
+  {
+   "id": "477",
+   "decision": "accepted-with-limitations",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The cogwheel rings, the pink central body and the surrounding pale surfaces correspond closely. FPT is slightly brighter and less grainy than the native, with a similar pink and cream palette."
+  },
+  {
+   "id": "443",
+   "decision": "accepted-with-limitations",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The triangular spires, the green lattice and the dark background correspond. FPT greens are brighter and more saturated, and a few thin white streaks appear near the top-left edge. The overall appearance remains readable."
+  },
+  {
+   "id": "561",
+   "decision": "needs-work",
+   "geometry": "acceptable",
+   "illumination": "needs-work",
+   "note": "The twisted tendril forms correspond in all three views, so geometry is acceptable. The native scene has a blue-grey sky and haze behind bronze tendrils; FPT renders the whole frame in warm orange-brown with no blue backdrop. The missing background and atmosphere change the appearance materially."
+  },
+  {
+   "id": "485",
+   "decision": "accepted-with-limitations",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The green filament network, the pinkish-grey surfaces and the smooth green lower-right region correspond closely. FPT is slightly more saturated; the fine structure and layout match."
+  },
+  {
+   "id": "469",
+   "decision": "accepted",
+   "geometry": "acceptable",
+   "illumination": "acceptable",
+   "note": "The copper pyramid with its ribbed underside and the olive-gold surrounding forms match the native reference in geometry, palette and lighting direction. The differences are limited to minor tone and noise."
+  }
+ ],
+ "evidence_sha256": "6e7cce6df5aaf3b5d049220fe2998b05ec9994bcfd9824080d3b4f39519d3430"
+}

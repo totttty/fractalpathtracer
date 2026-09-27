@@ -802,6 +802,12 @@ Central overhanging rock and distant terrain are recognisable, but native snowy 
 
 The interlocking smooth ribs and two raised tips match the neutral control, but authored FPT clips a large central/upper area to white and loses the native surrounding soft light. Important surface relief is obscured.
 
+## [561: xenodreambuie2](561.md)
+
+[![Native / FPT authored](images/561-thumb.webp)](561.md)
+
+The twisted tendril forms correspond in all three views, so geometry is acceptable. The native scene has a blue-grey sky and haze behind bronze tendrils; FPT renders the whole frame in warm orange-brown with no blue backdrop. The missing background and atmosphere change the appearance materially.
+
 ## [567: IFS31_anim](567.md)
 
 [![Native / FPT authored](images/567-thumb.webp)](567.md)
