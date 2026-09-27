@@ -5,6 +5,7 @@ import copy
 import json
 from pathlib import Path
 import re
+import shutil
 import textwrap
 
 from PIL import Image, ImageDraw
@@ -89,11 +90,15 @@ def assemble(ranked, additional, refresh, catalog, ranked_manifest, additional_m
     return dict(version=1,scope='Capture-specific visual review, not whole-corpus current-binary validation or NAADF/CVOX certification.',rows=portable), dict(rows=local)
 
 
-def validate_assets(evidence, assets):
+def validate_assets(evidence, assets, partial=False):
+    """Hash-check raw captures. Partial maps cover only rows whose raw captures are still local."""
     local = {r['id']:r for r in assets['rows']}
-    if len(local) != len(assets['rows']) or set(local) != {r['id'] for r in evidence['rows']}:
+    ids = {r['id'] for r in evidence['rows']}
+    if len(local) != len(assets['rows']) or not (set(local) <= ids if partial else set(local) == ids):
         raise ValueError('asset map does not match evidence')
     for row in evidence['rows']:
+        if row['id'] not in local:
+            continue
         for mode in MODES:
             path = Path(local[row['id']]['paths'][mode])
             if sha256(path) != row['captures'][mode]['sha256']:
@@ -140,7 +145,7 @@ def record_assessment(assessment, evidence, legacy, evidence_hash, existing=None
 
 def append_batch(evidence, assets, batch, catalog, revision):
     """Preserve accepted evidence verbatim and append only complete new triplets."""
-    validate_assets(evidence,assets)
+    validate_assets(evidence,assets,partial=True)
     from mandel_catalog import matching_rows
     sources=source_index(catalog['scenes'])
     expected=matching_rows(batch['identity']['manifest']['scenes'],sources)
@@ -175,12 +180,25 @@ def append_batch(evidence, assets, batch, catalog, revision):
     return combined,paths,dict(scope='Incomplete triplets remain unpromoted; failures are not hidden or counted as visually reviewed.',rows=held)
 
 
-def publish(catalog, reviews, evidence, assets, output):
+def published_images(previous):
+    """Images of a committed showcase, each checked against that showcase's manifest."""
+    manifest = json.loads((previous/'manifest.json').read_text())
+    images = {}
+    for name, digest in manifest['files'].items():
+        if name.startswith('images/'):
+            if sha256(previous/name) != digest:
+                raise ValueError('previous showcase image changed since publication: '+name)
+            images[name] = previous/name
+    return images
+
+
+def publish(catalog, reviews, evidence, assets, output, previous=None):
     sources = source_index(catalog['scenes'])
     decisions, proofs = validate_reviews(reviews,evidence,sources)
     if set(decisions) != set(proofs):
         raise ValueError('publication requires a decision for every captured row')
-    local = validate_assets(evidence,assets)
+    local = validate_assets(evidence,assets,partial=previous is not None)
+    prior = published_images(previous) if previous is not None else {}
     output.mkdir(parents=True,exist_ok=False)
     (output/'images').mkdir()
     accepted, held = [], []
@@ -188,24 +206,31 @@ def publish(catalog, reviews, evidence, assets, output):
         row, review = sources[key], decisions[key]
         entry = (row,review,proof)
         (held if review['decision']=='needs-work' else accepted).append(entry)
-        height = max(proof['dimensions'][1],100)
-        canvas = Image.new('RGB',(900,height+28),'#202326')
-        draw = ImageDraw.Draw(canvas)
-        names = ('Native CPU reference','FPT neutral geometry','FPT authored path')
-        for col,mode in enumerate(MODES):
-            with Image.open(local[row['id']]['paths'][mode]) as source:
-                im = source.convert('RGB')
-            if mode=='mandel' and proof['native_reference_reduced']:
-                im = im.resize(tuple(proof['dimensions']),Image.Resampling.NEAREST)
-            canvas.paste(im,(col*300+(300-im.width)//2,28+(height-im.height)//2))
-            draw.text((col*300+8,8),names[col],fill='white')
-        canvas.save(output/'images'/f'{row["id"]}.png',optimize=True)
-        pair = Image.new('RGB',(360,120),'#202326')
-        for col,mode in enumerate(('mandel','authored')):
-            with Image.open(local[row['id']]['paths'][mode]) as source:
-                im=source.convert('RGB');im.thumbnail((178,120))
-            pair.paste(im,(col*180+(180-im.width)//2,(120-im.height)//2))
-        pair.save(output/'images'/f'{row["id"]}-thumb.webp',quality=85)
+        if row['id'] in local:
+            height = max(proof['dimensions'][1],100)
+            canvas = Image.new('RGB',(900,height+28),'#202326')
+            draw = ImageDraw.Draw(canvas)
+            names = ('Native CPU reference','FPT neutral geometry','FPT authored path')
+            for col,mode in enumerate(MODES):
+                with Image.open(local[row['id']]['paths'][mode]) as source:
+                    im = source.convert('RGB')
+                if mode=='mandel' and proof['native_reference_reduced']:
+                    im = im.resize(tuple(proof['dimensions']),Image.Resampling.NEAREST)
+                canvas.paste(im,(col*300+(300-im.width)//2,28+(height-im.height)//2))
+                draw.text((col*300+8,8),names[col],fill='white')
+            canvas.save(output/'images'/f'{row["id"]}.png',optimize=True)
+            pair = Image.new('RGB',(360,120),'#202326')
+            for col,mode in enumerate(('mandel','authored')):
+                with Image.open(local[row['id']]['paths'][mode]) as source:
+                    im=source.convert('RGB');im.thumbnail((178,120))
+                pair.paste(im,(col*180+(180-im.width)//2,(120-im.height)//2))
+            pair.save(output/'images'/f'{row["id"]}-thumb.webp',quality=85)
+        else:
+            # raw captures are gone; reuse the images published from them, verified by hash
+            for name in (f'images/{row["id"]}.png', f'images/{row["id"]}-thumb.webp'):
+                if name not in prior:
+                    raise ValueError('no raw captures or verified published image for '+row['id'])
+                shutil.copy2(prior[name], output/name)
         lines=[f'# {row["id"]}: {row["name"]}', '', '[Reviewed gallery](README.md) | [Needs-work audit](needs-work.md) | [Full catalogue](../mandel-catalog/README.md)', '',
             f'**{review["decision"]}**. {review["note"]}', '', f'![Native reference / FPT neutral / FPT authored](images/{row["id"]}.png)', '',
             f'FPT: {proof["dimensions"][0]}x{proof["dimensions"][1]}, 32 SPP; {proof["bounces"]}.',
@@ -265,6 +290,7 @@ def publish(catalog, reviews, evidence, assets, output):
     return manifest
 
 
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest='command',required=True)
@@ -276,6 +302,7 @@ def main():
     p=sub.add_parser('publish')
     for key in ('evidence','reviews','assets','output'):
         p.add_argument('--'+key,type=Path,required=True)
+    p.add_argument('--previous',type=Path,help='Committed showcase whose verified images stand in for raw captures no longer on disk')
     preview=sub.add_parser('preview',help='Contact sheets for refreshed rows before visual decisions')
     for key in ('evidence','assets','output'):
         preview.add_argument('--'+key,type=Path,required=True)
@@ -323,7 +350,7 @@ def main():
         args.output.mkdir(parents=True,exist_ok=False)
         sheets(dict(rows=rows,gallery_title='REFRESH REVIEW | Native CPU / FPT geometry / FPT authored | 300px max edge, 32 FPT SPP'),args.output)
     else:
-        result=publish(read(args.catalog),read(args.reviews),read(args.evidence),read(args.assets),args.output)
+        result=publish(read(args.catalog),read(args.reviews),read(args.evidence),read(args.assets),args.output,args.previous)
         print(json.dumps({k:v for k,v in result.items() if k!='files'},indent=2))
 
 

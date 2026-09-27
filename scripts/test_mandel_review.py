@@ -86,6 +86,31 @@ class VisualReviewTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'hash mismatch'):
                 validate_assets(evidence,assets)
 
+    def test_republish_reuses_verified_images_when_raw_captures_are_gone(self):
+        cat,reviews,evidence=fixture()
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            paths={}
+            for i,mode in enumerate(('mandel','geometry','authored')):
+                path=root/f'{mode}.png'
+                Image.new('RGB',(300,225),(i*40+10,25,30)).save(path)
+                paths[mode]=str(path)
+                evidence['rows'][0]['captures'][mode]['sha256']=sha256(path)
+            reviews['rows'][0]['evidence_sha256']=evidence_digest(evidence['rows'][0])
+            publish(cat,reviews,evidence,dict(rows=[dict(id='051',paths=paths)]),root/'first')
+            # raw captures deleted: only the published showcase remains
+            for path in paths.values():
+                Path(path).unlink()
+            with self.assertRaisesRegex(ValueError,'asset map'):
+                publish(cat,reviews,evidence,dict(rows=[]),root/'strict')
+            result=publish(cat,reviews,evidence,dict(rows=[]),root/'second',previous=root/'first')
+            self.assertEqual(result['reviewed'],1)
+            for name in ('images/051.png','images/051-thumb.webp'):
+                self.assertEqual(sha256(root/'second'/name),sha256(root/'first'/name))
+            (root/'first/images/051.png').write_bytes(b'tampered')
+            with self.assertRaisesRegex(ValueError,'changed since publication'):
+                publish(cat,reviews,evidence,dict(rows=[]),root/'third',previous=root/'first')
+
     def test_append_batch_preserves_old_evidence_and_requires_complete_modes(self):
         cat,_,evidence=fixture()
         evidence['rows'][0]['upstream_revision']='f'*40
@@ -115,6 +140,9 @@ class VisualReviewTests(unittest.TestCase):
             self.assertEqual(combined['rows'][0],evidence['rows'][0])
             self.assertEqual(combined['rows'][1]['id'],'052')
             self.assertEqual(held['rows'],[])
+            # prior rows whose raw captures are gone may be omitted from the asset map
+            _,partial,_=append_batch(evidence,dict(rows=[]),report,cat,'c'*40)
+            self.assertEqual([r['id'] for r in partial['rows']],['052'])
             report['identity']['settings']['native_mc_samples']=16
             with self.assertRaisesRegex(ValueError,'screening-only'):
                 append_batch(evidence,assets,report,cat,'c'*40)
