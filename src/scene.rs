@@ -213,7 +213,7 @@ pub struct RenderArgs {
 }
 
 impl RenderArgs {
-    fn new(scene_path: impl Into<PathBuf>) -> Self {
+    pub(crate) fn new(scene_path: impl Into<PathBuf>) -> Self {
         Self {
             scene_path: scene_path.into(),
             out_dir: "renders".into(),

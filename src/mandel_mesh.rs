@@ -1,12 +1,12 @@
-use anyhow::{Context, Result, anyhow, bail, ensure};
-use fpt_metal::fptvox7::{
+use crate::fptvox7::{
     MeshSurfaceVertex, aspect_resolutions, build_triangle_surface_from_normalized_mesh,
     build_triangle_surface_from_normalized_mesh_3d,
 };
-use fpt_metal::{
+use crate::{
     Aabb, CoordinateSystem, FptvoxTriangleSurface, SparseVoxel, SurfaceMaterial, VoxelCell,
     VoxelGrid,
 };
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs;

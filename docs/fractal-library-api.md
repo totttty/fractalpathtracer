@@ -2,8 +2,75 @@
 
 FPT Metal exposes a Rust library for scene parsing, deterministic reference
 voxelization, exact voxel payload interchange, `.fptvox`, and GLB export. Real
-Mandelbulber `.fract` files use the CLI adapter because their authoritative
-evaluator is the existing generated Metal program, not a second CPU port.
+Mandelbulber `.fract` files use the production `runtime::Runtime` API or the CLI;
+both call the same generated Metal evaluator and artifact implementation.
+
+## Production runtime
+
+`runtime::Runtime` exposes `prepare`, `render`, `export`, and `build_bundle`.
+Requests are serializable, reject unknown fields, and pin the source SHA-256.
+`SceneSource` requires absolute scene and Mandelbulber-resource paths.
+`PreparedRender` keeps the generated scene private; callers do not construct
+Metal bridge structs. Source identity is checked again before rendering.
+
+```rust,no_run
+use fpt_metal::runtime::{Runtime, RenderRequest};
+# fn main() -> anyhow::Result<()> {
+let request: RenderRequest = serde_json::from_slice(&std::fs::read("request.json")?)?;
+let runtime = Runtime;
+let receipt = runtime.render(runtime.prepare(&request)?)?;
+println!("{} {}", receipt.path.display(), receipt.sha256);
+# Ok(()) }
+```
+
+For non-Rust consumers, `cargo build --release --locked --example scene_worker`
+builds a small process adapter linked to this library:
+
+```sh
+target/release/examples/scene_worker bundle request.json receipt.json
+```
+
+The adapter accepts `render`, `export`, or `bundle`. It does not launch the
+legacy CLI. A bundle request has this shape (replace the example identity):
+
+```json
+{
+  "source": {
+    "path": "/absolute/scene.fract",
+    "sha256": "<64 hex characters>",
+    "mandelbulber_root": "/absolute/mandelbulber2"
+  },
+  "output_directory": "/absolute/new-bundle",
+  "geometry": {
+    "kind": "authored_surface",
+    "resolution": 384,
+    "maximum_axis": 300,
+    "path_bounces": 0
+  }
+}
+```
+
+`authored_surface` fits bounds to captured geometry and produces indexed BVH
+FPTVOX11 with ray-consistent splats. Its scope is **authored view**, including
+the requested captured path bounces; it cannot certify arbitrary-view or
+secondary-ray completeness. `bounded_cubes` instead requires an explicit
+`bounds` object with `min`/`max` triples and a resolution, and samples the
+generated field throughout that volume. It is not a conservative-occupancy proof.
+
+Automatic authored fitting encloses the finite captured hits, including hits
+outside the generic `[-4, 4]` sampling box. The CLI preserves clipping when
+`--bounds-min`, `--bounds-max`, or `--surface-view-clip-bounds` is explicitly
+supplied. A disjoint fitted/explicit domain is rejected before triangulation.
+View exports write a `.geometry.json` sidecar with captured/effective bounds,
+finite hits, out-of-bounds hits, and reconstruction counts before constructing
+the artifact. FPTVOX11 bundle manifests also embed these diagnostics.
+
+`manifest.json` is written last. Geometry and scene metadata have relative paths,
+SHA-256 hashes and byte sizes. The metadata preserves camera, materials,
+environment settings and the generated light table. Consumers must inspect
+`required_consumer_extensions`; successful export never grants visual acceptance.
+Decoded environment data travels in the FPTVOX artifact. The consumer needs no
+original scene/resource checkout to load a completed bundle.
 
 ## Rust API
 
@@ -60,7 +127,7 @@ inspection.
 fixtures. It currently implements `BuiltinFractal::MengerSponge`, samples cell
 centres in X-fastest order, and applies the legacy half-diagonal surface-band
 rule. A `FractalScene::Mandelbulber` request returns
-`CpuReferenceUnavailable`; use the production CLI below. This avoids silently
+`CpuReferenceUnavailable`; use `runtime::Runtime` or the production CLI below. This avoids silently
 substituting a partial CPU evaluator for generated Mandelbulber formulas.
 
 ## Exact voxel payload
@@ -798,8 +865,10 @@ outlier sweep showed that reducing the cell cap to `0.30` or footprint scale to
 `0.65` lowered extra coverage but also lowered IoU for every outlier, so neither
 setting replaced the `0.85 / 0.45` defaults.
 
-`--surface-view-fit-bounds` is an explicit force mode that quantizes only the
-finite captured surface inside the requested domain. A full forced-fit sweep
+`--surface-view-fit-bounds` is an explicit force mode that quantizes the
+finite captured surface. Explicit caller bounds constrain this fit; the default
+sampling box does not. Before the September 2026 bounds correction, fitting
+also clamped to that default box. The earlier full forced-fit sweep
 reduced median authored-view IoU from `0.889` to `0.784`, so it is not a cohort
 default. `--surface-view-auto-fit-bounds` is the retained guarded form. It
 selects fitted bounds only when the largest captured extent is at most `1%` of

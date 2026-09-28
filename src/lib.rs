@@ -13,11 +13,15 @@ pub mod fptvox;
 pub mod fptvox7;
 #[doc(hidden)]
 pub mod mandelbulber;
+pub mod runtime;
+mod runtime_impl;
 #[doc(hidden)]
 pub mod scene;
 #[doc(hidden)]
 pub mod tools;
 pub mod voxel;
+#[doc(hidden)]
+pub use runtime_impl::run_cli;
 
 pub use fptvox::{
     FPTVOX_APPEARANCE_AUX_LIGHT_ENABLED, FPTVOX_APPEARANCE_AUX_LIGHT_SHADOWS,

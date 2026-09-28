@@ -338,6 +338,12 @@ Apache-2.0 repository does not vendor the upstream generated formula corpus.
 
 ### Rust library and portable voxel export
 
+The production [`runtime::Runtime`](docs/fractal-library-api.md#production-runtime)
+API renders and exports real Mandelbulber scenes through the same implementation
+as the CLI. Typed source-pinned requests can produce portable scene bundles for
+NAADF. `examples/scene_worker.rs` supplies a library-linked process adapter for
+non-Rust hosts; completed bundles are ordinary viewer assets.
+
 The crate exposes serializable fractal requests, the exact 12-byte Metal
 `VoxelCell`, sparse `VoxelGrid` volumes, a deterministic built-in CPU reference
 voxelizer, and a greedy-meshed GLB encoder. Real `.fract` scenes retain their
