@@ -124,6 +124,14 @@ pub struct MandelbulberMaterial {
     pub transparency_of_interior: f64,
     pub index_of_refraction: f64,
     pub transparency_interior_color: [f32; 3],
+    /// `matN_transparency_color`; tints the transmitted part (white default).
+    pub transparency_color: [f32; 3],
+    /// `matN_reflections_color`; with `reflectance` it weights the mirror
+    /// share of a transparent surface (white default).
+    pub reflections_color: [f32; 3],
+    /// `matN_fresnel_reflectance`; with it native transmits
+    /// transparency * (1 - Fresnel reflectance) instead of transparency.
+    pub fresnel_reflectance: bool,
     pub luminosity: f64,
     /// `matN_luminosity_color`; white by default (initparameters.cpp).
     pub luminosity_color: [f32; 3],
@@ -140,6 +148,29 @@ impl MandelbulberMaterial {
     /// when both the palette and the luminosity gradient are enabled.
     pub fn uses_luminosity_gradient(&self) -> bool {
         self.use_colors_from_palette && self.luminosity_gradient_enabled
+    }
+
+    /// Generated Metal assignments for authored surface transparency. Empty
+    /// for opaque materials so their generated source is unchanged.
+    pub fn transmission_source(&self) -> String {
+        if !(self.transparency_of_surface > 0.0) {
+            return String::new();
+        }
+        let t = self.transparency_color.map(|channel| channel.max(0.0));
+        let reflectance = self.reflectance.clamp(0.0, 1.0) as f32;
+        let r = self
+            .reflections_color
+            .map(|channel| channel.max(0.0) * reflectance);
+        format!(
+            " material.transmission_rgb = float3({:.9e}f, {:.9e}f, {:.9e}f); material.reflection_rgb = float3({:.9e}f, {:.9e}f, {:.9e}f); material.fresnel_transparency = {};",
+            t[0],
+            t[1],
+            t[2],
+            r[0],
+            r[1],
+            r[2],
+            if self.fresnel_reflectance { "1.0f" } else { "0.0f" }
+        )
     }
 
     /// `luminosity * luminosity_color`, the non-gradient emission branch.
@@ -818,6 +849,23 @@ fn parse_material(document: &FractDocument, material_id: u32) -> Result<Mandelbu
             1.5,
         )?,
         transparency_interior_color,
+        transparency_color: document
+            .value("main_parameters", &key("transparency_color"))
+            .map(parse_rgb16)
+            .transpose()
+            .with_context(|| format!("invalid {prefix}transparency_color"))?
+            .unwrap_or([1.0; 3]),
+        reflections_color: document
+            .value("main_parameters", &key("reflections_color"))
+            .map(parse_rgb16)
+            .transpose()
+            .with_context(|| format!("invalid {prefix}reflections_color"))?
+            .unwrap_or([1.0; 3]),
+        fresnel_reflectance: document.boolean(
+            "main_parameters",
+            &key("fresnel_reflectance"),
+            false,
+        )?,
         luminosity: document.number("main_parameters", &key("luminosity"), 0.0)?,
         luminosity_color: document
             .value("main_parameters", &key("luminosity_color"))

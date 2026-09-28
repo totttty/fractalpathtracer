@@ -1014,7 +1014,8 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
         let assignment = if let Some(material) = fixed_material {
             let c = material.surface_color.map(metal_float);
             format!(
-                "            material.rgb = float3({r},{g},{b});\n            material.roughness = {roughness}; material.specular = {specular};\n            material.translucency = {translucency}; material.ior = {ior}; material.emission = 0.0f;{emission_source}",
+                "            material.rgb = float3({r},{g},{b});\n            material.roughness = {roughness}; material.specular = {specular};\n            material.translucency = {translucency}; material.ior = {ior}; material.emission = 0.0f;{emission_source}{transmission}",
+                transmission = material.transmission_source(),
                 r = c[0],
                 g = c[1],
                 b = c[2],
@@ -1130,7 +1131,7 @@ static Material mandelbulberGeneratedMaterial(float3 p,
     material.specular = cfg.fractal_style[5];
     material.translucency = {translucency};
     material.ior = {ior};
-{fractal_emission}{plane_materials}
+{fractal_transmission}{fractal_emission}{plane_materials}
 #ifdef FPT_MANDEL_BOX
     material = mandelbulberBoxMaterial(p, cfg, material);
 #endif
@@ -1144,6 +1145,10 @@ static Material mandelbulberGeneratedMaterial(float3 p,
         luminosity_gradient = luminosity_gradient_source(scene),
         surface_color = surface_color,
         fractal_emission = fractal_emission,
+        fractal_transmission = {
+            let source = scene.material.transmission_source();
+            if source.is_empty() { source } else { format!("   {source}\n") }
+        },
         base_r = base[0],
         base_g = base[1],
         base_b = base[2],
@@ -7507,6 +7512,30 @@ target 0 0 0;
         let source = mandelbulber_palette_source(&scene);
         assert!(source.contains("material.emission_rgb = float3(3.0f,3.0f,3.0f);"));
         assert!(!source.contains("kMandelLuminosityGradient"));
+    }
+
+    #[test]
+    fn transparent_materials_carry_transmission_and_reflection_colours() {
+        // Opaque scenes generate no transmission assignments at all.
+        let opaque = MandelbulberScene::parse(COLOR_SCENE).unwrap();
+        assert!(!mandelbulber_palette_source(&opaque).contains("transmission_rgb"));
+        assert!(opaque.material.transmission_source().is_empty());
+
+        let scene = MandelbulberScene::parse(&COLOR_SCENE.replace(
+            "[main_parameters]",
+            "[main_parameters]\nmat1_transparency_of_surface 1;\nmat1_transparency_color ffff 8000 0000;\nmat1_reflectance 0,5;\nmat1_reflections_color 0000 ffff 0000;\nmat1_fresnel_reflectance true;\nprimitive_sphere_1_enabled true;\nprimitive_sphere_1_material_id 2;\nmat2_is_defined true;\nmat2_use_colors_from_palette false;",
+        ))
+        .unwrap();
+        assert_eq!(scene.material.transparency_color, [1.0, 32768.0 / 65535.0, 0.0]);
+        assert_eq!(scene.material.reflections_color, [0.0, 1.0, 0.0]);
+        assert!(scene.material.fresnel_reflectance);
+        let source = mandelbulber_palette_source(&scene);
+        assert_eq!(source.matches("material.transmission_rgb = ").count(), 1);
+        assert!(source.contains(
+            "material.reflection_rgb = float3(0.000000000e0f, 5.000000000e-1f, 0.000000000e0f); material.fresnel_transparency = 1.0f;"
+        ));
+        // The opaque sphere material resets translucency, so it needs none.
+        assert!(scene.materials[&2].transmission_source().is_empty());
     }
 
     #[test]

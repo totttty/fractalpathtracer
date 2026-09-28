@@ -189,7 +189,7 @@ static float mandelbulberPrimitiveUnionDistance(float3 p, constant FptRenderConf
         )?;
         writeln!(
             materials,
-            "        material.rgb = {}; material.roughness = {}; material.specular = {}; material.translucency = {}; material.ior = {}; material.emission = 0.0f;{} }} }}",
+            "        material.rgb = {}; material.roughness = {}; material.specular = {}; material.translucency = {}; material.ior = {}; material.emission = 0.0f;{}{} }} }}",
             vector(material.surface_color.map(f64::from))?,
             number(material.surface_roughness.max(0.0).sqrt().clamp(0.0, 1.0))?,
             number(
@@ -206,7 +206,8 @@ static float mandelbulberPrimitiveUnionDistance(float3 p, constant FptRenderConf
                     vector(emission.map(f64::from))?
                 ),
                 None => String::new(),
-            }
+            },
+            material.transmission_source()
         )?;
     }
     writeln!(

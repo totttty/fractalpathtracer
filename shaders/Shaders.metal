@@ -338,6 +338,12 @@ struct Material {
     // Absolute RGB radiance, not scaled by rgb. Mandelbulber luminosity uses
     // luminosity_color or its luminosity gradient rather than the albedo.
     float3 emission_rgb;
+    // Authored surface transparency (Mandelbulber transparency_color,
+    // reflectance * reflections_color and fresnel_reflectance). Only read by
+    // the authored path when translucency > 0.
+    float3 transmission_rgb;
+    float3 reflection_rgb;
+    float fresnel_transparency;
 };
 
 struct SDFResult {
@@ -441,6 +447,9 @@ static Material defaultMaterial() {
     m.ior = 1.5f;
     m.emission = 0.0f;
     m.emission_rgb = float3(0.0f);
+    m.transmission_rgb = float3(1.0f);
+    m.reflection_rgb = float3(0.0f);
+    m.fresnel_transparency = 0.0f;
     return m;
 }
 
@@ -7075,56 +7084,143 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
         if (cfg.mandel_appearance_mode == 1u) {
             return mandelbulberCompatibilitySurface(rp, n, dr, material, cfg);
         }
-        if (material.emission > 0.001f) {
-            pixellight += authored_path
-                ? pixelcolor * material.rgb * material.emission
-                : material.rgb * material.emission;
-        }
-        if (any(material.emission_rgb > float3(0.0f))) {
-            pixellight += authored_path
-                ? pixelcolor * material.emission_rgb
-                : material.emission_rgb;
-        }
-
+        // Mandelbulber composites a transparent surface as
+        //   R*rd*reflected + (1 - R*avg(rd)) * (T*transmitted + (1 - T)*surface)
+        // with rd = reflectance * reflections_color, R = Fresnel reflectance
+        // (1 without fresnel_reflectance) and T = transparency * (1 - R) with
+        // Fresnel, else transparency (render_worker.cpp, ray_recursion.cl).
+        // Surface terms are weighted deterministically; the continuation below
+        // picks reflection / transmission / surface with those weights.
+        // Opaque materials keep the original code verbatim.
+        const bool authored_transparent = authored_path && material.translucency > 0.0f;
+        float reflect_probability = 0.0f;
+        float transmit_probability = 0.0f;
+        if (authored_transparent) {
+            float3 facing = side == 1.0f ? n : -n;
+            float f0 = pow((material.ior - 1.0f) / (material.ior + 1.0f), 2.0f);
+            float cosTheta = clamp(dot(facing, -dr), 0.0f, 1.0f);
+            float fresnel = f0 + (1.0f - f0) * pow5(1.0f - cosTheta);
+            bool use_fresnel = material.fresnel_transparency != 0.0f;
+            float reflectance = use_fresnel ? fresnel : 1.0f;
+            float reflected_share = clamp(reflectance *
+                (material.reflection_rgb.x + material.reflection_rgb.y + material.reflection_rgb.z) / 3.0f,
+                0.0f, 1.0f);
+            float transmitted = material.translucency * (use_fresnel ? 1.0f - fresnel : 1.0f);
+            reflect_probability = reflected_share;
+            transmit_probability = (1.0f - reflected_share) * transmitted;
+            const float3 surface_pixelcolor =
+                pixelcolor * ((1.0f - reflected_share) * (1.0f - transmitted));
+            // Direct light is evaluated at full strength for the surface part.
+            Material lit = material;
+            lit.translucency = 0.0f;
+            if (material.emission > 0.001f) {
+                pixellight += surface_pixelcolor * material.rgb * material.emission;
+            }
+            pixellight += surface_pixelcolor * material.emission_rgb;
 #if defined(FPT_MANDEL_GENERATED_AMBIENT)
-        if (authored_path && i == 0) {
-            bool ambientValid;
-            float3 ambient = mandelAuthoredAmbient(rp, cfg, ambientValid);
-            if (!ambientValid) return float3(8.0f, 0.0f, 8.0f);
-            pixellight += material.rgb * ambient;
-        }
+            if (i == 0) {
+                bool ambientValid;
+                float3 ambient = mandelAuthoredAmbient(rp, cfg, ambientValid);
+                if (!ambientValid) return float3(8.0f, 0.0f, 8.0f);
+                pixellight += surface_pixelcolor * material.rgb * ambient;
+            }
 #else
-        if (authored_path && cfg.mandel_appearance[0] != 0.0f) {
-            const float ambient_strength = clamp(
-                cfg.mandel_appearance[1] * 0.08f, 0.0f, 1.0f);
-            pixellight += pixelcolor * material.rgb * ambient_strength;
-        }
+            if (cfg.mandel_appearance[0] != 0.0f) {
+                const float ambient_strength = clamp(
+                    cfg.mandel_appearance[1] * 0.08f, 0.0f, 1.0f);
+                pixellight += surface_pixelcolor * material.rgb * ambient_strength;
+            }
 #endif
-
-        if (cfg.sun[0] == 1.0f) {
-            const float3 direct = sunContributionWithSurface(rp, xy, frame, material, n, cfg);
-            pixellight += authored_path ? pixelcolor * material.rgb * direct : direct;
-        }
+            if (cfg.sun[0] == 1.0f) {
+                pixellight += surface_pixelcolor * material.rgb *
+                    sunContributionWithSurface(rp, xy, frame, lit, n, cfg);
+            }
 #if defined(FPT_MANDEL_AUX_DIRECTIONAL)
-        if (authored_path) {
-            pixellight += pixelcolor * material.rgb * mandelAuxDirectionalContribution(rp, n, material, cfg);
-        }
+            pixellight += surface_pixelcolor * material.rgb *
+                mandelAuxDirectionalContribution(rp, n, lit, cfg);
 #endif
 #if defined(FPT_MANDEL_AUX_POINT)
-        if (authored_path) {
-            pixellight += pixelcolor * material.rgb * mandelAuxPointContribution(rp, n, material, cfg);
-        }
+            pixellight += surface_pixelcolor * material.rgb *
+                mandelAuxPointContribution(rp, n, lit, cfg);
 #endif
 #if defined(FPT_MANDEL_FAKE_LIGHTS)
-        // Orbit lights are a compatibility shading effect, not physical emitters.
-        // Do not invent diffuse GI from them when it is disabled in the source.
-        if (authored_path && (i == 0 || mandelFakeIndirect)) {
-            pixellight += pixelcolor * material.rgb * mandelFakeLightContribution(rp,n,cfg);
-        }
+            if (i == 0 || mandelFakeIndirect) {
+                pixellight += surface_pixelcolor * material.rgb * mandelFakeLightContribution(rp,n,cfg);
+            }
 #endif
+        } else {
+            if (material.emission > 0.001f) {
+                pixellight += authored_path
+                    ? pixelcolor * material.rgb * material.emission
+                    : material.rgb * material.emission;
+            }
+            if (any(material.emission_rgb > float3(0.0f))) {
+                pixellight += authored_path
+                    ? pixelcolor * material.emission_rgb
+                    : material.emission_rgb;
+            }
+
+#if defined(FPT_MANDEL_GENERATED_AMBIENT)
+            if (authored_path && i == 0) {
+                bool ambientValid;
+                float3 ambient = mandelAuthoredAmbient(rp, cfg, ambientValid);
+                if (!ambientValid) return float3(8.0f, 0.0f, 8.0f);
+                pixellight += material.rgb * ambient;
+            }
+#else
+            if (authored_path && cfg.mandel_appearance[0] != 0.0f) {
+                const float ambient_strength = clamp(
+                    cfg.mandel_appearance[1] * 0.08f, 0.0f, 1.0f);
+                pixellight += pixelcolor * material.rgb * ambient_strength;
+            }
+#endif
+
+            if (cfg.sun[0] == 1.0f) {
+                const float3 direct = sunContributionWithSurface(rp, xy, frame, material, n, cfg);
+                pixellight += authored_path ? pixelcolor * material.rgb * direct : direct;
+            }
+#if defined(FPT_MANDEL_AUX_DIRECTIONAL)
+            if (authored_path) {
+                pixellight += pixelcolor * material.rgb * mandelAuxDirectionalContribution(rp, n, material, cfg);
+            }
+#endif
+#if defined(FPT_MANDEL_AUX_POINT)
+            if (authored_path) {
+                pixellight += pixelcolor * material.rgb * mandelAuxPointContribution(rp, n, material, cfg);
+            }
+#endif
+#if defined(FPT_MANDEL_FAKE_LIGHTS)
+            // Orbit lights are a compatibility shading effect, not physical emitters.
+            // Do not invent diffuse GI from them when it is disabled in the source.
+            if (authored_path && (i == 0 || mandelFakeIndirect)) {
+                pixellight += pixelcolor * material.rgb * mandelFakeLightContribution(rp,n,cfg);
+            }
+#endif
+        }
+
         float r1 = hash13(float3(xy, frame * 1.37f + float(i)));
         float r2 = hash13(float3(xy, frame * 7.91f + float(i)));
-        if (r1 > material.translucency) {
+        if (authored_transparent && r1 < reflect_probability) {
+            // Mirror reflection, weighted rd / avg(rd).
+            if (side != 1.0f) n = -n;
+            float average = (material.reflection_rgb.x + material.reflection_rgb.y +
+                material.reflection_rgb.z) / 3.0f;
+            dr = normalize(reflect(dr, n));
+            pixelcolor *= material.reflection_rgb / max(average, 1.0e-6f);
+        } else if (authored_transparent && r1 < reflect_probability + transmit_probability) {
+            // Transmitted part: refract (total internal reflection reflects)
+            // and tint by the authored transparency colour.
+            float eta = side == 1.0f ? 1.0f / material.ior : material.ior;
+            if (side != 1.0f) n = -n;
+            float3 refracted = refract(dr, n, eta);
+            if (dot(refracted, refracted) < 0.000001f || !isfinite(refracted.x)) {
+                dr = normalize(reflect(dr, n));
+            } else {
+                dr = normalize(refracted);
+                side *= -1.0f;
+                pixelcolor *= material.transmission_rgb;
+            }
+        } else if (authored_transparent || r1 > material.translucency) {
             float3 metal = reflect(dr, n);
             float3 diffuse = randomVector(n, xy, frame * 13.37f + float(i));
             float f0 = pow((material.ior - 1.0f) / (material.ior + 1.0f), 2.0f);
