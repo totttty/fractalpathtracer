@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "date": "2026-09-14",
+  "scope": "FPT production library and offline NAADF scene-bundle integration; clean rendering of all accepted scenes remains unproven.",
+  "counts": {
+    "export": {
+      "passed": 389,
+      "failed": 38
+    },
+    "cubes": {
+      "rendered-needs-review": 389,
+      "not-run-export-failed": 38
+    },
+    "surface": {
+      "rendered-needs-review": 389,
+      "not-run-export-failed": 38
+    }
+  },
+  "accepted_fpt_scenes": 427,
+  "naadf_visual_promotions": 0,
+  "screening_settings": {
+    "maximum_axis": 96,
+    "samples": 1,
+    "bounces": 4,
+    "geometry_resolution": 192
+  },
+  "identities": {
+    "catalog_sha256": "f380181065de517cac6f98ca5d1fe30e46fa8cd58015740237377d24e4bbe5f2",
+    "worker_sha256": "8ebaa235632002013db862deee1448ea7c6b4224bed1ef48527aeb7a9c81e999",
+    "renderer": {
+      "executable": "a10c69ea5f8df19dcf8c48ee184ce7de3376374daebf68051524e3ba4c69ee0b",
+      "metal_libraries": {
+        "NaadfPathGlassPrefix.metallib": "bcfa13cc55a4c082bcd0eea663f5878f4062da01a087d987f3be48de0aab71b2",
+        "NaadfPathTransmissive.metallib": "25d39c365030e32f4ab8df1117e9a9f2ffde4372d76978ca9f59002073c25357",
+        "NaadfPathTransmissiveAbsorption.metallib": "3c38004749494f3119fbfdd521c8814b8a493a4628abfe51c675caf947987a8c",
+        "VoxelShaders.metallib": "c21dc4d212679af45fe90f9b20aaa6c14919c7b76fff7ee5f0f6bfc02e58129b"
+      }
+    },
+    "maximum_axis": 96,
+    "samples": 1,
+    "bounces": 4,
+    "resolution": 192,
+    "path_bounces": 0,
+    "refine_subdivisions": null,
+    "converter_sha256": null,
+    "verify_refinement": false
+  },
+  "failure_categories": {
+    "Error: view-triangle capture produced no connected surface triangles": 36,
+    "export timeout": 2
+  },
+  "failed_exports": [
+    {
+      "id": "02",
+      "path": "Sebastian Jennen collection - license Creative Commons  (CC-BY 4.0)/hybrid 03 - christmas ornaments.fract",
+      "source_sha256": "27d4cf989838051969d0d0df8ce84664ebecc8ec165f645c78efac8febc71888",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "04",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/DIFS Cylinder complex primitive.fract",
+      "source_sha256": "8e60def0f10c74a0e863033fd38925771f98794af6bdb02c7ed696f04486e21c",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "26",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf_kleinV2.fract",
+      "source_sha256": "9ac02395052160cd1c59f4ef7e48181d150d3111bbe26ca795b7162ff6bd61c5",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "27",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_juliaBox_bxFld_scale_mgrM1.fract",
+      "source_sha256": "1311e943edd381938d08251480137380f8d5bd96d768387eec4acf3e82b07cfb",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "30",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudoKleinianMod_4D.fract",
+      "source_sha256": "a4413dd119852ccd2ec9425ddcf85ba579e671e237592357d2e4104cc7c0546b",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "33",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pk3Abx15.fract",
+      "source_sha256": "1b2bb0128c18b93d993c1d53223727722e6dfd10904312ff91de62dd33783d97",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "40",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/orbitTraps 005.fract",
+      "source_sha256": "96e4bec4d5d7dcbd535a39058c26c87b060954ab8cb8b7c3229a8f485ef37928",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "47",
+      "path": "pseudo kleinian std de 001.fract",
+      "source_sha256": "243b5626d7777f9a188b30ac1768af2815a8793f7c1c03ae648203fa6ecb083d",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "50",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hex prism and chromatic.fract",
+      "source_sha256": "6969b43c486186e7aa218f13d20791a4e161403149e66f0a0cd020c0bb3c1dc1",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "145",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/TransfSphereCoordInv_bulbs.fract",
+      "source_sha256": "44c7647649fa3f40b9f33fc01bdaf8c25dffbf0b7fca6257c2509e363ee1e8cb",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "149",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/aboxMod1 V2.11.fract",
+      "source_sha256": "df2fb09a0f759c58db49174aace31a4708cf5abace8dac50852664fbcbe35507",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "159",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/aboxMod15_001.fract",
+      "source_sha256": "c7dc0a648dedae7e5d32ae6be47001ad0f31c5effc800eae2ddab0ed0f605ec1",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "161",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/aboxMod15cpixelInvert.fract",
+      "source_sha256": "3f4ebaa58cc33dd68702510392f77a44edec69233702444346211be345fc4eae",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "191",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf3_mandalay.fract",
+      "source_sha256": "e64ca4653686594332f1fb31ef294b637b9bf0d77814c0c165fe0e4fc4c4b178",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "195",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/asurf_foldingTetra.fract",
+      "source_sha256": "bfb3c9307bf5a574807552d925d9ec096b404085662f965f1551cd82913967bc",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "201",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/blockifyV2_PseudoKlien.fract",
+      "source_sha256": "800f36e11a116d42c667e51ed476c522afa44e8e5208046e6b5d2bf8f4b3519d",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "205",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/boxFoldBulb_v2.fract",
+      "source_sha256": "44ac456def086eac20de340e66735c0f8743bc8aafc27e6a097de61efbd0fd03",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "207",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/boxFoldBulb_v2_twice.fract",
+      "source_sha256": "3b61a5878c14577092103862b76f5b2577293ec06311758231a47576a131508f",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "208",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/boxFoldBulb_v3 iridescene.fract",
+      "source_sha256": "111483dd937c8368bd5f93b7f660bb139b2ae910cc0dfebba44942facfc77cef",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "214",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/collatz mod hybrid1.fract",
+      "source_sha256": "d6ffd17198ecb20cc5c07e09583119ace535ef89ac9ebcf750c0afd504bebe28",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "297",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/pseudo kleinian maxiter10.fract",
+      "source_sha256": "8a5d6e8ee86d63ca7a65f9ea2d1b0e9425030dd4113d58a134774da8dc3d5266",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "358",
+      "path": "Graeme McLaren  collection - license Creative Commons  (CC-BY 4.0)/transf_juliaBox.fract",
+      "source_sha256": "3b52cb110fa6bb2368eb29955df34caa3ba55ca0cdbfe90bd59f7f5a9727d3e2",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "380",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/GeneralizedFoldBox03_2.fract",
+      "source_sha256": "cabbb86e4cbe239cc2f857f44f1f6d5633be6c00a290c32c904289b51dc44f7a",
+      "reason": "export timeout"
+    },
+    {
+      "id": "388",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/IFS 26.fract",
+      "source_sha256": "aace6c14a051f0b1bfddfeb4ee034bf5c252babe4643ecd3d7ab1d142fa9e691",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "406",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/benesi03.fract",
+      "source_sha256": "de27655c312cbfd2ab7ade376d91c9932b9d0852b8f70c91892c8269a574c87c",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "418",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/constant factor 2.0  - mandelbox scale 2.0.fract",
+      "source_sha256": "0527cc1ae29bc889fba405175590d803020b5f31638adfdbec8cc8b740426b6f",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "438",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/hybrid25.fract",
+      "source_sha256": "6e363a2b81d9666933026a68efe1d016b8b9f4872c3aee800ba55a9012d8ab3c",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "474",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox18.fract",
+      "source_sha256": "e856694ce806fa293b5d17e2683d5ed1c06fbc82669b6c78dcc9b81c5dbd1b1c",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "475",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox19.fract",
+      "source_sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "493",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox41_2.fract",
+      "source_sha256": "e6207e855731af92390ec34cac005fa3018f254d1e525d6b107c7ab49be7f769",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "494",
+      "path": "Krzysztof Marczak collection - license Creative Commons (CC-BY 4.0)/mandelbox44_2.fract",
+      "source_sha256": "84095aa3b67825f6f2849157fd48c7c8524a31a283b4500e00d2de4e11cfea65",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "564",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/Abox4D8K.fract",
+      "source_sha256": "0ecf726405f28eab79d3a72c84f5e957aba683a3289f64d29ec49b1b9274b8f7",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "565",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/Caves-PseudoKleinianMod2.fract",
+      "source_sha256": "43bbc3fb3daeb2d6204bd5586d41fb7470b93363f633847b715d7fecb725f1e8",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "566",
+      "path": "Robert Pancoast collection - license Creative Commons (CC-BY 4.0)/Caves2-PseudoKleinianMod2.fract",
+      "source_sha256": "a13f80c744df9328b370eb62fb55643266e0aa1ce99b5690299c6fd70f04a27e",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "598",
+      "path": "aboxmod1_001.fract",
+      "source_sha256": "69001b86dd23432e2b25865cd4b3d81fcf8767085912cf86f460f66bbd48db88",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "627",
+      "path": "difs_tree.fract",
+      "source_sha256": "cfabe02513ba181611cf79f518986fa0874afecbe1198c5647aadc373cd290be",
+      "reason": "export timeout"
+    },
+    {
+      "id": "648",
+      "path": "hybrid008 - collatz.fract",
+      "source_sha256": "0978b0a13f2deb623fa3798de057c007a66255bc04db2c2ccb62b183fbb31e6c",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    },
+    {
+      "id": "734",
+      "path": "smooth_mandelbox_001.fract",
+      "source_sha256": "fead2e0c4e4a680e1ff082224b3905d839ee86dadd5d795135a2a747ad02d93a",
+      "reason": "Error: view-triangle capture produced no connected surface triangles"
+    }
+  ],
+  "pilot": {
+    "scenes": 12,
+    "exported": 11,
+    "rendered_cube_surface_refined": 11,
+    "maximum_axis": 300,
+    "samples": 32,
+    "bounces": 4,
+    "geometry_resolution": 384,
+    "refinement": 4,
+    "reviews": [
+      {
+        "id": "01",
+        "source_sha256": "fde8d0d0b9c328abcfcbb328a029420f769d764d9a00618712864cae205cb92e",
+        "decision": "needs-work",
+        "note": "Authored composition and colour retained; cube striping, surface noise and refined shadow artefacts remain."
+      },
+      {
+        "id": "03",
+        "source_sha256": "66e4f4628004100f0a89316b367a988293cd4f8b36d8488bcb4e88cb8782eb8f",
+        "decision": "needs-work",
+        "note": "Main layered form retained; brightness, face noise and small structures differ."
+      },
+      {
+        "id": "04",
+        "source_sha256": "8e60def0f10c74a0e863033fd38925771f98794af6bdb02c7ed696f04486e21c",
+        "decision": "export-failed",
+        "note": "Continuous FPT renders, but structural export emits no usable connected triangles."
+      },
+      {
+        "id": "05",
+        "source_sha256": "eb77680b3a7eea4c9548d0cb36e5a5fa0733f1dbaf6660e8b76889e1867cdc93",
+        "decision": "needs-work",
+        "note": "Lattice survives, but fine openings, lighting and interior details differ."
+      },
+      {
+        "id": "08",
+        "source_sha256": "af8ef643a642d29424887b19766201988921dc7f8e3bfb8bc7c58ecdd8f24f80",
+        "decision": "needs-work",
+        "note": "Coarse cubes obscure the close geometry. 4x refinement helps; separately verified 16x is substantially closer. Fine detail and lighting still differ."
+      },
+      {
+        "id": "11",
+        "source_sha256": "ba19f06138f0351692f5e84163de4428598c0d20ed088dcc02379c61e12c51ef",
+        "decision": "needs-work",
+        "note": "Cube geometry loses fine repeated structures; exact surface is closer but appearance differs."
+      },
+      {
+        "id": "13",
+        "source_sha256": "307aa167218bb7c63fce7ee98fbb6839247fd5cebfc1634a079c0d52f10da1ff",
+        "decision": "needs-work",
+        "note": "Loop silhouettes and colours are retained. Surface reference is close; cubes retain visible face and edge artefacts."
+      },
+      {
+        "id": "14",
+        "source_sha256": "dac246366d4906985891dc91eac3ce874d8a801a5e4ec16dcd8e39fa06259249",
+        "decision": "needs-work",
+        "note": "Cubes replace the ornate fine pattern with coarse blocks; exact surface is closer."
+      },
+      {
+        "id": "21",
+        "source_sha256": "1fd08e16820af8ca79cd59305e71cac2564c2420bad10fe3edfc0d645158b56a",
+        "decision": "needs-work",
+        "note": "Cubes and surface references do not reproduce the continuous terrain cleanly; large blocks and coverage differences remain."
+      },
+      {
+        "id": "41",
+        "source_sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf",
+        "decision": "needs-work",
+        "note": "Distant repeated geometry is truncated in the exported asset."
+      },
+      {
+        "id": "475",
+        "source_sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+        "decision": "needs-work",
+        "note": "NAADF views are almost entirely background while continuous FPT shows the tunnel. Geometry/camera correspondence requires investigation."
+      },
+      {
+        "id": "484",
+        "source_sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+        "decision": "needs-work",
+        "note": "Cube captures are black; the surface reference has large appearance and coverage differences."
+      }
+    ]
+  },
+  "verification": {
+    "fpt_library_tests": 231,
+    "python_tests": 24,
+    "converter_tests": 7,
+    "fpt_before_after_pixels_identical": 6,
+    "fpt_export_byte_identical": true,
+    "ordinary_naadf_before_after_identical": 3,
+    "mixed_leaf_vs_uniform_identical": true,
+    "full_parent_material_count": 744,
+    "full_parent_image_identical": true,
+    "scene08_16x_uniform_masks_verified": 26039,
+    "scene08_16x_unrepresented_parent_cells": 32,
+    "generated_light_regression_count": 80,
+    "generated_light_capacity": 256,
+    "source_acceptance_records_byte_identical": true,
+    "fpt_shaders_unchanged": true
+  },
+  "view_coverage": {
+    "scenes": [
+      "13",
+      "08"
+    ],
+    "poses": "translated X by 10 percent of export extent",
+    "bounces": [
+      1,
+      4
+    ],
+    "arbitrary_view_complete": false,
+    "finding": "Scene 13 retains its broad loop geometry with edge/material differences. Scene 08 reveals substantial missing geometry/background relative to continuous FPT after translation."
+  },
+  "remaining_work": [
+    "Structural-export coverage: 36 no-triangle scenes and two timed-out exports.",
+    "Complete geometry coverage for authored and secondary rays; camera/repeat correspondence and unseen surfaces.",
+    "Sparse deeper refinement and per-subcell materials, with separate measured memory budgets.",
+    "Distance-field shadow and orbit-trap lighting semantics; authored environment/transport differences.",
+    "Source/capture-bound visual review before any NAADF promotion."
+  ],
+  "evidence": {
+    "catalog_report": "reports/fpt-library-catalog-final/report.json",
+    "catalog_sha256": "1c64cd68082eba302cc738975844b2711f30c693f1caae9e69dd51cbca1c405a",
+    "pilot_review": "reports/fpt-library-visual-review/review.json",
+    "pilot_review_sha256": "712163677680c081174a62d8b334d5f329a71edac3550fbee167b722c73a234d",
+    "producer_parity": "reports/naadf-library-20260914/parity/report.json",
+    "producer_export_parity": "reports/naadf-library-20260914/export-parity.json"
+  }
+}

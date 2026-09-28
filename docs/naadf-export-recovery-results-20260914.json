@@ -1,0 +1,390 @@
+{
+  "version": 1,
+  "date": "2026-09-14",
+  "change": "Structural-only export skips unused colour diagnostic compilation, dispatch and PNG output.",
+  "producer": {
+    "worker_sha256": "144c4f54408ad370c604d89a21db49483b477ad8c971f1fe8004e40fe11fc654",
+    "cli_sha256": "3f35f9f12e10a164e7fb474aa56b3239b3e66c9f9a82dd6aebfe593b6a6ab7a3",
+    "source_sha256": {
+      "src/runtime_impl.rs": "2810f8b8ca3ddad95ea9a977d06ddf20d91a2d13490ab548c9cf7e014b86b3a0",
+      "src/metal_bridge.mm": "20fb19591b356e619217a3ffc05838e507de50406b22d178436f6b0650bc6d4e",
+      "src/metal_bridge.h": "665c601b38827098adf373719a7d520c48f042554d63770dff07bee7eac69349"
+    }
+  },
+  "full_export_gate": {
+    "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-export-parity-20260914/report.json",
+    "sha256": "994d5fc24550c50f84000bb091c7c9125a044afc067a92a01dd7a27c35aa9fc8",
+    "totals": {
+      "exported": 427,
+      "identical": 425,
+      "recovered": 2
+    },
+    "geometry_request": {
+      "kind": "authored_surface",
+      "resolution": 192,
+      "maximum_axis": 96,
+      "path_bounces": 0
+    },
+    "resumed_completed_exports": 163,
+    "source_count": 427
+  },
+  "tests": {
+    "rust_library_passed": 234,
+    "structural_only_gpu_fixture": true,
+    "combined_diagnostic_regression": true,
+    "wrong_producer_resume_rejected": true,
+    "format_and_whitespace_passed": true
+  },
+  "diagnosis": {
+    "original_180_second_timeouts": [
+      "380",
+      "627"
+    ],
+    "o1_only": {
+      "worker_sha256": "8f81bc0a1447e0f02f9c96ee5b976be226c872f059c55b6fc4bc616af75bf716",
+      "results": [
+        {
+          "scene": "380",
+          "exit": -9,
+          "timeout": true,
+          "seconds": 180.0840211249997
+        },
+        {
+          "scene": "627",
+          "exit": -9,
+          "timeout": true,
+          "seconds": 180.06420495900056
+        }
+      ]
+    },
+    "structural_only_first_run": {
+      "worker_sha256": "144c4f54408ad370c604d89a21db49483b477ad8c971f1fe8004e40fe11fc654",
+      "results": [
+        {
+          "scene": "627",
+          "exit": 0,
+          "timeout": false,
+          "seconds": 8.107276834000004
+        },
+        {
+          "scene": "380",
+          "exit": 0,
+          "timeout": false,
+          "seconds": 24.309020667000368
+        }
+      ]
+    },
+    "pipeline_samples": [
+      {
+        "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/fpt380.sample.txt",
+        "sha256": "0d2719dd97bb767d0a4626c03fb8dde9bf3c39be4f398f76b183b6b2fcf441c2"
+      },
+      {
+        "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/fpt380-o1.sample.txt",
+        "sha256": "a05435760cf661e469c07d1ee91ae5f372f7ff7f0fe7396e7d96b96b28850fab"
+      }
+    ]
+  },
+  "consumer_evidence": {
+    "previous_full_gate": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/merged/report.json",
+    "previous_full_gate_sha256": "d374f79ef975ab3281ba103eb803ec5d3967b9fb9d4bf74a770009550dd7d33f",
+    "previous_adaptive_rendered": 424,
+    "new_rendered_scenes": [
+      "380",
+      "627"
+    ],
+    "new_capture_profile": {
+      "maximum_axis": 96,
+      "samples": 1,
+      "bounces": 4
+    },
+    "new_captures": [
+      {
+        "scene": "380",
+        "mode": "cubes",
+        "receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/380-structural/cubes/receipt.json",
+        "receipt_sha256": "98fb17df410ff101d9e845992140e36773b1ee9de274eaef45725874b38f66e6",
+        "images": [
+          {
+            "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/380-structural/cubes/render-naadf_aadf_cpu-normal.ppm",
+            "sha256": "b7ef0b7c18ea4a09329878668cb99844ebeb01c13f4ddc4e5928502692eb07a0"
+          }
+        ],
+        "health": {
+          "render-naadf_aadf_cpu-normal.ppm": {
+            "size": [
+              96,
+              54
+            ],
+            "all_black": false,
+            "uniform": false,
+            "rgb_extrema": [
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "scene": "380",
+        "mode": "surface",
+        "receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/380-structural/surface/receipt.json",
+        "receipt_sha256": "9df676b349b5bf7b2632de5f9226e3daa68e6474bdaabef4583d9980e080da00",
+        "images": [
+          {
+            "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/380-structural/surface/render-naadf_aadf_cpu-normal.ppm",
+            "sha256": "a5173a33075a75055b74086d0d9db35d3c8d8b809d213625e830e4cf402168cc"
+          }
+        ],
+        "health": {
+          "render-naadf_aadf_cpu-normal.ppm": {
+            "size": [
+              96,
+              54
+            ],
+            "all_black": false,
+            "uniform": false,
+            "rgb_extrema": [
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "scene": "380",
+        "mode": "adaptive-cubes",
+        "receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/380-structural/adaptive-cubes/receipt.json",
+        "receipt_sha256": "6af5f7688f2dc00e06283d2fa519cb6efe5dd36747f1f6f6306788ca472a2363",
+        "images": [
+          {
+            "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/380-structural/adaptive-cubes/render-naadf_aadf_cpu-normal.ppm",
+            "sha256": "68be6706c98b8346fe7a03031754c329a6739b40d501b77de301ae2291ba5f0a"
+          }
+        ],
+        "health": {
+          "render-naadf_aadf_cpu-normal.ppm": {
+            "size": [
+              96,
+              54
+            ],
+            "all_black": false,
+            "uniform": false,
+            "rgb_extrema": [
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "scene": "627",
+        "mode": "cubes",
+        "receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/627-structural/cubes/receipt.json",
+        "receipt_sha256": "9360ad337e37df457560d16571c0ccd08ff9928d28278fca1670561cc7822ba0",
+        "images": [
+          {
+            "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/627-structural/cubes/render-naadf_aadf_cpu-normal.ppm",
+            "sha256": "a6f946082db31f40400061a06b3a32e5050d2a9e817d419f32116e758c2627d3"
+          }
+        ],
+        "health": {
+          "render-naadf_aadf_cpu-normal.ppm": {
+            "size": [
+              96,
+              54
+            ],
+            "all_black": false,
+            "uniform": false,
+            "rgb_extrema": [
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "scene": "627",
+        "mode": "surface",
+        "receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/627-structural/surface/receipt.json",
+        "receipt_sha256": "838a0f1411421c3b7269a927ae940eb388937e3c67bbe4520d1b5ab8e944b071",
+        "images": [
+          {
+            "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/627-structural/surface/render-naadf_aadf_cpu-normal.ppm",
+            "sha256": "6091f6a7b9b41689adbfd53ff7c437e838b058f8f686888e9f95cf3d56c1e2ca"
+          }
+        ],
+        "health": {
+          "render-naadf_aadf_cpu-normal.ppm": {
+            "size": [
+              96,
+              54
+            ],
+            "all_black": false,
+            "uniform": false,
+            "rgb_extrema": [
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "scene": "627",
+        "mode": "adaptive-cubes",
+        "receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/627-structural/adaptive-cubes/receipt.json",
+        "receipt_sha256": "a0bafb486b8dac223cd96431dedbd4addca0bbdea2e2f67c82031c60b739c445",
+        "images": [
+          {
+            "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-remaining-20260914/627-structural/adaptive-cubes/render-naadf_aadf_cpu-normal.ppm",
+            "sha256": "a0d637e941c3369751a7578b094523cdfe3fd109f14bf453e3516ea61e9dba93"
+          }
+        ],
+        "health": {
+          "render-naadf_aadf_cpu-normal.ppm": {
+            "size": [
+              96,
+              54
+            ],
+            "all_black": false,
+            "uniform": false,
+            "rgb_extrema": [
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ],
+              [
+                0,
+                255
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "identical_to_final_producer_assets": true,
+    "combined_adaptive_rendered": 426,
+    "total_scenes": 427,
+    "remaining_adaptive_scene": "740",
+    "visual_promotions": 0,
+    "policy": "Combined native execution evidence, not a fresh full native rerender or visual acceptance."
+  },
+  "transmission_analysis": {
+    "scene": "740",
+    "source": {
+      "name": "subsurface scattering 002.fract",
+      "sha256": "a90e883c7784cd3eb484cb1ef6d183463e8e8371d87c1ceabdfaae3448473593"
+    },
+    "manifest_sha256": "00a3c1c3f320f081f9ca8d44a592968458083f3cb25758b8204c37d3e6f50690",
+    "materials": [
+      {
+        "base_color": [
+          0.8711070418357849,
+          0.8711070418357849,
+          0.8711070418357849
+        ],
+        "emission": 0.0,
+        "flags": 2147483649,
+        "id": 1,
+        "interior_opacity": 0.20326073467731476,
+        "ior": 1.100000023841858,
+        "metallic": 0.0,
+        "reflectance": 0.0,
+        "roughness": 0.10000000149011612,
+        "specular": 0.4000000059604645,
+        "specular_width": 0.06300000101327896,
+        "transmission": 0.8999999761581421,
+        "transmission_color": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "base_color": [
+          0.7629510760307312,
+          0.7629510760307312,
+          0.7629510760307312
+        ],
+        "emission": 0.0,
+        "flags": 1,
+        "id": 2,
+        "interior_opacity": 0.0,
+        "ior": 1.5,
+        "metallic": 0.0,
+        "reflectance": 0.0,
+        "roughness": 0.10000000149011612,
+        "specular": 0.5,
+        "specular_width": 0.05000000074505806,
+        "transmission": 0.0,
+        "transmission_color": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    ],
+    "guard": "adaptive cubes currently require opaque materials",
+    "bundle_published": false,
+    "required_work": [
+      "Traverse occupied child cells during transmission, including gaps and subdivision changes.",
+      "Separate authored medium identity from colour-specific shading material slots.",
+      "Remove 255-slot absorption aliasing for wide material tables.",
+      "Test entry/exit and missing rear-interface geometry explicitly before visual acceptance."
+    ]
+  }
+}

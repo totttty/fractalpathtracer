@@ -1,0 +1,2209 @@
+{
+  "date": "2026-09-14",
+  "milestone": "adaptive_static_leaves_and_subcell_materials",
+  "catalogue": {
+    "accepted_fpt": 427,
+    "previous_exports_and_render_executions": 425,
+    "remaining_export_timeouts": [
+      "380",
+      "627"
+    ],
+    "adaptive_full_catalogue_run": true,
+    "adaptive_unique_scenes_tested": 425,
+    "new_naadf_acceptances": 0,
+    "adaptive_rendered": 424,
+    "adaptive_nonblack_nonuniform": 424,
+    "remaining_refinement_unsupported": [
+      "740"
+    ],
+    "panoramic_rendered": [
+      "421",
+      "422",
+      "574",
+      "582",
+      "584",
+      "590"
+    ]
+  },
+  "renderer": {
+    "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+    "metal_libraries": {
+      "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+      "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+      "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+      "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+    }
+  },
+  "installed_app": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+  "capabilities": {
+    "version": 1,
+    "extensions": [
+      "auxiliary_light_table",
+      "fpt_local_cubes",
+      "packed_cell_materials",
+      "auxiliary_lights_over_64",
+      "fpt_sample_batches",
+      "fpt_adaptive_materials"
+    ],
+    "max_auxiliary_lights": 256
+  },
+  "sources": {
+    "tools/adaptive_fpt_bundle.py": "e1847735b968372e48574b3e54466ba33fabd7986156e1b8e142b1c762df7f47",
+    "tools/voxel_refinement_probe/src/adaptive.rs": "f64d064256fff3fbb19902a5ecf4ec4f2fa35ad2364f7a876cae29f20d9de483",
+    "src/NaadfLocalMaterials.hpp": "d9a1a8bc15f74158c332f8bc26f271db4bb9e6752a7db343057830a15a43cce2",
+    "src/NaadfLocalCubes.hpp": "8da55d328e387812e70f74e8877f9d02e9032575eca58abf7a19413b1c8ccff1",
+    "src/main.mm": "ec773467b73e3794dd1759855a3f32efcc6f70fb246a28a04f9887a3b3248bbc",
+    "shaders/VoxelShaders.metal": "fc7f6e030c4167c1fa8d98e346e37c3446192b63202723474ae4b0df2bb67caa",
+    "tools/check_fpt_catalog.py": "5df6a690453c25959a6eb2b2ae0176a2f9ae93a3aee1d14e079952bb690867a0",
+    "tools/view_fpt_bundle.py": "60f9c6a0c5fd095b9a3d7076286cbdd2aec34f7545f81f3b5504ecbe7ce7eb0e",
+    "tools/fpt_adaptive_camera.py": "f5e8496bc776b0f269f49833a406c0762832328aea4e5445b9192ef5959e9ae1",
+    "tools/merge_fpt_catalog_runs.py": "309e13e6e7406578f10db62c710c21845036d1d07fdb37a05520114069cad396",
+    "tools/local_material_payload.py": "c244a78aac2c5cce995be526ef8e93e61ed4c23de86627d64ad5e4a494357d00"
+  },
+  "producer_build_provenance": {
+    "command": [
+      "cargo",
+      "build",
+      "--release",
+      "--locked",
+      "--manifest-path",
+      "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/tools/voxel_refinement_probe/Cargo.toml",
+      "--target-dir",
+      "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/voxel-converter/target"
+    ],
+    "voxquant_root": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/vendor/voxquant",
+    "voxquant_source_sha256": "de765f341dd52145257c7d506aa0d7a2c63e31feb6565310432cd6e35cd5aaeb",
+    "converter_sources": {
+      "adaptive.rs": "f64d064256fff3fbb19902a5ecf4ec4f2fa35ad2364f7a876cae29f20d9de483",
+      "bin/voxel_colour_probe.rs": "420a747b758a264817cb9ec131ba965265ade76ba6412300676c8750bf8efb96",
+      "main.rs": "28921777b0bae5e7780c6448089f704a481badfb20bea904f983dd6abca66a8b"
+    },
+    "cargo_lock_sha256": "a7fae4b3e5e93ebd0fe437207c88aa8ca42d5ff231e98c341b1cc7f6a9282f4c",
+    "executables": [
+      "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/voxel-converter/target/release/voxel_refinement_probe",
+      "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/voxel-converter/target/release/voxel_colour_probe"
+    ]
+  },
+  "scenes": [
+    {
+      "id": "03",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/03/verified/manifest.json",
+      "manifest_sha256": "337566802cc0b15ec167dbb9d0dd8906360e4c2694515d9a3446e8186f99c2af",
+      "source_sha256": "66e4f4628004100f0a89316b367a988293cd4f8b36d8488bcb4e88cb8782eb8f",
+      "geometry_sha256": "fede63a50e1835c4ddd58b5bd4f09fd2e3ac14846a1efcef2c7ecb4537125bff",
+      "refinement": {
+        "parent_geometry_sha256": "fede63a50e1835c4ddd58b5bd4f09fd2e3ac14846a1efcef2c7ecb4537125bff",
+        "source_bundle_sha256": "ea3f18c6755101c4bcc4b638df1915667226157097d668b0eee157f3043d2649",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "53bc3f8794c2c5eeea4524910ecd773e7b3815f175628431bd2f8c19e6a30f44",
+        "plan_sha256": "506cd4449169a6747605be2ba8528165898c0cc0b18aa1ebcaa6c8a61a26e632",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 300,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "4": 407641
+        },
+        "statistics": {
+          "parents": 407641,
+          "triangles": 81322,
+          "samples": 4292265,
+          "occupancy_bytes": 8152884,
+          "material_bytes": 58029468,
+          "total_s": 33.948944875,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/03/adaptive/receipt.json",
+      "capture_receipt_sha256": "163b38aacb6501cc2c3a57ac58f18b5e048ad00512a2b6d6b6676cae4eacec12",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            300,
+            300
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              40,
+              255
+            ],
+            [
+              58,
+              255
+            ],
+            [
+              56,
+              200
+            ]
+          ]
+        }
+      },
+      "review": "Small material changes; target is already met at 4x. Noisy transport remains.",
+      "naadf_accepted": false,
+      "normalized_manifest": {
+        "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/03/normalized/manifest.json",
+        "sha256": "2a32a66cccf941d9e463b28950af27b1f3a6d2bf8d5f247e7c0b6e556497147c"
+      }
+    },
+    {
+      "id": "04",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/04/verified/manifest.json",
+      "manifest_sha256": "4f700ffabd8527823c65f2fc37df55f253a4a41709e8ded14085539f403d8a46",
+      "source_sha256": "8e60def0f10c74a0e863033fd38925771f98794af6bdb02c7ed696f04486e21c",
+      "geometry_sha256": "63fb87c6ffafc3b2b3c1d6ab85383a8da4573d481427729df11959cb99ac3d8e",
+      "refinement": {
+        "parent_geometry_sha256": "63fb87c6ffafc3b2b3c1d6ab85383a8da4573d481427729df11959cb99ac3d8e",
+        "source_bundle_sha256": "1f7274372cd34f35ba062d41394ff3632c0fa90ff73e92b7d37d0e0a63315280",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "62361c75d8b8013057331e4975fc705f9fcb294e63bf74c8d1a5c805931eb110",
+        "plan_sha256": "cb135dfd172335181b772889fc59952b46fd719dcecd75c7def16aea43804255",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 300,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "4": 141251
+        },
+        "statistics": {
+          "parents": 141251,
+          "triangles": 50262,
+          "samples": 1688505,
+          "occupancy_bytes": 2825084,
+          "material_bytes": 22522108,
+          "total_s": 13.190396541,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/04/adaptive/receipt.json",
+      "capture_receipt_sha256": "e7c99e0b7601dd7129361b51351c8793c88095138b07bb8a540844aa1a1c30b6",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            300,
+            225
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              255
+            ]
+          ]
+        }
+      },
+      "review": "Small material changes; target is already met at 4x. Noisy transport remains.",
+      "naadf_accepted": false,
+      "normalized_manifest": {
+        "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/04/normalized/manifest.json",
+        "sha256": "af99476bf4fc347ad0f889af918989b3155903abfdc8a22c9bddfcd3cda54701"
+      }
+    },
+    {
+      "id": "08",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/08/verified/manifest.json",
+      "manifest_sha256": "a6b861119a70e043156e96313897f0625abe2259ddadff878bbf77397fdd85d4",
+      "source_sha256": "af8ef643a642d29424887b19766201988921dc7f8e3bfb8bc7c58ecdd8f24f80",
+      "geometry_sha256": "cac9226aeb51ce79a40bd85646e24f20e85c05bf8df7f6ba0af4f785c6743ebb",
+      "refinement": {
+        "parent_geometry_sha256": "cac9226aeb51ce79a40bd85646e24f20e85c05bf8df7f6ba0af4f785c6743ebb",
+        "source_bundle_sha256": "37f64cc96e702cb67b63ca8dc116ed32dace500c5c6ce1ef4491211ef3395692",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "60ed8a5fbb189c9d12bf7bd195c57a832c7b4f390be363f31293aa1469813ba7",
+        "plan_sha256": "2b5d5aeb2943158efc669c79e5e21943bcd132a538a39f641f10492c1b3447c6",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 300,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "4": 22568,
+          "8": 1096,
+          "16": 612,
+          "32": 1763
+        },
+        "statistics": {
+          "parents": 26039,
+          "triangles": 123457,
+          "samples": 1023260,
+          "occupancy_bytes": 8097812,
+          "material_bytes": 12695776,
+          "total_s": 7.838888,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/08/adaptive/receipt.json",
+      "capture_receipt_sha256": "6c3e4dbabdcb4671f6ca70205bbe72faf365861b44f82be257dc0260efdc6977",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            300,
+            169
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              3,
+              255
+            ],
+            [
+              0,
+              255
+            ],
+            [
+              3,
+              255
+            ]
+          ]
+        }
+      },
+      "review": "Substantial reduction in foreground blockiness; thin stems restored.",
+      "naadf_accepted": false,
+      "normalized_manifest": {
+        "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/08/normalized/manifest.json",
+        "sha256": "6f3bd16af56144ae44581f3c5e71d399854ece78cb71b219c27c9038e12e7a75"
+      }
+    },
+    {
+      "id": "41",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/manifest.json",
+      "manifest_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+      "source_sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf",
+      "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+      "refinement": {
+        "parent_geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+        "source_bundle_sha256": "31d93eb7867cc14777b6e81b31a0e695b6c38bb98b194e4627d12ad5b157a4c1",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "9b8b5f82656fe549e7bf8e5d8f3ed6bfdca55a509781edd7338e0df6a59a0ff8",
+        "plan_sha256": "4937061f76981c31abd9b08a08ab5c11b6428dee8b7f8f4e221f4035a2a877ff",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 300,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "8": 3585,
+          "4": 324,
+          "16": 1869,
+          "32": 1703
+        },
+        "statistics": {
+          "parents": 7481,
+          "triangles": 59972,
+          "samples": 1860524,
+          "occupancy_bytes": 8254284,
+          "material_bytes": 22446016,
+          "total_s": 1.539304708,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/adaptive/receipt.json",
+      "capture_receipt_sha256": "1a096e10a0939af698684e9a52ebb2062bf28e7b9a74061fdc42a51b4e66d326",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            300,
+            300
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              1,
+              255
+            ],
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              255
+            ]
+          ]
+        }
+      },
+      "review": "Additional small features on the chain faces; colour detail preserved.",
+      "naadf_accepted": false,
+      "normalized_manifest": {
+        "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/normalized/manifest.json",
+        "sha256": "c88beb6d40e43aad81ef8f008e7f878fc845085657c235d17283543bbb8e322c"
+      }
+    },
+    {
+      "id": "475",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/475/verified/manifest.json",
+      "manifest_sha256": "4a91e413d4251a086c418b8653a0ca530e7a3499116aa76d1dc6b62e3ac63f2b",
+      "source_sha256": "b7a6f1e880dc1b8a5a0ccf3e1cc7bcb070577d26b71c973aad05b5121a767936",
+      "geometry_sha256": "3e17ae6ae71d5bc2c5ff9878077e88a26bfe7f6444a5e9902bd54d6bdf70228d",
+      "refinement": {
+        "parent_geometry_sha256": "3e17ae6ae71d5bc2c5ff9878077e88a26bfe7f6444a5e9902bd54d6bdf70228d",
+        "source_bundle_sha256": "98b81dbb3951825a882ae42397d714c315d30f8ab287c2d056e8e4b87e2cf0f0",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "477d77dc62be304f250c7b152d5fd06c92087823a8c807ddf25cbe4c1320837c",
+        "plan_sha256": "685c396686ce428218b08514cf14d5cc9ddf4ea8dfde99f6f436272625c46acc",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 300,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "4": 177,
+          "32": 2354,
+          "8": 276,
+          "16": 1323
+        },
+        "statistics": {
+          "parents": 4130,
+          "triangles": 129653,
+          "samples": 1736726,
+          "occupancy_bytes": 10388064,
+          "material_bytes": 20906824,
+          "total_s": 2.094567042,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/475/adaptive/receipt.json",
+      "capture_receipt_sha256": "feac61b0a0b8c30746b055b66b9d13ac6e4fc960c4671bf0d3321bd56fa69ab8",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            300,
+            169
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              54,
+              255
+            ],
+            [
+              5,
+              49
+            ],
+            [
+              26,
+              171
+            ]
+          ]
+        }
+      },
+      "review": "Substantial reduction in tunnel blockiness; lighting/depth mismatch remains.",
+      "naadf_accepted": false,
+      "normalized_manifest": {
+        "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/475/normalized/manifest.json",
+        "sha256": "2f67c9eb85504c60dc6df7607b134eedc15e6dd5c6ba7ff27f06abb232d5d9b8"
+      }
+    },
+    {
+      "id": "484",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/484/verified/manifest.json",
+      "manifest_sha256": "0f954760d732f25e5d749446433528eb40cdf7e14e363ac1c4316bedc8757d7d",
+      "source_sha256": "e62a8539483a2a92d33ee922c4d948c479c493ca416c1b8bd06b3836a6a49479",
+      "geometry_sha256": "c5ebf15d9e1f2e68756c6fc6a2769462a5c658e58c2c14432048f3fb7e738d5a",
+      "refinement": {
+        "parent_geometry_sha256": "c5ebf15d9e1f2e68756c6fc6a2769462a5c658e58c2c14432048f3fb7e738d5a",
+        "source_bundle_sha256": "2a90b9e990a0ac63e2ac63a13ebdac3a1ae9a959522cb04b34cc23fef471af46",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "b1ec13a9ccb7bacd99fe22f77125cd60f7c60145c73bac3b7cc18f0e0217debe",
+        "plan_sha256": "2d20cb536832a9343fbe781fee06f80512c73624bdde2bea9d8677df67d80a0d",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 300,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "32": 198,
+          "16": 864,
+          "8": 589,
+          "4": 568
+        },
+        "statistics": {
+          "parents": 2219,
+          "triangles": 61250,
+          "samples": 220118,
+          "occupancy_bytes": 1322308,
+          "material_bytes": 2676952,
+          "total_s": 0.47320175,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/484/adaptive/receipt.json",
+      "capture_receipt_sha256": "ce26824a6103ee06a9a7163629ff358874cb04dcb7747779d5dd0c025f382072",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            300,
+            169
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              255
+            ]
+          ]
+        }
+      },
+      "review": "Non-black; conspicuously coarse camera-near surfaces remain.",
+      "naadf_accepted": false,
+      "normalized_manifest": {
+        "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/484/normalized/manifest.json",
+        "sha256": "5f602b5c3a51ef7cba6ea7476b4fc66b35f0d9a8ff5482cca74bf6c0cf5ea4bd"
+      }
+    },
+    {
+      "id": "418",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/418/verified/manifest.json",
+      "manifest_sha256": "2ec5a2ca1005c941f68777259625f102be62b30b0804311feba456bd26de65b2",
+      "source_sha256": "0527cc1ae29bc889fba405175590d803020b5f31638adfdbec8cc8b740426b6f",
+      "geometry_sha256": "684a3ce48193aedef0aaf054b3dfc245872dd4a42c32cdded300766c396c03df",
+      "refinement": {
+        "parent_geometry_sha256": "684a3ce48193aedef0aaf054b3dfc245872dd4a42c32cdded300766c396c03df",
+        "source_bundle_sha256": "f3b2c889feaebcc7fdd2f894edb26bc3b9f6c250f34f3f6ec9b465aaabba51c2",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "8f7f913c8d669ca5ffb5f9b9d0834e2ab0e398a055ef8accd69e6c400a942701",
+        "plan_sha256": "0758c8090cdbeef305ac20cace5e346ef472eb1c8e82ba77b09ca7ddc4f5d3f6",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 96,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "32": 55,
+          "16": 13,
+          "8": 24,
+          "4": 15
+        },
+        "statistics": {
+          "parents": 107,
+          "triangles": 20820,
+          "samples": 5333,
+          "occupancy_bytes": 234940,
+          "material_bytes": 65740,
+          "total_s": 0.057471916,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/418/adaptive/receipt.json",
+      "capture_receipt_sha256": "68d63c431f04a49cb448901f5dd781d7d3e9f0ed73db53bb8ff8f3df2d3e505f",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            96,
+            96
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              0,
+              239
+            ],
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              255
+            ]
+          ]
+        }
+      },
+      "review": "Non-black at the 96px one-sample screen; not visually accepted.",
+      "naadf_accepted": false
+    },
+    {
+      "id": "420",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/420/verified/manifest.json",
+      "manifest_sha256": "be4737fba05ac4a1d5055c2bb0e2ce75fcdc1f9a2cfc7421a6ae732055349483",
+      "source_sha256": "a4b8e8a92ae0c54b1e5b032f0baecdcfc931ee811c0887e766371b147d1efc35",
+      "geometry_sha256": "eced1ebbae51efad8ae4c7512daad2f27d7cceb080e8b484aa606b5f158b9b41",
+      "refinement": {
+        "parent_geometry_sha256": "eced1ebbae51efad8ae4c7512daad2f27d7cceb080e8b484aa606b5f158b9b41",
+        "source_bundle_sha256": "c5f963caf7ab9126138ebc392f7a49e2c1d5429f404a77147672f16f38fcd8c0",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "6cb6d3c8cf67cc30542c5c6dacdd99577595718abc52a2e429d5553f4817b2aa",
+        "plan_sha256": "b290332eefa7db634a1c6ad3edb1b55475dc89beeee448aeaba34fdb393820c9",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 96,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "4": 1326,
+          "8": 752,
+          "16": 401,
+          "32": 63
+        },
+        "statistics": {
+          "parents": 2542,
+          "triangles": 5381,
+          "samples": 119060,
+          "occupancy_bytes": 552664,
+          "material_bytes": 1469424,
+          "total_s": 0.113839416,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/420/adaptive/receipt.json",
+      "capture_receipt_sha256": "419505bb8e95226fe843702bced53aae0ff44e829569ece63420cba546d823a4",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            96,
+            54
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              253
+            ],
+            [
+              0,
+              249
+            ]
+          ]
+        }
+      },
+      "review": "Non-black at the 96px one-sample screen; not visually accepted.",
+      "naadf_accepted": false
+    },
+    {
+      "id": "600",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/600/verified/manifest.json",
+      "manifest_sha256": "4f1bad852cc0092cece8311c405c90af9cc02a9b2daeecde23ff02792a23697e",
+      "source_sha256": "0c2c3cd5a2c62336e9532ad1a58b4dc1c3cb8302980aac45c52db55de1cb010a",
+      "geometry_sha256": "bdc2d1cbe015e0060432962063909b5142915245b6a69d8aeed097a150b64524",
+      "refinement": {
+        "parent_geometry_sha256": "bdc2d1cbe015e0060432962063909b5142915245b6a69d8aeed097a150b64524",
+        "source_bundle_sha256": "6ac8179edff4632258d55ea93ca143f6cc6c925d39bc0539f853299c7083cf01",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "b82533e720a072fbc09f29140fa6cb6b56369384c0be61ed0a14af503ca5c119",
+        "plan_sha256": "c0aed6aa2b5ddcbb9cca4b0be80b1f565345bd1acb7bb334fce7864501fffac8",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 96,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "32": 41,
+          "4": 520
+        },
+        "statistics": {
+          "parents": 561,
+          "triangles": 8728,
+          "samples": 18039,
+          "occupancy_bytes": 178892,
+          "material_bytes": 225476,
+          "total_s": 0.025138833,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/600/adaptive/receipt.json",
+      "capture_receipt_sha256": "6f48a41ff90bc79f30573c50774c30fa85a64804715140989459b031844a9d4c",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            96,
+            54
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              0,
+              245
+            ],
+            [
+              0,
+              237
+            ],
+            [
+              0,
+              37
+            ]
+          ]
+        }
+      },
+      "review": "Non-black at the 96px one-sample screen; not visually accepted.",
+      "naadf_accepted": false
+    },
+    {
+      "id": "703",
+      "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/703/verified/manifest.json",
+      "manifest_sha256": "cac2bfa053c7e4ad8a80ddd4f02bdcaee8de07a545fbddbad7ffab6604d446b2",
+      "source_sha256": "00dd50b817457483ce42cb23eef25690fe8abfa9539a0bfbb2ee93b243303c28",
+      "geometry_sha256": "f91228b9b817cc34168189e6c60ebd3bc1f230ce890b118c0f121bb83ddb868a",
+      "refinement": {
+        "parent_geometry_sha256": "f91228b9b817cc34168189e6c60ebd3bc1f230ce890b118c0f121bb83ddb868a",
+        "source_bundle_sha256": "f39e11250857ab5c3d2d5884deebf9960b660e07970a0da253a82980da0df003",
+        "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+        "local_cubes_sha256": "97850636d33cbeff32a5ace0d8a23e9c04363739d1611086d6674fcfe503a989",
+        "plan_sha256": "afdf568000cacb2260ed910acd40be5a1dae78a829751aee40372c1eb0f106a6",
+        "policy": "projected_parent_aabb_error",
+        "maximum_axis": 96,
+        "target_pixels": 0.125,
+        "budget_bytes": 16777216,
+        "subdivisions": {
+          "32": 77,
+          "8": 35,
+          "4": 326
+        },
+        "statistics": {
+          "parents": 438,
+          "triangles": 11240,
+          "samples": 35327,
+          "occupancy_bytes": 325560,
+          "material_bytes": 430964,
+          "total_s": 0.039745833,
+          "verified": true
+        },
+        "uniform_occupancy_verified": true,
+        "material_policy": "Barycentric RGB8 source colours and authored material IDs per occupied child; first source triangle wins overlaps.",
+        "geometry_policy": "Conservative source-triangle occupancy inside every existing parent; view-derived unseen geometry remains unknown."
+      },
+      "capture_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/703/adaptive/receipt.json",
+      "capture_receipt_sha256": "8fa3d3532b8db23a8e51cdfb5d6728dbc1d0c19c0e8e8577f72814908528c4ce",
+      "capture_health": {
+        "render-naadf_aadf_cpu-normal.ppm": {
+          "size": [
+            96,
+            54
+          ],
+          "all_black": false,
+          "uniform": false,
+          "rgb_extrema": [
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              255
+            ],
+            [
+              0,
+              255
+            ]
+          ]
+        }
+      },
+      "review": "Non-black at the 96px one-sample screen; not visually accepted.",
+      "naadf_accepted": false
+    }
+  ],
+  "black_screen_controls": [
+    {
+      "id": "418",
+      "geometry_sha256": "684a3ce48193aedef0aaf054b3dfc245872dd4a42c32cdded300766c396c03df",
+      "coarse_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/418/coarse-control/receipt.json",
+      "coarse_receipt_sha256": "848f3dc1334b3a241d59f86ff3b524cf5a2d6f37f15bca031dc4999caff8fc43",
+      "adaptive_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/418/adaptive/receipt.json",
+      "adaptive_receipt_sha256": "68d63c431f04a49cb448901f5dd781d7d3e9f0ed73db53bb8ff8f3df2d3e505f",
+      "coarse_all_black": true,
+      "adaptive_uniform": false
+    },
+    {
+      "id": "420",
+      "geometry_sha256": "eced1ebbae51efad8ae4c7512daad2f27d7cceb080e8b484aa606b5f158b9b41",
+      "coarse_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/420/coarse-control/receipt.json",
+      "coarse_receipt_sha256": "36ecf8ff5c596e1d81d958689b3f4f81469821a084ed7728e1d1c1eaa82b6b55",
+      "adaptive_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/420/adaptive/receipt.json",
+      "adaptive_receipt_sha256": "419505bb8e95226fe843702bced53aae0ff44e829569ece63420cba546d823a4",
+      "coarse_all_black": true,
+      "adaptive_uniform": false
+    },
+    {
+      "id": "484",
+      "geometry_sha256": "03ef0a7e19848c70e86b094c4ea42d642d8b6fdf0cecc0a91b65240502d46dd5",
+      "coarse_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/484/coarse-control/receipt.json",
+      "coarse_receipt_sha256": "316a99a57a821a50cacb308bfdec2b716789fed2a9c320393d83a43c3149deb0",
+      "adaptive_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/484/screen-adaptive/receipt.json",
+      "adaptive_receipt_sha256": "f0dbbb9d858a950d1bcf28323028f902aa1807b55ee921de90b94963f329f0c0",
+      "coarse_all_black": true,
+      "adaptive_uniform": false
+    },
+    {
+      "id": "600",
+      "geometry_sha256": "bdc2d1cbe015e0060432962063909b5142915245b6a69d8aeed097a150b64524",
+      "coarse_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/600/coarse-control/receipt.json",
+      "coarse_receipt_sha256": "7771509d40e57390d4e54ccaabfc0652dcb1e014e2f724488218bc4a1a34314c",
+      "adaptive_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/600/adaptive/receipt.json",
+      "adaptive_receipt_sha256": "6f48a41ff90bc79f30573c50774c30fa85a64804715140989459b031844a9d4c",
+      "coarse_all_black": true,
+      "adaptive_uniform": false
+    },
+    {
+      "id": "703",
+      "geometry_sha256": "f91228b9b817cc34168189e6c60ebd3bc1f230ce890b118c0f121bb83ddb868a",
+      "coarse_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/703/coarse-control/receipt.json",
+      "coarse_receipt_sha256": "3f1fdfc0e665aff2e3bffb24831180ed5942f484091f9022b6cd7818d4228c82",
+      "adaptive_receipt": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/703/adaptive/receipt.json",
+      "adaptive_receipt_sha256": "8fa3d3532b8db23a8e51cdfb5d6728dbc1d0c19c0e8e8577f72814908528c4ce",
+      "coarse_all_black": true,
+      "adaptive_uniform": false
+    }
+  ],
+  "tests": {
+    "wide_parent_materials": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/parent-regression/result.json",
+      "sha256": "e5f4294ecde6eed128de2eb4ab77f01ccfca479f7d85207afd50c2477fbafc5b",
+      "result": {
+        "material_count": 283,
+        "parent_count": 7481,
+        "difference": {
+          "changed_pixels": 0,
+          "mae": 0.0,
+          "rmse": 0.0,
+          "max_error": 0
+        },
+        "renders": [
+          {
+            "bundle_sha256": "31d93eb7867cc14777b6e81b31a0e695b6c38bb98b194e4627d12ad5b157a4c1",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/pilot/41/bundle/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "300x300",
+              "--gpu-naadf-path-max-samples",
+              "32",
+              "--gpu-naadf-path-bounces",
+              "4",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "reports/fpt-adaptive-20260914/parent-regression/base/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              300,
+              300
+            ],
+            "samples": 32,
+            "bounces": 4,
+            "sample_batch": 1
+          },
+          {
+            "bundle_sha256": "31d93eb7867cc14777b6e81b31a0e695b6c38bb98b194e4627d12ad5b157a4c1",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/pilot/41/bundle/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "300x300",
+              "--gpu-naadf-path-max-samples",
+              "32",
+              "--gpu-naadf-path-bounces",
+              "4",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "reports/fpt-adaptive-20260914/parent-regression/full/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              300,
+              300
+            ],
+            "samples": 32,
+            "bounces": 4,
+            "sample_batch": 1
+          }
+        ]
+      }
+    },
+    "mixed_4_32": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/mixed-native-4/result.json",
+      "sha256": "e3b082abaf8adf6ac604fcf73cd001502825894392e00cf09654958b4d223234",
+      "result": {
+        "cases": [
+          {
+            "case": "positive",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          },
+          {
+            "case": "negative",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          },
+          {
+            "case": "edge",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 1.1920928955078125e-06
+          },
+          {
+            "case": "corner",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 1.9073486328125e-06
+          },
+          {
+            "case": "last32",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          }
+        ],
+        "pt_parity": {
+          "changed_pixels": 0,
+          "mae": 0.0,
+          "rmse": 0.0,
+          "max_error": 0
+        }
+      }
+    },
+    "mixed_8_32": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/mixed-native-8/result.json",
+      "sha256": "e3b082abaf8adf6ac604fcf73cd001502825894392e00cf09654958b4d223234",
+      "result": {
+        "cases": [
+          {
+            "case": "positive",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          },
+          {
+            "case": "negative",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          },
+          {
+            "case": "edge",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 1.1920928955078125e-06
+          },
+          {
+            "case": "corner",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 1.9073486328125e-06
+          },
+          {
+            "case": "last32",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          }
+        ],
+        "pt_parity": {
+          "changed_pixels": 0,
+          "mae": 0.0,
+          "rmse": 0.0,
+          "max_error": 0
+        }
+      }
+    },
+    "mixed_16_32": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/mixed-native/result.json",
+      "sha256": "e3b082abaf8adf6ac604fcf73cd001502825894392e00cf09654958b4d223234",
+      "result": {
+        "cases": [
+          {
+            "case": "positive",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          },
+          {
+            "case": "negative",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          },
+          {
+            "case": "edge",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 1.1920928955078125e-06
+          },
+          {
+            "case": "corner",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 1.9073486328125e-06
+          },
+          {
+            "case": "last32",
+            "image": {
+              "changed_pixels": 0,
+              "mae": 0.0,
+              "rmse": 0.0,
+              "max_error": 0
+            },
+            "max_depth_error": 9.5367431640625e-07
+          }
+        ],
+        "pt_parity": {
+          "changed_pixels": 0,
+          "mae": 0.0,
+          "rmse": 0.0,
+          "max_error": 0
+        }
+      }
+    },
+    "gpu_child_materials": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/result.json",
+      "sha256": "08e4fd56025846d4295716e2989787a12ed553b70d81aa49c7cfc27d354fe84e",
+      "result": {
+        "red_pixels": 3447,
+        "green_pixels": 3819,
+        "position_parity": {
+          "changed_pixels": 0,
+          "mae": 0.0,
+          "rmse": 0.0,
+          "max_error": 0
+        },
+        "authored_optics_preserved": true,
+        "renders": [
+          {
+            "bundle_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "150x150",
+              "--gpu-naadf-path-max-samples",
+              "1",
+              "--gpu-naadf-path-bounces",
+              "1",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/material-children/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              150,
+              150
+            ],
+            "samples": 1,
+            "bounces": 1,
+            "sample_batch": 1,
+            "diagnostic_mode": "material",
+            "child_materials": true,
+            "override_sha256": "81964b527d86cec838ec96ceb7b1fff3fedcee089f769b0ef76ff68551b3d686",
+            "capture_health": {
+              "render-naadf_aadf_cpu-normal.ppm": {
+                "size": [
+                  150,
+                  150
+                ],
+                "all_black": false,
+                "uniform": false,
+                "rgb_extrema": [
+                  [
+                    0,
+                    255
+                  ],
+                  [
+                    0,
+                    255
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "bundle_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "150x150",
+              "--gpu-naadf-path-max-samples",
+              "1",
+              "--gpu-naadf-path-bounces",
+              "1",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/material-parents/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              150,
+              150
+            ],
+            "samples": 1,
+            "bounces": 1,
+            "sample_batch": 1,
+            "diagnostic_mode": "material",
+            "child_materials": false,
+            "override_sha256": null,
+            "capture_health": {
+              "render-naadf_aadf_cpu-normal.ppm": {
+                "size": [
+                  150,
+                  150
+                ],
+                "all_black": false,
+                "uniform": false,
+                "rgb_extrema": [
+                  [
+                    0,
+                    244
+                  ],
+                  [
+                    0,
+                    188
+                  ],
+                  [
+                    0,
+                    134
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "bundle_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "150x150",
+              "--gpu-naadf-path-max-samples",
+              "1",
+              "--gpu-naadf-path-bounces",
+              "1",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/position-children/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              150,
+              150
+            ],
+            "samples": 1,
+            "bounces": 1,
+            "sample_batch": 1,
+            "diagnostic_mode": "position",
+            "child_materials": true,
+            "override_sha256": "81964b527d86cec838ec96ceb7b1fff3fedcee089f769b0ef76ff68551b3d686",
+            "capture_health": {
+              "render-naadf_aadf_cpu-normal.ppm": {
+                "size": [
+                  150,
+                  150
+                ],
+                "all_black": false,
+                "uniform": false,
+                "rgb_extrema": [
+                  [
+                    0,
+                    226
+                  ],
+                  [
+                    0,
+                    207
+                  ],
+                  [
+                    0,
+                    189
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "bundle_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "150x150",
+              "--gpu-naadf-path-max-samples",
+              "1",
+              "--gpu-naadf-path-bounces",
+              "1",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/position-parents/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              150,
+              150
+            ],
+            "samples": 1,
+            "bounces": 1,
+            "sample_batch": 1,
+            "diagnostic_mode": "position",
+            "child_materials": false,
+            "override_sha256": null,
+            "capture_health": {
+              "render-naadf_aadf_cpu-normal.ppm": {
+                "size": [
+                  150,
+                  150
+                ],
+                "all_black": false,
+                "uniform": false,
+                "rgb_extrema": [
+                  [
+                    0,
+                    226
+                  ],
+                  [
+                    0,
+                    207
+                  ],
+                  [
+                    0,
+                    189
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "bundle_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "150x150",
+              "--gpu-naadf-path-max-samples",
+              "1",
+              "--gpu-naadf-path-bounces",
+              "1",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/roughness-children/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              150,
+              150
+            ],
+            "samples": 1,
+            "bounces": 1,
+            "sample_batch": 1,
+            "diagnostic_mode": "roughness",
+            "child_materials": true,
+            "override_sha256": "81964b527d86cec838ec96ceb7b1fff3fedcee089f769b0ef76ff68551b3d686",
+            "capture_health": {
+              "render-naadf_aadf_cpu-normal.ppm": {
+                "size": [
+                  150,
+                  150
+                ],
+                "all_black": false,
+                "uniform": false,
+                "rgb_extrema": [
+                  [
+                    0,
+                    26
+                  ],
+                  [
+                    0,
+                    26
+                  ],
+                  [
+                    0,
+                    26
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "bundle_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "150x150",
+              "--gpu-naadf-path-max-samples",
+              "1",
+              "--gpu-naadf-path-bounces",
+              "1",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/roughness-parents/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              150,
+              150
+            ],
+            "samples": 1,
+            "bounces": 1,
+            "sample_batch": 1,
+            "diagnostic_mode": "roughness",
+            "child_materials": false,
+            "override_sha256": null,
+            "capture_health": {
+              "render-naadf_aadf_cpu-normal.ppm": {
+                "size": [
+                  150,
+                  150
+                ],
+                "all_black": false,
+                "uniform": false,
+                "rgb_extrema": [
+                  [
+                    0,
+                    26
+                  ],
+                  [
+                    0,
+                    26
+                  ],
+                  [
+                    0,
+                    26
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "bundle_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "150x150",
+              "--gpu-naadf-path-max-samples",
+              "1",
+              "--gpu-naadf-path-bounces",
+              "1",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/specular-children/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              150,
+              150
+            ],
+            "samples": 1,
+            "bounces": 1,
+            "sample_batch": 1,
+            "diagnostic_mode": "specular",
+            "child_materials": true,
+            "override_sha256": "81964b527d86cec838ec96ceb7b1fff3fedcee089f769b0ef76ff68551b3d686",
+            "capture_health": {
+              "render-naadf_aadf_cpu-normal.ppm": {
+                "size": [
+                  150,
+                  150
+                ],
+                "all_black": false,
+                "uniform": false,
+                "rgb_extrema": [
+                  [
+                    0,
+                    128
+                  ],
+                  [
+                    0,
+                    128
+                  ],
+                  [
+                    0,
+                    128
+                  ]
+                ]
+              }
+            }
+          },
+          {
+            "bundle_sha256": "9df37ebe9df6e7e57747dc253234e0efcf360361a276713ce7f63f4bbf9bf6b3",
+            "representation": "cubes",
+            "geometry_scope": "authored_view",
+            "source": {
+              "name": "transfSinYm3d_menger3.fract",
+              "sha256": "4e115d3249734b1e3fb4c5546dff69dcc0526ca40becec8b20977cc2ecd8ecaf"
+            },
+            "geometry_sha256": "b4f33e16a2e3e91de6b43b7c87bf0d8a7b2b31cc7fc130e2e677000d9734e897",
+            "renderer_sha256": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+            "unsupported_extensions": [],
+            "renderer_identity": {
+              "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+              "metal_libraries": {
+                "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+                "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+                "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+                "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+              }
+            },
+            "supported_extensions": [
+              "auxiliary_light_table",
+              "fpt_local_cubes",
+              "packed_cell_materials",
+              "auxiliary_lights_over_64",
+              "fpt_sample_batches",
+              "fpt_adaptive_materials"
+            ],
+            "diagnostic": true,
+            "naadf_accepted": false,
+            "command": [
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/build/fpt-adaptive-20260914/MetalVoxel.app/Contents/MacOS/MetalVoxel",
+              "--mode",
+              "greedy2d",
+              "--fptvox",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/41/verified/geometry.fptvox",
+              "--gpu-renderer",
+              "naadf",
+              "--gpu-naadf-build",
+              "cpu",
+              "--gpu-naadf-primary-layout",
+              "direct16",
+              "--gpu-naadf-path-tracing",
+              "fixed",
+              "--gpu-naadf-appearance",
+              "mandel-compat",
+              "--gpu-naadf-fptvox-surface-mode",
+              "voxel",
+              "--size",
+              "150x150",
+              "--gpu-naadf-path-max-samples",
+              "1",
+              "--gpu-naadf-path-bounces",
+              "1",
+              "--benchmark",
+              "--offscreen",
+              "--capture",
+              "--frames",
+              "1",
+              "--warmup",
+              "0",
+              "--perf-profile",
+              "--gpu-retain-output",
+              "--report",
+              "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/material-native/specular-parents/render",
+              "--gpu-naadf-path-sample-batch",
+              "1"
+            ],
+            "size": [
+              150,
+              150
+            ],
+            "samples": 1,
+            "bounces": 1,
+            "sample_batch": 1,
+            "diagnostic_mode": "specular",
+            "child_materials": false,
+            "override_sha256": null,
+            "capture_health": {
+              "render-naadf_aadf_cpu-normal.ppm": {
+                "size": [
+                  150,
+                  150
+                ],
+                "all_black": false,
+                "uniform": false,
+                "rgb_extrema": [
+                  [
+                    0,
+                    128
+                  ],
+                  [
+                    0,
+                    128
+                  ],
+                  [
+                    0,
+                    128
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "checks": {
+    "rust_producer_tests": 9,
+    "python_tests": 32,
+    "cpp_malformed_payload_cases": 69,
+    "independent_occupancy_verified": true,
+    "generated_shader_variants_current": true,
+    "diff_whitespace_checks_passed": true,
+    "changed_plan_cache_rejected": true,
+    "material_structure_cache_still_rechecks_file_hashes": true
+  },
+  "catalogue_gate": {
+    "report": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/merged/report.json",
+    "sha256": "d374f79ef975ab3281ba103eb803ec5d3967b9fb9d4bf74a770009550dd7d33f",
+    "counts": {
+      "export": {
+        "passed": 425,
+        "failed": 2
+      },
+      "cubes": {
+        "rendered-needs-review": 425,
+        "not-run-export-failed": 2
+      },
+      "surface": {
+        "rendered-needs-review": 425,
+        "not-run-export-failed": 2
+      },
+      "refined_cubes": {
+        "rendered-needs-review": 424,
+        "not-run-export-failed": 2,
+        "failed": 1
+      }
+    },
+    "profile": {
+      "catalog_sha256": "f380181065de517cac6f98ca5d1fe30e46fa8cd58015740237377d24e4bbe5f2",
+      "worker_sha256": "c9482e9b529bb0e06ed5a2343afb5363d2cc19f40dd339925780f08c4eb9ce8e",
+      "renderer": {
+        "executable": "71c7d4a37dd475764f06594a57eef7e7feda56948e701ab54f5f85fcceb10e80",
+        "metal_libraries": {
+          "NaadfPathGlassPrefix.metallib": "5f1b6683a441699c3d5e8bc26b23c219ce56d1425494f84f98dad27e7e2d3b2b",
+          "NaadfPathTransmissive.metallib": "4e555c115286230de4d22a2617a821bf153c1878adec0c5bd8ec6218667c7a7b",
+          "NaadfPathTransmissiveAbsorption.metallib": "4a3feb7436ee4ff98121e929fb3f118e33e4b643ed17b5211fa0e4bd86519459",
+          "VoxelShaders.metallib": "8cea07f59cb10bd8ff7eefb3fa65368f2678dc08663a21007f695d7086624c63"
+        }
+      },
+      "maximum_axis": 96,
+      "samples": 1,
+      "bounces": 4,
+      "resolution": 192,
+      "path_bounces": 0,
+      "refine_subdivisions": null,
+      "converter_sha256": "7c9f0f9225b02e842397825690828ea88465fa44b9704cde87765f607aec3388",
+      "verify_refinement": true,
+      "adaptive_refinement": {
+        "budget_bytes": 16777216,
+        "target_pixels": 0.25,
+        "scheduler_sha256": "e1847735b968372e48574b3e54466ba33fabd7986156e1b8e142b1c762df7f47",
+        "camera_model_sha256": "f5e8496bc776b0f269f49833a406c0762832328aea4e5445b9192ef5959e9ae1"
+      }
+    },
+    "image_health": {
+      "cubes": {
+        "uniform": [
+          "418",
+          "420",
+          "484",
+          "600",
+          "703"
+        ],
+        "all_black": [
+          "418",
+          "420",
+          "484",
+          "600",
+          "703"
+        ]
+      },
+      "surface": {
+        "uniform": [],
+        "all_black": []
+      },
+      "refined_cubes": {
+        "uniform": [],
+        "all_black": []
+      }
+    },
+    "run_provenance": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/run.json",
+    "run_provenance_sha256": "7c640fd8cd99bd4fdbc6303dc237974324f317bfc358fcacf76381fe080b727e",
+    "seconds": 156.45603733299868,
+    "source_failure_policy": "Reuse identical-producer source-bound timeout evidence for 380 and 627; all render captures are fresh."
+  },
+  "visual_review": {
+    "review-1.png": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/review-1.png",
+      "sha256": "92e736b34ccd11be02fd08f87a6c8e35fc059266456b729ed8273521bd6d9119"
+    },
+    "review-2.png": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/review-2.png",
+      "sha256": "32ab1aca8b56b19242fefa442a2f12d7fe516c3864f3732cdbafa8990ca9f053"
+    },
+    "black-controls.png": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/black-controls.png",
+      "sha256": "79ab108421481343da6e3ee3b6f3a0fe7e07de76323d1b42ac9304c999a86f2f"
+    }
+  },
+  "limitations": [
+    "Opaque perspective and panoramic bundles only; translucent scene 740 and fisheye refinement remain unsupported.",
+    "32x maximum subdivision can leave camera-near geometry coarse.",
+    "View-derived geometry cannot represent unseen or parent-excluded source surfaces.",
+    "Lighting and transport parity remain unaccepted.",
+    "Material payload limit 128 MiB; one-million-entry GPU palette; budget exhaustion fails explicitly.",
+    "Full catalogue image-health screening is 96 pixels / one sample / four bounces; clean visual acceptance remains pending."
+  ],
+  "camera_normalization": {
+    "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-20260914/camera-normalization.json",
+    "sha256": "6d57e9a3032c232c91c172c5ec5f9d5a89fa008a57251ee9e2980ed5423dc258",
+    "proof": "Corrected authored-camera quarter-pixel allocation is byte-identical to all six previously tested perspective pilot leaf plans, geometry and materials."
+  },
+  "full_refinement": {
+    "reused_verified_conversions": 418,
+    "new_conversions": 6,
+    "parents": 9782558,
+    "max_occupancy_bytes": 16777184,
+    "max_material_bytes": 89111892,
+    "panoramas": [
+      {
+        "scene": "421",
+        "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/part-3/421/refined/manifest.json",
+        "sha256": "49a992be3995ea8c71d943847eef1203369a03bf57f7b1e51862f767a0c83b59",
+        "statistics": {
+          "parents": 14476,
+          "triangles": 9206,
+          "samples": 3119495,
+          "occupancy_bytes": 16777104,
+          "material_bytes": 37665588,
+          "total_s": 6.413481,
+          "verified": true
+        }
+      },
+      {
+        "scene": "582",
+        "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/part-3/582/refined/manifest.json",
+        "sha256": "ad14ef13daf0d45b10b26b75dc4a5841c35901ff36aaab16e7b6a980b0bd5d66",
+        "statistics": {
+          "parents": 50473,
+          "triangles": 404,
+          "samples": 7358691,
+          "occupancy_bytes": 16776940,
+          "material_bytes": 89111892,
+          "total_s": 11.918730625,
+          "verified": true
+        }
+      },
+      {
+        "scene": "422",
+        "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/part-0/422/refined/manifest.json",
+        "sha256": "91d731c4d011430cf7b2820036bee8b09b1bd09bd3ab37ea80f154f2972b7aa4",
+        "statistics": {
+          "parents": 862,
+          "triangles": 9216,
+          "samples": 690848,
+          "occupancy_bytes": 3541160,
+          "material_bytes": 8304000,
+          "total_s": 5.242708208,
+          "verified": true
+        }
+      },
+      {
+        "scene": "590",
+        "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/part-0/590/refined/manifest.json",
+        "sha256": "734ebed95ac9e3b268e894d702ddf8747e8fb9b16dab77b310b92883185d524c",
+        "statistics": {
+          "parents": 6386,
+          "triangles": 5088,
+          "samples": 3339089,
+          "occupancy_bytes": 16775576,
+          "material_bytes": 40171276,
+          "total_s": 8.182252,
+          "verified": true
+        }
+      },
+      {
+        "scene": "584",
+        "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/part-0/584/refined/manifest.json",
+        "sha256": "fba5244a18026c43421684391d720c95f0adeb7f6dca6690c4f8984b79aee260",
+        "statistics": {
+          "parents": 3486,
+          "triangles": 10330,
+          "samples": 2481504,
+          "occupancy_bytes": 14320552,
+          "material_bytes": 29833856,
+          "total_s": 5.738778792,
+          "verified": true
+        }
+      },
+      {
+        "scene": "574",
+        "manifest": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-adaptive-catalog-final-20260914/part-1/574/refined/manifest.json",
+        "sha256": "b84c1400de729671266015c9040e1c8e9401b5e4d0a7640e5c0c6ef0c76cfb7d",
+        "statistics": {
+          "parents": 41010,
+          "triangles": 5314,
+          "samples": 5054220,
+          "occupancy_bytes": 16777184,
+          "material_bytes": 61306832,
+          "total_s": 5.488484333,
+          "verified": true
+        }
+      }
+    ]
+  }
+}

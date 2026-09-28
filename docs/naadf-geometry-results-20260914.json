@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "date": "2026-09-14",
+  "scope": "Shared authored geometry bounds and render-validation milestone; full clean-scene target remains incomplete.",
+  "counts": {
+    "accepted_fpt": 427,
+    "exported": 425,
+    "cube_execution": 425,
+    "surface_execution": 425,
+    "export_timeouts": 2,
+    "previous_no_triangle_failures_resolved": 36,
+    "naadf_visual_accepted": 0
+  },
+  "export_timeout_ids": [
+    "380",
+    "627"
+  ],
+  "uniform_cube_capture_ids": [
+    "418",
+    "420",
+    "484",
+    "600",
+    "703"
+  ],
+  "uniform_surface_capture_ids": [],
+  "tests": {
+    "rust_library": 233,
+    "python_contract": 21,
+    "wide_parent_materials": 3783,
+    "wide_parent_changed_pixels": 0
+  },
+  "evidence": {
+    "catalog": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-geometry-verified-20260914/merged/report.json",
+      "sha256": "3fc2053577fcf9e2364a267ace3b0836061e8a6ab74c2c7b9507fbfabf4cb80e"
+    },
+    "pilot": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/pilot-final/report.json",
+      "sha256": "bb467cb161bf784a62c0e3682c59a6f6da31df6068d954a11312a1e22ae0eaef"
+    },
+    "visual_review": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/visual-review-final/review.json",
+      "sha256": "e5af138710002945f714549fa9abbd79e6425abd21b61f328e3d63a4200e71f9"
+    },
+    "image_health": {
+      "path": "/Users/jordantotty/Desktop/vox/metal-voxel-fractal-integration/reports/fpt-geometry-verified-20260914/image-health.json",
+      "sha256": "714dd92a8d32f67f16fcec0a4a56673b09a2148f77f759e48218e27bcb2ddd89"
+    },
+    "primary_geometry": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/primary-geometry-check.json",
+      "sha256": "bfc86fd5ead265281bbf39b48eab8e66df5680938999deb105ad058b352b6a24"
+    },
+    "geometry_parity": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/geometry-parity.json",
+      "sha256": "38f921ba9214e0db83f841a9e2cacc9c4b9dc525c6859a880c2d19a542b6708c"
+    },
+    "rust_tests": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/tests.log",
+      "sha256": "d1bd60a50764a463862b8ed1c7c9e966bab6ba7c5d4b0f8f779d2bed25bb935f"
+    },
+    "python_tests": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/python-tests.log",
+      "sha256": "03f690fd17ac2ba6e0a0a8fae43f52a403f84db761270dbeefa6c3104b9555cc"
+    },
+    "material_regression": {
+      "path": "/Volumes/Ventura/Projects/FPT-metal-release/reports/naadf-geometry-20260914/material-regression/result.json",
+      "sha256": "b5cdc992380d400c72cff46fc9b53c1cd54a2231268e47b03f81f2b74faa448b"
+    }
+  },
+  "limits": [
+    "View-derived source does not certify unseen/secondary geometry.",
+    "16x probes retain inherited parent materials; per-subcell materials and budgeted mixed-depth scheduling remain unimplemented.",
+    "Two timeouts occur during Metal compute pipeline creation.",
+    "The source of two transient black surface captures was not established; isolated and stress reruns passed.",
+    "Final catalogue screen is 96px/1spp, pilot 300px/32spp."
+  ]
+}
