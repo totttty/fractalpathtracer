@@ -335,6 +335,9 @@ struct Material {
     float translucency;
     float ior;
     float emission;
+    // Absolute RGB radiance, not scaled by rgb. Mandelbulber luminosity uses
+    // luminosity_color or its luminosity gradient rather than the albedo.
+    float3 emission_rgb;
 };
 
 struct SDFResult {
@@ -437,6 +440,7 @@ static Material defaultMaterial() {
     m.translucency = 0.0f;
     m.ior = 1.5f;
     m.emission = 0.0f;
+    m.emission_rgb = float3(0.0f);
     return m;
 }
 
@@ -7076,6 +7080,11 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
                 ? pixelcolor * material.rgb * material.emission
                 : material.rgb * material.emission;
         }
+        if (any(material.emission_rgb > float3(0.0f))) {
+            pixellight += authored_path
+                ? pixelcolor * material.emission_rgb
+                : material.emission_rgb;
+        }
 
 #if defined(FPT_MANDEL_GENERATED_AMBIENT)
         if (authored_path && i == 0) {
@@ -7246,6 +7255,7 @@ static float3 renderRegionalProgramPath(float2 xy,
         if (material.emission > 0.001f) {
             pixel_light += material.rgb * material.emission;
         }
+        pixel_light += material.emission_rgb;
         float3 normal = normalAt(position, cfg);
         if (cfg.sun[0] == 1.0f) {
             pixel_light += regionalProgramSunContributionWithSurface(
@@ -7480,6 +7490,7 @@ static float3 renderBoundGridPath(float2 xy,
         if (material.emission > 0.001f) {
             pixel_light += material.rgb * material.emission;
         }
+        pixel_light += material.emission_rgb;
 
         float3 normal = normalAt(position, cfg);
         if (cfg.sun[0] == 1.0f) {
@@ -8392,6 +8403,7 @@ static float3 sdfBounceContributionDiagnostic(float2 xy, constant FptRenderConfi
             float3 n = normalAt(rp, cfg);
             float3 contribution = float3(0.0f);
             if (material.emission > 0.001f) contribution += material.rgb * material.emission;
+            contribution += material.emission_rgb;
             if (cfg.sun[0] == 1.0f) contribution += sunContributionWithSurface(rp, xy, frame, material, n, cfg);
             if (uint(i) == target_bounce) total += contribution * throughput;
 

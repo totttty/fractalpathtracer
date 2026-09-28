@@ -126,7 +126,7 @@ pub(super) fn specialize(base: &str, scene: &MandelbulberScene) -> Result<String
             .with_context(|| format!("{prefix}: material {id} is missing"))?;
         writeln!(
             materials,
-            "    {{ float candidate = fptBox{index}(source) * world_scale; if (candidate < distance) {{ distance = candidate;\n        material.rgb = {}; material.roughness = {}; material.specular = {}; material.translucency = {}; material.ior = {}; material.emission = {}; }} }}",
+            "    {{ float candidate = fptBox{index}(source) * world_scale; if (candidate < distance) {{ distance = candidate;\n        material.rgb = {}; material.roughness = {}; material.specular = {}; material.translucency = {}; material.ior = {}; material.emission = 0.0f;{} }} }}",
             vector(material.surface_color.map(f64::from))?,
             number(material.surface_roughness.max(0.0).sqrt().clamp(0.0, 1.0))?,
             number(
@@ -137,7 +137,13 @@ pub(super) fn specialize(base: &str, scene: &MandelbulberScene) -> Result<String
             )?,
             number(material.transparency_of_surface.clamp(0.0, 1.0))?,
             number(material.index_of_refraction.max(1.0))?,
-            number(material.luminosity.max(0.0))?
+            match scene.primitive_emission_override(material) {
+                Some(emission) => format!(
+                    " material.emission_rgb = {};",
+                    vector(emission.map(f64::from))?
+                ),
+                None => String::new(),
+            }
         )?;
     }
     writeln!(

@@ -905,6 +905,53 @@ static float mandelbulberCalculateColorIndex(float4 initial,
 "#
 }
 
+/// Luminosity gradient table and lookup, emitted only for scenes whose
+/// fractal emission comes from the palette (same interpolation as the
+/// surface gradient).
+fn luminosity_gradient_source(scene: &MandelbulberScene) -> String {
+    if !(scene.fractal_emits() && scene.material.uses_luminosity_gradient()) {
+        return String::new();
+    }
+    let stops = &scene.material.luminosity_gradient;
+    let table = stops
+        .iter()
+        .map(|stop| {
+            format!(
+                "    float4({}, {}, {}, {})",
+                metal_float(stop.position),
+                metal_float(stop.color[0]),
+                metal_float(stop.color[1]),
+                metal_float(stop.color[2])
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",\n");
+    format!(
+        r#"constant uint kMandelLuminosityGradientCount = {count}u;
+constant float4 kMandelLuminosityGradient[{count}] = {{
+{table}
+}};
+
+static float3 mandelbulberLuminosityGradient(float position) {{
+    uint lower = 0u;
+    uint upper = kMandelLuminosityGradientCount - 1u;
+    while (lower + 1u < upper) {{
+        uint middle = (lower + upper) / 2u;
+        if (position > kMandelLuminosityGradient[middle].x) lower = middle;
+        else upper = middle;
+    }}
+    float4 first = kMandelLuminosityGradient[lower];
+    float4 second = kMandelLuminosityGradient[upper];
+    float amount = clamp((position - first.x) / max(second.x - first.x, 1.0e-20f),
+                         0.0f, 1.0f);
+    return mix(first.yzw, second.yzw, amount);
+}}
+
+"#,
+        count = stops.len()
+    )
+}
+
 fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
     use std::fmt::Write;
     let stops = scene
@@ -930,15 +977,31 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
         .map(|p| p.material_id)
         .chain(scene.primitive_spheres.iter().map(|p| p.material_id));
     for (index, material_id) in primitive_material_ids.enumerate() {
-        let Some(material) = scene.materials.get(&material_id) else {
-            continue;
+        let material = scene.materials.get(&material_id);
+        // Primitives never receive a palette position natively, so their
+        // emission is `luminosity * luminosity_color` or black; they must not
+        // keep the fractal's (possibly gradient-driven) emission.
+        let emission = match material {
+            Some(material) => scene.primitive_emission_override(material),
+            None => scene.fractal_emits().then_some([0.0; 3]),
         };
+        let emission_source = emission
+            .map(|e| {
+                format!(
+                    " material.emission_rgb = float3({},{},{});",
+                    metal_float(e[0]),
+                    metal_float(e[1]),
+                    metal_float(e[2])
+                )
+            })
+            .unwrap_or_default();
         // Fixed-color primitive materials do not use the fractal's color orbit.
-        // Palette-driven primitive materials need their own coloring contract.
-        if material.use_colors_from_palette {
+        // Palette-driven primitive materials need their own coloring contract,
+        // so only their emission is overridden.
+        let fixed_material = material.filter(|material| !material.use_colors_from_palette);
+        if fixed_material.is_none() && emission.is_none() {
             continue;
         }
-        let c = material.surface_color.map(metal_float);
         let distance_source = if index < scene.primitive_planes.len() {
             format!(
                 "const FptPrimitiveInstance plane = cfg.sdf_flat_union_instances[{index}];\n        float distance = max(dot(p,float3(plane.data[0],plane.data[1],plane.data[2]))+plane.data[3],0.0f);"
@@ -948,7 +1011,30 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
                 "const FptPrimitiveInstance sphere = cfg.sdf_flat_union_instances[{index}];\n        float3 local = p + float3(sphere.transform[3],sphere.transform[7],sphere.transform[11]);\n        float distance = length(local) - sphere.data[0];\n        if ((sphere._pad0 & 1u) != 0u) distance = abs(distance);\n        distance = max(distance - sphere.data[1],0.0f);"
             )
         };
-        writeln!(plane_materials,r#"    {{
+        let assignment = if let Some(material) = fixed_material {
+            let c = material.surface_color.map(metal_float);
+            format!(
+                "            material.rgb = float3({r},{g},{b});\n            material.roughness = {roughness}; material.specular = {specular};\n            material.translucency = {translucency}; material.ior = {ior}; material.emission = 0.0f;{emission_source}",
+                r = c[0],
+                g = c[1],
+                b = c[2],
+                roughness =
+                    metal_float(material.surface_roughness.max(0.0).sqrt().clamp(0.0, 1.0) as f32),
+                specular = metal_float(
+                    (material.specular / 10.0)
+                        .max(material.metallic)
+                        .max(material.reflectance)
+                        .clamp(0.0, 1.0) as f32
+                ),
+                translucency = metal_float(material.transparency_of_surface.clamp(0.0, 1.0) as f32),
+                ior = metal_float(material.index_of_refraction.max(1.0) as f32),
+            )
+        } else {
+            format!("            material.emission = 0.0f;{emission_source}")
+        };
+        writeln!(
+            plane_materials,
+            r#"    {{
         {distance_source}
 #ifdef FPT_MANDEL_PERLIN
         float scale = max(setv(cfg,0),1.0f);
@@ -956,15 +1042,43 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
 #endif
         if (distance < selected_distance) {{
             selected_distance = distance;
-            material.rgb = float3({r},{g},{b});
-            material.roughness = {roughness}; material.specular = {specular};
-            material.translucency = {translucency}; material.ior = {ior}; material.emission = {emission};
+{assignment}
         }}
-    }}"#,r=c[0],g=c[1],b=c[2],roughness=metal_float(material.surface_roughness.max(0.0).sqrt().clamp(0.0,1.0) as f32),
-            specular=metal_float((material.specular/10.0).max(material.metallic).max(material.reflectance).clamp(0.0,1.0) as f32),
-            translucency=metal_float(material.transparency_of_surface.clamp(0.0,1.0) as f32),ior=metal_float(material.index_of_refraction.max(1.0) as f32),
-            emission=metal_float(material.luminosity.max(0.0) as f32)).expect("format plane material");
+    }}"#
+        )
+        .expect("format plane material");
     }
+    // Native ObjectShader: luminosity * gradient(palette position) when the
+    // palette and luminosity gradient are enabled, else luminosity *
+    // luminosity_color. Emission is carried as RGB, not scaled by albedo.
+    let gradient_emission = scene.fractal_emits() && scene.material.uses_luminosity_gradient();
+    let surface_color = if gradient_emission {
+        format!(
+            "    float palette_position = mandelbulberGeneratedPalettePosition(p, cfg);\n    material.rgb = ({} && {}) ? mandelbulberSurfaceGradient(palette_position) : fixed_color;\n",
+            metal_bool(scene.material.use_colors_from_palette),
+            metal_bool(scene.material.surface_gradient_enabled)
+        )
+    } else {
+        format!(
+            "    if ({} && {}) {{\n        float position = mandelbulberGeneratedPalettePosition(p, cfg);\n        material.rgb = mandelbulberSurfaceGradient(position);\n    }} else {{\n        material.rgb = fixed_color;\n    }}\n",
+            metal_bool(scene.material.use_colors_from_palette),
+            metal_bool(scene.material.surface_gradient_enabled)
+        )
+    };
+    let fractal_emission = if !scene.fractal_emits() {
+        "    material.emission = cfg.fractal_style[6];\n".to_owned()
+    } else if gradient_emission {
+        format!(
+            "    material.emission = 0.0f;\n    material.emission_rgb = {} * mandelbulberLuminosityGradient(palette_position);\n",
+            metal_float(scene.material.luminosity.max(0.0) as f32)
+        )
+    } else {
+        let e = scene.material.fixed_emission().map(metal_float);
+        format!(
+            "    material.emission = 0.0f;\n    material.emission_rgb = float3({},{},{});\n",
+            e[0], e[1], e[2]
+        )
+    };
     let plane_materials = if plane_materials.is_empty() {
         String::new()
     } else {
@@ -973,7 +1087,7 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
         )
     };
     format!(
-        r#"constant uint kMandelSurfaceGradientCount = {count}u;
+        r#"{luminosity_gradient}constant uint kMandelSurfaceGradientCount = {count}u;
 constant float4 kMandelSurfaceGradient[{count}] = {{
 {stops}
 }};
@@ -1012,18 +1126,11 @@ static Material mandelbulberGeneratedMaterial(float3 p,
                                                constant FptRenderConfig &cfg) {{
     Material material = defaultMaterial();
     float3 fixed_color = float3({base_r}, {base_g}, {base_b});
-    if ({use_palette} && {surface_gradient}) {{
-        float position = mandelbulberGeneratedPalettePosition(p, cfg);
-        material.rgb = mandelbulberSurfaceGradient(position);
-    }} else {{
-        material.rgb = fixed_color;
-    }}
-    material.roughness = cfg.fractal_style[4];
+{surface_color}    material.roughness = cfg.fractal_style[4];
     material.specular = cfg.fractal_style[5];
     material.translucency = {translucency};
     material.ior = {ior};
-    material.emission = cfg.fractal_style[6];
-{plane_materials}
+{fractal_emission}{plane_materials}
 #ifdef FPT_MANDEL_BOX
     material = mandelbulberBoxMaterial(p, cfg, material);
 #endif
@@ -1034,11 +1141,12 @@ static Material mandelbulberGeneratedMaterial(float3 p,
 }}
 "#,
         count = scene.material.surface_gradient.len(),
+        luminosity_gradient = luminosity_gradient_source(scene),
+        surface_color = surface_color,
+        fractal_emission = fractal_emission,
         base_r = base[0],
         base_g = base[1],
         base_b = base[2],
-        use_palette = metal_bool(scene.material.use_colors_from_palette),
-        surface_gradient = metal_bool(scene.material.surface_gradient_enabled),
         speed = metal_float(scene.material.coloring_speed as f32),
         offset = metal_float(scene.material.palette_offset as f32),
         translucency = metal_float(scene.material.transparency_of_surface.clamp(0.0, 1.0) as f32,),
@@ -7353,6 +7461,52 @@ target 0 0 0;
         assert!(source.contains(&format!("material.rgb = float3(0.0f,{green},0.0f)")));
         assert!(source.contains("if (distance < selected_distance)"));
         assert!(source.contains("cfg.sdf_flat_union_instances[0]"));
+    }
+
+    #[test]
+    fn non_emissive_scenes_keep_the_scalar_emission_source() {
+        let scene = MandelbulberScene::parse(COLOR_SCENE).expect("color scene");
+        let source = mandelbulber_palette_source(&scene);
+        assert!(source.contains("material.emission = cfg.fractal_style[6];"));
+        assert!(!source.contains("emission_rgb"));
+        assert!(!source.contains("kMandelLuminosityGradient"));
+        assert!(source.contains("float position = mandelbulberGeneratedPalettePosition(p, cfg);"));
+    }
+
+    #[test]
+    fn gradient_luminosity_is_rgb_and_primitives_do_not_inherit_it() {
+        let scene = MandelbulberScene::parse(&COLOR_SCENE.replace(
+            "[main_parameters]",
+            "[main_parameters]\nmat1_luminosity 4;\nmat1_luminosity_gradient_enable true;\nmat1_luminosity_gradient 0 000000 5000 0080ff;\nprimitive_plane_1_enabled true;\nprimitive_sphere_1_enabled true;\nprimitive_sphere_1_material_id 2;\nmat2_is_defined true;\nmat2_use_colors_from_palette false;\nmat2_luminosity 2;\nmat2_luminosity_color 0000 0000 ffff;",
+        ))
+        .unwrap();
+        let source = mandelbulber_palette_source(&scene);
+        assert!(source.contains("kMandelLuminosityGradientCount = 3u"));
+        assert!(source.contains("float4(0.5f, 0.0f, 0.5f, 0.99609375f)"));
+        assert!(source.contains(
+            "material.emission_rgb = 4.0f * mandelbulberLuminosityGradient(palette_position);"
+        ));
+        assert!(!source.contains("material.emission = cfg.fractal_style[6];"));
+        // The palette-driven plane keeps the fractal colour but not its glow.
+        assert!(
+            source.contains(
+                "material.emission = 0.0f; material.emission_rgb = float3(0.0f,0.0f,0.0f);"
+            )
+        );
+        // The fixed sphere emits luminosity * luminosity_color, not albedo.
+        assert!(source.contains("material.emission_rgb = float3(0.0f,0.0f,2.0f);"));
+    }
+
+    #[test]
+    fn fixed_luminosity_uses_luminosity_color_instead_of_albedo() {
+        let scene = MandelbulberScene::parse(&COLOR_SCENE.replace(
+            "[main_parameters]",
+            "[main_parameters]\nmat1_luminosity 3;\nmat1_surface_color 0000 0000 0000;",
+        ))
+        .unwrap();
+        let source = mandelbulber_palette_source(&scene);
+        assert!(source.contains("material.emission_rgb = float3(3.0f,3.0f,3.0f);"));
+        assert!(!source.contains("kMandelLuminosityGradient"));
     }
 
     #[test]

@@ -125,7 +125,40 @@ pub struct MandelbulberMaterial {
     pub index_of_refraction: f64,
     pub transparency_interior_color: [f32; 3],
     pub luminosity: f64,
+    /// `matN_luminosity_color`; white by default (initparameters.cpp).
+    pub luminosity_color: [f32; 3],
+    /// `matN_luminosity_emissive`. Parsed for completeness; FPT's path tracer
+    /// has a single emission term, so it is not applied separately.
+    pub luminosity_emissive: f64,
+    pub luminosity_gradient_enabled: bool,
+    pub luminosity_gradient: Vec<MandelbulberGradientStop>,
     pub parameters: BTreeMap<String, String>,
+}
+
+impl MandelbulberMaterial {
+    /// Native `ObjectShader` takes luminosity from the palette gradient only
+    /// when both the palette and the luminosity gradient are enabled.
+    pub fn uses_luminosity_gradient(&self) -> bool {
+        self.use_colors_from_palette && self.luminosity_gradient_enabled
+    }
+
+    /// `luminosity * luminosity_color`, the non-gradient emission branch.
+    pub fn fixed_emission(&self) -> [f32; 3] {
+        let luminosity = self.luminosity.max(0.0) as f32;
+        self.luminosity_color
+            .map(|channel| channel.max(0.0) * luminosity)
+    }
+
+    /// Emission of a primitive object (plane, sphere, box, water) using this
+    /// material. Native `SurfaceColour` computes no palette position for
+    /// primitives, so their luminosity gradient value stays black.
+    pub fn primitive_emission(&self) -> [f32; 3] {
+        if self.uses_luminosity_gradient() {
+            [0.0; 3]
+        } else {
+            self.fixed_emission()
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -781,11 +814,47 @@ fn parse_material(document: &FractDocument, material_id: u32) -> Result<Mandelbu
         )?,
         transparency_interior_color,
         luminosity: document.number("main_parameters", &key("luminosity"), 0.0)?,
+        luminosity_color: document
+            .value("main_parameters", &key("luminosity_color"))
+            .map(parse_rgb16)
+            .transpose()
+            .with_context(|| format!("invalid {prefix}luminosity_color"))?
+            .unwrap_or([1.0; 3]),
+        luminosity_emissive: document.number(
+            "main_parameters",
+            &key("luminosity_emissive"),
+            1.0,
+        )?,
+        luminosity_gradient_enabled: document.boolean(
+            "main_parameters",
+            &key("luminosity_gradient_enable"),
+            false,
+        )?,
+        luminosity_gradient: parse_gradient(
+            document
+                .value("main_parameters", &key("luminosity_gradient"))
+                .unwrap_or("0 000000"),
+        )
+        .with_context(|| format!("invalid {prefix}luminosity_gradient"))?,
         parameters,
     })
 }
 
 impl MandelbulberScene {
+    /// Whether the fractal material emits light. Its emission is then set
+    /// explicitly on every primitive material override, because primitives
+    /// otherwise inherit the fractal's material.
+    pub fn fractal_emits(&self) -> bool {
+        self.material.luminosity > 0.0
+    }
+
+    /// RGB emission to assign when a primitive with `material` is selected,
+    /// or `None` when neither it nor the fractal emits (emission stays zero).
+    pub fn primitive_emission_override(&self, material: &MandelbulberMaterial) -> Option<[f32; 3]> {
+        let emission = material.primitive_emission();
+        (self.fractal_emits() || emission != [0.0; 3]).then_some(emission)
+    }
+
     /// Rebase a periodic Jos-Kleinian field before converting its camera to
     /// fp32. Old example scenes can be hundreds of units from the origin while
     /// focusing only thousandths of a unit away. Their first Jos iteration
@@ -4345,6 +4414,46 @@ target 0 0 0;
         assert_eq!(sphere.transform[3], -WORLD_SCALE as f32);
         assert_eq!(sphere.transform[7], -3.0 * WORLD_SCALE as f32);
         assert_eq!(sphere.transform[11], -2.0 * WORLD_SCALE as f32);
+    }
+
+    #[test]
+    fn luminosity_color_and_gradient_follow_native_defaults_and_branches() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nmat1_luminosity 2;\nmat2_is_defined true;\nmat2_luminosity 4;\nmat2_luminosity_color 0000 ffff 0000;\nmat2_luminosity_emissive 0,5;\nmat2_luminosity_gradient_enable true;\nmat2_luminosity_gradient 0 000000 5000 ff0000;\nmat3_is_defined true;\nmat3_luminosity 3;\nmat3_use_colors_from_palette false;\nmat3_luminosity_gradient_enable true;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("luminosity scene");
+        let first = &scene.materials[&1];
+        assert_eq!(first.luminosity_color, [1.0; 3]);
+        assert_eq!(first.luminosity_emissive, 1.0);
+        assert!(!first.luminosity_gradient_enabled);
+        assert_eq!(first.luminosity_gradient.len(), 2);
+        assert_eq!(first.fixed_emission(), [2.0; 3]);
+        assert_eq!(first.primitive_emission(), [2.0; 3]);
+
+        let second = &scene.materials[&2];
+        assert_eq!(second.luminosity_color, [0.0, 1.0, 0.0]);
+        assert_eq!(second.luminosity_emissive, 0.5);
+        assert!(second.uses_luminosity_gradient());
+        assert_eq!(second.luminosity_gradient[1].position, 0.5);
+        assert_eq!(
+            second.luminosity_gradient[1].color,
+            [255.0 / 256.0, 0.0, 0.0]
+        );
+        // Primitives have no palette position, so a gradient material is dark.
+        assert_eq!(second.primitive_emission(), [0.0; 3]);
+
+        // Without the palette, native uses luminosity_color even when the
+        // gradient switch is on.
+        let third = &scene.materials[&3];
+        assert!(!third.uses_luminosity_gradient());
+        assert_eq!(third.primitive_emission(), [3.0; 3]);
+
+        assert!(scene.fractal_emits());
+        assert_eq!(scene.primitive_emission_override(second), Some([0.0; 3]));
+        let dark = MandelbulberScene::parse(IFS_SCENE).expect("dark scene");
+        assert!(!dark.fractal_emits());
+        assert_eq!(dark.primitive_emission_override(&dark.material), None);
     }
 
     #[test]
