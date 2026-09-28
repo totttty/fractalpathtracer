@@ -7967,6 +7967,9 @@ static float3 postProcess(float3 color, constant FptRenderConfig &cfg) {
         color *= cfg.post[1];
         color = (color - float3(0.5f)) * cfg.post[4] + float3(0.5f);
         color = max(color, float3(0.0f));
+        // Mandelbulber cimage.cpp CalculatePixel: hdr tone-maps with tanh
+        // after the contrast clamp and before saturation and gamma.
+        if (cfg.post[2] > 0.5f) color = tanh(min(color, float3(20.0f)));
         float l = sqrt(dot(color * color, float3(0.299f, 0.587f, 0.114f)));
         color = mix(float3(l), color, cfg.post[3]);
         color = clamp(color, 0.0f, 1.0f);

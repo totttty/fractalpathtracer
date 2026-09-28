@@ -237,6 +237,8 @@ pub struct MandelbulberScene {
     pub image_contrast: f64,
     pub image_gamma: f64,
     pub image_saturation: f64,
+    /// `hdr`: native CalculatePixel applies tanh after the contrast clamp.
+    pub image_hdr: bool,
     pub main_light_enabled: bool,
     pub main_light_rotation: [f64; 3],
     pub main_light_intensity: f64,
@@ -1528,6 +1530,7 @@ impl MandelbulberScene {
             image_contrast: document.number("main_parameters", "contrast", 1.0)?,
             image_gamma: document.number("main_parameters", "gamma", 1.0)?,
             image_saturation: document.number("main_parameters", "saturation", 1.0)?,
+            image_hdr: document.boolean("main_parameters", "hdr", false)?,
             main_light_enabled: document.boolean(
                 "main_parameters",
                 if modern_lights {
@@ -2052,7 +2055,8 @@ impl MandelbulberScene {
         config.post = [
             -(self.image_gamma.max(1.0e-6) as f32),
             self.image_brightness as f32,
-            0.0,
+            // Unused by the Mandelbulber order otherwise; 1 selects hdr tanh.
+            u32::from(self.image_hdr) as f32,
             self.image_saturation as f32,
             self.image_contrast as f32,
             0.0,
@@ -2203,7 +2207,8 @@ impl MandelbulberScene {
         config.post = [
             -(self.image_gamma.max(1.0e-6) as f32),
             self.image_brightness as f32,
-            0.0,
+            // Unused by the Mandelbulber order otherwise; 1 selects hdr tanh.
+            u32::from(self.image_hdr) as f32,
             self.image_saturation as f32,
             self.image_contrast as f32,
             0.0,
@@ -3898,6 +3903,14 @@ IFS_scale 1,4;
         assert_eq!(config.background_gradient[..3], scene.background_colors[0]);
         assert_eq!(config.post, [-0.7, 0.9, 0.0, 0.75, 1.1, 0.0, 0.0]);
         assert_eq!(config.mandel_appearance[5], 1.0);
+
+        let hdr = MandelbulberScene::parse(&source.replace("gamma 0,7;", "gamma 0,7;\nhdr true;"))
+            .expect("hdr scene");
+        assert!(hdr.image_hdr && !scene.image_hdr);
+        let mut config = FptRenderConfig::default();
+        hdr.apply_to_config(&mut config);
+        hdr.apply_authored_path_appearance(&mut config);
+        assert_eq!(config.post, [-0.7, 0.9, 1.0, 0.75, 1.1, 0.0, 0.0]);
     }
 
     #[test]
