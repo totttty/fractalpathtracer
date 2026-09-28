@@ -240,6 +240,9 @@ pub struct MandelbulberScene {
     /// `hdr`: native CalculatePixel applies tanh after the contrast clamp.
     pub image_hdr: bool,
     pub main_light_enabled: bool,
+    /// Modern `light1_type point`: light1 is rendered through the auxiliary
+    /// point-light table at `light1_position`, so the directional sun is off.
+    pub main_light_point: bool,
     pub main_light_rotation: [f64; 3],
     pub main_light_intensity: f64,
     pub main_light_color: [f32; 3],
@@ -1540,6 +1543,11 @@ impl MandelbulberScene {
                 },
                 true,
             )?,
+            main_light_point: modern_lights
+                && matches!(
+                    document.value("main_parameters", "light1_type"),
+                    Some("point" | "1")
+                ),
             main_light_rotation,
             main_light_intensity: document.number(
                 "main_parameters",
@@ -2042,7 +2050,7 @@ impl MandelbulberScene {
         let light_direction = self.main_light_direction();
         let light_horizontal = light_direction[0].hypot(light_direction[2]);
         config.sun = [
-            u32::from(self.main_light_enabled) as f32,
+            u32::from(self.main_light_enabled && !self.main_light_point) as f32,
             light_direction[0].atan2(light_direction[2]).to_degrees() as f32,
             light_direction[1].atan2(light_horizontal).to_degrees() as f32,
             self.main_light_intensity as f32,

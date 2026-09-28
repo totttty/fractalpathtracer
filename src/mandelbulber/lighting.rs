@@ -159,7 +159,7 @@ impl AuxiliaryLighting {
                     .push("fake lights: non-point, hybrid, boolean or delta orbit".into());
             }
         }
-        let ids: BTreeSet<u32> = parameters
+        let mut ids: BTreeSet<u32> = parameters
             .keys()
             .filter_map(|key| {
                 key.strip_prefix("light")?
@@ -169,6 +169,18 @@ impl AuxiliaryLighting {
             })
             .filter(|id| *id > 1)
             .collect();
+        // Light1 is normally the directional sun in config.sun. A point-type
+        // light1 is routed through this table instead (the sun is disabled
+        // for it in apply_to_config); native defaults differ for light1.
+        if scene.main_light_point {
+            ids.insert(1);
+        }
+        if let Some(kind) = parameters.get("light1_type")
+            && !matches!(kind.as_str(), "directional" | "0" | "point" | "1")
+            && scene.main_light_enabled
+        {
+            result.unsupported.push(format!("light1: {kind}"));
+        }
         let global = parameters
             .get("all_lights_intensity")
             .map(|v| parse_number(v))
@@ -186,7 +198,7 @@ impl AuxiliaryLighting {
                     .transpose()?
                     .unwrap_or(default))
             };
-            if !boolean("enabled", false)? {
+            if !boolean("enabled", id == 1)? {
                 continue;
             }
             let kind = get("type").map(String::as_str).unwrap_or("point");
@@ -259,7 +271,7 @@ impl AuxiliaryLighting {
                         5 => [0.0, -1.0, -3.0],
                         _ => [0.0; 3],
                     });
-                let relative = boolean("relative_position", false)?;
+                let relative = boolean("relative_position", id == 1)?;
                 let size = get("size")
                     .map(|v| parse_number(v))
                     .transpose()?
@@ -589,6 +601,43 @@ mod tests {
         assert!(source.contains("constant uint mandelAuxDirectionalCount = 2u;"));
         assert_eq!(source, lights.specialize(MARKER).unwrap());
         assert!(lights.specialize("no marker").is_err());
+    }
+
+    #[test]
+    fn point_type_light1_uses_point_table_and_disables_the_sun() {
+        let directional = scene("");
+        assert!(!directional.main_light_point);
+        let lights = AuxiliaryLighting::load(&directional).unwrap();
+        assert!(lights.point.iter().all(|light| light.id != 1));
+        let mut config = crate::ffi::FptRenderConfig::default();
+        directional.apply_to_config(&mut config);
+        assert_eq!(config.sun[0], 1.0);
+
+        let point = scene(
+            "light1_type point;\nlight1_position 1 2 3;\nlight1_relative_position false;",
+        );
+        assert!(point.main_light_point);
+        let mut config = crate::ffi::FptRenderConfig::default();
+        point.apply_to_config(&mut config);
+        assert_eq!(config.sun[0], 0.0);
+        let lights = AuxiliaryLighting::load(&point).unwrap();
+        let light1 = lights.point.iter().find(|light| light.id == 1).unwrap();
+        assert_eq!(light1.position, [1.0, 3.0, 2.0]);
+        assert!(!light1.camera_relative);
+        // ifs-20 authors light1_intensity 0,7; point intensity is unchanged.
+        assert!((light1.intensity - 0.7).abs() < 1e-6);
+        assert_eq!(light1.color, [1.0; 3]);
+        assert!(lights.unsupported.is_empty());
+
+        // Native defaults light1 to enabled and camera-relative.
+        let relative = AuxiliaryLighting::load(&scene("light1_type 1;")).unwrap();
+        let light1 = relative.point.iter().find(|light| light.id == 1).unwrap();
+        assert!(light1.camera_relative);
+        let disabled = scene("light1_type point;\nlight1_enabled false;");
+        assert!(AuxiliaryLighting::load(&disabled).unwrap().point.is_empty());
+
+        let spot = AuxiliaryLighting::load(&scene("light1_type spot;")).unwrap();
+        assert_eq!(spot.unsupported, ["light1: spot"]);
     }
 
     #[test]
