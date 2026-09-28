@@ -5221,6 +5221,50 @@ struct RenderMetadataInput<'a> {
     mandel_offline_compile_ms: Option<f64>,
 }
 
+/// Effective authored Mandel lighting as sent to the GPU, so a dark render
+/// can be traced to its light sources from render.json alone.
+fn mandel_lighting_metadata(
+    config: &FptRenderConfig,
+    auxiliary: &mandelbulber::lighting::AuxiliaryLighting,
+) -> Value {
+    let yaw = config.sun[1].to_radians();
+    let pitch = config.sun[2].to_radians();
+    json!({
+        "main_light": {
+            "enabled": config.sun[0] == 1.0,
+            "point_light1": auxiliary.point.iter().any(|light| light.id == 1),
+            "direction": [yaw.sin() * pitch.cos(), pitch.sin(), yaw.cos() * pitch.cos()],
+            "yaw_pitch_degrees": [config.sun[1], config.sun[2]],
+            "intensity": config.sun[3],
+            "soft_shadow_radians": config.sun[4],
+            "color": config.sun_color,
+        },
+        "auxiliary_light_count": {
+            "directional": auxiliary.directional.len(),
+            "point": auxiliary.point.len(),
+            "fake": auxiliary.fake.is_some(),
+        },
+        "emissive_material_count": auxiliary.emissive_material_ids.len(),
+        "sky": {
+            "secondary_environment_mode": config.world[0],
+            "secondary_environment_strength": config.world[4],
+            "secondary_environment_color": config.world_one_color,
+            "background_mode": config.world[6],
+            "background_brightness": config.world[1],
+            "background_gamma": config.world[5],
+            "background_top": &config.background_gradient[..3],
+            "background_bottom": &config.background_gradient[3..],
+        },
+        "image": {
+            "gamma": -config.post[0],
+            "brightness": config.post[1],
+            "hdr": config.post[2] != 0.0,
+            "saturation": config.post[3],
+            "contrast": config.post[4],
+        },
+    })
+}
+
 fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
     let RenderMetadataInput {
         output,
@@ -5430,6 +5474,7 @@ fn write_render_metadata(input: RenderMetadataInput<'_>) -> Result<()> {
         "mandel_source_bytes": mandel_source_bytes,
         "mandel_ambient": mandel_ambient,
         "mandel_auxiliary": mandel_auxiliary,
+        "mandel_lighting": mandel_auxiliary.map(|auxiliary| mandel_lighting_metadata(config, auxiliary)),
         "mandel_offline_compile_ms": mandel_offline_compile_ms,
         "mandel_pipeline_build_ms": mandel_offline_compile_ms.map(|compile_ms| (build_ms - compile_ms).max(0.0)),
         "sdf_flat_union_primitive_count": config.sdf_flat_union_count,
@@ -8388,6 +8433,7 @@ kernel void mandelbulber_field_sample_kernel(device const float4 *points [[buffe
             point: vec![],
             fake: None,
             unsupported: vec![],
+            emissive_material_ids: vec![],
             directional: vec![
                 DirectionalLight {
                     id: 2,

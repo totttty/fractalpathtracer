@@ -50,6 +50,53 @@ pub struct AuxiliaryLighting {
     pub point: Vec<PointLight>,
     pub fake: Option<FakeLights>,
     pub unsupported: Vec<String>,
+    /// Defined materials with luminosity > 0 (FPT's only emitters besides
+    /// the lights above and the sky).
+    pub emissive_material_ids: Vec<u32>,
+}
+
+/// Self-luminous or light-scattering media that the continuous FPT path
+/// renderer does not implement. Scenes lit mainly by these render dark, so
+/// they are reported rather than silently dropped.
+fn unsupported_media(scene: &MandelbulberScene) -> Result<Vec<String>> {
+    let parameters = &scene.main_parameters;
+    let flag = |key: &str| -> Result<bool> {
+        Ok(parameters
+            .get(key)
+            .map(|v| parse_bool(v))
+            .transpose()?
+            .unwrap_or(false))
+    };
+    let number = |key: &str, default: f64| -> Result<f64> {
+        Ok(parameters
+            .get(key)
+            .map(|v| parse_number(v))
+            .transpose()?
+            .unwrap_or(default))
+    };
+    let mut unsupported = Vec::new();
+    // Defaults from Mandelbulber initparameters.cpp.
+    if flag("volumetric_fog_enabled")? && number("volumetric_fog_density", 0.5)? > 0.0 {
+        unsupported.push("volumetric fog".into());
+    }
+    if flag("basic_fog_enabled")? {
+        unsupported.push("basic fog".into());
+    }
+    if flag("iteration_fog_enable")? {
+        unsupported.push("iteration fog".into());
+    }
+    if flag("clouds_enable")? {
+        unsupported.push("clouds".into());
+    }
+    if flag("fake_lights_enabled")? {
+        let visibility = number("fake_lights_visibility", 1.0)?;
+        if visibility > 0.0 {
+            unsupported.push(format!(
+                "fake lights: visible orbit-trap glow (visibility {visibility})"
+            ));
+        }
+    }
+    Ok(unsupported)
 }
 
 impl AuxiliaryLighting {
@@ -64,6 +111,18 @@ impl AuxiliaryLighting {
         Ok(())
     }
     pub fn load(scene: &MandelbulberScene) -> Result<Self> {
+        let mut result = Self::load_lights(scene)?;
+        result.unsupported.extend(unsupported_media(scene)?);
+        result.emissive_material_ids = scene
+            .materials
+            .iter()
+            .filter(|(_, material)| material.luminosity > 0.0)
+            .map(|(&id, _)| id)
+            .collect();
+        Ok(result)
+    }
+
+    fn load_lights(scene: &MandelbulberScene) -> Result<Self> {
         let mut result = Self::default();
         if version_is_before(&scene.source_version, 2, 25)? {
             return Self::load_legacy_points(scene);
@@ -394,7 +453,7 @@ impl AuxiliaryLighting {
                 ));
             }
         }
-        let mut result = Self::load(&translated)?;
+        let mut result = Self::load_lights(&translated)?;
         result.unsupported.extend(volumes);
         for (key, value) in &scene.main_parameters {
             if let Some(index) = key.strip_prefix("aux_light_enabled_") {
@@ -638,6 +697,34 @@ mod tests {
 
         let spot = AuxiliaryLighting::load(&scene("light1_type spot;")).unwrap();
         assert_eq!(spot.unsupported, ["light1: spot"]);
+    }
+
+    #[test]
+    fn unrendered_media_and_emitters_are_reported() {
+        let plain = AuxiliaryLighting::load(&scene("")).unwrap();
+        assert!(plain.unsupported.is_empty());
+        let media = AuxiliaryLighting::load(&scene(
+            "volumetric_fog_enabled true;\nbasic_fog_enabled true;\niteration_fog_enable true;\nclouds_enable true;\nfake_lights_enabled true;\nfake_lights_visibility 128;\nmat1_luminosity 2;",
+        ))
+        .unwrap();
+        assert_eq!(
+            media.unsupported,
+            [
+                "volumetric fog",
+                "basic fog",
+                "iteration fog",
+                "clouds",
+                "fake lights: visible orbit-trap glow (visibility 128)",
+            ]
+        );
+        assert_eq!(media.emissive_material_ids, [1]);
+        assert!(media.fake.is_some());
+        // Zero density fog and invisible orbit lights have no visible effect.
+        let quiet = AuxiliaryLighting::load(&scene(
+            "volumetric_fog_enabled true;\nvolumetric_fog_density 0;\nfake_lights_enabled true;\nfake_lights_visibility 0;",
+        ))
+        .unwrap();
+        assert!(quiet.unsupported.is_empty());
     }
 
     #[test]
