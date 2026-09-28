@@ -42,5 +42,5 @@ The raw captures from the previous batches are gone, so `publish_mandel_review.p
 
 ## Caveats
 
-- The native-reference cache hashes the whole process environment. App or session restarts therefore invalidate every entry.
+- During this pass the native-reference cache hashed the whole process environment, so app or session restarts invalidated every entry. Contract version 2 now hashes only renderer-relevant variables (`HOME`, `LANG`, `TZ`, and the `LC_`, `QT_`, `OMP_`, `KMP_`, `DYLD_`, `MANDELBULBER`, `OCL_` and `OPENCL_` prefixes).
 - Timings were measured under unrelated machine load and are not benchmarks.

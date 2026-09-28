@@ -13,6 +13,19 @@ def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
+# Variables that can change what the native renderer reads or computes. Hashing the whole
+# environment made every app or session restart (new socket paths, tokens) a cache miss.
+NATIVE_ENVIRONMENT_KEYS = ('HOME', 'LANG', 'TZ')
+NATIVE_ENVIRONMENT_PREFIXES = ('LC_', 'QT_', 'OMP_', 'KMP_', 'DYLD_', 'MANDELBULBER', 'OCL_', 'OPENCL_')
+
+
+def native_environment(environ=None):
+    environ = os.environ if environ is None else environ
+    # Only the digest is stored, never the values (which could be sensitive).
+    return {k: v for k, v in environ.items()
+            if k in NATIVE_ENVIRONMENT_KEYS or k.startswith(NATIVE_ENVIRONMENT_PREFIXES)}
+
+
 def reference_contract(command, scene, size, lightmap, shared_root):
     # The full scene hash covers authored camera, projection and all settings.
     # Fail closed for external assets whose actual native resolution is unknown.
@@ -39,14 +52,11 @@ def reference_contract(command, scene, size, lightmap, shared_root):
     settings = {str(p.resolve()): sha256(p)
                 for root in (Path.home()/'mandelbulber', Path.home()/'.mandelbulber')
                 for p in sorted(root.glob('*.ini')) if p.is_file()}
-    # Do not persist environment values (which may include credentials).
-    environment = {k:v for k,v in os.environ.items()
-                   if k not in ('PWD', 'OLDPWD', 'TMPDIR', 'SHLVL', '_') and not k.startswith('FPT_')}
-    return dict(version=1, scene_sha256=sha256(scene), dimensions=list(size),
+    return dict(version=2, scene_sha256=sha256(scene), dimensions=list(size),
                 command=normalized, binary_sha256=sha256(Path(command[0])),
                 assets=assets, native_settings=settings,
                 resource_roots=[str(root.resolve()) for root in roots],
-                environment_sha256=digest(environment)), None
+                environment_sha256=digest(native_environment())), None
 
 
 def verify_native_log(contract, folder):

@@ -5,7 +5,10 @@ import unittest
 from pathlib import Path
 from PIL import Image
 
-from mandel_reference_cache import digest, reference_contract, load_reference, store_reference, verify_native_log
+import os
+from unittest import mock
+
+from mandel_reference_cache import digest, native_environment, reference_contract, load_reference, store_reference, verify_native_log
 from run_release_canaries import image_result, lightmap_asset, mandel_reference_command
 
 
@@ -56,6 +59,15 @@ class ReferenceCacheTests(unittest.TestCase):
         self.binary.write_text('binary')
         Image.new('RGB',(2,2),'green').save(self.map)
         self.assertNotEqual(self.make_contract()[0],self.contract)
+
+    def test_session_variables_do_not_invalidate_but_renderer_variables_do(self):
+        with mock.patch.dict(os.environ,{'CLAUDE_CODE_MESSAGING_SOCKET':'/tmp/a','TERM_SESSION_ID':'x'}):
+            first=self.make_contract()[0]
+        with mock.patch.dict(os.environ,{'CLAUDE_CODE_MESSAGING_SOCKET':'/tmp/b','TERM_SESSION_ID':'y'}):
+            self.assertEqual(self.make_contract()[0],first)
+        with mock.patch.dict(os.environ,{'OMP_NUM_THREADS':'3'}):
+            self.assertNotEqual(self.make_contract()[0],first)
+        self.assertEqual(native_environment({'PATH':'/bin','LC_ALL':'C','QT_X':'1','SECRET_TOKEN':'s'}),{'LC_ALL':'C','QT_X':'1'})
 
     def test_output_location_and_timeout_are_not_render_settings(self):
         self.command[self.command.index('-o')+1]='/another/output.png'
