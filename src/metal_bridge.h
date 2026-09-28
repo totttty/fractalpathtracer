@@ -446,6 +446,8 @@ int fpt_metal_render(const char *metallib_path,
                      char *error,
                      size_t error_len);
 
+// Either output path may be null/empty; at least one is required. Structural-
+// only captures do not require the colour diagnostic function in the library.
 int fpt_metal_diagnostic_render(const char *metallib_path,
                                 const char *output_path,
                                 const char *structural_output_path,

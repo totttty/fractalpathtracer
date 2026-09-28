@@ -6213,6 +6213,14 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             set_error(error, error_len, "missing diagnostic render config");
             return 1;
         }
+        // Structural exports consume records only. Avoid compiling and
+        // dispatching the colour diagnostic when no image was requested.
+        const bool write_image = output_path && output_path[0] != '\0';
+        const bool write_structural = structural_output_path && structural_output_path[0] != '\0';
+        if (!write_image && !write_structural) {
+            set_error(error, error_len, "diagnostic render requires an image or structural output");
+            return 1;
+        }
         FptRenderConfig hydrated_config = *config;
         if (!hydrate_hdri_config(hydrated_config, error, error_len)) return 1;
         config = &hydrated_config;
@@ -6243,17 +6251,18 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
         NSString *diagnostic_function_name = use_voxels
             ? @"voxel_diagnostic_kernel"
             : @"sdf_diagnostic_kernel";
-        id<MTLFunction> function = [library newFunctionWithName:diagnostic_function_name];
-        if (!function) {
+        id<MTLFunction> function = write_image
+            ? [library newFunctionWithName:diagnostic_function_name] : nil;
+        if (write_image && !function) {
             set_error(error, error_len, "sdf_diagnostic_kernel not found in metallib");
             return 1;
         }
-        id<MTLComputePipelineState> pipeline = [device newComputePipelineStateWithFunction:function error:&ns_error];
-        if (!pipeline) {
+        id<MTLComputePipelineState> pipeline = write_image
+            ? [device newComputePipelineStateWithFunction:function error:&ns_error] : nil;
+        if (write_image && !pipeline) {
             set_error(error, error_len, "failed to create SDF diagnostic pipeline: %s", ns_error.localizedDescription.UTF8String);
             return 1;
         }
-        const bool write_structural = structural_output_path && structural_output_path[0] != '\0';
         if (write_structural && use_voxels) {
             set_error(error, error_len, "structural diagnostic output requires the SDF renderer");
             return 1;
@@ -6285,7 +6294,8 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
         }
         id<MTLCommandQueue> queue = [device newCommandQueue];
         const size_t pixel_count = static_cast<size_t>(config->width) * config->height;
-        id<MTLBuffer> out_buffer = [device newBufferWithLength:pixel_count * 4 options:MTLResourceStorageModeShared];
+        id<MTLBuffer> out_buffer = write_image
+            ? [device newBufferWithLength:pixel_count * 4 options:MTLResourceStorageModeShared] : nil;
         constexpr size_t structural_record_bytes = 80u;
         id<MTLBuffer> structural_buffer = write_structural
             ? [device newBufferWithLength:pixel_count * structural_record_bytes options:MTLResourceStorageModeShared]
@@ -6299,7 +6309,7 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             ? [device newBufferWithLength:voxel_count * 12u options:MTLResourceStorageModeShared]
             : nil;
         id<MTLBuffer> voxel_page_table_buffer = nil;
-        if (!queue || !out_buffer || !cfg_buffer || !diag_buffer ||
+        if (!queue || (write_image && !out_buffer) || !cfg_buffer || !diag_buffer ||
             (write_structural && !structural_buffer) || (use_voxels && !voxel_buffer)) {
             set_error(error, error_len, "failed to allocate SDF diagnostic buffers");
             return 1;
@@ -6338,7 +6348,7 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             voxel_buffer = storage.cells;
             voxel_page_table_buffer = storage.page_table;
         }
-        MTLSize threads_per_group = threadgroup_for_pipeline(pipeline);
+        MTLSize threads_per_group = threadgroup_for_pipeline(write_image ? pipeline : structural_pipeline);
         const uint32_t rows_per_dispatch = config->sdf_id == FPT_SDF_MANDELBULBER
             ? 8u
             : config->height;
@@ -6350,14 +6360,16 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
             const uint32_t tile_height = std::min(rows_per_dispatch, config->height - row);
             id<MTLCommandBuffer> command_buffer = [queue commandBuffer];
             id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoder];
-            [encoder setComputePipelineState:pipeline];
-            [encoder setBuffer:out_buffer offset:0 atIndex:0];
-            [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
-            [encoder setBuffer:diag_buffer offset:0 atIndex:2];
-            if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
-            if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
-            MTLSize groups = groups_for_extent(config->width, tile_height, threads_per_group);
-            [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
+            if (write_image) {
+                [encoder setComputePipelineState:pipeline];
+                [encoder setBuffer:out_buffer offset:0 atIndex:0];
+                [encoder setBuffer:cfg_buffer offset:0 atIndex:1];
+                [encoder setBuffer:diag_buffer offset:0 atIndex:2];
+                if (use_voxels) [encoder setBuffer:voxel_buffer offset:0 atIndex:3];
+                if (use_voxels) [encoder setBuffer:voxel_page_table_buffer offset:0 atIndex:4];
+                MTLSize groups = groups_for_extent(config->width, tile_height, threads_per_group);
+                [encoder dispatchThreadgroups:groups threadsPerThreadgroup:threads_per_group];
+            }
             if (write_structural) {
                 const MTLSize structural_threads = threadgroup_for_pipeline(structural_pipeline);
                 [encoder setComputePipelineState:structural_pipeline];
@@ -6388,9 +6400,11 @@ extern "C" int fpt_metal_diagnostic_render(const char *metallib_path,
                 : wall_elapsed_ms;
         }
         if (diagnostic_gpu_lock.owns_lock()) diagnostic_gpu_lock.unlock();
-        std::vector<uint8_t> rgba(pixel_count * 4);
-        std::memcpy(rgba.data(), out_buffer.contents, rgba.size());
-        if (!write_png(output_path, config->width, config->height, rgba, error, error_len)) return 1;
+        if (write_image) {
+            std::vector<uint8_t> rgba(pixel_count * 4);
+            std::memcpy(rgba.data(), out_buffer.contents, rgba.size());
+            if (!write_png(output_path, config->width, config->height, rgba, error, error_len)) return 1;
+        }
         if (write_structural) {
             const std::filesystem::path structural_path(structural_output_path);
             if (structural_path.has_parent_path()) {
