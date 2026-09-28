@@ -1,0 +1,80 @@
+diff --git a/shaders/Shaders.metal b/shaders/Shaders.metal
+index 993264e..29171e4 100644
+--- a/shaders/Shaders.metal
++++ b/shaders/Shaders.metal
+@@ -7064,6 +7064,10 @@ static float3 renderPath(float2 xy, uint sample_idx, constant FptRenderConfig &c
+             // Authored AO replaces generic environment illumination. Primary
+             // background still comes from the unchanged authored sky below.
+             if (!authored_path || i == 0)
++#else
++            // Without Monte Carlo GI, Mandelbulber lights nothing with the
++            // sky: only primary misses see it (mandel_appearance[9] = GI).
++            if (!authored_path || i == 0 || cfg.mandel_appearance[9] != 0.0f)
+ #endif
+             pixellight += authored_path
+                 ? pixelcolor * environment(dr, cfg)
+diff --git a/src/mandelbulber.rs b/src/mandelbulber.rs
+index 7680ce6..0f4b0be 100644
+--- a/src/mandelbulber.rs
++++ b/src/mandelbulber.rs
+@@ -245,6 +245,8 @@ pub struct MandelbulberScene {
+     pub main_light_color: [f32; 3],
+     pub main_light_soft_shadow_degrees: f64,
+     pub main_light_cast_shadows: bool,
++    /// Native GI needs both `DOF_monte_carlo` and `DOF_MC_global_illumination`.
++    pub monte_carlo_global_illumination: bool,
+     pub main_light_penetrating: bool,
+     pub ambient_occlusion_enabled: bool,
+     pub ambient_occlusion_mode: u32,
+@@ -1560,6 +1562,15 @@ impl MandelbulberScene {
+                 },
+                 1.0,
+             )?,
++            monte_carlo_global_illumination: document.boolean(
++                "main_parameters",
++                "DOF_monte_carlo",
++                false,
++            )? && document.boolean(
++                "main_parameters",
++                "DOF_MC_global_illumination",
++                false,
++            )?,
+             main_light_cast_shadows: document.boolean(
+                 "main_parameters",
+                 if modern_lights {
+@@ -2224,6 +2235,8 @@ impl MandelbulberScene {
+         config.mandel_appearance[6] = u32::from(self.main_light_penetrating) as f32;
+         config.mandel_appearance[7] = u32::from(self.main_light_cast_shadows) as f32;
+         config.mandel_appearance[8] = self.internal_fov() as f32;
++        // Secondary sky light is only part of Mandelbulber's Monte Carlo GI.
++        config.mandel_appearance[9] = u32::from(self.monte_carlo_global_illumination) as f32;
+     }
+ 
+     fn internal_fov(&self) -> f64 {
+@@ -3911,6 +3924,26 @@ IFS_scale 1,4;
+         hdr.apply_to_config(&mut config);
+         hdr.apply_authored_path_appearance(&mut config);
+         assert_eq!(config.post, [-0.7, 0.9, 1.0, 0.75, 1.1, 0.0, 0.0]);
++        assert_eq!(config.mandel_appearance[9], 0.0);
++
++        // Secondary sky light requires native Monte Carlo GI (both flags).
++        for (flags, enabled) in [
++            ("DOF_MC_global_illumination true;", false),
++            (
++                "DOF_monte_carlo true;\nDOF_MC_global_illumination true;",
++                true,
++            ),
++        ] {
++            let gi = MandelbulberScene::parse(
++                &source.replace("gamma 0,7;", &format!("gamma 0,7;\n{flags}")),
++            )
++            .expect("gi scene");
++            assert_eq!(gi.monte_carlo_global_illumination, enabled);
++            let mut config = FptRenderConfig::default();
++            gi.apply_to_config(&mut config);
++            gi.apply_authored_path_appearance(&mut config);
++            assert_eq!(config.mandel_appearance[9], f32::from(u8::from(enabled)));
++        }
+     }
+ 
+     #[test]
