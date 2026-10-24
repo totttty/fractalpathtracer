@@ -3905,6 +3905,7 @@ static MandelbulberMarchResult marchMandelbulber(float3 direction,
                                                   int iteration_count,
                                                   constant FptRenderConfig &cfg) {
     float3 start = position;
+    float travel = 0.0f;
     float distance = 0.0f;
     float threshold = mandelbulberMarchThreshold(position, cfg);
     float step = 0.0f;
@@ -3922,13 +3923,16 @@ static MandelbulberMarchResult marchMandelbulber(float3 direction,
             break;
         }
         step = sdfMarchStep(distance, threshold, cfg);
-        float3 next_position = position + direction * step;
-        // Once fp32 can no longer represent the requested displacement, every
-        // remaining iteration evaluates the exact same point and returns the
-        // same final position. Stop that provably redundant fixed-point loop.
-        if (all(next_position == position)) break;
-        position = next_position;
-        if (length(position - start) >= cfg.render[4]) break;
+        // Advance a scalar travel distance and rebuild the position from the
+        // start. Accumulating position + direction * step drops any per-axis
+        // displacement below half an fp32 spacing, which stalls or bends rays
+        // when tiny detail sits at large world coordinates (scene 483). Stop
+        // only once the travel itself can no longer change.
+        float next_travel = travel + step;
+        if (next_travel == travel) break;
+        travel = next_travel;
+        position = fma(direction, float3(travel), start);
+        if (travel >= cfg.render[4]) break;
     }
     if (!found) return MandelbulberMarchResult{position, false};
 
@@ -3939,14 +3943,15 @@ static MandelbulberMarchResult marchMandelbulber(float3 direction,
     for (int refinement = 0; refinement < 30; ++refinement) {
         if (distance < threshold && distance > threshold * search_limit) break;
         if (distance > threshold) {
-            float3 next_position = position + direction * step;
-            if (all(next_position == position)) break;
-            position = next_position;
+            float next_travel = travel + step;
+            if (next_travel == travel) break;
+            travel = next_travel;
         } else if (distance < threshold * search_limit) {
-            float3 next_position = position - direction * step;
-            if (all(next_position == position)) break;
-            position = next_position;
+            float next_travel = travel - step;
+            if (next_travel == travel) break;
+            travel = next_travel;
         }
+        position = fma(direction, float3(travel), start);
         distance = mapSdf(position, cfg);
         step *= 0.5f;
     }
@@ -4369,6 +4374,7 @@ static MandelbulberMarchResult marchMandelbulberDiagnostic(
 
     float3 position = origin + direction * entry_t;
     float3 start = position;
+    float travel = 0.0f;
     float distance = 0.0f;
     float threshold = mandelbulberMarchThreshold(position, cfg);
     float step = 0.0f;
@@ -4383,10 +4389,13 @@ static MandelbulberMarchResult marchMandelbulberDiagnostic(
             break;
         }
         step = sdfMarchStep(distance, threshold, cfg);
-        float3 next_position = position + direction * step;
-        if (all(next_position == position)) break;
-        if (dot(next_position - start, direction) > maximum_travel) break;
-        position = next_position;
+        // Scalar travel, as in marchMandelbulber: rebuild the position from the
+        // clipped entry point instead of accumulating sub-spacing displacements.
+        float next_travel = travel + step;
+        if (next_travel == travel) break;
+        if (next_travel > maximum_travel) break;
+        travel = next_travel;
+        position = fma(direction, float3(travel), start);
     }
     if (!found) return MandelbulberMarchResult{position, false};
 
@@ -4394,16 +4403,16 @@ static MandelbulberMarchResult marchMandelbulberDiagnostic(
     step *= 0.5f;
     for (int refinement = 0; refinement < 30; ++refinement) {
         if (distance < threshold && distance > threshold * search_limit) break;
-        float3 next_position = position;
+        float next_travel = travel;
         if (distance > threshold) {
-            next_position = position + direction * step;
+            next_travel = travel + step;
         } else if (distance < threshold * search_limit) {
-            next_position = position - direction * step;
+            next_travel = travel - step;
         }
-        if (all(next_position == position)) break;
-        float next_travel = dot(next_position - start, direction);
+        if (next_travel == travel) break;
         if (next_travel < 0.0f || next_travel > maximum_travel) break;
-        position = next_position;
+        travel = next_travel;
+        position = fma(direction, float3(travel), start);
         distance = mapSdf(position, cfg);
         step *= 0.5f;
     }
@@ -6947,6 +6956,7 @@ static MandelbulberMarchResult marchMandelbulberSampled(float3 direction,
                                                   constant FptRenderConfig &cfg, uint initial_seed) {
     uint step_seed = initial_seed;
     float3 start = position;
+    float travel = 0.0f;
     float distance = 0.0f;
     float threshold = mandelbulberMarchThreshold(position, cfg);
     float step = 0.0f;
@@ -6964,13 +6974,16 @@ static MandelbulberMarchResult marchMandelbulberSampled(float3 direction,
             break;
         }
         step = mandelSampledStep(distance, threshold, cfg, step_seed);
-        float3 next_position = position + direction * step;
-        // Once fp32 can no longer represent the requested displacement, every
-        // remaining iteration evaluates the exact same point and returns the
-        // same final position. Stop that provably redundant fixed-point loop.
-        if (all(next_position == position)) break;
-        position = next_position;
-        if (length(position - start) >= cfg.render[4]) break;
+        // Advance a scalar travel distance and rebuild the position from the
+        // start. Accumulating position + direction * step drops any per-axis
+        // displacement below half an fp32 spacing, which stalls or bends rays
+        // when tiny detail sits at large world coordinates (scene 483). Stop
+        // only once the travel itself can no longer change.
+        float next_travel = travel + step;
+        if (next_travel == travel) break;
+        travel = next_travel;
+        position = fma(direction, float3(travel), start);
+        if (travel >= cfg.render[4]) break;
     }
     if (!found) return MandelbulberMarchResult{position, false};
 
@@ -6981,14 +6994,15 @@ static MandelbulberMarchResult marchMandelbulberSampled(float3 direction,
     for (int refinement = 0; refinement < 30; ++refinement) {
         if (distance < threshold && distance > threshold * search_limit) break;
         if (distance > threshold) {
-            float3 next_position = position + direction * step;
-            if (all(next_position == position)) break;
-            position = next_position;
+            float next_travel = travel + step;
+            if (next_travel == travel) break;
+            travel = next_travel;
         } else if (distance < threshold * search_limit) {
-            float3 next_position = position - direction * step;
-            if (all(next_position == position)) break;
-            position = next_position;
+            float next_travel = travel - step;
+            if (next_travel == travel) break;
+            travel = next_travel;
         }
+        position = fma(direction, float3(travel), start);
         distance = mapSdf(position, cfg);
         step *= 0.5f;
     }
@@ -8301,6 +8315,7 @@ static float3 marchMandelbulberProfiled(float3 direction,
                                         thread uint &ray_steps,
                                         uint step_seed = 0u) {
     float3 start = position;
+    float travel = 0.0f;
     float distance = 0.0f;
     float threshold = mandelbulberMarchThreshold(position, cfg);
     float step = 0.0f;
@@ -8316,10 +8331,12 @@ static float3 marchMandelbulberProfiled(float3 direction,
             break;
         }
         step = mandelSampledStep(distance, threshold, cfg, step_seed);
-        float3 next_position = position + direction * step;
-        if (all(next_position == position)) break;
-        position = next_position;
-        if (length(position - start) >= cfg.render[4]) break;
+        // Scalar travel, as in marchMandelbulber.
+        float next_travel = travel + step;
+        if (next_travel == travel) break;
+        travel = next_travel;
+        position = fma(direction, float3(travel), start);
+        if (travel >= cfg.render[4]) break;
     }
     if (!found) return position;
 
@@ -8330,14 +8347,15 @@ static float3 marchMandelbulberProfiled(float3 direction,
         stats.refinement_steps += 1u;
         stats.refinement_distance_evals += 1u;
         if (distance > threshold) {
-            float3 next_position = position + direction * step;
-            if (all(next_position == position)) break;
-            position = next_position;
+            float next_travel = travel + step;
+            if (next_travel == travel) break;
+            travel = next_travel;
         } else if (distance < threshold * search_limit) {
-            float3 next_position = position - direction * step;
-            if (all(next_position == position)) break;
-            position = next_position;
+            float next_travel = travel - step;
+            if (next_travel == travel) break;
+            travel = next_travel;
         }
+        position = fma(direction, float3(travel), start);
         distance = mandelbulberProfileDistance(position, cfg, stats);
         step *= 0.5f;
     }
