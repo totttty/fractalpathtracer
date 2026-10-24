@@ -1,4 +1,6 @@
+# The machine-wide toolchain (2026-10-17): one pinned nightly for every Rust project, for the parallel front end
+# (-Zthreads) and Cranelift debug builds set in ~/.cargo/config.toml. Was 1.97.1.
 [toolchain]
-channel = "1.97.1"
+channel = "nightly-2026-10-05"
 profile = "minimal"
-components = ["rustfmt", "clippy"]
+components = ["rustfmt", "clippy", "rustc-codegen-cranelift-preview"]
