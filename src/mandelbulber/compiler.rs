@@ -1797,7 +1797,7 @@ static float4 {field_name}(float3 p,
 {context_wrapper}{marker}"#,
         orbit_state = orbit_state_declaration()
     );
-    let specialized = base_source.replacen(marker, &fragment, 1);
+    let specialized = with_orbit_nan_recovery(base_source.replacen(marker, &fragment, 1));
     dump_specialized_shader_if_requested(&specialized)?;
     Ok(specialized)
 }
@@ -3846,9 +3846,26 @@ static float3 mandelFakeOrbit(float3 p, float3 trap, int first, int last,
             function_name = formula.function_name,
         )
     };
-    let specialized = base_source.replacen(marker, &fragment, 1);
+    let specialized = with_orbit_nan_recovery(base_source.replacen(marker, &fragment, 1));
     dump_specialized_shader_if_requested(&specialized)?;
     Ok(specialized)
+}
+
+/// Mandelbulber's compute_fractal discards an iteration that turns z into NaN:
+/// z returns to its value before that iteration, r is recomputed and the orbit
+/// stops. Without this, a NaN z reaches the distance and clamp() makes it 0.
+/// The bit test survives fast math, which may fold isnan() to false.
+fn with_orbit_nan_recovery(source: String) -> String {
+    const UPDATE: &str = "aux.r = length(z);\n        completed_iterations = iteration + 1;";
+    const GUARDED: &str = "aux.r = length(z);\n        if (mandelOrbitIsNaN(z)) {\n            z = aux.old_z;\n            aux.r = length(z);\n            completed_iterations = iteration + 1;\n            break;\n        }\n        completed_iterations = iteration + 1;";
+    const DEFINE: &str = "#define FPT_MANDEL_GENERATED_FIELD 1\n";
+    const HELPER: &str = "static inline bool mandelOrbitIsNaN(float4 v) {\n    uint4 bits = as_type<uint4>(v);\n    bool4 exponent = (bits & 0x7f800000u) == 0x7f800000u;\n    bool4 mantissa = (bits & 0x007fffffu) != 0u;\n    return any(select(bool4(false), mantissa, exponent));\n}\n";
+    if !source.contains(UPDATE) || !source.contains(DEFINE) {
+        return source;
+    }
+    source
+        .replace(UPDATE, GUARDED)
+        .replacen(DEFINE, &format!("{DEFINE}{HELPER}"), 1)
 }
 
 fn dump_specialized_shader_if_requested(source: &str) -> Result<()> {
@@ -4351,7 +4368,7 @@ static float4 mandelbulberGeneratedFieldSample(float3 p,
         sequence_length = sequence.len(),
         iteration_body = iteration_body,
     );
-    let specialized = base_source.replacen(marker, &fragment, 1);
+    let specialized = with_orbit_nan_recovery(base_source.replacen(marker, &fragment, 1));
     dump_specialized_shader_if_requested(&specialized)?;
     Ok(specialized)
 }
