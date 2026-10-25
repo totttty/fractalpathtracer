@@ -328,6 +328,7 @@ pub fn specialize_scene_with_kernel_specialization(
         )
     }?;
     let specialized = with_periodic_orbit_shift(specialized, scene);
+    let specialized = with_spheretree_v4_bend_tables(specialized, scene)?;
     let mut specialized =
         specialize_mandelbulber_appearance(&specialized, scene, &formulas, &configured_values)?;
     specialized = super::primitive_box::specialize(&specialized, scene)?;
@@ -3897,6 +3898,132 @@ fn with_periodic_orbit_shift(source: String, scene: &MandelbulberScene) -> Strin
             "        last_last_z = aux.old_z;\n",
             &format!("        last_last_z = iteration == 1 ? aux.old_z + {shift} : aux.old_z;\n"),
         )
+}
+
+/// Spheretree V4 multiplies its bend angle by transf_scaleB_1 on every
+/// sub-iteration, so the bend can pass 1e14 within sixteen steps and its
+/// cos/tan then depend on double rounding. The bend sequence does not depend
+/// on the point, so evaluate it in f64 as Mandelbulber does and give each
+/// generated copy per-step tables in place of fp32 trigonometry.
+fn with_spheretree_v4_bend_tables(source: String, scene: &MandelbulberScene) -> Result<String> {
+    const DEFINITION: &str = "static float4 SpheretreeV4Iteration(float4 z,";
+    const OMEGA: &str =
+        "    omega = M_PI_2_F - bend;\n    bigR = 1.0f / cos(omega);\n    d = tan(omega);\n";
+    const HALF_COS: &str = "    float R2 = minr / cos(o2);\n";
+    const HALF_TAN: &str = "    tv.z -= minr * tan(o2) * ";
+    if !source.contains(DEFINITION) {
+        return Ok(source);
+    }
+    let mut namespaces = Vec::new();
+    for prefix in ["namespace MandelSlot", "namespace MandelBooleanSlot"] {
+        for (first, _) in source.match_indices(prefix) {
+            let rest = &source[first + prefix.len()..];
+            let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+            if digits == 0 || !rest[digits..].starts_with(" {") {
+                continue;
+            }
+            let open = first + prefix.len() + digits + 1;
+            let last = matching_brace(&source, open).unwrap_or(source.len());
+            namespaces.push((first, last, rest[..digits].parse::<usize>()?));
+        }
+    }
+    let mut output = String::with_capacity(source.len() + 4096);
+    let mut cursor = 0;
+    for (copy, (start, _)) in source.match_indices(DEFINITION).enumerate() {
+        let open = start + source[start..].find('{').context("Spheretree V4 body")?;
+        let end = matching_brace(&source, open).context("Spheretree V4 body end")? + 1;
+        let values = match namespaces
+            .iter()
+            .find(|(first, last, _)| *first < start && start < *last)
+        {
+            Some((_, _, slot)) => &scene.formula_slots[*slot].parameters,
+            None => &scene.formula_parameters,
+        };
+        let body = &source[start..end];
+        ensure!(
+            body.matches(OMEGA).count() == 2 && body.contains(HALF_COS) && body.contains(HALF_TAN),
+            "Spheretree V4 bend trigonometry no longer matches its generated form"
+        );
+        let steps = usize::try_from(formula_integer(values, "transf_int_16", 16)?.max(1))?;
+        let start_a = formula_integer(values, "transf_start_iterations_A", 0)?;
+        let stop_a = formula_integer(values, "transf_stop_iterations_A", 250)?;
+        let scale_b = super::parameter_number(values, "transf_scaleB_1", 1.0)?;
+        let offset_b = super::parameter_number(values, "transf_offsetB_0", 0.0)?;
+        let mut bend = super::parameter_number(values, "transf_scale_08", 0.8)?;
+        let mut tables = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+        for c in 0..steps {
+            let omega = std::f64::consts::FRAC_PI_2 - bend;
+            let half = bend / 2.0;
+            for (table, value) in
+                tables
+                    .iter_mut()
+                    .zip([omega.cos(), omega.tan(), half.cos(), half.tan()])
+            {
+                table.push(metal_float_or_infinity(value as f32));
+            }
+            if (start_a..stop_a).contains(&(c as i32)) {
+                bend *= scale_b;
+                bend += offset_b;
+            }
+        }
+        let [cos_omega, tan_omega, cos_half, tan_half] =
+            ["CosOmega", "TanOmega", "CosHalf", "TanHalf"]
+                .map(|name| format!("kSpheretreeV4{name}{copy}"));
+        output.push_str(&source[cursor..start]);
+        for (name, table) in [&cos_omega, &tan_omega, &cos_half, &tan_half]
+            .iter()
+            .zip(&tables)
+        {
+            output.push_str(&format!(
+                "constant float {name}[{steps}] = {{ {} }};\n",
+                table.join(", ")
+            ));
+        }
+        let lookup = |index: &str| {
+            format!(
+                "    omega = M_PI_2_F - bend;\n    bigR = 1.0f / {cos_omega}[{index}];\n    d = {tan_omega}[{index}];\n"
+            )
+        };
+        output.push_str(
+            &body
+                .replacen(OMEGA, &lookup("0"), 1)
+                .replacen(OMEGA, &lookup("c"), 1)
+                .replace(HALF_COS, &format!("    float R2 = minr / {cos_half}[c];\n"))
+                .replace(HALF_TAN, &format!("    tv.z -= minr * {tan_half}[c] * ")),
+        );
+        cursor = end;
+    }
+    output.push_str(&source[cursor..]);
+    Ok(output)
+}
+
+fn matching_brace(source: &str, open: usize) -> Option<usize> {
+    let mut depth = 0usize;
+    for (offset, byte) in source.as_bytes()[open..].iter().enumerate() {
+        match byte {
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(open + offset);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+fn metal_float_or_infinity(value: f32) -> String {
+    if value.is_finite() {
+        metal_float(value)
+    } else if value.is_nan() {
+        "NAN".to_owned()
+    } else if value > 0.0 {
+        "INFINITY".to_owned()
+    } else {
+        "-INFINITY".to_owned()
+    }
 }
 
 fn dump_specialized_shader_if_requested(source: &str) -> Result<()> {
