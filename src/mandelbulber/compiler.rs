@@ -327,6 +327,7 @@ pub fn specialize_scene_with_kernel_specialization(
             scene.delta_de_function,
         )
     }?;
+    let specialized = with_periodic_orbit_shift(specialized, scene);
     let mut specialized =
         specialize_mandelbulber_appearance(&specialized, scene, &formulas, &configured_values)?;
     specialized = super::primitive_box::specialize(&specialized, scene)?;
@@ -3737,8 +3738,10 @@ pub fn specialize_fpt_shader(
     } else {
         let additional_bailout = i32::from(uses_additional_bailout(formula));
         let orbit_loop = format!(
-            r#"    for (int iteration = 0; iteration < max_iterations; ++iteration) {{
+            r#"    float4 last_last_z = float4(0.0f);
+    for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         aux.i = uint(iteration);
+        last_last_z = aux.old_z;
         aux.old_z = z;
         z = mandelApplyGlobalFoldings(z, cfg, aux);
         z = {function_name}(z, kMandelFormulaParameters, aux);
@@ -3751,6 +3754,7 @@ pub fn specialize_fpt_shader(
         if ({additional_bailout} != 0) {{
             escaped = true;
             if (length(z - aux.old_z) / aux.r < 0.1f / bailout) break;
+            if (length(z - last_last_z) / aux.r < 0.1f / bailout) break;
         }}
     }}"#,
             function_name = formula.function_name,
@@ -3869,6 +3873,32 @@ fn with_orbit_nan_recovery(source: String) -> String {
         .replacen(DEFINE, &format!("{DEFINE}{HELPER}"), 1)
 }
 
+/// Periodic Jos-Kleinian scenes march from a camera rebased by whole cells.
+/// Mandelbulber's two-iteration bailout compares the second iterate with the
+/// original, un-rebased point, so that one comparison adds the shift back.
+fn with_periodic_orbit_shift(source: String, scene: &MandelbulberScene) -> String {
+    let Some(shift) = scene.periodic_orbit_shift() else {
+        return source;
+    };
+    let shift = format!(
+        "float4({}, {}, {}, 0.0f)",
+        metal_float(shift[0] as f32),
+        metal_float(shift[1] as f32),
+        metal_float(shift[2] as f32)
+    );
+    source
+        .replace(
+            "            last_last_z = aux.old_z;\n",
+            &format!(
+                "            last_last_z = current_iteration == 1 ? aux.old_z + {shift} : aux.old_z;\n"
+            ),
+        )
+        .replace(
+            "        last_last_z = aux.old_z;\n",
+            &format!("        last_last_z = iteration == 1 ? aux.old_z + {shift} : aux.old_z;\n"),
+        )
+}
+
 fn dump_specialized_shader_if_requested(source: &str) -> Result<()> {
     let Some(path) = std::env::var_os("FPT_DUMP_MANDEL_SHADER") else {
         return Ok(());
@@ -3961,8 +3991,10 @@ static MandelDeltaOrbitResult mandelDeltaOrbit(float3 scaled,
             : configured_iterations);
     bool escaped = false;
     float bailout = max(setv(cfg, 2), 1.0f);
+    float4 last_last_z = float4(0.0f);
     for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         aux.i = uint(iteration);
+        last_last_z = aux.old_z;
         aux.old_z = z;
         z = mandelApplyGlobalFoldings(z, cfg, aux);
         z = {function_name}(z, kMandelFormulaParameters, aux);
@@ -3975,6 +4007,7 @@ static MandelDeltaOrbitResult mandelDeltaOrbit(float3 scaled,
         if (forced_iterations < 0 && {additional_bailout} != 0) {{
             escaped = true;
             if (length(z - aux.old_z) / aux.r < 0.1f / bailout) break;
+            if (length(z - last_last_z) / aux.r < 0.1f / bailout) break;
         }}
     }}
     return {{ z, aux.r, aux.DE, completed_iterations, escaped }};
@@ -4252,10 +4285,12 @@ pub fn specialize_fpt_shader_hybrid(
             "int sequence_index = int(kMandelHybridSequence[iteration]);",
         );
         format!(
-            r#"    for (int iteration = 0; iteration < max_iterations; ++iteration) {{
+            r#"    float4 last_last_z = float4(0.0f);
+    for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         {sequence_index}
         float formula_weight = kMandelHybridWeights[sequence_index];
         aux.i = uint(iteration);
+        last_last_z = aux.old_z;
         aux.old_z = z;
         z = mandelApplyGlobalFoldings(z, cfg, aux);
         float4 previous_z = z;
@@ -4279,6 +4314,7 @@ pub fn specialize_fpt_shader_hybrid(
             if (kMandelHybridAdditionalBailoutChecks[sequence_index] != 0) {{
                 escaped = true;
                 if (length(z - aux.old_z) / aux.r < 0.1f / bailout) break;
+                if (length(z - last_last_z) / aux.r < 0.1f / bailout) break;
             }}
         }}
     }}"#
@@ -4475,7 +4511,7 @@ fn hybrid_unrolled_periodic_loop_source(
         phases.push_str(&hybrid_unrolled_phase_source(slot, phase, set_values));
     }
     Ok(Some(format!(
-        "    for (int iteration = 0; iteration < max_iterations; iteration += {period}) {{\n{phases}    }}"
+        "    float4 last_last_z = float4(0.0f);\n    for (int iteration = 0; iteration < max_iterations; iteration += {period}) {{\n{phases}    }}"
     )))
 }
 
@@ -4523,6 +4559,7 @@ fn hybrid_unrolled_phase_source(
             format!(
                 r#"                escaped = true;
                 if (length(z - aux.old_z) / aux.r < 0.1f / kMandelHybridBailouts[{slot_index}]) break;
+                if (length(z - last_last_z) / aux.r < 0.1f / kMandelHybridBailouts[{slot_index}]) break;
 "#,
                 slot_index = slot.index,
             )
@@ -4549,6 +4586,7 @@ fn hybrid_unrolled_phase_source(
         r#"        {{
             int current_iteration = {current_iteration};
             aux.i = uint(current_iteration);
+            last_last_z = aux.old_z;
             aux.old_z = z;
             z = mandelApplyGlobalFoldings(z, cfg, aux);
             float4 previous_z = z;
@@ -4610,6 +4648,7 @@ fn hybrid_direct_loop_source(
             format!(
                 r#"            escaped = true;
             if (length(z - aux.old_z) / aux.r < 0.1f / {bailout}) break;
+            if (length(z - last_last_z) / aux.r < 0.1f / {bailout}) break;
 "#
             )
         } else {
@@ -4628,8 +4667,10 @@ fn hybrid_direct_loop_source(
         String::new()
     };
     Ok(Some(format!(
-        r#"    for (int iteration = 0; iteration < max_iterations; ++iteration) {{
+        r#"    float4 last_last_z = float4(0.0f);
+    for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         aux.i = uint(iteration);
+        last_last_z = aux.old_z;
         aux.old_z = z;
         z = mandelApplyGlobalFoldings(z, cfg, aux);
         float4 previous_z = z;

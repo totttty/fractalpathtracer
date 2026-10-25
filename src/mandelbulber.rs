@@ -961,6 +961,14 @@ impl MandelbulberScene {
         ))
     }
 
+    /// The whole-cell translation `periodic_camera_rebase` removes from the
+    /// camera, in Mandelbulber coordinates; `None` when nothing moves.
+    pub(crate) fn periodic_orbit_shift(&self) -> Option<[f64; 3]> {
+        let (camera, _) = self.periodic_camera_rebase()?;
+        let shift: [f64; 3] = std::array::from_fn(|axis| self.camera[axis] - camera[axis]);
+        (shift != [0.0; 3]).then_some(shift)
+    }
+
     pub fn load(path: &Path) -> Result<Self> {
         let source = fs::read_to_string(path)
             .with_context(|| format!("read Mandelbulber scene {}", path.display()))?;
