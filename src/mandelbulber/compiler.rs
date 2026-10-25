@@ -7052,6 +7052,8 @@ fn translate_opencl_body(source: &str, parameter_address: &str) -> String {
             .replace("native_exp", "exp")
             .replace("native_atan2", "atan2")
             .replace("native_powr", "powr")
+            .replace("asin(z.z / aux.r)", "mandelPolarAsin(z, aux.r)")
+            .replace("acos(z.z / aux.r)", "mandelPolarAcos(z, aux.r)")
             .replace("asin(", "mandelSafeAsin(")
             .replace("acos(", "mandelSafeAcos(")
             .replace("fabs", "abs")
