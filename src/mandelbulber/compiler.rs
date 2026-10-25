@@ -1165,9 +1165,9 @@ fn standalone_color_index_source(
     set_values: &[f32; 40],
 ) -> Result<String> {
     let actual_scale = if formula.source.internal_name == "kaleidoscopic_ifs" {
-        "kMandelFormulaParameters.IFS.scale"
+        "kMandelFormulaParameters.IFS.scale".to_owned()
     } else {
-        "1.0f"
+        initial_actual_scale(&scene.formula_slots[0].parameters)?
     };
     let post_iteration = constant_addition_source(formula.source.id, set_values);
     let coloring_function = coloring_function_id(&formula.source.coloring_function)?;
@@ -1253,6 +1253,7 @@ fn hybrid_color_index_source(
         !sequence.is_empty(),
         "hybrid coloring sequence cannot be empty"
     );
+    let seed_actual_scale = initial_actual_scale(&scene.formula_slots[0].parameters)?;
     let sequence_literal = sequence
         .iter()
         .map(u8::to_string)
@@ -1295,7 +1296,7 @@ static float mandelbulberGeneratedColorIndex(float3 p,
     aux.DE0 = 0.0f;
     aux.dist = 1000.0f;
     aux.pseudoKleinianDE = 1.0f;
-    aux.actualScale = 1.0f;
+    aux.actualScale = {seed_actual_scale};
     aux.actualScaleA = 0.0f;
     aux.color = 1.0f;
     aux.colorHybrid = 0.0f;
@@ -1366,7 +1367,7 @@ fn boolean_formula_color_evaluator_source(
     let actual_scale = if formula.source.internal_name == "kaleidoscopic_ifs" {
         format!("{namespace}::kMandelFormulaParameters.IFS.scale")
     } else {
-        "1.0f".to_owned()
+        initial_actual_scale(&scene.formula_slots[index].parameters)?
     };
     let post_iteration = hybrid_constant_addition_source(
         scene.formula_slots[index].add_c_constant,
@@ -1618,7 +1619,7 @@ fn specialize_fpt_shader_boolean(
         let actual_scale = if formula.source.internal_name == "kaleidoscopic_ifs" {
             format!("{namespace}::kMandelFormulaParameters.IFS.scale")
         } else {
-            "1.0f".into()
+            initial_actual_scale(&scene.formula_slots[*index].parameters)?
         };
         let distance_expression = analytic_distance_expression(&formula.source.analytic_function)?
             .replace(
@@ -3692,7 +3693,7 @@ pub fn specialize_fpt_shader(
         match formula.source.internal_name.as_str() {
             "kaleidoscopic_ifs" => (
                 ifs_constant_initializer(formula_values)?,
-                "kMandelFormulaParameters.IFS.scale",
+                "kMandelFormulaParameters.IFS.scale".to_owned(),
                 "0.0f".into(),
                 String::new(),
             ),
@@ -3716,7 +3717,7 @@ pub fn specialize_fpt_shader(
                 } else {
                     "constant MandelFractalParameters kMandelFormulaParameters = { 0u };".into()
                 },
-                "1.0f",
+                initial_actual_scale(formula_values)?,
                 metal_float(set_values[3]),
                 constant_addition_source(formula.source.id, set_values),
             ),
@@ -3727,7 +3728,7 @@ pub fn specialize_fpt_shader(
             &declarations,
             &parameter_initializer,
             formula,
-            actual_scale,
+            &actual_scale,
             &initial_w,
             &post_iteration,
             delta_de_function,
@@ -4074,6 +4075,12 @@ pub fn specialize_fpt_shader_hybrid(
     direct_hybrid_loop: bool,
     formula_optimization: SceneFormulaOptimizationPolicy,
 ) -> Result<String> {
+    // Without slot 1 among the active slots, its container still holds the
+    // default mandelbox scale.
+    let seed_actual_scale = match slots.iter().find(|slot| slot.index == 0) {
+        Some(slot) => initial_actual_scale(slot.formula_values)?,
+        None => metal_float(2.0),
+    };
     ensure!(
         !slots.is_empty(),
         "hybrid runtime requires at least one formula"
@@ -4324,7 +4331,7 @@ static MandelHybridOrbitResult mandelHybridOrbit(float3 scaled,
     aux.DE = 1.0f;
     aux.dist = 1000.0f;
     aux.pseudoKleinianDE = 1.0f;
-    aux.actualScale = 1.0f;
+    aux.actualScale = {seed_actual_scale};
     aux.color = 1.0f;
     aux.temp1000 = 1000.0f;
     int completed_iterations = 0;
@@ -6345,6 +6352,13 @@ fn generalized_fold_normals_literal(member_path: &str, count: usize) -> Result<S
             .collect::<Vec<_>>()
             .join(", ")
     ))
+}
+
+/// compute_fractal seeds aux.actualScale with formula slot 1's mandelbox scale
+/// (default 2) for every formula, or the forced slot's for Boolean objects.
+/// Vary-scale formulas (e.g. 18, 64) read it on their first iteration.
+fn initial_actual_scale(values: &BTreeMap<String, String>) -> Result<String> {
+    Ok(metal_float(formula_scalar(values, "mandelbox_scale", 2.0)?))
 }
 
 fn formula_scalar(values: &BTreeMap<String, String>, name: &str, fallback: f32) -> Result<f32> {
