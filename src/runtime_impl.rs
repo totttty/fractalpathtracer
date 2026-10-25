@@ -1377,10 +1377,18 @@ fn structural_camera_ray(
     } else {
         height - 1.0 - output_coordinate[1]
     };
-    // Mandel structural diagnostics intentionally sample (x, y + 1), while
-    // built-in scenes use conventional half-pixel centers.
+    // Mandel structural diagnostics sample Mandelbulber's pixel corners: (x, y + 1),
+    // or (x, y) for legacy coordinates, whose rows are not flipped. Built-in
+    // scenes use conventional half-pixel centers.
     let pixel_offset = if config.sdf_id == SDF_MANDELBULBER {
-        [0.0, 1.0]
+        [
+            0.0,
+            if config.camera_image_y_sign < 0.0 {
+                0.0
+            } else {
+                1.0
+            },
+        ]
     } else {
         [0.5, 0.5]
     };
@@ -9446,38 +9454,44 @@ kernel void mandelbulber_field_sample_kernel(device const float4 *points [[buffe
 
     #[test]
     fn structural_pixel_frustum_patch_matches_mandel_pixel_boundaries() {
-        let mut config = FptRenderConfig {
-            sdf_id: SDF_MANDELBULBER,
-            camera_position: [0.0, 0.0, 0.0],
-            camera_yaw_pitch: [0.0, 0.0],
-            camera_fov: 90.0,
-            camera_image_y_sign: -1.0,
-            ..Default::default()
-        };
-        config.vset_values[mandelbulber::VPARAM_CAMERA_PROJECTION] = 0.0;
-        let center_ray =
-            structural_camera_ray([2.0, 1.0], [4, 4], &config).expect("center camera ray");
-        assert!(center_ray[0].abs() < 1.0e-6);
-        assert!(center_ray[1].abs() < 1.0e-6);
-        assert!((center_ray[2] - 1.0).abs() < 1.0e-6);
+        // Mandelbulber's image centre is the corner sample of row h/2 in both
+        // coordinate systems: 0.5 - 2/4 and, for legacy, 2/4 - 0.5.
+        for (image_y_sign, corner_y) in [
+            (-1.0_f32, [-0.25_f32, -0.25, 0.25, 0.25]),
+            (1.0, [0.25, 0.25, -0.25, -0.25]),
+        ] {
+            let mut config = FptRenderConfig {
+                sdf_id: SDF_MANDELBULBER,
+                camera_position: [0.0, 0.0, 0.0],
+                camera_yaw_pitch: [0.0, 0.0],
+                camera_fov: 90.0,
+                camera_image_y_sign: image_y_sign,
+                ..Default::default()
+            };
+            config.vset_values[mandelbulber::VPARAM_CAMERA_PROJECTION] = 0.0;
+            let center_ray =
+                structural_camera_ray([2.0, 2.0], [4, 4], &config).expect("center camera ray");
+            assert!(center_ray[0].abs() < 1.0e-6);
+            assert!(center_ray[1].abs() < 1.0e-6);
+            assert!((center_ray[2] - 1.0).abs() < 1.0e-6);
 
-        let corners = structural_pixel_frustum_patch(
-            [2, 1],
-            [4, 4],
-            &config,
-            [0.0, 0.0, 2.0],
-            [0.0, 0.0, 1.0],
-        )
-        .expect("pixel frustum patch");
-        let expected = [
-            [-0.25, -0.25, 2.0],
-            [0.25, -0.25, 2.0],
-            [0.25, 0.25, 2.0],
-            [-0.25, 0.25, 2.0],
-        ];
-        for (actual, expected) in corners.into_iter().zip(expected) {
-            for axis in 0..3 {
-                assert!((actual[axis] - expected[axis]).abs() < 1.0e-5);
+            let corners = structural_pixel_frustum_patch(
+                [2, 2],
+                [4, 4],
+                &config,
+                [0.0, 0.0, 2.0],
+                [0.0, 0.0, 1.0],
+            )
+            .expect("pixel frustum patch");
+            let corner_x = [-0.25_f32, 0.25, 0.25, -0.25];
+            for (index, actual) in corners.into_iter().enumerate() {
+                let expected = [corner_x[index], corner_y[index], 2.0];
+                for axis in 0..3 {
+                    assert!(
+                        (actual[axis] - expected[axis]).abs() < 1.0e-5,
+                        "y sign {image_y_sign}: {actual:?} vs {expected:?}"
+                    );
+                }
             }
         }
     }

@@ -8114,8 +8114,10 @@ static float3 diagnosticEncodeScalar(float value, float scale) {
 }
 
 static float2 sdfScreenUv(uint2 gid, constant FptRenderConfig &cfg) {
+    // Mandelbulber samples pixel corners: image y = 0.5 - row/h, or row/h - 0.5
+    // with legacy_coordinate_system, whose rows cameraOutputIndex leaves unflipped.
     float2 pixel_offset = cfg.sdf_id == SDF_MANDELBULBER
-        ? float2(0.0f, 1.0f)
+        ? float2(0.0f, cfg.camera_image_y_sign < 0.0f ? 0.0f : 1.0f)
         : float2(0.5f);
     float2 uv = (float2(gid) + pixel_offset) /
                     float2(float(cfg.width), float(cfg.height)) - 0.5f;
