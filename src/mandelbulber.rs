@@ -1215,7 +1215,32 @@ impl MandelbulberScene {
         let method = document.integer("main_parameters", "delta_DE_method", 0)?;
         ensure!(method <= 2, "delta_DE_method must be 0..2");
         let (force_delta_de, force_analytic_de) = (method == 1, method == 2);
-        let delta_de_function = document.integer("main_parameters", "delta_DE_function", 0)?;
+        let mut delta_de_function = document.integer("main_parameters", "delta_DE_function", 0)?;
+        // cSettings::Compatibility (settings.cpp): up to 2.06 the setting was
+        // linear_DE_mode, which loads as the linear function, and before 2.09
+        // the preferred and logarithmic values were numbered the other way round.
+        if version_is_before(&document.version, 2, 7)?
+            && document.value("main_parameters", "linear_DE_mode").is_some()
+        {
+            delta_de_function = 1;
+        }
+        if version_is_before(&document.version, 2, 9)? {
+            delta_de_function = match delta_de_function {
+                0 => 2,
+                2 => 0,
+                value => value,
+            };
+        }
+        // cSettings::Compatibility2: up to 2.06 every non-linear function became
+        // logarithmic, and before 2.20 the stored function applied only with a
+        // forced DE method. Scene 596 (2.12) otherwise swaps formula 114's IFS
+        // distance for the logarithmic one, which reads up to 1.8x too far.
+        if version_is_before(&document.version, 2, 7)? && delta_de_function != 1 {
+            delta_de_function = 2;
+        }
+        if version_is_before(&document.version, 2, 20)? && method == 0 {
+            delta_de_function = 0;
+        }
         ensure!(delta_de_function <= 6, "delta_DE_function must be 0..6");
         let use_default_bailout =
             document.boolean("main_parameters", "use_default_bailout", true)?;
