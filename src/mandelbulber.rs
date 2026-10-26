@@ -521,7 +521,46 @@ impl FractDocument {
         }
 
         let version = version.ok_or_else(|| anyhow!("missing Mandelbulber version comment"))?;
-        Ok(Self { version, sections })
+        let mut document = Self { version, sections };
+        document.migrate_legacy_water()?;
+        Ok(document)
+    }
+
+    /// Before 2.13 water stored an absolute `_amplitude`; Mandelbulber renames
+    /// it on load and divides the (possibly default) value by the wave length.
+    fn migrate_legacy_water(&mut self) -> Result<()> {
+        if !version_is_before(&self.version, 2, 13)? {
+            return Ok(());
+        }
+        let Some(values) = self.sections.get_mut("main_parameters") else {
+            return Ok(());
+        };
+        let mut prefixes = values
+            .keys()
+            .filter_map(|key| {
+                let index = key.strip_prefix("primitive_water_")?.split('_').next()?;
+                index
+                    .parse::<u32>()
+                    .ok()
+                    .map(|_| format!("primitive_water_{index}"))
+            })
+            .collect::<Vec<_>>();
+        prefixes.dedup();
+        for prefix in prefixes {
+            let amplitude = match values
+                .remove(&format!("{prefix}_amplitude"))
+                .or_else(|| values.remove(&format!("{prefix}_relative_amplitude")))
+            {
+                Some(value) => parse_number(&value)?,
+                None => 0.2,
+            };
+            let length = parameter_number(values, &format!("{prefix}_length"), 0.1)?;
+            values.insert(
+                format!("{prefix}_relative_amplitude"),
+                format!("{}", amplitude / length),
+            );
+        }
+        Ok(())
     }
 
     fn value(&self, section: &str, key: &str) -> Option<&str> {
@@ -4164,6 +4203,23 @@ IFS_scale 1,4;
                 .map(String::as_str),
             Some("true")
         );
+    }
+
+    #[test]
+    fn parser_migrates_pre_213_water_amplitude() {
+        let water = |version: &str, lines: &str| {
+            let source = format!(
+                "# version {version}\n[main_parameters]\nprimitive_water_1_enabled true;\n{lines}"
+            );
+            let document = FractDocument::parse(&source).unwrap();
+            document
+                .value("main_parameters", "primitive_water_1_relative_amplitude")
+                .map(str::to_owned)
+        };
+        let legacy = "primitive_water_1_amplitude 0,04;\nprimitive_water_1_length 0,5;\n";
+        assert_eq!(water("2.09", legacy).as_deref(), Some("0.08"));
+        assert_eq!(water("2.12", "").as_deref(), Some("2"));
+        assert_eq!(water("2.13", legacy), None);
     }
 
     #[test]
