@@ -2106,6 +2106,12 @@ impl MandelbulberScene {
         self.hybrid_sequence_with_limit(self.max_iterations)
     }
 
+    /// True when the hybrid sequence ends on an empty slot before the
+    /// iteration limit; Mandelbulber treats reaching it as empty space.
+    pub fn hybrid_sequence_exits_to_empty_slot(&self) -> Result<bool> {
+        Ok(self.hybrid_enabled && self.hybrid_sequence()?.len() < self.max_iterations as usize)
+    }
+
     pub fn hybrid_coloring_sequence(&self) -> Result<Vec<u8>> {
         self.hybrid_sequence_with_limit(self.max_iterations)
     }
@@ -4204,6 +4210,24 @@ IFS_scale 1,4;
                 .map(String::as_str),
             Some("true")
         );
+    }
+
+    #[test]
+    fn hybrid_sequences_follow_mandelbulber_slot_search() {
+        let scene = |lines: &str| {
+            MandelbulberScene::parse(&format!(
+                "# version 2.33\n[main_parameters]\nhybrid_fractal_enable true;\nformula_1 1;\nformula_2 2;\n{lines}"
+            ))
+            .unwrap()
+        };
+        // No slot covers iterations 0 and 1: the exhausted search wraps back.
+        let late = scene("formula_start_iteration_1 2;\nformula_start_iteration_2 2;\nN 6;\n");
+        assert_eq!(late.hybrid_sequence().unwrap(), [0, 1, 0, 1, 0, 1]);
+        assert!(!late.hybrid_sequence_exits_to_empty_slot().unwrap());
+        // Past every stop iteration the search lands on an empty slot.
+        let past = scene("formula_stop_iteration_1 2;\nformula_stop_iteration_2 2;\nN 8;\n");
+        assert_eq!(past.hybrid_sequence().unwrap(), [0, 1, 0, 1]);
+        assert!(past.hybrid_sequence_exits_to_empty_slot().unwrap());
     }
 
     #[test]

@@ -305,6 +305,7 @@ pub fn specialize_scene_with_kernel_specialization(
             base_source,
             &slots,
             &sequence,
+            scene.hybrid_sequence_exits_to_empty_slot()?,
             &configured_values,
             scene.linear_de_offset,
             scene.force_delta_de,
@@ -4290,6 +4291,7 @@ pub fn specialize_fpt_shader_hybrid(
     base_source: &str,
     slots: &[RuntimeFormulaSlot<'_>],
     sequence: &[u8],
+    exits_to_empty_slot: bool,
     set_values: &[f32; 40],
     linear_de_offset: f64,
     force_delta_de: bool,
@@ -4386,6 +4388,16 @@ pub fn specialize_fpt_shader_hybrid(
             && slots
                 .iter()
                 .any(|slot| slot.formula.source.de_type == "deltaDEType"));
+    // An orbit that survives to an empty slot makes Mandelbulber return its
+    // 10-unit far distance, so those points are empty space, not interior.
+    let empty_slot_exit = if exits_to_empty_slot {
+        format!(
+            "\n    if (!base.escaped && base.iterations >= {})\n        return float4(10.0f * world_scale, base.radius, base.derivative, -float(base.iterations));",
+            sequence.len()
+        )
+    } else {
+        String::new()
+    };
     let sample_body = if uses_delta {
         let finalizer = hybrid_delta_distance_expression(slots, delta_de_function)?;
         // Global folds introduce piecewise discontinuities before each hybrid
@@ -4405,7 +4417,7 @@ pub fn specialize_fpt_shader_hybrid(
         let radial_gradient_source = delta_radial_gradient_source();
         format!(
             r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
-        scaled, cfg, -iteration_multiplier, iteration_budget);
+        scaled, cfg, -iteration_multiplier, iteration_budget);{empty_slot_exit}
 {delta_probe_source}
 {radial_gradient_source}
     // Mandelbulber's Delta-DE treats a zero radial gradient as an interior
@@ -4425,7 +4437,7 @@ pub fn specialize_fpt_shader_hybrid(
         )?);
         format!(
             r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
-        scaled, cfg, -iteration_multiplier, iteration_budget);
+        scaled, cfg, -iteration_multiplier, iteration_budget);{empty_slot_exit}
     float4 z = base.z;
     MandelOrbitState aux = {{}};
     aux.r = base.radius;

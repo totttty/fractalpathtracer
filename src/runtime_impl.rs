@@ -7531,6 +7531,7 @@ fn mandel_parity(args: &[String]) -> Result<()> {
             std::str::from_utf8(METAL_SOURCE_BYTES)?,
             &slots,
             &sequence,
+            scene.hybrid_sequence_exits_to_empty_slot()?,
             &config.set_values,
             scene.linear_de_offset,
             scene.force_delta_de,
