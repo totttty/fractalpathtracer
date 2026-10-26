@@ -1372,7 +1372,7 @@ fn boolean_formula_color_evaluator_source(
     let post_iteration = hybrid_constant_addition_source(
         scene.formula_slots[index].add_c_constant,
         formula.source.id,
-        set_values,
+        &boolean_slot_set_values(scene, index, set_values),
     );
     let coloring_function = coloring_function_id(&formula.source.coloring_function)?;
     let mandelbox_factor_r = formula_scalar(
@@ -1402,7 +1402,7 @@ fn boolean_formula_color_evaluator_source(
     aux.temp1000 = 1000.0f;
     float color_min = 1000.0f;
     float bailout = {bailout};
-    int max_iterations = clamp(int(setv(cfg, 1)), 1, 4096);
+    int max_iterations = {max_iterations};
     for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         aux.i = uint(iteration);
         aux.old_z = z;
@@ -1440,7 +1440,8 @@ fn boolean_formula_color_evaluator_source(
         initial, z, aux, color_min, false, {coloring_function}, {mandelbox_factor_r});
 }}
 "#,
-        initial_w = metal_float(scene.initial_waxis as f32),
+        initial_w = metal_float(scene.boolean_slots[index].initial_waxis as f32),
+        max_iterations = boolean_slot_iterations(scene, index),
         bailout = metal_float(scene.formula_slots[index].bailout as f32),
         function_name = formula.function_name,
         check_for_bailout = metal_bool(scene.formula_slots[index].check_for_bailout),
@@ -1474,6 +1475,7 @@ fn boolean_color_index_source(
             r#"    float3 point{index} = mandelBooleanTransformPoint(
         point, float3({px}, {py}, {pz}), {rotation},
         float3({rx}, {ry}, {rz}), {scale});
+    point{index} = mandelBooleanGlobalPoint(point{index});
     float distance{index} = mandelBooleanDistance{index}(point{index}, cfg) / abs({scale});"#,
             px = metal_float(position[0]),
             py = metal_float(position[1]),
@@ -1629,7 +1631,7 @@ fn specialize_fpt_shader_boolean(
         let post_iteration = hybrid_constant_addition_source(
             scene.formula_slots[*index].add_c_constant,
             formula.source.id,
-            set_values,
+            &boolean_slot_set_values(scene, *index, set_values),
         );
         let (history_declaration, history_update, additional_bailout) =
             boolean_additional_bailout_source(formula);
@@ -1649,7 +1651,7 @@ fn specialize_fpt_shader_boolean(
     aux.actualScale = {actual_scale};
     aux.color = 1.0f;
     aux.temp1000 = 1000.0f;
-{history_declaration}    int max_iterations = clamp(int(setv(cfg, 1)), 1, 4096);
+{history_declaration}    int max_iterations = {max_iterations};
     float bailout = {bailout};
     for (int iteration = 0; iteration < max_iterations; ++iteration) {{
         aux.i = uint(iteration);
@@ -1663,7 +1665,8 @@ fn specialize_fpt_shader_boolean(
 }}
 
 "#,
-            initial_w = metal_float(scene.initial_waxis as f32),
+            initial_w = metal_float(scene.boolean_slots[*index].initial_waxis as f32),
+            max_iterations = boolean_slot_iterations(scene, *index),
             bailout = metal_float(scene.formula_slots[*index].bailout as f32),
             function_name = formula.function_name,
             history_declaration = history_declaration,
@@ -1686,6 +1689,7 @@ fn specialize_fpt_shader_boolean(
         {rotation},
         float3({rx}, {ry}, {rz}),
         {scale});
+    point{index} = mandelBooleanGlobalPoint(point{index});
     float distance{index} = mandelBooleanDistance{index}(point{index}, cfg) / abs({scale});"#,
             px = metal_float(position[0]),
             py = metal_float(position[1]),
@@ -1698,6 +1702,30 @@ fn specialize_fpt_shader_boolean(
         ));
     }
     ensure!(!calls.is_empty(), "boolean scene has no active formulas");
+    // compute_fractal.cpp moves, rotates and repeats by the global fractal
+    // transform inside Compute, after each Boolean slot's own transform, so
+    // apply_to_config leaves the outer mandelbulberGlobalPoint at identity.
+    let global_position = scene.fractal_position.map(|value| value as f32);
+    let global_rotation = rotation2_matrix(
+        scene
+            .fractal_rotation
+            .map(|value| value.to_radians() as f32),
+    );
+    let global_repeat = scene.fractal_repeat.map(|value| value as f32);
+    let global_transform = format!(
+        r#"static float3 mandelBooleanGlobalPoint(float3 point) {{
+    return mandelBooleanTransformPoint(point, float3({px}, {py}, {pz}), {rotation},
+                                       float3({rx}, {ry}, {rz}), 1.0f);
+}}
+"#,
+        px = metal_float(global_position[0]),
+        py = metal_float(global_position[1]),
+        pz = metal_float(global_position[2]),
+        rotation = row_matrix_literal(global_rotation),
+        rx = metal_float(global_repeat[0]),
+        ry = metal_float(global_repeat[1]),
+        rz = metal_float(global_repeat[2]),
+    );
     let mut combination = String::new();
     combination.push_str(&calls[0]);
     combination.push_str("\n    float distance = distance0;\n");
@@ -1774,6 +1802,7 @@ static float3 mandelBooleanTransformPoint(float3 point,
     return rotated * scale;
 }}
 
+{global_transform}
 {evaluators}
 static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
     int completed_iterations) {{
@@ -1817,6 +1846,28 @@ fn boolean_combination_source(index: usize, operator: u32) -> Result<String> {
             index + 1
         ),
     })
+}
+
+/// The c-addition inputs (Julia mode and constant, constant factor) a Boolean
+/// slot reads from its own settings in place of the global ones.
+fn boolean_slot_set_values(
+    scene: &MandelbulberScene,
+    index: usize,
+    set_values: &[f32; 40],
+) -> [f32; 40] {
+    let slot = &scene.boolean_slots[index];
+    let mut values = *set_values;
+    values[super::PARAM_JULIA_MODE] = u32::from(slot.julia_mode) as f32;
+    values[super::PARAM_JULIA_C..super::PARAM_JULIA_C + 3]
+        .copy_from_slice(&slot.julia_c.map(|value| value as f32));
+    values[super::PARAM_CONSTANT_MULTIPLIER..super::PARAM_CONSTANT_MULTIPLIER + 3]
+        .copy_from_slice(&slot.constant_multiplier.map(|value| value as f32));
+    values
+}
+
+/// A Boolean slot iterates formula_maxiter_N times, not the global N.
+fn boolean_slot_iterations(scene: &MandelbulberScene, index: usize) -> u32 {
+    scene.boolean_slots[index].max_iterations.clamp(1, 4096)
 }
 
 fn boolean_point_scale(settings_scale: f64) -> f32 {

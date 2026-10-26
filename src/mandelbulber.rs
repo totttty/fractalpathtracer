@@ -226,6 +226,18 @@ pub struct MandelbulberPrimitiveSphere {
     pub calculation_order: u32,
 }
 
+/// Settings a Boolean scene reads per formula slot instead of globally
+/// (nine_fractals.cpp: julia_mode_N, julia_c_N, fractal_constant_factor_N,
+/// initial_waxis_N, formula_maxiter_N).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MandelbulberBooleanSlot {
+    pub julia_mode: bool,
+    pub julia_c: [f64; 3],
+    pub constant_multiplier: [f64; 3],
+    pub initial_waxis: f64,
+    pub max_iterations: u32,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MandelbulberPrimitiveShapeKind {
     Cylinder,
@@ -311,6 +323,7 @@ pub struct MandelbulberScene {
     pub formula_rotations: [[f64; 3]; FORMULA_SLOT_COUNT],
     pub formula_repeats: [[f64; 3]; FORMULA_SLOT_COUNT],
     pub formula_scales: [f64; FORMULA_SLOT_COUNT],
+    pub boolean_slots: [MandelbulberBooleanSlot; FORMULA_SLOT_COUNT],
     pub primitive_planes: Vec<MandelbulberPrimitivePlane>,
     pub primitive_spheres: Vec<MandelbulberPrimitiveSphere>,
     pub primitive_shapes: Vec<MandelbulberPrimitiveShape>,
@@ -1127,8 +1140,42 @@ impl MandelbulberScene {
         let mut formula_rotations = [[0.0; 3]; FORMULA_SLOT_COUNT];
         let mut formula_repeats = [[0.0; 3]; FORMULA_SLOT_COUNT];
         let mut formula_scales = [1.0; FORMULA_SLOT_COUNT];
+        let mut boolean_slots = [MandelbulberBooleanSlot {
+            julia_mode: false,
+            julia_c: [0.0; 3],
+            constant_multiplier: [1.0; 3],
+            initial_waxis: 0.0,
+            max_iterations: 250,
+        }; FORMULA_SLOT_COUNT];
         for index in 0..FORMULA_SLOT_COUNT {
             let scene_index = index + 1;
+            boolean_slots[index] = MandelbulberBooleanSlot {
+                julia_mode: document.boolean(
+                    "main_parameters",
+                    &format!("julia_mode_{scene_index}"),
+                    false,
+                )?,
+                julia_c: document.vec3(
+                    "main_parameters",
+                    &format!("julia_c_{scene_index}"),
+                    [0.0; 3],
+                )?,
+                constant_multiplier: document.vec3(
+                    "main_parameters",
+                    &format!("fractal_constant_factor_{scene_index}"),
+                    [1.0; 3],
+                )?,
+                initial_waxis: document.number(
+                    "main_parameters",
+                    &format!("initial_waxis_{scene_index}"),
+                    0.0,
+                )?,
+                max_iterations: document.integer(
+                    "main_parameters",
+                    &format!("formula_maxiter_{scene_index}"),
+                    250,
+                )?,
+            };
             formula_positions[index] = document.vec3(
                 "main_parameters",
                 &format!("formula_position_{scene_index}"),
@@ -1675,6 +1722,7 @@ impl MandelbulberScene {
             formula_rotations,
             formula_repeats,
             formula_scales,
+            boolean_slots,
             primitive_planes,
             primitive_spheres,
             primitive_shapes,
@@ -2296,12 +2344,23 @@ impl MandelbulberScene {
         config.vset_values[VPARAM_MIN_THRESHOLD] = (self.detail_size_min * WORLD_SCALE) as f32;
         config.vset_values[VPARAM_MAX_THRESHOLD] = (self.detail_size_max * WORLD_SCALE) as f32;
         config.vset_values[VPARAM_CAMERA_PROJECTION] = self.camera_projection as f32;
+        // Boolean scenes apply the global fractal transform after each slot's
+        // own transform, in the generated evaluator (compute_fractal.cpp order).
+        let (position, rotation, repeat) = if self.boolean_enabled {
+            ([0.0; 3], [0.0; 3], [0.0; 3])
+        } else {
+            (
+                self.fractal_position,
+                self.fractal_rotation,
+                self.fractal_repeat,
+            )
+        };
         config.vset_values[VPARAM_FRACTAL_POSITION..VPARAM_FRACTAL_POSITION + 3]
-            .copy_from_slice(&self.fractal_position.map(|value| value as f32));
+            .copy_from_slice(&position.map(|value| value as f32));
         config.vset_values[VPARAM_FRACTAL_ROTATION..VPARAM_FRACTAL_ROTATION + 3]
-            .copy_from_slice(&self.fractal_rotation.map(|value| value.to_radians() as f32));
+            .copy_from_slice(&rotation.map(|value| value.to_radians() as f32));
         config.vset_values[VPARAM_FRACTAL_REPEAT..VPARAM_FRACTAL_REPEAT + 3]
-            .copy_from_slice(&self.fractal_repeat.map(|value| value as f32));
+            .copy_from_slice(&repeat.map(|value| value as f32));
         config.vset_values[VPARAM_DETAIL_LEVEL] = self.detail_level as f32;
         config.vset_values[VPARAM_INTERACTIVE_REFINEMENT] =
             std::env::var("FPT_MANDEL_PREVIEW_REFINEMENT_MASK")
@@ -4704,6 +4763,37 @@ target 0 0 0;
         assert_eq!(sphere.transform[3], -WORLD_SCALE as f32);
         assert_eq!(sphere.transform[7], -3.0 * WORLD_SCALE as f32);
         assert_eq!(sphere.transform[11], -2.0 * WORLD_SCALE as f32);
+    }
+
+    #[test]
+    fn boolean_scenes_read_slot_settings_and_defer_the_global_transform() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nboolean_operators true;\nfractal_position 1 2 3;\nfractal_rotation 0 0 90;\njulia_mode_1 true;\njulia_c_1 0 0 0.2;\nfractal_constant_factor_1 2 2 2;\ninitial_waxis_1 0.5;\nformula_maxiter_1 12;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("boolean scene");
+        assert_eq!(
+            scene.boolean_slots[0],
+            MandelbulberBooleanSlot {
+                julia_mode: true,
+                julia_c: [0.0, 0.0, 0.2],
+                constant_multiplier: [2.0; 3],
+                initial_waxis: 0.5,
+                max_iterations: 12,
+            }
+        );
+        assert_eq!(scene.boolean_slots[1].max_iterations, 250);
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+        // Applied inside the Boolean evaluator, after each slot's transform.
+        assert_eq!(
+            config.vset_values[VPARAM_FRACTAL_POSITION..VPARAM_FRACTAL_POSITION + 3],
+            [0.0; 3]
+        );
+        assert_eq!(
+            config.vset_values[VPARAM_FRACTAL_ROTATION..VPARAM_FRACTAL_ROTATION + 3],
+            [0.0; 3]
+        );
     }
 
     #[test]
