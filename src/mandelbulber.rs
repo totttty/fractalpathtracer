@@ -2166,6 +2166,16 @@ impl MandelbulberScene {
         Ok(sequence)
     }
 
+    /// Mandelbulber caps the hit threshold at detail_size_max only in
+    /// advanced-quality mode; otherwise distant thresholds keep growing.
+    fn threshold_ceiling(&self) -> f64 {
+        if self.advanced_quality {
+            self.detail_size_max * WORLD_SCALE
+        } else {
+            f64::from(f32::MAX)
+        }
+    }
+
     pub fn mesh_delta_relative_delta(&self) -> f32 {
         if self.advanced_quality {
             self.delta_de_relative_delta as f32
@@ -2308,10 +2318,8 @@ impl MandelbulberScene {
         let distance_threshold = if self.constant_de_threshold && !self.iteration_threshold_mode {
             self.de_threshold * WORLD_SCALE
         } else {
-            (length(direction) * threshold_scale).clamp(
-                self.detail_size_min * WORLD_SCALE,
-                self.detail_size_max * WORLD_SCALE,
-            )
+            (length(direction) * threshold_scale)
+                .clamp(self.detail_size_min * WORLD_SCALE, self.threshold_ceiling())
         };
         config.render[1] = self.max_raymarching_steps as f32;
         config.render[2] = distance_threshold as f32;
@@ -2388,7 +2396,7 @@ impl MandelbulberScene {
         config.vset_values[VPARAM_THRESHOLD_SCALE] = threshold_scale as f32;
         config.vset_values[VPARAM_CONSTANT_THRESHOLD] = (self.de_threshold * WORLD_SCALE) as f32;
         config.vset_values[VPARAM_MIN_THRESHOLD] = (self.detail_size_min * WORLD_SCALE) as f32;
-        config.vset_values[VPARAM_MAX_THRESHOLD] = (self.detail_size_max * WORLD_SCALE) as f32;
+        config.vset_values[VPARAM_MAX_THRESHOLD] = self.threshold_ceiling() as f32;
         config.vset_values[VPARAM_CAMERA_PROJECTION] = self.camera_projection as f32;
         // Boolean scenes apply the global fractal transform after each slot's
         // own transform, in the generated evaluator (compute_fractal.cpp order).
@@ -4740,6 +4748,23 @@ target 0 0 0;
             config.vset_values[VPARAM_DYNAMIC_THRESHOLD],
             VPARAM_ITERATION_THRESHOLD_MODE
         );
+    }
+
+    #[test]
+    fn detail_size_max_caps_thresholds_only_in_advanced_quality() {
+        let ceiling = |extra: &str| {
+            let source = IFS_SCENE.replace(
+                "detail_level 2;",
+                &format!("detail_level 2;\ndetail_size_max 0,5;{extra}"),
+            );
+            let mut config = FptRenderConfig::default();
+            MandelbulberScene::parse(&source)
+                .unwrap()
+                .apply_to_config(&mut config);
+            config.vset_values[VPARAM_MAX_THRESHOLD]
+        };
+        assert_eq!(ceiling(""), f32::MAX);
+        assert_eq!(ceiling("\nadvanced_quality true;"), (0.5 * WORLD_SCALE) as f32);
     }
 
     #[test]
