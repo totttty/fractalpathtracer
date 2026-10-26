@@ -2134,9 +2134,10 @@ impl MandelbulberScene {
                 }
                 searches += 1;
             }
+            // When no slot is in range, Mandelbulber runs whichever slot the
+            // exhausted search wrapped to; only an empty slot ends the orbit.
             let slot = &self.formula_slots[formula_index];
-            if !slot.active() || iteration < slot.start_iteration || iteration > slot.stop_iteration
-            {
+            if !slot.active() {
                 if sequence.is_empty()
                     && let Some(first_active) = self
                         .formula_slots
