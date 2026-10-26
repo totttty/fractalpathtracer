@@ -973,12 +973,20 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
         .join(",\n");
     let base = scene.material.surface_color.map(metal_float);
     let mut plane_materials = String::new();
-    let primitive_material_ids = scene
+    // (config slot, material) per primitive; repeated shapes occupy two slots.
+    let mut primitive_materials = scene
         .primitive_planes
         .iter()
         .map(|p| p.material_id)
-        .chain(scene.primitive_spheres.iter().map(|p| p.material_id));
-    for (index, material_id) in primitive_material_ids.enumerate() {
+        .chain(scene.primitive_spheres.iter().map(|p| p.material_id))
+        .enumerate()
+        .collect::<Vec<_>>();
+    let mut slot = primitive_materials.len();
+    for shape in &scene.primitive_shapes {
+        primitive_materials.push((slot, shape.material_id));
+        slot += shape.slots();
+    }
+    for (index, material_id) in primitive_materials {
         let material = scene.materials.get(&material_id);
         // Primitives never receive a palette position natively, so their
         // emission is `luminosity * luminosity_color` or black; they must not
@@ -1004,15 +1012,8 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
         if fixed_material.is_none() && emission.is_none() {
             continue;
         }
-        let distance_source = if index < scene.primitive_planes.len() {
-            format!(
-                "const FptPrimitiveInstance plane = cfg.sdf_flat_union_instances[{index}];\n        float distance = max(dot(p,float3(plane.data[0],plane.data[1],plane.data[2]))+plane.data[3],0.0f);"
-            )
-        } else {
-            format!(
-                "const FptPrimitiveInstance sphere = cfg.sdf_flat_union_instances[{index}];\n        float3 local = p + float3(sphere.transform[3],sphere.transform[7],sphere.transform[11]);\n        float distance = length(local) - sphere.data[0];\n        if ((sphere._pad0 & 1u) != 0u) distance = abs(distance);\n        distance = max(distance - sphere.data[1],0.0f);"
-            )
-        };
+        let distance_source =
+            format!("float distance = mandelbulberPrimitiveDistance(p, {index}u, cfg);");
         let assignment = if let Some(material) = fixed_material {
             let c = material.surface_color.map(metal_float);
             format!(
@@ -1039,10 +1040,6 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
             plane_materials,
             r#"    {{
         {distance_source}
-#ifdef FPT_MANDEL_PERLIN
-        float scale = max(setv(cfg,0),1.0f);
-        distance = fptPerlinDisplace(distance / scale, p.xzy / scale, {material_id}u) * scale;
-#endif
         if (distance < selected_distance) {{
             selected_distance = distance;
 {assignment}
@@ -1090,7 +1087,8 @@ fn mandelbulber_palette_source(scene: &MandelbulberScene) -> String {
         )
     };
     format!(
-        r#"{luminosity_gradient}constant uint kMandelSurfaceGradientCount = {count}u;
+        r#"static float mandelbulberPrimitiveDistance(float3 p, uint index, constant FptRenderConfig &cfg);
+{luminosity_gradient}constant uint kMandelSurfaceGradientCount = {count}u;
 constant float4 kMandelSurfaceGradient[{count}] = {{
 {stops}
 }};
@@ -7666,7 +7664,7 @@ target 0 0 0;
         let green = metal_float(65280.0 / 65535.0);
         assert!(source.contains(&format!("material.rgb = float3(0.0f,{green},0.0f)")));
         assert!(source.contains("if (distance < selected_distance)"));
-        assert!(source.contains("cfg.sdf_flat_union_instances[0]"));
+        assert!(source.contains("mandelbulberPrimitiveDistance(p, 0u, cfg)"));
     }
 
     #[test]
@@ -7746,8 +7744,21 @@ target 0 0 0;
         let source = mandelbulber_palette_source(&scene);
         let red = metal_float(65280.0 / 65535.0);
         assert!(source.contains(&format!("material.rgb = float3({red},0.0f,0.0f)")));
-        assert!(source.contains("cfg.sdf_flat_union_instances[1]"));
-        assert!(source.contains("sphere._pad0 & 1u"));
+        assert!(source.contains("mandelbulberPrimitiveDistance(p, 1u, cfg)"));
+    }
+
+    #[test]
+    fn shape_materials_follow_their_config_slots_past_repeat_slots() {
+        let scene = MandelbulberScene::parse(&COLOR_SCENE.replace(
+            "[main_parameters]",
+            "[main_parameters]\nprimitive_cylinder_1_enabled true;\nprimitive_cylinder_1_repeat 2 0 0;\nprimitive_cylinder_1_material_id 2;\nprimitive_torus_1_enabled true;\nprimitive_torus_1_material_id 2;\nmat2_is_defined true;\nmat2_use_colors_from_palette false;",
+        ))
+        .unwrap();
+        let source = mandelbulber_palette_source(&scene);
+        // The cylinder's repeat periods occupy slot 1, so the torus is slot 2.
+        assert!(source.contains("mandelbulberPrimitiveDistance(p, 0u, cfg)"));
+        assert!(!source.contains("mandelbulberPrimitiveDistance(p, 1u, cfg)"));
+        assert!(source.contains("mandelbulberPrimitiveDistance(p, 2u, cfg)"));
     }
 
     #[test]

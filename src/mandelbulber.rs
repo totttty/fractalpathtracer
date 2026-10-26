@@ -1,6 +1,7 @@
 use crate::ffi::{
     FptPrimitiveInstance, FptRenderConfig, SDF_FLAT_UNION_MAX_PRIMITIVES, SDF_MANDELBULBER,
-    SDF_OP_PLANE, SDF_OP_SPHERE,
+    SDF_OP_CONE, SDF_OP_CYLINDER, SDF_OP_PLANE, SDF_OP_PRIMITIVE_REPEAT, SDF_OP_RECTANGLE,
+    SDF_OP_SPHERE, SDF_OP_TORUS,
 };
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use std::collections::BTreeMap;
@@ -225,6 +226,73 @@ pub struct MandelbulberPrimitiveSphere {
     pub calculation_order: u32,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum MandelbulberPrimitiveShapeKind {
+    Cylinder,
+    Cone,
+    Torus,
+    Rectangle,
+}
+
+/// Cylinder, cone, torus or rectangle primitive (primitive.cpp), in Mandelbulber units.
+/// `size` is radius and height for cylinders and cones, radius and tube radius for tori,
+/// and width and height for rectangles.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MandelbulberPrimitiveShape {
+    pub kind: MandelbulberPrimitiveShapeKind,
+    pub position: [f64; 3],
+    pub rotation: [f64; 3],
+    pub repeat: [f64; 3],
+    pub size: [f64; 2],
+    pub caps: bool,
+    pub empty: bool,
+    pub wall_thickness: f64,
+    pub material_id: u32,
+    pub calculation_order: u32,
+}
+
+impl MandelbulberPrimitiveShape {
+    /// Config slots used: repeated shapes carry their periods in a second slot.
+    pub(crate) fn slots(&self) -> usize {
+        if self.repeat == [0.0; 3] { 1 } else { 2 }
+    }
+
+    /// World-space instance: transform rows map FPT points into the primitive's
+    /// local Mandelbulber frame (rotationMatrix * (point - position)), in world units.
+    fn instance(&self) -> FptPrimitiveInstance {
+        use MandelbulberPrimitiveShapeKind::{Cone, Cylinder, Rectangle, Torus};
+        let rotation = rotation2_matrix(self.rotation.map(f64::to_radians));
+        let mut transform = [0.0f32; 12];
+        for (row, axis) in rotation.iter().enumerate() {
+            let world_axis = map_mandel_vector(*axis);
+            transform[row * 4..row * 4 + 3].copy_from_slice(&world_axis.map(|value| value as f32));
+            transform[row * 4 + 3] = (-dot(*axis, self.position) * WORLD_SCALE) as f32;
+        }
+        let [a, b] = self.size.map(|value| value * WORLD_SCALE);
+        let wall = self.wall_thickness * WORLD_SCALE;
+        let (opcode, data) = match self.kind {
+            Cylinder => (SDF_OP_CYLINDER, [a, 0.5 * b, wall, 0.0]),
+            Cone => {
+                // sPrimitiveCone: wallNormal = normalize(1, radius / height).
+                let length = (1.0 + (a / b).powi(2)).sqrt();
+                (SDF_OP_CONE, [b, 1.0 / length, a / b / length, wall])
+            }
+            Torus => (SDF_OP_TORUS, [a, b, wall, 0.0]),
+            Rectangle => (SDF_OP_RECTANGLE, [0.5 * a, 0.5 * b, 0.0, 0.0]),
+        };
+        FptPrimitiveInstance {
+            transform,
+            data: data.map(|value| value as f32),
+            opcode,
+            distance_scale: 1.0,
+            source_instruction: self.material_id,
+            _pad0: u32::from(self.empty)
+                | (u32::from(self.caps) << 1)
+                | (u32::from(self.slots() == 2) << 2),
+        }
+    }
+}
+
 impl MandelbulberFormulaSlot {
     pub fn active(&self) -> bool {
         self.enabled && self.formula_id != 0
@@ -245,6 +313,7 @@ pub struct MandelbulberScene {
     pub formula_scales: [f64; FORMULA_SLOT_COUNT],
     pub primitive_planes: Vec<MandelbulberPrimitivePlane>,
     pub primitive_spheres: Vec<MandelbulberPrimitiveSphere>,
+    pub primitive_shapes: Vec<MandelbulberPrimitiveShape>,
     pub force_delta_de: bool,
     pub force_analytic_de: bool,
     /// Mandelbulber's `delta_DE_function`: zero selects the formula-preferred
@@ -1213,8 +1282,30 @@ impl MandelbulberScene {
             });
         }
         primitive_spheres.sort_by_key(|sphere| sphere.calculation_order);
+        let mut primitive_shapes = Vec::new();
+        for (name, kind) in [
+            ("cylinder", MandelbulberPrimitiveShapeKind::Cylinder),
+            ("cone", MandelbulberPrimitiveShapeKind::Cone),
+            ("torus", MandelbulberPrimitiveShapeKind::Torus),
+            ("rectangle", MandelbulberPrimitiveShapeKind::Rectangle),
+        ] {
+            for index in 1..=SDF_FLAT_UNION_MAX_PRIMITIVES {
+                let prefix = format!("primitive_{name}_{index}");
+                if !document.boolean("main_parameters", &format!("{prefix}_enabled"), false)? {
+                    continue;
+                }
+                primitive_shapes.push(parse_primitive_shape(&document, &prefix, kind)?);
+            }
+        }
+        primitive_shapes.sort_by_key(|shape| shape.calculation_order);
         ensure!(
-            primitive_planes.len() + primitive_spheres.len() <= SDF_FLAT_UNION_MAX_PRIMITIVES,
+            primitive_planes.len()
+                + primitive_spheres.len()
+                + primitive_shapes
+                    .iter()
+                    .map(MandelbulberPrimitiveShape::slots)
+                    .sum::<usize>()
+                <= SDF_FLAT_UNION_MAX_PRIMITIVES,
             "enabled Mandelbulber primitives exceed the supported limit"
         );
         // Native Mandelbulber 2.x retains the old spelling in its settings
@@ -1586,6 +1677,7 @@ impl MandelbulberScene {
             formula_scales,
             primitive_planes,
             primitive_spheres,
+            primitive_shapes,
             force_delta_de,
             force_analytic_de,
             delta_de_function,
@@ -1993,8 +2085,13 @@ impl MandelbulberScene {
         config.width = self.width;
         config.height = self.height;
 
-        config.sdf_flat_union_count =
-            (self.primitive_planes.len() + self.primitive_spheres.len()) as u32;
+        config.sdf_flat_union_count = (self.primitive_planes.len()
+            + self.primitive_spheres.len()
+            + self
+                .primitive_shapes
+                .iter()
+                .map(MandelbulberPrimitiveShape::slots)
+                .sum::<usize>()) as u32;
         config
             .sdf_flat_union_instances
             .fill(FptPrimitiveInstance::default());
@@ -2053,6 +2150,24 @@ impl MandelbulberScene {
                 source_instruction: sphere.material_id,
                 _pad0: u32::from(sphere.empty),
             };
+        }
+        let mut slot = self.primitive_planes.len() + self.primitive_spheres.len();
+        for shape in &self.primitive_shapes {
+            config.sdf_flat_union_instances[slot] = shape.instance();
+            if shape.slots() == 2 {
+                config.sdf_flat_union_instances[slot + 1] = FptPrimitiveInstance {
+                    data: [
+                        (shape.repeat[0] * WORLD_SCALE) as f32,
+                        (shape.repeat[1] * WORLD_SCALE) as f32,
+                        (shape.repeat[2] * WORLD_SCALE) as f32,
+                        0.0,
+                    ],
+                    opcode: SDF_OP_PRIMITIVE_REPEAT,
+                    distance_scale: 1.0,
+                    ..FptPrimitiveInstance::default()
+                };
+            }
+            slot += shape.slots();
         }
 
         let (source_camera, source_target) = self
@@ -3728,6 +3843,79 @@ fn bool_mask(values: &[bool]) -> u32 {
     })
 }
 
+fn parse_primitive_shape(
+    document: &FractDocument,
+    prefix: &str,
+    kind: MandelbulberPrimitiveShapeKind,
+) -> Result<MandelbulberPrimitiveShape> {
+    use MandelbulberPrimitiveShapeKind::{Cone, Cylinder, Rectangle, Torus};
+    let number = |key: &str, fallback: f64| -> Result<f64> {
+        let value = document.number("main_parameters", &format!("{prefix}_{key}"), fallback)?;
+        ensure!(value.is_finite(), "{prefix}_{key} must be finite");
+        Ok(value)
+    };
+    let boolean = |key: &str, fallback: bool| {
+        document.boolean("main_parameters", &format!("{prefix}_{key}"), fallback)
+    };
+    ensure!(
+        document.integer("main_parameters", &format!("{prefix}_boolean_operator"), 1)? == 1,
+        "{prefix} currently requires Mandelbulber's OR boolean operator"
+    );
+    ensure!(
+        !boolean("smooth_de_combine_enable", false)?,
+        "{prefix} smooth distance combination is not yet supported"
+    );
+    ensure!(
+        kind == Rectangle || !boolean("limits_enable", false)?,
+        "{prefix} limits are not yet supported"
+    );
+    let size = match kind {
+        Cylinder | Cone => [number("radius", 1.0)?, number("height", 1.0)?],
+        Torus => {
+            ensure!(
+                number("radius_lpow", 1.0)? == 1.0 && number("tube_radius_lpow", 1.0)? == 1.0,
+                "{prefix} non-Euclidean torus norms are not yet supported"
+            );
+            [number("radius", 1.0)?, number("tube_radius", 0.2)?]
+        }
+        Rectangle => [number("width", 1.0)?, number("height", 1.0)?],
+    };
+    ensure!(
+        size.iter().all(|value| *value > 0.0),
+        "{prefix} dimensions must be positive"
+    );
+    let wall_thickness = if kind == Rectangle {
+        0.0
+    } else {
+        number("wall_thickness", 0.0)?
+    };
+    ensure!(
+        wall_thickness >= 0.0,
+        "{prefix} wall thickness must be non-negative"
+    );
+    Ok(MandelbulberPrimitiveShape {
+        kind,
+        position: document.vec3("main_parameters", &format!("{prefix}_position"), [0.0; 3])?,
+        rotation: document.vec3("main_parameters", &format!("{prefix}_rotation"), [0.0; 3])?,
+        // sPrimitiveRectangle::PrimitiveDistance ignores repetition.
+        repeat: if kind == Rectangle {
+            [0.0; 3]
+        } else {
+            document.vec3("main_parameters", &format!("{prefix}_repeat"), [0.0; 3])?
+        },
+        size,
+        caps: matches!(kind, Cylinder | Cone) && boolean("caps", true)?,
+        empty: kind != Rectangle && boolean("empty", false)?,
+        wall_thickness,
+        material_id: document.integer("main_parameters", &format!("{prefix}_material_id"), 1)?,
+        calculation_order: document.integer(
+            "main_parameters",
+            &format!("{prefix}_calculation_order"),
+            1,
+        )?,
+    })
+}
+
 fn map_mandel_point(point: [f64; 3]) -> [f64; 3] {
     [point[0], point[2], point[1]]
 }
@@ -4516,6 +4704,47 @@ target 0 0 0;
         assert_eq!(sphere.transform[3], -WORLD_SCALE as f32);
         assert_eq!(sphere.transform[7], -3.0 * WORLD_SCALE as f32);
         assert_eq!(sphere.transform[11], -2.0 * WORLD_SCALE as f32);
+    }
+
+    #[test]
+    fn config_maps_mandelbulber_shapes_into_local_frames_with_repeat_slots() {
+        let source = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nprimitive_cylinder_1_enabled true;\nprimitive_cylinder_1_caps false;\nprimitive_cylinder_1_material_id 4;\nprimitive_cylinder_1_position 1 2 3;\nprimitive_cylinder_1_radius 0.25;\nprimitive_cylinder_1_height 2;\nprimitive_cylinder_1_repeat 2 0 0;\nprimitive_cone_1_enabled true;\nprimitive_cone_1_radius 0.5;\nprimitive_cone_1_height 2;",
+        );
+        let scene = MandelbulberScene::parse(&source).expect("primitive shape scene");
+        assert_eq!(scene.primitive_shapes.len(), 2);
+
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+        assert_eq!(config.sdf_flat_union_count, 3);
+        let cylinder = config.sdf_flat_union_instances[0];
+        assert_eq!(cylinder.opcode, SDF_OP_CYLINDER);
+        assert_eq!(cylinder.source_instruction, 4);
+        assert_eq!(cylinder._pad0, 4, "uncapped, solid, repeated");
+        // Local Mandelbulber axes x, y, z read world x, z, y.
+        assert_eq!(cylinder.transform[..3], [1.0, 0.0, 0.0]);
+        assert_eq!(cylinder.transform[4..7], [0.0, 0.0, 1.0]);
+        assert_eq!(cylinder.transform[8..11], [0.0, 1.0, 0.0]);
+        let scale = WORLD_SCALE as f32;
+        assert_eq!(
+            [
+                cylinder.transform[3],
+                cylinder.transform[7],
+                cylinder.transform[11]
+            ],
+            [-scale, -2.0 * scale, -3.0 * scale]
+        );
+        assert_eq!(cylinder.data[..2], [0.25 * scale, scale]);
+        let repeat = config.sdf_flat_union_instances[1];
+        assert_eq!(repeat.opcode, SDF_OP_PRIMITIVE_REPEAT);
+        assert_eq!(repeat.data[..3], [2.0 * scale, 0.0, 0.0]);
+        let cone = config.sdf_flat_union_instances[2];
+        assert_eq!(cone.opcode, SDF_OP_CONE);
+        assert_eq!(cone._pad0, 2, "capped by default");
+        let normal_length = (1.0f32 + 0.25f32.powi(2)).sqrt();
+        assert!((cone.data[1] - 1.0 / normal_length).abs() < 1e-6);
+        assert!((cone.data[2] - 0.25 / normal_length).abs() < 1e-6);
     }
 
     #[test]

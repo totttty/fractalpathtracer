@@ -32,6 +32,12 @@ pub const SDF_OP_SORT_DESC: u32 = 8;
 pub const SDF_OP_SPHERE: u32 = 16;
 pub const SDF_OP_BOX: u32 = 17;
 pub const SDF_OP_PLANE: u32 = 18;
+pub const SDF_OP_CYLINDER: u32 = 19;
+pub const SDF_OP_CONE: u32 = 20;
+pub const SDF_OP_TORUS: u32 = 21;
+pub const SDF_OP_RECTANGLE: u32 = 22;
+/// Repeat periods (data[0..3]) for the Mandelbulber primitive in the previous slot.
+pub const SDF_OP_PRIMITIVE_REPEAT: u32 = 23;
 pub const SDF_OP_UNION: u32 = 24;
 pub const SDF_OP_INTERSECTION: u32 = 25;
 pub const SDF_OP_SUBTRACT: u32 = 26;

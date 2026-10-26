@@ -80,6 +80,13 @@ enum {
     SDF_OP_SPHERE = 16,
     SDF_OP_BOX = 17,
     SDF_OP_PLANE = 18,
+    SDF_OP_CYLINDER = 19,
+    SDF_OP_CONE = 20,
+    SDF_OP_TORUS = 21,
+    SDF_OP_RECTANGLE = 22,
+    // Carries the repeat periods (data.xyz) of the Mandelbulber primitive
+    // in the slot before it; never a surface of its own.
+    SDF_OP_PRIMITIVE_REPEAT = 23,
     SDF_OP_UNION = 24,
     SDF_OP_INTERSECTION = 25,
     SDF_OP_SUBTRACT = 26,
@@ -1031,6 +1038,7 @@ static float4 mandelbulberFieldSample(float3 p,
 #endif
 
 static float mandelbulberPrimitiveUnionDistance(float3 p, constant FptRenderConfig &cfg);
+static float mandelbulberPrimitiveDistance(float3 p, uint index, constant FptRenderConfig &cfg);
 static float mandelbulberMarchThreshold(float3 position, constant FptRenderConfig &cfg);
 
 static float mandelbulberNormalDistance(float3 p,
@@ -1081,45 +1089,86 @@ static float mandelbulberNormalOrbitRadius(float3 p,
     return log(max(abs(radius), 1.0e-30f));
 }
 
+// Mandelbulber primitive flags in FptPrimitiveInstance._pad0.
+constant uint kMandelPrimitiveEmpty = 1u;
+constant uint kMandelPrimitiveCaps = 2u;
+constant uint kMandelPrimitiveRepeated = 4u;
+
+// One Mandelbulber primitive (primitive.cpp PrimitiveDistance), in world units.
+// Shapes other than the plane evaluate in the primitive's local frame: the
+// transform rows rotate and translate world points as rotationMatrix does.
+static float mandelbulberPrimitiveDistance(float3 p, uint index,
+                                           constant FptRenderConfig &cfg) {
+    const FptPrimitiveInstance primitive = cfg.sdf_flat_union_instances[index];
+    float4 data = float4(primitive.data[0], primitive.data[1],
+                         primitive.data[2], primitive.data[3]);
+    float distance = inf;
+    if (primitive.opcode == SDF_OP_PLANE) {
+        // Mandelbulber clamps solid plane interiors to zero. Keeping that
+        // convention suppresses enclosed fractal isosurfaces without
+        // changing the plane boundary selected by marching cubes.
+        distance = max(dot(p, data.xyz) + data.w, 0.0f);
+    } else if (primitive.opcode == SDF_OP_SPHERE ||
+               primitive.opcode == SDF_OP_CYLINDER ||
+               primitive.opcode == SDF_OP_CONE ||
+               primitive.opcode == SDF_OP_TORUS ||
+               primitive.opcode == SDF_OP_RECTANGLE) {
+        float3 local = float3(
+            dot(float3(primitive.transform[0], primitive.transform[1],
+                       primitive.transform[2]), p) + primitive.transform[3],
+            dot(float3(primitive.transform[4], primitive.transform[5],
+                       primitive.transform[6]), p) + primitive.transform[7],
+            dot(float3(primitive.transform[8], primitive.transform[9],
+                       primitive.transform[10]), p) + primitive.transform[11]);
+        if ((primitive._pad0 & kMandelPrimitiveRepeated) != 0u &&
+            index + 1u < FPT_SDF_FLAT_UNION_MAX_PRIMITIVES) {
+            const FptPrimitiveInstance periods = cfg.sdf_flat_union_instances[index + 1u];
+            local = float3(mandelbulberRepeatCoordinate(local.x, periods.data[0]),
+                           mandelbulberRepeatCoordinate(local.y, periods.data[1]),
+                           mandelbulberRepeatCoordinate(local.z, periods.data[2]));
+        }
+        float wall = 0.0f;
+        bool caps = (primitive._pad0 & kMandelPrimitiveCaps) != 0u;
+        if (primitive.opcode == SDF_OP_SPHERE) {
+            distance = length(local) - data.x;
+            wall = data.y;
+        } else if (primitive.opcode == SDF_OP_CYLINDER) {
+            distance = length(local.xy) - data.x;
+            if (!caps) distance = abs(distance);
+            distance = max(abs(local.z) - data.y, distance);
+            wall = data.z;
+        } else if (primitive.opcode == SDF_OP_CONE) {
+            local.z -= data.x;
+            distance = dot(data.yz, float2(length(local.xy), local.z));
+            if (!caps) distance = abs(distance);
+            distance = max(-local.z - data.x, distance);
+            wall = data.w;
+        } else if (primitive.opcode == SDF_OP_TORUS) {
+            distance = length(float2(length(local.xy) - data.x, local.z)) - data.y;
+            wall = data.z;
+        } else {
+            // Rectangles have no empty, wall or repeat options natively.
+            distance = length(float3(max(abs(local.xy) - data.xy, float2(0.0f)), abs(local.z)));
+        }
+        if ((primitive._pad0 & kMandelPrimitiveEmpty) != 0u) distance = abs(distance);
+        distance = max(distance - wall, 0.0f);
+    }
+#ifdef FPT_MANDEL_PERLIN
+    if (distance < inf) {
+        float scale = max(setv(cfg,0),1.0f);
+        distance = fptPerlinDisplace(distance / scale, p.xzy / scale, primitive.source_instruction) * scale;
+    }
+#endif
+    return distance;
+}
+
 static float mandelbulberPrimitiveUnionDistance(
     float3 p, constant FptRenderConfig &cfg) {
     float distance = inf;
     uint count = min(cfg.sdf_flat_union_count,
                      FPT_SDF_FLAT_UNION_MAX_PRIMITIVES);
     for (uint index = 0u; index < count; ++index) {
-        const FptPrimitiveInstance primitive =
-            cfg.sdf_flat_union_instances[index];
-        if (primitive.opcode == SDF_OP_PLANE) {
-            float4 plane = float4(primitive.data[0], primitive.data[1],
-                                  primitive.data[2], primitive.data[3]);
-            // Mandelbulber clamps solid plane interiors to zero. Keeping that
-            // convention suppresses enclosed fractal isosurfaces without
-            // changing the plane boundary selected by marching cubes.
-            float plane_distance = max(dot(p, plane.xyz) + plane.w, 0.0f);
-#ifdef FPT_MANDEL_PERLIN
-            float scale = max(setv(cfg,0),1.0f);
-            plane_distance = fptPerlinDisplace(plane_distance / scale, p.xzy / scale, primitive.source_instruction) * scale;
-#endif
-            distance = min(distance, plane_distance);
-        } else if (primitive.opcode == SDF_OP_SPHERE) {
-            float3 local = float3(
-                dot(float3(primitive.transform[0], primitive.transform[1],
-                           primitive.transform[2]), p) + primitive.transform[3],
-                dot(float3(primitive.transform[4], primitive.transform[5],
-                           primitive.transform[6]), p) + primitive.transform[7],
-                dot(float3(primitive.transform[8], primitive.transform[9],
-                           primitive.transform[10]), p) + primitive.transform[11]);
-            float sphere_distance = length(local) - primitive.data[0];
-            if ((primitive._pad0 & 1u) != 0u) {
-                sphere_distance = abs(sphere_distance);
-            }
-            sphere_distance = max(sphere_distance - primitive.data[1], 0.0f);
-#ifdef FPT_MANDEL_PERLIN
-            float scale = max(setv(cfg,0),1.0f);
-            sphere_distance = fptPerlinDisplace(sphere_distance / scale, p.xzy / scale, primitive.source_instruction) * scale;
-#endif
-            distance = min(distance, sphere_distance);
-        }
+        distance = min(distance, mandelbulberPrimitiveDistance(p, index, cfg));
     }
     return distance;
 }
