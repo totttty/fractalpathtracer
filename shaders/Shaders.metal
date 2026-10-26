@@ -4022,6 +4022,12 @@ static MandelbulberMarchResult marchMandelbulber(float3 direction,
         distance = mapSdf(position, cfg);
         step *= 0.5f;
     }
+    // render_worker.cpp RayMarching: with iteration_threshold_mode ("stop at
+    // maxiter") the accepted hit backs off by one threshold.
+    if (cfg.vset_values[115] > 1.5f) {
+        travel -= mandelbulberMarchThreshold(position, cfg);
+        position = fma(direction, float3(travel), start);
+    }
     return MandelbulberMarchResult{position, true};
 }
 
@@ -4482,6 +4488,12 @@ static MandelbulberMarchResult marchMandelbulberDiagnostic(
         position = fma(direction, float3(travel), start);
         distance = mapSdf(position, cfg);
         step *= 0.5f;
+    }
+    // render_worker.cpp RayMarching: with iteration_threshold_mode ("stop at
+    // maxiter") the accepted hit backs off by one threshold.
+    if (cfg.vset_values[115] > 1.5f) {
+        travel -= mandelbulberMarchThreshold(position, cfg);
+        position = fma(direction, float3(travel), start);
     }
     return MandelbulberMarchResult{position, true};
 }
@@ -7073,6 +7085,12 @@ static MandelbulberMarchResult marchMandelbulberSampled(float3 direction,
         distance = mapSdf(position, cfg);
         step *= 0.5f;
     }
+    // render_worker.cpp RayMarching: with iteration_threshold_mode ("stop at
+    // maxiter") the accepted hit backs off by one threshold.
+    if (cfg.vset_values[115] > 1.5f) {
+        travel -= mandelbulberMarchThreshold(position, cfg);
+        position = fma(direction, float3(travel), start);
+    }
     return MandelbulberMarchResult{position, true};
 }
 
@@ -8427,6 +8445,12 @@ static float3 marchMandelbulberProfiled(float3 direction,
         position = fma(direction, float3(travel), start);
         distance = mandelbulberProfileDistance(position, cfg, stats);
         step *= 0.5f;
+    }
+    // render_worker.cpp RayMarching: with iteration_threshold_mode ("stop at
+    // maxiter") the accepted hit backs off by one threshold.
+    if (cfg.vset_values[115] > 1.5f) {
+        travel -= mandelbulberMarchThreshold(position, cfg);
+        position = fma(direction, float3(travel), start);
     }
     return position;
 }
