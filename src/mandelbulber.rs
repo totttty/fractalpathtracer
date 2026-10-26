@@ -1444,10 +1444,15 @@ impl MandelbulberScene {
             (1..=16384).contains(&width) && (1..=16384).contains(&height),
             "image dimensions must be 1..16384"
         );
-        let camera = document.vec3("main_parameters", "camera", [0.0, 0.0, -5.0])?;
+        let camera = document.vec3("main_parameters", "camera", [3.0, -6.0, 2.0])?;
         let target = document.vec3("main_parameters", "target", [0.0, 0.0, 0.0])?;
         ensure!(camera != target, "camera and target must differ");
-        let camera_top = document.vec3("main_parameters", "camera_top", [0.0, 0.0, 1.0])?;
+        // Mandelbulber's defaults (initparameters.cpp); the top vector is tilted.
+        let camera_top = document.vec3(
+            "main_parameters",
+            "camera_top",
+            [-0.1277753, 0.2555506, 0.958314],
+        )?;
         let camera_projection = match document
             .value("main_parameters", "perspective_type")
             .unwrap_or("three_point")
@@ -4218,6 +4223,14 @@ IFS_scale 1,4;
                 .map(String::as_str),
             Some("true")
         );
+    }
+
+    #[test]
+    fn camera_defaults_match_mandelbulber() {
+        let scene =
+            MandelbulberScene::parse("# version 2.21\n[main_parameters]\nformula_1 2;\n").unwrap();
+        assert_eq!(scene.camera, [3.0, -6.0, 2.0]);
+        assert_eq!(scene.camera_top, [-0.1277753, 0.2555506, 0.958314]);
     }
 
     #[test]
