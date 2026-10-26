@@ -4116,6 +4116,7 @@ fn standalone_delta_fragment(
     let distance_expression = delta_distance_expression(de_function)?;
     let delta_source = standalone_delta_source(formula.source.id);
     let radial_derivative_source = standalone_delta_derivative_source();
+    let radial_gradient_source = delta_radial_gradient_source();
     let additional_bailout = i32::from(uses_additional_bailout(formula));
     Ok(format!(
         r#"#define FPT_MANDEL_GENERATED_FIELD 1
@@ -4201,7 +4202,7 @@ static float4 mandelbulberGeneratedFieldSample(float3 p,
     // source can instead mirror a smaller authoritative OpenCL stencil.
 {delta_source}
 {radial_derivative_source}
-    float radial_gradient = length(radial_derivative);
+{radial_gradient_source}
     float distance = radial_gradient > 0.0f ? ({distance_expression}) : base.radius;
     distance = clamp(distance, 0.0f, 10.0f) * world_scale;
     float iteration_state = base.escaped
@@ -4237,11 +4238,21 @@ fn standalone_delta_derivative_source() -> &'static str {
     float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;"#
 }
 
+fn delta_radial_gradient_source() -> &'static str {
+    // High-power formulas escape with gradients beyond sqrt(FLT_MAX); squaring
+    // them inside length() overflows to infinity and the zero distance reads
+    // as a surface hit. Scaling by the largest component keeps the norm finite.
+    r#"    float gradient_scale = max3(radial_derivative.x, radial_derivative.y, radial_derivative.z);
+    float radial_gradient = gradient_scale > 0.0f && isfinite(gradient_scale)
+        ? gradient_scale * length(radial_derivative / gradient_scale)
+        : gradient_scale;"#
+}
+
 fn delta_distance_expression(function: &str) -> Result<&'static str> {
     match function {
         "linearDEFunction" => Ok("0.5f * base.radius / radial_gradient"),
         "logarithmicDEFunction" => {
-            Ok("0.5f * base.radius * log(max(base.radius, 1.0e-30f)) / radial_gradient")
+            Ok("0.5f * (base.radius / radial_gradient) * log(max(base.radius, 1.0e-30f))")
         }
         other => bail!("delta distance finalizer {other} is not supported by the runtime"),
     }
@@ -4391,11 +4402,12 @@ pub fn specialize_fpt_shader_hybrid(
     float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;"#;
         let delta_probe_source =
             hybrid_delta_probe_source(&delta_source, &derivative_source, global_folding);
+        let radial_gradient_source = delta_radial_gradient_source();
         format!(
             r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
         scaled, cfg, -iteration_multiplier, iteration_budget);
 {delta_probe_source}
-    float radial_gradient = length(radial_derivative);
+{radial_gradient_source}
     // Mandelbulber's Delta-DE treats a zero radial gradient as an interior
     // sample. Falling back to the orbit radius creates a false exterior spike.
     float distance = radial_gradient > 0.0f ? ({finalizer}) : {zero_gradient_distance};
@@ -5010,7 +5022,7 @@ fn hybrid_delta_distance_expression(
     Ok(match hybrid_selected_de_function(slots, delta_de_function)? {
         0 => "0.5f * base.radius / radial_gradient".into(),
         1 => {
-            "0.5f * base.radius * log(max(base.radius, 1.0e-30f)) / radial_gradient".into()
+            "0.5f * (base.radius / radial_gradient) * log(max(base.radius, 1.0e-30f))".into()
         }
         2 => "max(length(base.z.xy) - 0.92784f, abs(length(base.z.xy) * base.z.z) / max(base.radius, 1.0e-30f)) / radial_gradient".into(),
         3 => "(abs(length(base.z.xz) * base.z.y) / max(base.radius, 1.0e-30f)) / radial_gradient".into(),
@@ -7907,6 +7919,15 @@ target 0 0 0;
         assert_eq!(hybrid_delta_scale(false), 6.25e-6);
         assert_eq!(hybrid_delta_scale(true), 1.2e-5);
         assert_eq!(hybrid_delta_zero_gradient_distance(), "0.0f");
+    }
+
+    #[test]
+    fn delta_gradients_avoid_fp32_overflow() {
+        let gradient = delta_radial_gradient_source();
+        assert!(!gradient.contains("length(radial_derivative)"));
+        assert!(gradient.contains("gradient_scale * length(radial_derivative / gradient_scale)"));
+        let logarithmic = delta_distance_expression("logarithmicDEFunction").unwrap();
+        assert!(logarithmic.starts_with("0.5f * (base.radius / radial_gradient)"));
     }
 
     #[test]
