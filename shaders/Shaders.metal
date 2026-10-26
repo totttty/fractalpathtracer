@@ -503,22 +503,31 @@ static float mandelSafeAcos(float value) {
     return acos(clamp(value, -1.0f, 1.0f));
 }
 
-// asin/acos(z.z / r) for the polar angle of z. Near the poles z.z / r rounds to
-// +-1 in fp32 and the angle collapses to 0 or pi/2, where Mandelbulber's double
-// keeps it; when r is z's own length, atan2 with the transverse component keeps
-// that angle. Other radii keep the clamped quotient.
-static bool mandelPolarRadius(float4 z, float r) {
-    return r > 0.0f && abs(length(z) - r) <= 1.0e-6f * r;
+// asin/acos(v[c] / r) for the angle of one component of v. Near +-r the
+// quotient rounds to +-1 in fp32 and the angle collapses to 0 or pi/2, where
+// Mandelbulber's double keeps it; when r is v's own length, atan2 against the
+// remaining components keeps that angle. Other radii keep the clamped quotient.
+template <typename V>
+static bool mandelComponentRadius(V v, float r) {
+    return r > 0.0f && abs(length(v) - r) <= 1.0e-6f * r;
 }
 
-static float mandelPolarAsin(float4 z, float r) {
-    return mandelPolarRadius(z, r) ? atan2(z.z, length(float3(z.x, z.y, z.w)))
-                                   : mandelSafeAsin(z.z / r);
+template <typename V>
+static float mandelComponentRest(V v, int c) {
+    v[c] = 0.0f;
+    return length(v);
 }
 
-static float mandelPolarAcos(float4 z, float r) {
-    return mandelPolarRadius(z, r) ? atan2(length(float3(z.x, z.y, z.w)), z.z)
-                                   : mandelSafeAcos(z.z / r);
+template <typename V>
+static float mandelComponentAsin(V v, int c, float r) {
+    return mandelComponentRadius(v, r) ? atan2(v[c], mandelComponentRest(v, c))
+                                       : mandelSafeAsin(v[c] / r);
+}
+
+template <typename V>
+static float mandelComponentAcos(V v, int c, float r) {
+    return mandelComponentRadius(v, r) ? atan2(mandelComponentRest(v, c), v[c])
+                                       : mandelSafeAcos(v[c] / r);
 }
 
 static float2 rot2(float2 p, float a) {

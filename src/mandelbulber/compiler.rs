@@ -7077,7 +7077,7 @@ fn translate_opencl_body(source: &str, parameter_address: &str) -> String {
         if line.contains("Q_UNUSED(") {
             continue;
         }
-        let line = line
+        let line = with_component_angles(line)
             .replace(
                 "const __constant REAL3 *",
                 &format!("{parameter_address} const float3 *"),
@@ -7105,8 +7105,6 @@ fn translate_opencl_body(source: &str, parameter_address: &str) -> String {
             .replace("native_exp", "exp")
             .replace("native_atan2", "atan2")
             .replace("native_powr", "powr")
-            .replace("asin(z.z / aux.r)", "mandelPolarAsin(z, aux.r)")
-            .replace("acos(z.z / aux.r)", "mandelPolarAcos(z, aux.r)")
             .replace("asin(", "mandelSafeAsin(")
             .replace("acos(", "mandelSafeAcos(")
             .replace("fabs", "abs")
@@ -7124,6 +7122,69 @@ fn translate_opencl_body(source: &str, parameter_address: &str) -> String {
         output.push('\n');
     }
     translate_compound_literals(&output)
+}
+
+/// Rewrites asin/acos(v.c / r) into mandelComponentAsin/Acos(v, c, r), which keep
+/// the angle near +-r in fp32 when r is v's own length (Shaders.metal).
+fn with_component_angles(line: &str) -> String {
+    let identifier = |text: &str| {
+        !text.is_empty()
+            && text
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+            && text.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+    };
+    let radius = |text: &str| {
+        !text.is_empty()
+            && text
+                .split("->")
+                .flat_map(|part| part.split('.'))
+                .all(identifier)
+    };
+    let mut output = String::with_capacity(line.len());
+    let mut rest = line;
+    while let Some(found) = ["asin(", "acos("]
+        .iter()
+        .filter_map(|name| rest.find(name).map(|at| (at, *name)))
+        .min()
+    {
+        let (at, name) = found;
+        let preceded = rest[..at].chars().next_back();
+        let open = at + name.len();
+        let rewritten = rest[open..].find(')').and_then(|close| {
+            if preceded.is_some_and(|c| c.is_ascii_alphanumeric() || c == '_') {
+                return None;
+            }
+            let (vector_component, divisor) = rest[open..open + close].split_once(" / ")?;
+            let (vector, component) = vector_component.rsplit_once('.')?;
+            let index = "xyzw".find(component).filter(|_| component.len() == 1)?;
+            (identifier(vector) && radius(divisor.trim())).then(|| {
+                let helper = if name == "asin(" {
+                    "mandelComponentAsin"
+                } else {
+                    "mandelComponentAcos"
+                };
+                (
+                    format!("{helper}({vector}, {index}, {})", divisor.trim()),
+                    open + close + 1,
+                )
+            })
+        });
+        match rewritten {
+            Some((replacement, end)) => {
+                output.push_str(&rest[..at]);
+                output.push_str(&replacement);
+                rest = &rest[end..];
+            }
+            None => {
+                output.push_str(&rest[..open]);
+                rest = &rest[open..];
+            }
+        }
+    }
+    output.push_str(rest);
+    output
 }
 
 fn emit_formula_dependencies(formula: &ParsedFormula) -> Result<String> {
@@ -7709,6 +7770,24 @@ target 0 0 0;
         assert!(palette.contains("kMandelSurfaceGradientCount = 3u"));
         assert!(palette.contains("* 3.0f + 0.25f"));
         assert!(palette.contains("float4(1.0f, 0.99609375f, 0.0f, 0.0f)"));
+    }
+
+    #[test]
+    fn component_angles_rewrite_only_quotients_of_one_vector_component() {
+        assert_eq!(
+            with_component_angles("t = asin(z.z / aux->r); u = acos(v.x / M0);"),
+            "t = mandelComponentAsin(z, 2, aux->r); u = mandelComponentAcos(v, 0, M0);"
+        );
+        // Anything else keeps the generic clamped rewrite.
+        assert_eq!(with_component_angles("t = asin(th);"), "t = asin(th);");
+        assert_eq!(
+            with_component_angles("t = asin(z.z * 2.0f);"),
+            "t = asin(z.z * 2.0f);"
+        );
+        assert_eq!(
+            with_component_angles("t = myasin(z.z / r);"),
+            "t = myasin(z.z / r);"
+        );
     }
 
     #[test]
