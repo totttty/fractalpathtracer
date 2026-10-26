@@ -7101,7 +7101,7 @@ fn translate_opencl_body(source: &str, parameter_address: &str) -> String {
         if line.contains("Q_UNUSED(") {
             continue;
         }
-        let line = with_component_angles(line)
+        let line = with_component_angles(&with_odd_dual_sine(line))
             .replace(
                 "const __constant REAL3 *",
                 &format!("{parameter_address} const float3 *"),
@@ -7150,6 +7150,20 @@ fn translate_opencl_body(source: &str, parameter_address: &str) -> String {
 
 /// Rewrites asin/acos(v.c / r) into mandelComponentAsin/Acos(v, c, r), which keep
 /// the angle near +-r in fp32 when r is v's own length (Shaders.metal).
+/// Mandelnest Full keeps the shorter of two mirrored branches. Without a
+/// constant term `zm` is exactly `-zp` and the lengths tie, which double keeps
+/// exact (so `zm` wins); Metal's sine is not bit-odd, so evaluate the mirrored
+/// branch as the negated sine of the positive angle.
+fn with_odd_dual_sine(line: &str) -> String {
+    for component in ["x", "y", "z"] {
+        let pattern = format!("zm.{component} = native_sin(zm.{component});");
+        if line.trim() == pattern {
+            return line.replace(&pattern, &format!("zm.{component} = -sin(-zm.{component});"));
+        }
+    }
+    line.to_owned()
+}
+
 fn with_component_angles(line: &str) -> String {
     let identifier = |text: &str| {
         !text.is_empty()
@@ -7794,6 +7808,18 @@ target 0 0 0;
         assert!(palette.contains("kMandelSurfaceGradientCount = 3u"));
         assert!(palette.contains("* 3.0f + 0.25f"));
         assert!(palette.contains("float4(1.0f, 0.99609375f, 0.0f, 0.0f)"));
+    }
+
+    #[test]
+    fn mandelnest_full_mirrored_branch_uses_an_odd_sine() {
+        assert_eq!(
+            with_odd_dual_sine("\tzm.y = native_sin(zm.y);"),
+            "\tzm.y = -sin(-zm.y);"
+        );
+        assert_eq!(
+            with_odd_dual_sine("\tzp.y = native_sin(zp.y);"),
+            "\tzp.y = native_sin(zp.y);"
+        );
     }
 
     #[test]
