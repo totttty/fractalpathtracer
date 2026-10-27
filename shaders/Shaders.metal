@@ -492,15 +492,18 @@ static float pow5(float x) {
     return x2 * x2 * x;
 }
 
-// OpenCL's length/division path stays inside the inverse-trig domain for the
-// bundled formulas. Metal fast-math can round a normalized component a few
-// ulps past either endpoint, so generated formulas use these guarded forms.
+// Metal fast-math can round a normalized component a few ulps past either
+// endpoint of the inverse-trig domain, so arguments within that rounding are
+// clamped. Anything further out is NaN in Mandelbulber's double as well, which
+// ends the orbit there, so it stays NaN here instead of being clamped.
 static float mandelSafeAsin(float value) {
-    return asin(clamp(value, -1.0f, 1.0f));
+    return abs(value) <= 1.0f + 1.0e-5f ? asin(clamp(value, -1.0f, 1.0f))
+                                        : as_type<float>(0x7fc00000u);
 }
 
 static float mandelSafeAcos(float value) {
-    return acos(clamp(value, -1.0f, 1.0f));
+    return abs(value) <= 1.0f + 1.0e-5f ? acos(clamp(value, -1.0f, 1.0f))
+                                        : as_type<float>(0x7fc00000u);
 }
 
 // asin/acos(v[c] / r) for the angle of one component of v. Near +-r the
