@@ -4975,6 +4975,9 @@ fn hybrid_constant_addition_source(enabled: bool, formula_id: i32, values: &[f32
     }
 }
 
+// Mandelbulber's double keeps aux.DE positive where fp32 underflows it to
+// zero (orbits settling on an attracting cycle), so zero counts as positive;
+// only negative or NaN derivatives fall back to the orbit radius.
 fn hybrid_distance_expression(
     slots: &[RuntimeFormulaSlot<'_>],
     linear_de_offset: f64,
@@ -4983,15 +4986,15 @@ fn hybrid_distance_expression(
     let selected = hybrid_selected_de_function(slots, delta_de_function)?;
     match selected {
         0 => Ok(format!(
-            "aux.DE > 0.0f ? (aux.r - {}) / aux.DE : aux.r",
+            "aux.DE >= 0.0f ? (aux.r - {}) / aux.DE : aux.r",
             metal_float(linear_de_offset as f32)
         )),
         1 => Ok(
-            "aux.DE > 0.0f ? (aux.r > 1.0f ? 0.5f * aux.r * log(aux.r) / aux.DE : 0.0f) : aux.r"
+            "aux.DE >= 0.0f ? (aux.r > 1.0f ? 0.5f * aux.r * log(aux.r) / aux.DE : 0.0f) : aux.r"
                 .into(),
         ),
         2 => Ok(
-            "aux.DE > 0.0f ? max(length(z.xy) - aux.pseudoKleinianDE, abs(length(z.xy) * z.z) / aux.r) / aux.DE : aux.r"
+            "aux.DE >= 0.0f ? max(length(z.xy) - aux.pseudoKleinianDE, abs(length(z.xy) * z.z) / aux.r) / aux.DE : aux.r"
                 .into(),
         ),
         3 => {
@@ -5013,16 +5016,14 @@ fn hybrid_distance_expression(
                 "z.y".into()
             };
             Ok(format!(
-                "aux.DE > 0.0f ? min({y}, {}) / max(aux.DE, {}) : aux.r",
+                "aux.DE >= 0.0f ? min({y}, {}) / max(aux.DE, {}) : aux.r",
                 metal_float(tweak005),
                 metal_float(offset1)
             ))
         }
-        // Mandelbulber only trusts a custom distance when aux.DE > 0 (NaN
-        // included); otherwise it falls back to the orbit radius.
-        4 => Ok("aux.DE > 0.0f ? aux.dist : aux.r".into()),
+        4 => Ok("aux.DE >= 0.0f ? aux.dist : aux.r".into()),
         5 => Ok(
-            "aux.DE > 0.0f ? max(abs(z.x), max(abs(z.y), abs(z.z))) / aux.DE : aux.r"
+            "aux.DE >= 0.0f ? max(abs(z.x), max(abs(z.y), abs(z.z))) / aux.DE : aux.r"
                 .into(),
         ),
         _ => unreachable!(),
@@ -5151,27 +5152,28 @@ fn clamped_distance_expression(expression: &str) -> String {
     format!("clamp(float({expression}), 0.0f, 10.0f)")
 }
 
+// Zero derivatives count as positive; see hybrid_distance_expression.
 fn analytic_distance_expression(function: &str) -> Result<String> {
     match function {
         "analyticFunctionLogarithmic" => Ok(
-            "aux.DE > 0.0f ? (aux.r > 1.0f ? 0.5f * aux.r * log(aux.r) / aux.DE : 0.0f) : aux.r"
+            "aux.DE >= 0.0f ? (aux.r > 1.0f ? 0.5f * aux.r * log(aux.r) / aux.DE : 0.0f) : aux.r"
                 .into(),
         ),
-        "analyticFunctionLinear" => Ok("aux.DE > 0.0f ? aux.r / aux.DE : aux.r".into()),
+        "analyticFunctionLinear" => Ok("aux.DE >= 0.0f ? aux.r / aux.DE : aux.r".into()),
         "analyticFunctionIFS" => {
-            Ok("aux.DE > 0.0f ? (aux.r - 2.0f) / aux.DE : aux.r".into())
+            Ok("aux.DE >= 0.0f ? (aux.r - 2.0f) / aux.DE : aux.r".into())
         }
         "analyticFunctionJosKleinian" => Ok(
-            "aux.DE > 0.0f ? min(kMandelFormulaParameters.transformCommon.spheresEnabled != 0 ? min(z.y, kMandelFormulaParameters.transformCommon.foldingValue - z.y) : z.y, kMandelFormulaParameters.analyticDE.tweak005) / max(aux.DE, kMandelFormulaParameters.analyticDE.offset1) : aux.r"
+            "aux.DE >= 0.0f ? min(kMandelFormulaParameters.transformCommon.spheresEnabled != 0 ? min(z.y, kMandelFormulaParameters.transformCommon.foldingValue - z.y) : z.y, kMandelFormulaParameters.analyticDE.tweak005) / max(aux.DE, kMandelFormulaParameters.analyticDE.offset1) : aux.r"
                 .into(),
         ),
         "analyticFunctionPseudoKleinian" => Ok(
-            "aux.DE > 0.0f ? max(length(z.xy) - aux.pseudoKleinianDE, abs(length(z.xy) * z.z) / aux.r) / aux.DE : aux.r"
+            "aux.DE >= 0.0f ? max(length(z.xy) - aux.pseudoKleinianDE, abs(length(z.xy) * z.z) / aux.r) / aux.DE : aux.r"
                 .into(),
         ),
-        "analyticFunctionCustomDE" => Ok("aux.DE > 0.0f ? aux.dist : aux.r".into()),
+        "analyticFunctionCustomDE" => Ok("aux.DE >= 0.0f ? aux.dist : aux.r".into()),
         "analyticFunctionMaxAxis" => Ok(
-            "aux.DE > 0.0f ? max(abs(z.x), max(abs(z.y), abs(z.z))) / aux.DE : aux.r"
+            "aux.DE >= 0.0f ? max(abs(z.x), max(abs(z.y), abs(z.z))) / aux.DE : aux.r"
                 .into(),
         ),
         other => bail!("analytic distance finalizer {other} is not supported by the runtime"),
@@ -7816,7 +7818,7 @@ target 0 0 0;
     fn custom_distances_need_a_positive_derivative() {
         assert_eq!(
             analytic_distance_expression("analyticFunctionCustomDE").unwrap(),
-            "aux.DE > 0.0f ? aux.dist : aux.r"
+            "aux.DE >= 0.0f ? aux.dist : aux.r"
         );
     }
 
