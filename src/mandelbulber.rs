@@ -523,7 +523,25 @@ impl FractDocument {
         let version = version.ok_or_else(|| anyhow!("missing Mandelbulber version comment"))?;
         let mut document = Self { version, sections };
         document.migrate_legacy_water()?;
+        document.migrate_legacy_boolean_iterations()?;
         Ok(document)
+    }
+
+    /// Before 2.29 Boolean slots shared N; Mandelbulber's loader copies N into
+    /// every formula_maxiter_N, overriding the per-slot 250 default.
+    fn migrate_legacy_boolean_iterations(&mut self) -> Result<()> {
+        if !version_is_before(&self.version, 2, 29)?
+            || !self.boolean("main_parameters", "boolean_operators", false)?
+        {
+            return Ok(());
+        }
+        let maxiter = self.integer("main_parameters", "N", DEFAULT_MAX_ITERATIONS)?;
+        if let Some(values) = self.sections.get_mut("main_parameters") {
+            for index in 1..=FORMULA_SLOT_COUNT {
+                values.insert(format!("formula_maxiter_{index}"), maxiter.to_string());
+            }
+        }
+        Ok(())
     }
 
     /// Before 2.13 water stored an absolute `_amplitude`; Mandelbulber renames
@@ -4223,6 +4241,21 @@ IFS_scale 1,4;
                 .map(String::as_str),
             Some("true")
         );
+    }
+
+    #[test]
+    fn parser_migrates_pre_229_boolean_iterations() {
+        let maxiter = |version: &str| {
+            let source = format!(
+                "# version {version}\n[main_parameters]\nboolean_operators true;\nN 15;\nformula_maxiter_2 40;\n"
+            );
+            let document = FractDocument::parse(&source).unwrap();
+            document
+                .value("main_parameters", "formula_maxiter_2")
+                .map(str::to_owned)
+        };
+        assert_eq!(maxiter("2.25").as_deref(), Some("15"));
+        assert_eq!(maxiter("2.29").as_deref(), Some("40"));
     }
 
     #[test]
