@@ -16,6 +16,13 @@ pub(super) fn supports(formula_id: i32) -> bool {
     DUAL_FORMULA_IDS.contains(&formula_id)
 }
 
+/// Whether generated Metal source evaluates its radial gradient with dual
+/// numbers. At -O0 every dual operator stays a call, which makes these scenes
+/// 10-30x slower than at -O1 and long enough to trip the GPU watchdog.
+pub(super) fn source_uses_dual_gradient(source: &str) -> bool {
+    source.contains("mandelDeltaDualGradient(scaled")
+}
+
 /// Dual scalar (value plus gradient over the three sample coordinates) and the
 /// vector types formula code needs. Members keep the x/y/z/w names so translated
 /// component access compiles unchanged.
@@ -404,6 +411,17 @@ mod tests {
         assert!(dual.contains("constant const float3 *p"));
         assert!(dual.ends_with("return z;\n}"));
         assert!(!dual.contains("other"));
+    }
+
+    #[test]
+    fn generated_dual_gradient_is_detected() {
+        let source = gradient_source("FooIteration", "0.0f", "2.0f", "");
+        assert!(!source_uses_dual_gradient(&source));
+        let caller = radial_derivative_source("", "    float3 radial_derivative = 0.0f;");
+        assert!(source_uses_dual_gradient(&format!("{source}{caller}")));
+        assert!(!source_uses_dual_gradient(
+            "static float4 Foo(float4 z) { return z; }"
+        ));
     }
 
     #[test]

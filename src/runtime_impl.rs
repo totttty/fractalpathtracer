@@ -6366,6 +6366,13 @@ fn diagnostic(args: &RenderArgs) -> Result<()> {
         || (production_compile && !mandel_scene_requires_o0(&args.scene_path)?)
     {
         MandelMetalOptimization::Default
+    } else if diagnostic_shader_source
+        .as_deref()
+        .is_some_and(mandelbulber::compiler::source_uses_dual_gradient)
+    {
+        // Dual-number gradients only inline at -O1; at -O0 they run 10-30x
+        // slower and deep-zoom scenes trip the GPU watchdog.
+        MandelMetalOptimization::O1
     } else {
         MandelMetalOptimization::O0
     };

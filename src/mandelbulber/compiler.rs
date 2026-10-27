@@ -372,6 +372,11 @@ pub fn scene_uses_kernel_specialization(scene: &Path) -> Result<bool> {
     Ok(!GENERIC_KERNEL_SCENES.contains(&digest.as_str()))
 }
 
+/// Whether generated Metal source evaluates its radial gradient with dual numbers.
+pub fn source_uses_dual_gradient(source: &str) -> bool {
+    super::dual::source_uses_dual_gradient(source)
+}
+
 pub fn scene_uses_direct_hybrid_loop(scene: &Path) -> Result<bool> {
     // These fixtures were selected from the exact full-corpus gate. They
     // retain identical PNGs and account for most of the measured benefit from
