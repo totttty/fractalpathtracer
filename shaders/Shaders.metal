@@ -4005,7 +4005,12 @@ static MandelbulberMarchResult marchMandelbulber(float3 direction,
         // when tiny detail sits at large world coordinates (scene 483). Stop
         // only once the travel itself can no longer change.
         float next_travel = travel + step;
-        if (next_travel == travel) break;
+        // render_worker.cpp RayMarching counts a ray whose point stops
+        // moving as a hit; fp32 travel stalls where double still creeps.
+        if (next_travel == travel) {
+            found = true;
+            break;
+        }
         travel = next_travel;
         position = fma(direction, float3(travel), start);
         if (travel >= cfg.render[4]) break;
@@ -4474,7 +4479,10 @@ static MandelbulberMarchResult marchMandelbulberDiagnostic(
         // Scalar travel, as in marchMandelbulber: rebuild the position from the
         // clipped entry point instead of accumulating sub-spacing displacements.
         float next_travel = travel + step;
-        if (next_travel == travel) break;
+        if (next_travel == travel) {
+            found = true;
+            break;
+        }
         if (next_travel > maximum_travel) break;
         travel = next_travel;
         position = fma(direction, float3(travel), start);
@@ -7068,7 +7076,12 @@ static MandelbulberMarchResult marchMandelbulberSampled(float3 direction,
         // when tiny detail sits at large world coordinates (scene 483). Stop
         // only once the travel itself can no longer change.
         float next_travel = travel + step;
-        if (next_travel == travel) break;
+        // render_worker.cpp RayMarching counts a ray whose point stops
+        // moving as a hit; fp32 travel stalls where double still creeps.
+        if (next_travel == travel) {
+            found = true;
+            break;
+        }
         travel = next_travel;
         position = fma(direction, float3(travel), start);
         if (travel >= cfg.render[4]) break;
@@ -8429,7 +8442,10 @@ static float3 marchMandelbulberProfiled(float3 direction,
         step = mandelSampledStep(distance, threshold, cfg, step_seed);
         // Scalar travel, as in marchMandelbulber.
         float next_travel = travel + step;
-        if (next_travel == travel) break;
+        if (next_travel == travel) {
+            found = true;
+            break;
+        }
         travel = next_travel;
         position = fma(direction, float3(travel), start);
         if (travel >= cfg.render[4]) break;
