@@ -10,7 +10,10 @@
 use anyhow::{Context, Result};
 
 /// Formula ids whose dual translation compiles and matches native geometry.
-const DUAL_FORMULA_IDS: [i32; 14] = [13, 16, 19, 39, 40, 49, 63, 71, 72, 82, 86, 96, 100, 251];
+const DUAL_FORMULA_IDS: [i32; 28] = [
+    7, 8, 10, 13, 16, 19, 37, 39, 40, 49, 63, 71, 72, 82, 85, 86, 96, 100, 105, 250, 251, 1002,
+    1004, 1040, 1064, 1080, 1129, 1146,
+];
 
 pub(super) fn supports(formula_id: i32) -> bool {
     DUAL_FORMULA_IDS.contains(&formula_id)
@@ -33,6 +36,8 @@ struct MD {
     MD() : v(0.0f), d(0.0f) {}
     MD(float value) : v(value), d(0.0f) {}
     MD(float value, float3 gradient) : v(value), d(gradient) {}
+    // Integer casts (sector indices) take the value, as in the float formula.
+    explicit operator int() const { return int(v); }
 };
 
 static inline MD operator+(MD a, MD b) { return MD(a.v + b.v, a.d + b.d); }
@@ -177,6 +182,7 @@ struct MD4 {
     explicit MD4(MD s) : x(s), y(s), z(s), w(s) {}
     MD4(MD a, MD b, MD c, MD d) : x(a), y(b), z(c), w(d) {}
     MD4(float4 v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+    MD3 xyz() const { return MD3(x, y, z); }
 };
 static inline MD4 operator+(MD4 a, MD4 b) { return MD4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w); }
 static inline MD4 operator-(MD4 a, MD4 b) { return MD4(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w); }
@@ -328,7 +334,38 @@ pub(super) fn formula_function(declarations: &str, function_name: &str) -> Resul
             output.push(ch);
         }
     }
-    Ok(output)
+    Ok(swizzle_reads(&output))
+}
+
+/// MD4 has no swizzle members, so `z.xyz` reads become the `xyz()` accessor.
+/// Assignments through a swizzle are left alone and fail to compile.
+fn swizzle_reads(source: &str) -> String {
+    let mut output = String::with_capacity(source.len());
+    let mut rest = source;
+    while let Some(found) = rest.find("z.xyz") {
+        let boundary = rest[..found]
+            .chars()
+            .next_back()
+            .is_none_or(|c| !(c.is_ascii_alphanumeric() || c == '_' || c == '.'));
+        let after = &rest[found + "z.xyz".len()..];
+        let continues = after
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_alphanumeric() || c == '_');
+        let trimmed = after.trim_start();
+        let assigned = trimmed.starts_with('=') && !trimmed.starts_with("==")
+            || ["+=", "-=", "*=", "/="]
+                .iter()
+                .any(|op| trimmed.starts_with(op));
+        output.push_str(&rest[..found]);
+        output.push_str("z.xyz");
+        if boundary && !continues && !assigned {
+            output.push_str("()");
+        }
+        rest = after;
+    }
+    output.push_str(rest);
+    output
 }
 
 /// Dual orbit replaying `iterations` steps of the base orbit and returning
@@ -581,6 +618,18 @@ mod tests {
             "{source}{}",
             hybrid_radial_derivative_source("    float3 radial_derivative = 0.0f;")
         )));
+    }
+
+    #[test]
+    fn swizzle_reads_use_the_accessor() {
+        assert_eq!(swizzle_reads("MD3 a = z.xyz;"), "MD3 a = z.xyz();");
+        assert_eq!(swizzle_reads("z.xyz = a;"), "z.xyz = a;");
+        assert_eq!(swizzle_reads("z.xyz += a;"), "z.xyz += a;");
+        assert_eq!(swizzle_reads("q = z.xyz == a;"), "q = z.xyz() == a;");
+        assert_eq!(
+            swizzle_reads("fractal.z.xyz; z.xyzw; tz.xyz"),
+            "fractal.z.xyz; z.xyzw; tz.xyz"
+        );
     }
 
     #[test]
