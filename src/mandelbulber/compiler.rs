@@ -4353,6 +4353,8 @@ pub fn specialize_fpt_shader_hybrid(
     let mut bailouts = [1.0_f64; 9];
     let mut bailout_checks = [0_i32; 9];
     let mut additional_bailout_checks = [0_i32; 9];
+    // (slot index, namespace, emitted namespace source, constant addition)
+    let mut slot_sources = Vec::with_capacity(slots.len());
     for slot in slots {
         ensure!(slot.index < 9, "hybrid formula slot index must be 0..8");
         ensure!(
@@ -4367,14 +4369,15 @@ pub fn specialize_fpt_shader_hybrid(
             slot.formula.source.symbol
         );
         let namespace = format!("MandelSlot{}", slot.index);
-        declarations.push_str(&emit_formula_namespace(
+        let slot_declarations = emit_formula_namespace(
             slot.formula,
             slot.formula_values,
             "constant",
             &namespace,
             false,
             FormulaSourceOptimization::from_policy(formula_optimization),
-        )?);
+        )?;
+        declarations.push_str(&slot_declarations);
         declarations.push_str("\n\nnamespace ");
         declarations.push_str(&namespace);
         declarations.push_str(" {\n");
@@ -4391,12 +4394,14 @@ pub fn specialize_fpt_shader_hybrid(
             slot.formula.function_name,
             namespace
         ));
-        dispatch_cases.push_str(&hybrid_constant_addition_source(
+        let constant_addition = hybrid_constant_addition_source(
             slot.add_c_constant,
             slot.formula.source.id,
             set_values,
-        ));
+        );
+        dispatch_cases.push_str(&constant_addition);
         dispatch_cases.push_str("                break;\n");
+        slot_sources.push((slot.index, namespace, slot_declarations, constant_addition));
         weights[slot.index] = slot.weight;
         bailouts[slot.index] = slot.bailout;
         bailout_checks[slot.index] = i32::from(slot.check_for_bailout);
@@ -4414,6 +4419,13 @@ pub fn specialize_fpt_shader_hybrid(
             && slots
                 .iter()
                 .any(|slot| slot.formula.source.de_type == "deltaDEType"));
+    // Dual gradients need every slot's formula translated; global folds keep
+    // their validated finite-difference probe.
+    let dual_hybrid = uses_delta
+        && !global_folding
+        && slots
+            .iter()
+            .all(|slot| super::dual::supports(slot.formula.source.id));
     // An orbit that survives to an empty slot makes Mandelbulber return its
     // 10-unit far distance, so those points are empty space, not interior.
     let empty_slot_exit = if exits_to_empty_slot {
@@ -4440,6 +4452,11 @@ pub fn specialize_fpt_shader_hybrid(
     float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;"#;
         let delta_probe_source =
             hybrid_delta_probe_source(&delta_source, &derivative_source, global_folding);
+        let delta_probe_source = if dual_hybrid {
+            super::dual::hybrid_radial_derivative_source(&delta_probe_source)
+        } else {
+            delta_probe_source
+        };
         let radial_gradient_source = delta_radial_gradient_source();
         format!(
             r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
@@ -4490,6 +4507,26 @@ pub fn specialize_fpt_shader_hybrid(
         .join(", ");
     let initial_w = metal_float(set_values[3]);
     let profile_orbit_multiplier = if uses_delta { 4 } else { 1 };
+    let dual_source = if dual_hybrid {
+        let dual_slots = slots
+            .iter()
+            .zip(&slot_sources)
+            .map(
+                |(slot, (index, namespace, slot_declarations, constant_addition))| {
+                    super::dual::HybridDualSlot {
+                        index: *index,
+                        namespace,
+                        declarations: slot_declarations,
+                        function_name: &slot.formula.function_name,
+                        constant_addition,
+                    }
+                },
+            )
+            .collect::<Vec<_>>();
+        super::dual::hybrid_delta_source(&dual_slots, &initial_w, &seed_actual_scale)?
+    } else {
+        String::new()
+    };
     let direct_loop = if direct_hybrid_loop {
         hybrid_direct_loop_source(slots, sequence, set_values)?
     } else {
@@ -4626,7 +4663,7 @@ static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
     }}
     return counts;
 }}
-
+{dual_source}
 static float4 mandelbulberGeneratedFieldSample(float3 p,
                                                 constant FptRenderConfig &cfg,
                                                 int iteration_multiplier,
@@ -4676,12 +4713,14 @@ pub fn specialize_mesh_delta_probe(source: &str) -> Result<String> {
     float delta = max(length(scaled) * 5.0e-7f,
                       detail_size * relative_delta);
 "#;
+    let disabled_switch = super::dual::HYBRID_DUAL_SWITCH.replace("= true;", "= false;");
     Ok(format!(
         "{}{}{}",
         &source[..body_start],
         replacement,
         &source[body_end..]
-    ))
+    )
+    .replace(super::dual::HYBRID_DUAL_SWITCH, &disabled_switch))
 }
 
 fn periodic_hybrid_sequence_expression(sequence: &[u8]) -> Option<String> {
@@ -8522,6 +8561,22 @@ kernel void mandelbulber_field_sample_kernel(
             specialize_mesh_delta_probe(analytic).expect("unchanged analytic source"),
             analytic
         );
+    }
+
+    #[test]
+    fn mesh_delta_specialization_keeps_finite_differences_for_dual_hybrids() {
+        let probe = hybrid_delta_probe_source(
+            "    float delta = 6.25e-6f;",
+            "    float3 radial_derivative = float3(1.0f);",
+            false,
+        );
+        let source = super::super::dual::hybrid_radial_derivative_source(&probe);
+        assert!(source.contains("bool dual_gradient = true;"));
+        assert!(source.contains("mandelDeltaDualGradient(scaled"));
+        let mesh = specialize_mesh_delta_probe(&source).expect("mesh source");
+        assert!(mesh.contains("bool dual_gradient = false;"));
+        assert!(!mesh.contains("bool dual_gradient = true;"));
+        assert!(mesh.contains("cfg.vset_values[131]"));
     }
 
     #[test]

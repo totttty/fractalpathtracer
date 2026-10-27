@@ -397,6 +397,133 @@ pub(super) fn radial_derivative_source(delta_source: &str, finite_difference: &s
     )
 }
 
+/// One hybrid slot whose formula has a dual translation.
+pub(super) struct HybridDualSlot<'a> {
+    pub index: usize,
+    pub namespace: &'a str,
+    /// The slot's own emitted namespace source (parameters, helpers, formula).
+    pub declarations: &'a str,
+    pub function_name: &'a str,
+    /// The slot's float constant-addition statement, if any.
+    pub constant_addition: &'a str,
+}
+
+/// The dual library, one dual formula per hybrid slot (inside the slot's
+/// namespace so its parameter and matrix types resolve), and a gradient
+/// driver replaying the hybrid sequence, weights and constant additions of
+/// `mandelHybridOrbit` for `iterations` steps.
+pub(super) fn hybrid_delta_source(
+    slots: &[HybridDualSlot<'_>],
+    initial_w: &str,
+    actual_scale: &str,
+) -> Result<String> {
+    let mut namespaces = String::new();
+    let mut dispatch_cases = String::new();
+    for slot in slots {
+        let matrix = if slot.declarations.contains("struct matrix33") {
+            MATRIX
+        } else {
+            ""
+        };
+        namespaces.push_str(&format!(
+            "namespace {} {{\n{matrix}{}\n}}\n\n",
+            slot.namespace,
+            formula_function(slot.declarations, slot.function_name)?
+        ));
+        dispatch_cases.push_str(&format!(
+            "            case {}:\n                if (formula_weight > 0.0f) z = {}::{}Dual(z, {}::kMandelFormulaParameters, aux);\n{}                break;\n",
+            slot.index,
+            slot.namespace,
+            slot.function_name,
+            slot.namespace,
+            slot.constant_addition.replace("float4(", "MD4(")
+        ));
+    }
+    Ok(format!(
+        r#"{LIBRARY}{STATE}
+{namespaces}static MD4 mdHybridSmoothVector(MD4 first, MD4 second, float weight) {{
+    if (weight <= 0.0f) return first;
+    if (weight >= 1.0f) return second;
+    float inverse_weight = 1.0f - weight;
+    MD interpolated_length = length(first) * inverse_weight + length(second) * weight;
+    MD4 blended = first * inverse_weight + second * weight;
+    MD blended_length = length(blended);
+    return blended_length.v > 0.0f ? blended * (interpolated_length / blended_length) : first;
+}}
+
+static float3 mandelDeltaDualGradient(float3 scaled,
+                                      constant FptRenderConfig &cfg,
+                                      int iterations) {{
+    MD4 z = MD4(MD(scaled.x, float3(1.0f, 0.0f, 0.0f)),
+                MD(scaled.z, float3(0.0f, 0.0f, 1.0f)),
+                MD(scaled.y, float3(0.0f, 1.0f, 0.0f)),
+                MD({initial_w}));
+    MandelDualOrbitState aux;
+    aux.i = 0u;
+    aux.c = z;
+    aux.const_c = z;
+    aux.old_z = z;
+    aux.pos_neg = 1.0f;
+    aux.r = length(z);
+    aux.DE = 1.0f;
+    aux.dist = 1000.0f;
+    aux.pseudoKleinianDE = 1.0f;
+    aux.actualScale = {actual_scale};
+    aux.color = 1.0f;
+    aux.temp1000 = 1000.0f;
+    for (int iteration = 0; iteration < iterations; ++iteration) {{
+        int sequence_index = int(kMandelHybridSequence[iteration]);
+        float formula_weight = kMandelHybridWeights[sequence_index];
+        aux.i = uint(iteration);
+        aux.old_z = z;
+        MD4 previous_z = z;
+        MD previous_de = aux.DE;
+        MD previous_color = aux.color;
+        switch (sequence_index) {{
+{dispatch_cases}        }}
+        if (formula_weight < 1.0f) {{
+            z = mdHybridSmoothVector(previous_z, z, formula_weight);
+            float inverse_weight = 1.0f - formula_weight;
+            aux.DE = aux.DE * formula_weight + previous_de * inverse_weight;
+            aux.color = aux.color * formula_weight + previous_color * inverse_weight;
+        }}
+        // As in the base orbit (and Mandelbulber), a NaN step keeps the
+        // previous point and ends the orbit.
+        if (mdIsNaN(z)) {{
+            z = aux.old_z;
+            break;
+        }}
+        aux.r = length(z);
+    }}
+    return length(z).d;
+}}
+"#
+    ))
+}
+
+/// Mesh export rewrites this switch to false so its Mandelbulber-matched
+/// finite-difference probe stays in force.
+pub(super) const HYBRID_DUAL_SWITCH: &str =
+    "    bool dual_gradient = true; // FPT_MANDEL_HYBRID_DUAL_GRADIENT";
+
+/// Hybrid radial derivative from the dual gradient, falling back to
+/// `finite_difference` under global folds or when mesh export disables it.
+pub(super) fn hybrid_radial_derivative_source(finite_difference: &str) -> String {
+    let fallback = finite_difference.replace(
+        "    float3 radial_derivative = ",
+        "    radial_derivative = ",
+    );
+    format!(
+        r#"    float3 radial_derivative;
+{HYBRID_DUAL_SWITCH}
+    if (!dual_gradient || cfg.vset_values[101] > 0.5f || cfg.vset_values[104] > 0.5f) {{
+{fallback}
+    }} else {{
+        radial_derivative = abs(mandelDeltaDualGradient(scaled, cfg, base.iterations));
+    }}"#
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -422,6 +549,38 @@ mod tests {
         assert!(!source_uses_dual_gradient(
             "static float4 Foo(float4 z) { return z; }"
         ));
+    }
+
+    #[test]
+    fn hybrid_dual_formulas_stay_in_their_slot_namespaces() {
+        let declarations = "struct matrix33 { float3 m1; float3 m2; float3 m3; };\nstatic float4 FooIteration(float4 z,\n    constant const MandelFractalParameters &fractal,\n    thread MandelOrbitState &aux) {\n    return z;\n}";
+        let slots = [
+            HybridDualSlot {
+                index: 0,
+                namespace: "MandelSlot0",
+                declarations,
+                function_name: "FooIteration",
+                constant_addition: "",
+            },
+            HybridDualSlot {
+                index: 2,
+                namespace: "MandelSlot2",
+                declarations: "static float4 BarIteration(float4 z, thread MandelOrbitState &aux) {\n    return z;\n}",
+                function_name: "BarIteration",
+                constant_addition: "                z += aux.const_c * float4(1.0f, 1.0f, 1.0f, 1.0f);\n",
+            },
+        ];
+        let source = hybrid_delta_source(&slots, "0.0f", "2.0f").unwrap();
+        let slot0 = source.find("namespace MandelSlot0 {").unwrap();
+        let slot2 = source.find("namespace MandelSlot2 {").unwrap();
+        assert!(source[slot0..slot2].contains("static MD4 FooIterationDual("));
+        assert!(source[slot0..slot2].contains("Matrix33MulFloat4(matrix33 matrix, MD4 value)"));
+        assert!(!source[slot2..].contains("Matrix33MulFloat4"));
+        assert!(source.contains("case 2:\n                if (formula_weight > 0.0f) z = MandelSlot2::BarIterationDual(z, MandelSlot2::kMandelFormulaParameters, aux);\n                z += aux.const_c * MD4(1.0f"));
+        assert!(source_uses_dual_gradient(&format!(
+            "{source}{}",
+            hybrid_radial_derivative_source("    float3 radial_derivative = 0.0f;")
+        )));
     }
 
     #[test]
