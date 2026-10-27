@@ -4115,8 +4115,29 @@ fn standalone_delta_fragment(
     let marker = "// FPT_MANDELBULBER_GENERATED_INSERTION_POINT";
     let de_function = overridden_de_function(&formula.source.de_function_type, delta_de_function)?;
     let distance_expression = delta_distance_expression(de_function)?;
-    let delta_source = standalone_delta_source(formula.source.id);
-    let radial_derivative_source = standalone_delta_derivative_source();
+    let (dual_source, delta_source, radial_derivative_source) =
+        if super::dual::supports(formula.source.id) {
+            (
+                super::dual::delta_source(
+                    declarations,
+                    &formula.function_name,
+                    initial_w,
+                    actual_scale,
+                    post_iteration,
+                )?,
+                String::new(),
+                super::dual::radial_derivative_source(
+                    standalone_delta_source(formula.source.id),
+                    standalone_delta_derivative_source(),
+                ),
+            )
+        } else {
+            (
+                String::new(),
+                standalone_delta_source(formula.source.id).to_owned(),
+                standalone_delta_derivative_source().to_owned(),
+            )
+        };
     let radial_gradient_source = delta_radial_gradient_source();
     let additional_bailout = i32::from(uses_additional_bailout(formula));
     Ok(format!(
@@ -4190,7 +4211,7 @@ static MandelDeltaOrbitResult mandelDeltaOrbit(float3 scaled,
     }}
     return {{ z, aux.r, aux.DE, completed_iterations, escaped }};
 }}
-
+{dual_source}
 static float4 mandelbulberGeneratedFieldSample(float3 p,
                                                 constant FptRenderConfig &cfg,
                                                 int iteration_multiplier,

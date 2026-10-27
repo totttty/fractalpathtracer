@@ -13,6 +13,7 @@ pub mod catalog;
 pub mod compiler;
 pub mod coverage;
 mod displacement;
+mod dual;
 mod formula_optimizer;
 mod interior;
 pub mod lighting;
