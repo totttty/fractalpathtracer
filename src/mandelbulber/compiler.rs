@@ -5018,7 +5018,9 @@ fn hybrid_distance_expression(
                 metal_float(offset1)
             ))
         }
-        4 => Ok("aux.dist".into()),
+        // Mandelbulber only trusts a custom distance when aux.DE > 0 (NaN
+        // included); otherwise it falls back to the orbit radius.
+        4 => Ok("aux.DE > 0.0f ? aux.dist : aux.r".into()),
         5 => Ok(
             "aux.DE > 0.0f ? max(abs(z.x), max(abs(z.y), abs(z.z))) / aux.DE : aux.r"
                 .into(),
@@ -5167,7 +5169,7 @@ fn analytic_distance_expression(function: &str) -> Result<String> {
             "aux.DE > 0.0f ? max(length(z.xy) - aux.pseudoKleinianDE, abs(length(z.xy) * z.z) / aux.r) / aux.DE : aux.r"
                 .into(),
         ),
-        "analyticFunctionCustomDE" => Ok("aux.dist".into()),
+        "analyticFunctionCustomDE" => Ok("aux.DE > 0.0f ? aux.dist : aux.r".into()),
         "analyticFunctionMaxAxis" => Ok(
             "aux.DE > 0.0f ? max(abs(z.x), max(abs(z.y), abs(z.z))) / aux.DE : aux.r"
                 .into(),
@@ -7808,6 +7810,14 @@ target 0 0 0;
         assert!(palette.contains("kMandelSurfaceGradientCount = 3u"));
         assert!(palette.contains("* 3.0f + 0.25f"));
         assert!(palette.contains("float4(1.0f, 0.99609375f, 0.0f, 0.0f)"));
+    }
+
+    #[test]
+    fn custom_distances_need_a_positive_derivative() {
+        assert_eq!(
+            analytic_distance_expression("analyticFunctionCustomDE").unwrap(),
+            "aux.DE > 0.0f ? aux.dist : aux.r"
+        );
     }
 
     #[test]
