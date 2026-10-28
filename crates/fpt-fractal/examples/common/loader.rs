@@ -2,7 +2,7 @@
 
 use std::{fs, path::Path};
 
-use fpt_fractal::orbit::Fractal;
+use fpt_fractal::orbit::{FormulaSource, Fractal};
 use fpt_fractal::params::ParameterSchema;
 use fpt_fractal::scene::{FormulaMeta, FractFile};
 
@@ -17,7 +17,8 @@ pub fn formula_files(root: &Path, id: i64) -> (String, String) {
     let enum_name = enums
         .lines()
         .find_map(|line| {
-            let (name, value) = line.trim().trim_end_matches(',').split_once('=')?;
+            let line = line.split("//").next()?.trim();
+            let (name, value) = line.trim_end_matches(',').split_once('=')?;
             (value.trim().parse::<i64>().ok()? == id).then(|| name.trim().to_owned())
         })
         .unwrap_or_else(|| panic!("no formula with id {id}"));
@@ -33,25 +34,44 @@ pub fn formula_files(root: &Path, id: i64) -> (String, String) {
     panic!("no definition for fractal::{enum_name}");
 }
 
-/// The scene's slot-1 fractal, ready to evaluate.
+/// The scene's fractal (every active slot of a hybrid), ready to evaluate.
 pub fn load_fractal(root: &Path, scene: impl AsRef<Path>) -> Fractal {
     let file = FractFile::parse(&read(scene));
-    let id = file.number("formula_1", 2.0) as i64;
-    let (definition, cl) = formula_files(root, id);
-    let meta = FormulaMeta::parse(&definition).unwrap();
-    let formula = fpt_fractal::parse_formula_file(&cl).unwrap();
-    let function = formula
-        .functions
-        .into_iter()
-        .find(|f| f.name.ends_with("Iteration"))
-        .expect("iteration function");
     let schema = ParameterSchema::parse(
         &read(root.join("src/initparameters.cpp")),
         &read(root.join("src/fractal.cpp")),
     )
     .unwrap();
-    let parameters = schema.parameters(&file.fractal_settings(1)).unwrap();
-    Fractal::from_scene(&file, function, meta, parameters)
+    let constants = fpt_fractal::constants::enum_constants(&read(root.join("opencl/fractal_cl.h")));
+    let hybrid = file.boolean("hybrid_fractal_enable", false);
+    let mut sources = Vec::new();
+    for slot in 1..=fpt_fractal::orbit::SLOTS {
+        let id = file.number(
+            &format!("formula_{slot}"),
+            if slot == 1 { 2.0 } else { 0.0 },
+        ) as i64;
+        let enabled = file.boolean(&format!("fractal_enable_{slot}"), true);
+        if id == 0 || !enabled || (slot > 1 && !hybrid) {
+            continue;
+        }
+        let (definition, cl) = formula_files(root, id);
+        let meta = FormulaMeta::parse(&definition).unwrap();
+        let formula = fpt_fractal::parse_formula_file(&cl).unwrap();
+        let function = formula
+            .functions
+            .into_iter()
+            .find(|f| f.name.ends_with("Iteration"))
+            .expect("iteration function");
+        let mut parameters = schema.parameters(&file.fractal_settings(slot)).unwrap();
+        parameters.constants = constants.clone();
+        sources.push(FormulaSource {
+            slot,
+            function,
+            meta,
+            parameters,
+        });
+    }
+    Fractal::from_slots(&file, sources).unwrap()
 }
 
 /// `x y z detail_size native_distance` samples.

@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 
 use crate::ast::*;
-use crate::eval::Value;
+use crate::eval::{Parameters, Value};
 use crate::orbit::Fractal;
 use crate::scene::DeFunction;
 
@@ -49,6 +49,9 @@ enum Ty {
     Vec(u8),
     Mat3,
     Array(Box<Ty>, usize),
+    /// A `REAL *` into the components of the vector `.0` (WGSL code): held
+    /// as the i32 component index.
+    Ptr(String),
 }
 
 impl Ty {
@@ -60,6 +63,7 @@ impl Ty {
             Ty::Vec(n) => format!("vec{n}<f32>"),
             Ty::Mat3 => "mat3x3<f32>".into(),
             Ty::Array(element, n) => format!("array<{}, {n}>", element.wgsl()),
+            Ty::Ptr(_) => "i32".into(),
         }
     }
 
@@ -74,6 +78,7 @@ fn declared_type(name: &str) -> Result<Ty> {
         "int" | "uint" | "unsigned int" | "long" | "short" | "char" => Ty::I32,
         "bool" => Ty::Bool,
         "matrix33" => Ty::Mat3,
+        enumeration if enumeration.starts_with("enum") => Ty::I32,
         other => match other
             .trim_start_matches("REAL")
             .trim_start_matches("float")
@@ -112,11 +117,38 @@ enum Slot {
     Buffer(usize, Ty),
 }
 
+/// A parameter read: a fixed path, or an array family (`rot[][]`) with
+/// runtime indices.
+enum ParameterRef {
+    Path(String),
+    Indexed {
+        template: String,
+        indices: Vec<String>,
+    },
+}
+
+/// Every element of an array parameter family, laid out row-major from
+/// `first`, `stride` slots apart, or for baked booleans and integers in the
+/// module-scope array `table`.
+#[derive(Clone, Debug)]
+struct Family {
+    first: usize,
+    dims: Vec<usize>,
+    stride: usize,
+    ty: Ty,
+    table: Option<String>,
+}
+
 struct Emitter<'a> {
     fractal: &'a Fractal,
     parameters: Vec<[f32; 4]>,
     slots: HashMap<String, Slot>,
+    families: HashMap<String, Family>,
+    /// The formula being emitted (index into `Fractal::formulas`).
+    current: usize,
     scopes: Vec<HashMap<String, Ty>>,
+    /// Module-scope declarations, placed after the prelude.
+    globals: String,
     out: String,
     indent: usize,
     temporaries: usize,
@@ -130,7 +162,10 @@ pub fn emit(fractal: &Fractal) -> Result<FractalShader> {
         fractal,
         parameters: vec![[0.0; 4]; HEADER_SLOTS],
         slots: HashMap::new(),
+        families: HashMap::new(),
+        current: 0,
         scopes: vec![HashMap::new()],
+        globals: String::new(),
         out: String::new(),
         indent: 0,
         temporaries: 0,
@@ -146,8 +181,11 @@ pub fn emit(fractal: &Fractal) -> Result<FractalShader> {
     emitter.parameters[1] = [m[0] as f32, m[1] as f32, m[2] as f32, 0.0];
     let julia_slot = emitter.push_slot([julia[0] as f32, julia[1] as f32, julia[2] as f32, 0.0]);
     emitter.prelude();
-    emitter.formula()?;
+    let globals_at = emitter.out.len();
+    emitter.formulas()?;
     emitter.distance(julia_slot)?;
+    let globals = std::mem::take(&mut emitter.globals);
+    emitter.out.insert_str(globals_at, &globals);
     Ok(FractalShader {
         source: emitter.out,
         parameters: emitter.parameters,
@@ -155,6 +193,10 @@ pub fn emit(fractal: &Fractal) -> Result<FractalShader> {
 }
 
 impl Emitter<'_> {
+    fn params(&self) -> &Parameters {
+        &self.fractal.formulas[self.current].parameters
+    }
+
     fn push_slot(&mut self, value: [f32; 4]) -> usize {
         self.parameters.push(value);
         self.parameters.len() - 1
@@ -179,10 +221,11 @@ impl Emitter<'_> {
     }
 
     fn slot(&mut self, path: &str) -> Result<Slot> {
-        if let Some(slot) = self.slots.get(path) {
+        let key = format!("{}:{path}", self.current);
+        if let Some(slot) = self.slots.get(&key) {
             return Ok(slot.clone());
         }
-        let Some(value) = self.fractal.parameters.values.get(path).cloned() else {
+        let Some(value) = self.params().values.get(path).cloned() else {
             return err(format!("unknown parameter fractal->{path}"));
         };
         let slot = match value {
@@ -199,43 +242,157 @@ impl Emitter<'_> {
                 self.push_slot([rows[2][0] as f32, rows[2][1] as f32, rows[2][2] as f32, 0.0]);
                 Slot::Buffer(first, Ty::Mat3)
             }
-            Value::Array(_) => {
-                return err(format!("array parameter fractal->{path} is not supported"));
+            Value::Array(_) | Value::Pointer { .. } => {
+                return err(format!("parameter fractal->{path} is not a value"));
             }
         };
-        self.slots.insert(path.to_owned(), slot.clone());
+        self.slots.insert(key, slot.clone());
         Ok(slot)
+    }
+
+    /// Lays out every `template` element (`mandelbox.rot[][]`) contiguously,
+    /// so runtime indices can address them.
+    fn family(&mut self, template: &str) -> Result<Family> {
+        let key = format!("{}:{template}", self.current);
+        if let Some(family) = self.families.get(&key) {
+            return Ok(family.clone());
+        }
+        let mut elements = Vec::new();
+        for (key, value) in &self.fractal.formulas[self.current].parameters.values {
+            let (shape, indices) = index_template(key);
+            if shape == template {
+                elements.push((indices, value.clone()));
+            }
+        }
+        let Some((first_indices, _)) = elements.first() else {
+            return err(format!("no parameter array fractal->{template}"));
+        };
+        let mut dims = vec![0; first_indices.len()];
+        for (indices, _) in &elements {
+            for (dim, index) in dims.iter_mut().zip(indices) {
+                *dim = (*dim).max(index + 1);
+            }
+        }
+        if elements.len() != dims.iter().product::<usize>() {
+            return err(format!("parameter array fractal->{template} has gaps"));
+        }
+        elements.sort_by(|a, b| a.0.cmp(&b.0));
+        if let Some((_, Value::Bool(_) | Value::Int(_))) = elements.first() {
+            let mut items = Vec::new();
+            let mut ty = Ty::Bool;
+            for (_, value) in &elements {
+                match value {
+                    Value::Bool(b) => items.push(b.to_string()),
+                    Value::Int(i) => {
+                        ty = Ty::I32;
+                        items.push(i.to_string());
+                    }
+                    other => {
+                        return err(format!(
+                            "mixed element types in fractal->{template}: {other:?}"
+                        ));
+                    }
+                }
+            }
+            if ty == Ty::I32 && elements.iter().any(|(_, v)| matches!(v, Value::Bool(_))) {
+                return err(format!("mixed element types in fractal->{template}"));
+            }
+            let table = format!("fractal_table{}", self.families.len());
+            let array = Ty::Array(Box::new(ty.clone()), items.len()).wgsl();
+            let _ = writeln!(
+                self.globals,
+                "// fractal->{template}\nvar<private> {table}: {array} = {array}({});\n",
+                items.join(", ")
+            );
+            let family = Family {
+                first: 0,
+                dims,
+                stride: 1,
+                ty,
+                table: Some(table),
+            };
+            self.families.insert(key, family.clone());
+            return Ok(family);
+        }
+        let first = self.parameters.len();
+        let mut ty = None;
+        for (_, value) in &elements {
+            let element_ty = match value {
+                Value::Scalar(x) => {
+                    self.push_slot([*x as f32, 0.0, 0.0, 0.0]);
+                    Ty::F32
+                }
+                Value::Vector { len, v } => {
+                    self.push_slot(v.map(|x| x as f32));
+                    Ty::Vec(*len)
+                }
+                Value::Matrix(rows) => {
+                    for row in rows {
+                        self.push_slot([row[0] as f32, row[1] as f32, row[2] as f32, 0.0]);
+                    }
+                    Ty::Mat3
+                }
+                other => {
+                    return err(format!(
+                        "runtime index into fractal->{template} of {other:?}"
+                    ));
+                }
+            };
+            if ty.get_or_insert(element_ty.clone()) != &element_ty {
+                return err(format!("mixed element types in fractal->{template}"));
+            }
+        }
+        let ty = ty.expect("elements");
+        let family = Family {
+            first,
+            dims,
+            stride: if ty == Ty::Mat3 { 3 } else { 1 },
+            ty,
+            table: None,
+        };
+        self.families.insert(key, family.clone());
+        Ok(family)
     }
 
     fn slot_code(slot: &Slot) -> (String, Ty) {
         match slot {
             Slot::Baked(code, ty) => (code.clone(), ty.clone()),
-            Slot::Buffer(k, ty) => (
-                match ty {
-                    Ty::F32 => format!("fractal_params[{k}].x"),
-                    Ty::Vec(2) => format!("fractal_params[{k}].xy"),
-                    Ty::Vec(3) => format!("fractal_params[{k}].xyz"),
-                    Ty::Mat3 => format!(
-                        "mat3x3<f32>(fractal_params[{k}].xyz, fractal_params[{}].xyz, fractal_params[{}].xyz)",
-                        k + 1,
-                        k + 2
-                    ),
-                    _ => format!("fractal_params[{k}]"),
-                },
-                ty.clone(),
-            ),
+            Slot::Buffer(k, ty) => (Self::buffer_code(&k.to_string(), ty), ty.clone()),
         }
     }
 
-    fn formula(&mut self) -> Result<()> {
-        let function = &self.fractal.function;
+    /// Reads a `ty` value starting at buffer slot `k` (WGSL code).
+    fn buffer_code(k: &str, ty: &Ty) -> String {
+        match ty {
+            Ty::F32 => format!("fractal_params[{k}].x"),
+            Ty::Vec(2) => format!("fractal_params[{k}].xy"),
+            Ty::Vec(3) => format!("fractal_params[{k}].xyz"),
+            Ty::Mat3 => format!(
+                "mat3x3<f32>(fractal_params[{k}].xyz, fractal_params[{k} + 1].xyz, fractal_params[{k} + 2].xyz)"
+            ),
+            _ => format!("fractal_params[{k}]"),
+        }
+    }
+
+    fn formulas(&mut self) -> Result<()> {
+        for k in 0..self.fractal.formulas.len() {
+            self.current = k;
+            self.formula(k)?;
+        }
+        Ok(())
+    }
+
+    fn formula(&mut self, k: usize) -> Result<()> {
+        let fractal = self.fractal;
+        let function = &fractal.formulas[k].function;
         let z = function
             .params
             .first()
             .map(|p| p.name.clone())
             .ok_or(EmitError("formula has no z".into()))?;
+        self.line(format!("// {}", fractal.formulas[k].meta.internal_name));
         self.line(format!(
-            "fn fractal_formula(z_in: vec4<f32>, aux: ptr<function, FractalAux>) -> vec4<f32> {{"
+            "fn fractal_formula_{k}(z_in: vec4<f32>, aux: ptr<function, FractalAux>) -> vec4<f32> {{"
         ));
         self.indent += 1;
         self.line(format!("var {z} = z_in;"));
@@ -291,7 +448,16 @@ impl Emitter<'_> {
             Stmt::Decl { ty, vars } => {
                 for var in vars {
                     if ty.pointer || var.pointer {
-                        return err(format!("pointer variable {} is not supported", var.name));
+                        let Some(init) = &var.init else {
+                            return err(format!("uninitialised pointer {}", var.name));
+                        };
+                        let (code, pointer) = self.expr(init)?;
+                        if !matches!(pointer, Ty::Ptr(_)) {
+                            return err(format!("pointer {} set to a {pointer:?}", var.name));
+                        }
+                        self.line(format!("var {}: i32 = {code};", var.name));
+                        self.declare(&var.name, pointer);
+                        continue;
                     }
                     let base = declared_type(&ty.name)?;
                     match (&var.array, &var.init) {
@@ -489,14 +655,14 @@ impl Emitter<'_> {
                 } => Some(*value as i64),
                 Expr::Ident(name) if name == "true" => Some(1),
                 Expr::Ident(name) if name == "false" => Some(0),
-                Expr::Ident(name) => emitter.fractal.parameters.constants.get(name).copied(),
+                Expr::Ident(name) => emitter.params().constants.get(name).copied(),
                 Expr::Member { .. } => match emitter.parameter_path(expr)? {
-                    Some(path) => match emitter.fractal.parameters.values.get(&path) {
+                    Some(ParameterRef::Path(path)) => match emitter.params().values.get(&path) {
                         Some(Value::Bool(b)) => Some(i64::from(*b)),
                         Some(Value::Int(i)) => Some(*i),
                         _ => None,
                     },
-                    None => None,
+                    _ => None,
                 },
                 Expr::Unary {
                     op: UnaryOp::Not,
@@ -542,6 +708,7 @@ impl Emitter<'_> {
                 self.line(format!("{target}{operator};"));
                 Ok(())
             }
+            Expr::Call { name, .. } if name == "Q_UNUSED" => Ok(()),
             Expr::Call { name, args } if name == "__comma" => {
                 self.expression_statement(&args[0])?;
                 self.expression_statement(&args[1])
@@ -586,12 +753,20 @@ impl Emitter<'_> {
                     None => err(format!("member .{field} of {ty:?}")),
                 }
             }
+            Expr::Unary {
+                op: UnaryOp::Deref,
+                expr: inner,
+            } => match self.expr(inner)? {
+                (pointer, Ty::Ptr(target)) => Ok((format!("{target}[{pointer}]"), Ty::F32)),
+                (_, other) => err(format!("dereference of {other:?}")),
+            },
             Expr::Index { base, index } => {
                 let (base, ty) = self.place(base)?;
                 let index = self.coerced(index, &Ty::I32)?;
                 match ty {
                     Ty::Array(element, _) => Ok((format!("{base}[{index}]"), *element)),
                     Ty::Vec(_) => Ok((format!("{base}[{index}]"), Ty::F32)),
+                    Ty::Ptr(target) => Ok((format!("{target}[{base} + {index}]"), Ty::F32)),
                     other => err(format!("index into {other:?}")),
                 }
             }
@@ -630,25 +805,19 @@ impl Emitter<'_> {
         Ok(())
     }
 
-    /// `fractal->a.b[i]` as a parameter path, when `expr` reads one.
-    fn parameter_path(&mut self, expr: &Expr) -> Result<Option<String>> {
-        let mut segments = Vec::new();
+    /// `fractal->a.b[i]` as a parameter reference, when `expr` reads one.
+    fn parameter_path(&mut self, expr: &Expr) -> Result<Option<ParameterRef>> {
+        // Field names, and index expressions as `Err`.
+        let mut segments: Vec<std::result::Result<String, &Expr>> = Vec::new();
         let mut node = expr;
         loop {
             match node {
                 Expr::Member { base, field, .. } => {
-                    segments.push(field.clone());
+                    segments.push(Ok(field.clone()));
                     node = base;
                 }
                 Expr::Index { base, index } => {
-                    let Expr::Number {
-                        value,
-                        float: false,
-                    } = &**index
-                    else {
-                        return err("parameter arrays need constant indices");
-                    };
-                    segments.push(format!("[{}]", *value as i64));
+                    segments.push(Err(&**index));
                     node = base;
                 }
                 Expr::Ident(name) if name == "fractal" => break,
@@ -656,14 +825,148 @@ impl Emitter<'_> {
             }
         }
         segments.reverse();
+        let constant = |index: &Expr| match index {
+            Expr::Number {
+                value,
+                float: false,
+            } => Some(*value as i64),
+            _ => None,
+        };
+        let dynamic = segments
+            .iter()
+            .any(|s| matches!(s, Err(index) if constant(index).is_none()));
         let mut path = String::new();
+        let mut indices = Vec::new();
         for segment in &segments {
-            if !path.is_empty() && !segment.starts_with('[') {
-                path.push('.');
+            match segment {
+                Ok(field) => {
+                    if !path.is_empty() {
+                        path.push('.');
+                    }
+                    path.push_str(field);
+                }
+                Err(index) if dynamic => {
+                    path.push_str("[]");
+                    indices.push(self.coerced(index, &Ty::I32)?);
+                }
+                Err(index) => {
+                    let _ = write!(path, "[{}]", constant(index).expect("constant"));
+                }
             }
-            path.push_str(segment);
         }
-        Ok(Some(path))
+        Ok(Some(if dynamic {
+            ParameterRef::Indexed {
+                template: path,
+                indices,
+            }
+        } else {
+            ParameterRef::Path(path)
+        }))
+    }
+
+    fn has_family(&self, template: &str) -> bool {
+        self.params()
+            .values
+            .keys()
+            .any(|key| index_template(key).0 == template)
+    }
+
+    /// The family of `template` and the flat element offset (WGSL code,
+    /// in slots) for `indices`.
+    fn family_offset(&mut self, template: &str, indices: &[String]) -> Result<(Family, String)> {
+        let family = self.family(template)?;
+        if family.dims.len() != indices.len() {
+            return err(format!(
+                "fractal->{template} needs {} indices",
+                family.dims.len()
+            ));
+        }
+        let mut flat = String::new();
+        for (position, index) in indices.iter().enumerate() {
+            let step: usize = family.dims[position + 1..].iter().product();
+            if !flat.is_empty() {
+                flat.push_str(" + ");
+            }
+            let _ = write!(flat, "({index}) * {}", step * family.stride);
+        }
+        Ok((family, flat))
+    }
+
+    /// The first buffer slot (WGSL code) and type of a parameter read
+    /// through runtime indices.
+    fn indexed_parameter(&mut self, template: &str, indices: &[String]) -> Result<(String, Ty)> {
+        let (family, flat) = self.family_offset(template, indices)?;
+        if family.table.is_some() {
+            return err(format!("fractal->{template} is baked, not in the buffer"));
+        }
+        Ok((format!("({} + {flat})", family.first), family.ty))
+    }
+
+    /// Reads a parameter element through runtime indices.
+    fn indexed_read(&mut self, template: &str, indices: &[String]) -> Result<(String, Ty)> {
+        let (family, flat) = self.family_offset(template, indices)?;
+        Ok(match &family.table {
+            Some(table) => (format!("{table}[{flat}]"), family.ty),
+            None => {
+                let k = format!("({} + {flat})", family.first);
+                (Self::buffer_code(&k, &family.ty), family.ty)
+            }
+        })
+    }
+
+    fn parameter_ref(&mut self, reference: ParameterRef) -> Result<(String, Ty)> {
+        match reference {
+            ParameterRef::Path(path) => self.parameter(&path),
+            ParameterRef::Indexed { template, indices } => {
+                // A trailing swizzle (`direction[i].x`) reads part of an element.
+                if let Some((base, field)) = template.rsplit_once('.')
+                    && swizzle_indices(field).is_some()
+                    && !self.has_family(&template)
+                {
+                    let (code, ty) = self.indexed_read(base, &indices)?;
+                    return match swizzle_type(&ty, field) {
+                        Some(result) => Ok((format!("{code}.{field}"), result)),
+                        None => err(format!("swizzle .{field} of fractal->{base}")),
+                    };
+                }
+                self.indexed_read(&template, &indices)
+            }
+        }
+    }
+
+    /// `&expr`: a component pointer into a local vector, a vector parameter
+    /// or the target of another pointer.
+    fn address_of(&mut self, expr: &Expr) -> Result<(String, Ty)> {
+        if let Some(reference) = self.parameter_path(expr)? {
+            let (k, ty) = match reference {
+                ParameterRef::Path(path) => match self.slot(&path)? {
+                    Slot::Buffer(k, ty) => (k.to_string(), ty),
+                    Slot::Baked(..) => return err(format!("address of baked fractal->{path}")),
+                },
+                ParameterRef::Indexed { template, indices } => {
+                    self.indexed_parameter(&template, &indices)?
+                }
+            };
+            return match ty {
+                Ty::F32 | Ty::Vec(_) => Ok(("0".into(), Ty::Ptr(format!("fractal_params[{k}]")))),
+                other => err(format!("pointer into {other:?} parameter")),
+            };
+        }
+        match expr {
+            Expr::Ident(name) => match self.lookup(name) {
+                Some(Ty::Vec(_)) => Ok(("0".into(), Ty::Ptr(name.clone()))),
+                other => err(format!("address of {name}: {other:?}")),
+            },
+            Expr::Index { base, index } => {
+                let (pointer, ty) = self.expr(base)?;
+                let Ty::Ptr(_) = ty else {
+                    return err(format!("address of an element of {ty:?}"));
+                };
+                let offset = self.coerced(index, &Ty::I32)?;
+                Ok((format!("({pointer} + {offset})"), ty))
+            }
+            other => err(format!("address of {other:?}")),
+        }
     }
 
     fn coerced(&mut self, expr: &Expr, target: &Ty) -> Result<String> {
@@ -690,9 +993,11 @@ impl Emitter<'_> {
             Expr::Ident(name) => {
                 if let Some(ty) = self.lookup(name) {
                     (name.clone(), ty)
-                } else if let Some(value) = self.fractal.parameters.constants.get(name) {
+                } else if let Some(value) = self.params().constants.get(name) {
                     (value.to_string(), Ty::I32)
-                } else if let Some(value) = math_constant(name) {
+                } else if let Some(value) = crate::constants::int_constant(name) {
+                    (value.to_string(), Ty::I32)
+                } else if let Some(value) = crate::constants::float_constant(name) {
                     (float_literal(value), Ty::F32)
                 } else if name == "true" || name == "false" {
                     (name.clone(), Ty::Bool)
@@ -701,8 +1006,8 @@ impl Emitter<'_> {
                 }
             }
             Expr::Member { base, field, arrow } => {
-                if let Some(path) = self.parameter_path(expr)? {
-                    return self.parameter(&path);
+                if let Some(reference) = self.parameter_path(expr)? {
+                    return self.parameter_ref(reference);
                 }
                 if *arrow {
                     return self.place(expr);
@@ -714,8 +1019,8 @@ impl Emitter<'_> {
                 }
             }
             Expr::Index { base, .. } => {
-                if let Some(path) = self.parameter_path(expr)? {
-                    return self.parameter(&path);
+                if let Some(reference) = self.parameter_path(expr)? {
+                    return self.parameter_ref(reference);
                 }
                 let _ = base;
                 self.place(expr)?
@@ -728,6 +1033,8 @@ impl Emitter<'_> {
                 UnaryOp::Plus => self.expr(inner)?,
                 UnaryOp::Not => (format!("(!{})", self.coerced(inner, &Ty::Bool)?), Ty::Bool),
                 UnaryOp::BitNot => (format!("(~{})", self.coerced(inner, &Ty::I32)?), Ty::I32),
+                UnaryOp::AddressOf => self.address_of(inner)?,
+                UnaryOp::Deref => self.place(expr)?,
                 _ => return err(format!("{op:?} inside an expression is not supported")),
             },
             Expr::Binary { op, lhs, rhs } => self.binary(*op, lhs, rhs)?,
@@ -748,7 +1055,8 @@ impl Emitter<'_> {
             Expr::Call { name, args } => self.call(name, args)?,
             Expr::Cast { ty, expr: inner } => {
                 if ty.pointer {
-                    return err("pointer casts are not supported");
+                    // `(REAL *)&v` only reinterprets a vector as its components.
+                    return self.expr(inner);
                 }
                 let target = declared_type(&ty.name)?;
                 let (code, from) = self.expr(inner)?;
@@ -775,10 +1083,10 @@ impl Emitter<'_> {
 
     fn parameter(&mut self, path: &str) -> Result<(String, Ty)> {
         // A trailing swizzle (`color.factor.x`) reads part of a vector slot.
-        if !self.fractal.parameters.values.contains_key(path)
+        if !self.params().values.contains_key(path)
             && let Some((base, field)) = path.rsplit_once('.')
             && swizzle_indices(field).is_some()
-            && self.fractal.parameters.values.contains_key(base)
+            && self.params().values.contains_key(base)
         {
             let (code, ty) = Self::slot_code(&self.slot(base)?);
             return match swizzle_type(&ty, field) {
@@ -972,17 +1280,44 @@ impl Emitter<'_> {
 
     fn distance(&mut self, julia_slot: usize) -> Result<()> {
         let fractal = self.fractal;
-        if fractal.delta {
-            return err("Delta-DE formulas are not supported by the WGSL backend yet");
-        }
-        let actual_scale = match self.fractal.parameters.values.get("mandelbox.scale") {
+        self.current = 0;
+        let actual_scale = match self.params().values.get("mandelbox.scale") {
             Some(_) => Self::slot_code(&self.slot("mandelbox.scale")?).0,
             None => "2.0".into(),
         };
-        self.line("fn fractal_distance(p: vec3<f32>, detail_size: f32) -> f32 {");
+        let sequence_length = fractal.sequence.len().max(1);
+        if fractal.hybrid {
+            let entries: Vec<String> = fractal
+                .sequence
+                .iter()
+                .map(|entry| entry.map_or(-1, |k| k as i64).to_string())
+                .collect();
+            let _ = writeln!(
+                self.globals,
+                "// Formula run by each iteration; -1 is an empty slot.\nvar<private> fractal_sequence: array<i32, {sequence_length}> = array<i32, {sequence_length}>({});\n",
+                entries.join(", ")
+            );
+        }
+        let weights: Vec<usize> = fractal
+            .formulas
+            .iter()
+            .map(|f| self.push_slot([f.weight as f32, 0.0, 0.0, 0.0]))
+            .collect();
+        let linear_offset = self.push_slot([fractal.linear_de_offset as f32, 0.0, 0.0, 0.0]);
+        self.line("struct FractalOrbit {");
+        self.line("    z: vec4<f32>,");
+        self.line("    aux: FractalAux,");
+        self.line("    iterations: i32,");
+        self.line("    formula: i32,");
+        self.line("    empty: bool,");
+        self.line("}");
+        self.line("");
+        self.line("// `forced` >= 0 runs exactly that many iterations with no bailout,");
+        self.line("// as Delta-DE's probes do.");
+        self.line("fn fractal_orbit(p: vec3<f32>, forced: i32) -> FractalOrbit {");
         self.indent += 1;
         self.line("let header = fractal_params[0];");
-        self.line("let max_iterations = i32(header.x);");
+        self.line("let max_iterations = select(i32(header.x), forced, forced >= 0);");
         self.line("let bailout = header.y;");
         self.line("var z = vec4<f32>(p, header.z);");
         self.line("var aux: FractalAux;");
@@ -1006,62 +1341,263 @@ impl Emitter<'_> {
             self.line(format!("aux.{field} = {value};"));
         }
         self.line("var iterations = 0;");
+        self.line("var formula = 0;");
+        self.line("var last_z = z;");
+        self.line("var done = false;");
         self.line("for (var i = 0; i < max_iterations; i++) {");
         self.indent += 1;
         self.line("iterations = i + 1;");
-        self.line("let last_z = z;");
+        self.line("let last_last_z = last_z;");
+        self.line("last_z = z;");
         self.line("aux.i = i;");
-        self.line("z = fractal_formula(z, &aux);");
-        if fractal.add_c {
-            let swapped = matches!(
-                fractal.meta.internal_name.as_str(),
-                "abox_mod1" | "amazing_surf"
-            );
-            let m = "fractal_params[1].xyz";
-            let add = match (fractal.julia.is_some(), swapped) {
-                (true, false) => format!("vec4<f32>(fractal_params[{julia_slot}].xyz * {m}, 0.0)"),
-                (true, true) => {
-                    format!("vec4<f32>(fractal_params[{julia_slot}].yxz * {m}.yxz, 0.0)")
-                }
-                (false, false) => format!("vec4<f32>(aux.const_c.xyz * {m}, aux.const_c.w)"),
-                (false, true) => format!("vec4<f32>(aux.const_c.yxz * {m}, 0.0)"),
-            };
-            self.line(format!("z += {add};"));
+        if fractal.hybrid {
+            self.line(format!(
+                "formula = fractal_sequence[min(i, {})];",
+                sequence_length - 1
+            ));
+            self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true); }");
+            self.line("let previous_de = aux.DE;");
+            self.line("let previous_color = aux.color;");
+            self.line("switch formula {");
         }
-        self.line("aux.r = length(z);");
-        self.line("if (any(z != z)) {");
-        self.line("    z = last_z;");
-        self.line("    aux.r = length(z);");
-        self.line("    break;");
-        self.line("}");
-        self.line("if (aux.r > bailout) { break; }");
+        let m = "fractal_params[1].xyz";
+        for (k, formula) in fractal.formulas.iter().enumerate() {
+            if fractal.hybrid {
+                let label = if k + 1 == fractal.formulas.len() {
+                    "default".to_owned()
+                } else {
+                    format!("case {k}")
+                };
+                self.line(format!("{label}: {{"));
+                self.indent += 1;
+                let weight = format!("fractal_params[{}].x", weights[k]);
+                self.line(format!(
+                    "if ({weight} > 0.0) {{ z = fractal_formula_{k}(z, &aux); }}"
+                ));
+            } else {
+                self.line(format!("z = fractal_formula_{k}(z, &aux);"));
+            }
+            if formula.add_c {
+                let swapped = matches!(
+                    formula.meta.internal_name.as_str(),
+                    "abox_mod1" | "amazing_surf"
+                );
+                let add = match (fractal.julia.is_some(), swapped) {
+                    (true, false) => {
+                        format!("vec4<f32>(fractal_params[{julia_slot}].xyz * {m}, 0.0)")
+                    }
+                    (true, true) => {
+                        format!("vec4<f32>(fractal_params[{julia_slot}].yxz * {m}.yxz, 0.0)")
+                    }
+                    (false, false) => format!("vec4<f32>(aux.const_c.xyz * {m}, aux.const_c.w)"),
+                    (false, true) => format!("vec4<f32>(aux.const_c.yxz * {m}, 0.0)"),
+                };
+                self.line(format!("z += {add};"));
+            }
+            if fractal.hybrid {
+                let weight = format!("fractal_params[{}].x", weights[k]);
+                self.line(format!("if ({weight} < 1.0) {{"));
+                self.line(format!(
+                    "    z = fractal_smooth_vector(last_z, z, {weight});"
+                ));
+                self.line(format!(
+                    "    aux.DE = aux.DE * {weight} + previous_de * (1.0 - {weight});"
+                ));
+                self.line(format!(
+                    "    aux.color = aux.color * {weight} + previous_color * (1.0 - {weight});"
+                ));
+                self.line("}");
+            }
+            // `break` inside a WGSL switch leaves only the switch.
+            let exit = if fractal.hybrid {
+                "done = true;"
+            } else {
+                "break;"
+            };
+            self.line("aux.r = length(z);");
+            self.line("if (any(z != z)) {");
+            self.line("    z = last_z;");
+            self.line("    aux.r = length(z);");
+            self.line(format!("    {exit}"));
+            self.line("}");
+            if formula.check_bailout {
+                self.line("if (!done && forced < 0) {");
+                self.line(format!("    if (aux.r > bailout) {{ {exit} }}"));
+                if formula.additional_bailout {
+                    // The pseudo-Kleinian "orbit stalled" exit.
+                    self.line(format!(
+                        "    if (length(z - last_z) / aux.r < 0.1 / bailout) {{ {exit} }}"
+                    ));
+                    self.line(format!(
+                        "    if (length(z - last_last_z) / aux.r < 0.1 / bailout) {{ {exit} }}"
+                    ));
+                }
+                self.line("}");
+            }
+            if fractal.hybrid {
+                self.indent -= 1;
+                self.line("}");
+            }
+        }
+        if fractal.hybrid {
+            self.line("}");
+            self.line("if (done) { break; }");
+        }
         self.indent -= 1;
         self.line("}");
-        let analytic = match fractal.meta.analytic_function {
-            DeFunction::Logarithmic => {
-                "select(0.0, 0.5 * aux.r * log(aux.r) / aux.DE, aux.r > 1.0)"
-            }
-            DeFunction::Linear => "aux.r / aux.DE",
-            DeFunction::Ifs => "(aux.r - 2.0) / aux.DE",
-            DeFunction::PseudoKleinian => {
-                "max(length(z.xy) - aux.pseudoKleinianDE, abs(length(z.xy) * z.z) / aux.r) / aux.DE"
-            }
-            DeFunction::MaxAxis => "max(abs(z.x), max(abs(z.y), abs(z.z))) / aux.DE",
-            DeFunction::Custom => "aux.dist",
-            DeFunction::None => "-1.0",
-            DeFunction::JosKleinian => return err("Jos-Kleinian distance is not supported yet"),
-        };
-        self.line(format!(
-            "var distance = select(aux.r, {analytic}, aux.DE > 0.0);"
-        ));
+        self.line("return FractalOrbit(z, aux, iterations, formula, false);");
+        self.indent -= 1;
+        self.line("}");
+        self.line("");
+        if fractal.hybrid {
+            self.line("// Mandelbulber's SmoothCVector: blends direction and length apart.");
+            self.line(
+                "fn fractal_smooth_vector(a: vec4<f32>, b: vec4<f32>, k: f32) -> vec4<f32> {",
+            );
+            self.line("    if (k <= 0.0) { return a; }");
+            self.line("    if (k >= 1.0) { return b; }");
+            self.line("    let blend = a * (1.0 - k) + b * k;");
+            self.line("    let blend_length = length(blend);");
+            self.line("    if (blend_length <= 0.0) { return a; }");
+            self.line("    return blend / blend_length * (length(a) * (1.0 - k) + length(b) * k);");
+            self.line("}");
+            self.line("");
+        }
+        self.line("fn fractal_distance(p: vec3<f32>, detail_size: f32) -> f32 {");
+        self.indent += 1;
+        self.line("let orbit = fractal_orbit(p, -1);");
+        self.line("if (orbit.empty) { return 10.0; }");
+        self.line("let z = orbit.z;");
+        self.line("let aux = orbit.aux;");
+        if fractal.delta {
+            self.delta_distance()?;
+        } else {
+            self.analytic_distance(linear_offset)?;
+        }
         self.line(
-            "if (iterations < i32(header.w) && distance < detail_size) { distance = detail_size; }",
+            "if (orbit.iterations < i32(fractal_params[0].w) && distance < detail_size) { distance = detail_size; }",
         );
         self.line("return clamp(distance, 0.0, 10.0);");
         self.indent -= 1;
         self.line("}");
         Ok(())
     }
+
+    fn analytic_distance(&mut self, linear_offset: usize) -> Result<()> {
+        self.current = 0;
+        let jos_kleinian = || -> String {
+            "min(jos_y, fractal_jos_tweak) / max(aux.DE, fractal_jos_offset)".into()
+        };
+        let function = if self.fractal.hybrid {
+            match self.fractal.de_function {
+                DeFunction::Linear => DeFunction::Linear,
+                DeFunction::Logarithmic => DeFunction::Logarithmic,
+                DeFunction::PseudoKleinian => DeFunction::PseudoKleinian,
+                DeFunction::JosKleinian => DeFunction::JosKleinian,
+                DeFunction::Custom => DeFunction::Custom,
+                DeFunction::MaxAxis => DeFunction::MaxAxis,
+                _ => DeFunction::None,
+            }
+        } else {
+            self.fractal.primary().meta.analytic_function
+        };
+        if function == DeFunction::JosKleinian {
+            let (tweak, _) = self.parameter("analyticDE.tweak005")?;
+            let (offset, _) = self.parameter("analyticDE.offset1")?;
+            let (spheres, _) = self.parameter("transformCommon.spheresEnabled")?;
+            let (folding, _) = self.parameter("transformCommon.foldingValue")?;
+            self.line(format!("let fractal_jos_tweak = {tweak};"));
+            self.line(format!("let fractal_jos_offset = {offset};"));
+            self.line(format!(
+                "let jos_y = select(z.y, min(z.y, {folding} - z.y), {spheres});"
+            ));
+        }
+        let analytic = match (function, self.fractal.hybrid) {
+            (DeFunction::Logarithmic, _) => {
+                "select(0.0, 0.5 * aux.r * log(aux.r) / aux.DE, aux.r > 1.0)".to_owned()
+            }
+            (DeFunction::Linear, true) => {
+                format!("(aux.r - fractal_params[{linear_offset}].x) / aux.DE")
+            }
+            (DeFunction::Linear, false) => "aux.r / aux.DE".into(),
+            (DeFunction::Ifs, _) => "(aux.r - 2.0) / aux.DE".into(),
+            (DeFunction::PseudoKleinian, _) => {
+                "max(length(z.xy) - aux.pseudoKleinianDE, abs(length(z.xy) * z.z) / aux.r) / aux.DE"
+                    .into()
+            }
+            (DeFunction::MaxAxis, _) => "max(abs(z.x), max(abs(z.y), abs(z.z))) / aux.DE".into(),
+            (DeFunction::Custom, _) => "aux.dist".into(),
+            (DeFunction::JosKleinian, _) => jos_kleinian(),
+            (DeFunction::None, true) => "0.0".into(),
+            (DeFunction::None, false) => "-1.0".into(),
+        };
+        self.line(format!(
+            "var distance = select(aux.r, {analytic}, aux.DE > 0.0);"
+        ));
+        Ok(())
+    }
+
+    /// Mandelbulber's Delta-DE (`CalculateDistance`): the radial gradient of
+    /// the xyz orbit radius from three probes at the same iteration count.
+    /// Native steps by 1e-5 x detail size in f64; f32 cannot resolve that
+    /// far from the origin, so the step never drops below 1e-5 of |p|.
+    fn delta_distance(&mut self) -> Result<()> {
+        let finaliser = match self.fractal.de_function {
+            DeFunction::Linear => "0.5 * r / dr",
+            DeFunction::Logarithmic => "0.5 * r * log(r) / dr",
+            DeFunction::PseudoKleinian => {
+                "max(length(z.xy) - 0.92784, abs(length(z.xy) * z.z) / r) / dr"
+            }
+            DeFunction::JosKleinian => "abs(length(z.xz) * z.y) / r / dr",
+            DeFunction::MaxAxis => {
+                "0.5 * max(abs(z.x), max(abs(z.y), abs(z.z))) / max(gradient.x, max(gradient.y, gradient.z))"
+            }
+            _ => "r",
+        };
+        self.line("let delta = max(1e-5 * detail_size, 1e-5 * max(length(p), 1.0));");
+        self.line("let r = length(z.xyz);");
+        // Divide by the step f32 actually took: p + delta rounds.
+        self.line("var gradient: vec3<f32>;");
+        self.line("for (var axis = 0; axis < 3; axis++) {");
+        self.line("    var ahead = p;");
+        self.line("    var behind = p;");
+        self.line("    ahead[axis] += delta;");
+        self.line("    behind[axis] -= delta;");
+        self.line("    let step = ahead[axis] - behind[axis];");
+        self.line("    let r_ahead = length(fractal_orbit(ahead, orbit.iterations).z.xyz);");
+        self.line("    let r_behind = length(fractal_orbit(behind, orbit.iterations).z.xyz);");
+        // Across a fold kink the central slope can vanish; the smaller
+        // one-sided slope keeps the step bounded there.
+        self.line("    let one_sided = min(abs(r_ahead - r), abs(r - r_behind)) / (0.5 * step);");
+        self.line("    gradient[axis] = max(abs(r_ahead - r_behind) / step, one_sided);");
+        self.line("}");
+        self.line("let dr = length(gradient);");
+        self.line(format!("var distance = select(r, {finaliser}, dr > 0.0);"));
+        Ok(())
+    }
+}
+
+/// `a.b[2][0]` as (`a.b[][]`, [2, 0]).
+fn index_template(key: &str) -> (String, Vec<usize>) {
+    let mut template = String::new();
+    let mut indices = Vec::new();
+    let mut rest = key;
+    while let Some(open) = rest.find('[') {
+        template.push_str(&rest[..open]);
+        let Some(close) = rest[open..].find(']') else {
+            break;
+        };
+        match rest[open + 1..open + close].parse() {
+            Ok(index) => {
+                indices.push(index);
+                template.push_str("[]");
+            }
+            Err(_) => template.push_str(&rest[open..=open + close]),
+        }
+        rest = &rest[open + close + 1..];
+    }
+    template.push_str(rest);
+    (template, indices)
 }
 
 fn zero_of(ty: &Ty) -> String {
@@ -1107,6 +1643,7 @@ fn common_type(a: &Ty, b: &Ty) -> Result<Ty> {
         (Ty::F32, _) | (_, Ty::F32) => Ty::F32,
         (Ty::I32, _) | (_, Ty::I32) => Ty::I32,
         (Ty::Bool, Ty::Bool) => Ty::Bool,
+        (Ty::Ptr(x), Ty::Ptr(y)) if x == y => a.clone(),
         _ => return err(format!("no common type for {a:?} and {b:?}")),
     })
 }
@@ -1140,24 +1677,6 @@ fn float_literal(value: f64) -> String {
     } else {
         format!("{value:e}")
     }
-}
-
-fn math_constant(name: &str) -> Option<f64> {
-    use std::f64::consts::*;
-    Some(match name.trim_end_matches("_F") {
-        "M_PI" => PI,
-        "M_PI_2" => FRAC_PI_2,
-        "M_PI_4" => FRAC_PI_4,
-        "M_1_PI" => FRAC_1_PI,
-        "M_2_PI" => FRAC_2_PI,
-        "M_PI_180" => PI / 180.0,
-        "M_PI_2x" => TAU,
-        "M_PI_2x_INV" => 1.0 / TAU,
-        "M_SQRT2" => SQRT_2,
-        "M_SQRT1_2" => FRAC_1_SQRT_2,
-        "M_E" => E,
-        _ => return None,
-    })
 }
 
 #[cfg(test)]
@@ -1212,18 +1731,27 @@ REAL4 TestIteration(REAL4 z, __constant sFractalCl *fractal, sExtendedAuxCl *aux
             default_bailout: 10.0,
         };
         Fractal {
-            function,
-            parameters,
-            meta,
+            formulas: vec![crate::orbit::Formula {
+                slot: 1,
+                function,
+                parameters,
+                meta,
+                add_c: true,
+                weight: 1.0,
+                check_bailout: true,
+                additional_bailout: false,
+            }],
+            sequence: vec![Some(0); 20],
+            hybrid: false,
             max_iterations: 20,
             min_iterations: 1,
             bailout: 10.0,
-            add_c: true,
             constant_multiplier: [1.0; 3],
             julia: None,
             initial_w: 0.0,
             delta: false,
             de_function: DeFunction::Logarithmic,
+            linear_de_offset: 0.0,
         }
     }
 
@@ -1252,8 +1780,9 @@ REAL4 TestIteration(REAL4 z, __constant sFractalCl *fractal, sExtendedAuxCl *aux
         validate(&disabled);
         assert!(disabled.source.contains("777.0"));
         assert!(!disabled.source.contains("mat3x3<f32>"));
-        // Header (2) + julia + power + offset (+ 3 matrix rows when enabled).
-        assert_eq!(disabled.parameters.len(), 5);
-        assert_eq!(enabled.parameters.len(), 8);
+        // Header (2) + julia + power + offset (+ 3 matrix rows when enabled)
+        // + weight + linear DE offset.
+        assert_eq!(disabled.parameters.len(), 7);
+        assert_eq!(enabled.parameters.len(), 10);
     }
 }

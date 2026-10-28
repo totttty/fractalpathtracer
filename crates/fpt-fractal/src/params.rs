@@ -47,8 +47,16 @@ impl ParameterSchema {
                     && !looks_like_default(arguments[1].trim())
                     && looks_like_default(arguments[2].trim());
                 let default = arguments[if indexed { 2 } else { 1 }].trim().to_owned();
-                if let Some(values) = arguments.last().and_then(|a| lists.get(a.trim())) {
-                    schema.enums.insert(name.clone(), values.clone());
+                if let Some(last) = arguments.last().map(|a| a.trim()) {
+                    // A named list, or one written inline: `QStringList({"a", "b"})`.
+                    let values = match lists.get(last) {
+                        Some(values) => values.clone(),
+                        None if last.starts_with("QStringList(") => quoted_literals(last),
+                        None => Vec::new(),
+                    };
+                    if !values.is_empty() {
+                        schema.enums.insert(name.clone(), values);
+                    }
                 }
                 if indexed {
                     schema.indexed_defaults.insert(name, default);
@@ -58,10 +66,16 @@ impl ParameterSchema {
             }
             offset = end + 1;
         }
-        let constructor = fractal
+        // Line comments would otherwise join the member before `=`.
+        let constructor: String = fractal
             .split("void sFractal::RecalculateFractalParams()")
             .next()
-            .unwrap_or(fractal);
+            .unwrap_or(fractal)
+            .lines()
+            .map(|line| line.split("//").next().unwrap_or(""))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let constructor = constructor.as_str();
         let marker = "container->Get<";
         let mut offset = 0;
         while let Some(relative) = constructor[offset..].find(marker) {
@@ -586,6 +600,8 @@ void InitFractalParams(std::shared_ptr<cParameterContainer> par)
 	par->addParam("mandelbox_folding_fixed_radius", 1.0, morphAkima, paramStandard);
 	par->addParam("mandelbox_offset", CVector3(0.0, 0.0, 0.0), morphAkima, paramStandard);
 	par->addParam("mandelbulbMulti_order_of_xyz", 0, 0, 5, morphNone, paramStandard, qslOrderOfXyz);
+	par->addParam("mandelbox_generalized_fold_type", 0, morphNone, paramStandard,
+		QStringList({"fold_tet", "fold_cube"}));
 	for (int i = 1; i <= 3; i++)
 		par->addParam("mandelbox_rotation_neg", i, CVector3(0.0, 0.0, 0.0), morphAkimaAngle, paramStandard);
 }
@@ -593,7 +609,8 @@ void InitFractalParams(std::shared_ptr<cParameterContainer> par)
     const FRACTAL: &str = r#"
 sFractal::sFractal(const cParameterContainer *container)
 {
-	bulb.power = container->Get<double>("power");
+	// common parameters
+	bulb.power = container->Get<double>("power"); // comment
 	bulb.alphaAngleOffset = container->Get<double>("alpha_angle_offset");
 	mandelbox.foldingSphericalMin = container->Get<double>("mandelbox_folding_min_radius");
 	mandelbox.foldingSphericalFixed = container->Get<double>("mandelbox_folding_fixed_radius");
@@ -602,6 +619,8 @@ sFractal::sFractal(const cParameterContainer *container)
 		mandelbox.rotation[0][i - 1] = container->Get<CVector3>("mandelbox_rotation_neg", i);
 	mandelbulbMulti.orderOfXYZ =
 		enumMulti_OrderOfXYZ(container->Get<int>("mandelbulbMulti_order_of_xyz"));
+	genFoldBox.type =
+		enumGeneralizedFoldBoxType(container->Get<int>("mandelbox_generalized_fold_type"));
 }
 void sFractal::RecalculateFractalParams()
 {
@@ -616,6 +635,10 @@ void sFractal::RecalculateFractalParams()
             ("alpha_angle_offset".to_owned(), "22,5".to_owned()),
             ("mandelbox_offset".to_owned(), "1 2 3".to_owned()),
             ("mandelbox_rotation_neg_2".to_owned(), "0 0 90".to_owned()),
+            (
+                "mandelbox_generalized_fold_type".to_owned(),
+                "fold_cube".to_owned(),
+            ),
         ]
         .into();
         let p = schema.parameters(&settings).unwrap().values;
@@ -628,6 +651,7 @@ void sFractal::RecalculateFractalParams()
         assert_eq!(p["mandelbox.mR2"], Value::Scalar(0.25));
         assert_eq!(p["mandelbox.mboxFactor1"], Value::Scalar(4.0));
         assert_eq!(p["mandelbulbMulti.orderOfXYZ"], Value::Int(0));
+        assert_eq!(p["genFoldBox.type"], Value::Int(1));
         let Value::Matrix(m) = p["mandelbox.rot[0][1]"] else {
             panic!()
         };

@@ -11,6 +11,7 @@
 #![forbid(unsafe_code)]
 
 pub mod ast;
+pub mod constants;
 pub mod eval;
 mod lex;
 pub mod orbit;

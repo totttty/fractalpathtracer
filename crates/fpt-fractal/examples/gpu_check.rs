@@ -134,7 +134,7 @@ fn main() {
         .collect();
     println!(
         "formula {}: {} parameter slots, {} lines of WGSL",
-        fractal.meta.internal_name,
+        fractal.primary().meta.internal_name,
         shader.parameters.len(),
         shader.source.lines().count()
     );

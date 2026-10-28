@@ -17,11 +17,11 @@ fn main() {
     let fractal = loader::load_fractal(Path::new(root), scene);
     println!(
         "formula {}, delta {}, bailout {}, N {}, add_c {}",
-        fractal.meta.internal_name,
+        fractal.primary().meta.internal_name,
         fractal.delta,
         fractal.bailout,
         fractal.max_iterations,
-        fractal.add_c
+        fractal.primary().add_c
     );
     let samples = loader::read_points(points);
     let pairs = samples

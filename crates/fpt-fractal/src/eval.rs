@@ -14,11 +14,26 @@ use crate::ast::*;
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
     Scalar(f64),
-    Vector { len: u8, v: [f64; 4] },
+    Vector {
+        len: u8,
+        v: [f64; 4],
+    },
     Int(i64),
     Bool(bool),
     Matrix([[f64; 3]; 3]),
     Array(Vec<Value>),
+    /// Component `index` of a vector: a local variable, or a read-only
+    /// parameter value. The only pointers the formula sources form.
+    Pointer {
+        target: PointerTarget,
+        index: usize,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum PointerTarget {
+    Local(String),
+    Parameter(Box<Value>),
 }
 
 impl Value {
@@ -421,20 +436,15 @@ impl Interpreter<'_> {
         if let Some(&constant) = self.parameters.constants.get(name) {
             return Ok(Value::Int(constant));
         }
+        if let Some(value) = crate::constants::int_constant(name) {
+            return Ok(Value::Int(value));
+        }
+        if let Some(value) = crate::constants::float_constant(name) {
+            return Ok(Value::Scalar(value));
+        }
         match name {
             "true" => Ok(Value::Bool(true)),
             "false" => Ok(Value::Bool(false)),
-            "M_PI_F" | "M_PI" => Ok(Value::Scalar(std::f64::consts::PI)),
-            "M_PI_2_F" | "M_PI_2" => Ok(Value::Scalar(std::f64::consts::FRAC_PI_2)),
-            "M_PI_4_F" | "M_PI_4" => Ok(Value::Scalar(std::f64::consts::FRAC_PI_4)),
-            "M_1_PI_F" | "M_1_PI" => Ok(Value::Scalar(std::f64::consts::FRAC_1_PI)),
-            "M_2_PI_F" | "M_2_PI" => Ok(Value::Scalar(std::f64::consts::FRAC_2_PI)),
-            "M_PI_180_F" | "M_PI_180" => Ok(Value::Scalar(std::f64::consts::PI / 180.0)),
-            "M_PI_2x_F" | "M_PI_2x" => Ok(Value::Scalar(std::f64::consts::TAU)),
-            "M_PI_2x_INV_F" | "M_PI_2x_INV" => Ok(Value::Scalar(1.0 / std::f64::consts::TAU)),
-            "M_SQRT2_F" | "M_SQRT2" => Ok(Value::Scalar(std::f64::consts::SQRT_2)),
-            "M_SQRT1_2_F" | "M_SQRT1_2" => Ok(Value::Scalar(std::f64::consts::FRAC_1_SQRT_2)),
-            "M_E_F" | "M_E" => Ok(Value::Scalar(std::f64::consts::E)),
             _ => Err(EvalError::new(format!("unknown identifier {name}"))),
         }
     }
@@ -472,6 +482,7 @@ impl Interpreter<'_> {
     fn statement(&mut self, statement: &Stmt) -> Result<Flow> {
         match statement {
             Stmt::Empty => Ok(Flow::Next),
+            Stmt::Expr(Expr::Call { name, .. }) if name == "Q_UNUSED" => Ok(Flow::Next),
             Stmt::Expr(expr) => {
                 self.expr(expr)?;
                 Ok(Flow::Next)
@@ -479,10 +490,21 @@ impl Interpreter<'_> {
             Stmt::Decl { ty, vars } => {
                 for var in vars {
                     if var.pointer || ty.pointer {
-                        return Err(EvalError::new(format!(
-                            "pointer variable {} is not supported",
-                            var.name
-                        )));
+                        let Some(init) = &var.init else {
+                            return Err(EvalError::new(format!(
+                                "uninitialised pointer {}",
+                                var.name
+                            )));
+                        };
+                        let value = self.expr(init)?;
+                        if !matches!(value, Value::Pointer { .. }) {
+                            return Err(EvalError::new(format!(
+                                "pointer {} set to {value:?}",
+                                var.name
+                            )));
+                        }
+                        self.declare(&var.name, value);
+                        continue;
                     }
                     let value = match (&var.init, &var.array) {
                         (Some(Expr::InitList(items)), _) => Value::Array(
@@ -670,6 +692,37 @@ impl Interpreter<'_> {
         )))
     }
 
+    /// `&local`, `&fractal->path` (component 0 of the vector) or `&p[k]` for
+    /// a pointer `p`.
+    fn address_of(&mut self, expr: &Expr) -> Result<Value> {
+        match expr {
+            Expr::Ident(name) => match self.lookup(name)? {
+                Value::Pointer { .. } => Err(EvalError::new("pointer to pointer")),
+                _ => Ok(Value::Pointer {
+                    target: PointerTarget::Local(name.clone()),
+                    index: 0,
+                }),
+            },
+            Expr::Index { base, index } => {
+                let offset = self.expr(index)?.as_int()? as usize;
+                match self.expr(base)? {
+                    Value::Pointer { target, index } => Ok(Value::Pointer {
+                        target,
+                        index: index + offset,
+                    }),
+                    other => Err(EvalError::new(format!("address of element of {other:?}"))),
+                }
+            }
+            other => match self.parameter(other)? {
+                Some(value) => Ok(Value::Pointer {
+                    target: PointerTarget::Parameter(Box::new(value)),
+                    index: 0,
+                }),
+                None => Err(EvalError::new(format!("address of {other:?}"))),
+            },
+        }
+    }
+
     fn place(&mut self, expr: &Expr) -> Result<Place> {
         match expr {
             Expr::Ident(name) => Ok(Place {
@@ -708,6 +761,21 @@ impl Interpreter<'_> {
                 place.index = Some(self.expr(index)?.as_int()? as usize);
                 Ok(place)
             }
+            Expr::Unary {
+                op: UnaryOp::Deref,
+                expr: inner,
+            } => match self.expr(inner)? {
+                Value::Pointer {
+                    target: PointerTarget::Local(name),
+                    index,
+                } => Ok(Place {
+                    aux: false,
+                    name,
+                    index: None,
+                    swizzle: Some(vec![index]),
+                }),
+                other => Err(EvalError::new(format!("cannot write through {other:?}"))),
+            },
             other => Err(EvalError::new(format!("cannot assign to {other:?}"))),
         }
     }
@@ -848,9 +916,17 @@ impl Interpreter<'_> {
                         old
                     }
                 }
-                UnaryOp::Deref | UnaryOp::AddressOf => {
-                    return Err(EvalError::new("pointers are not supported"));
-                }
+                UnaryOp::AddressOf => self.address_of(inner)?,
+                UnaryOp::Deref => match self.expr(inner)? {
+                    Value::Pointer { target, index } => {
+                        let vector = match target {
+                            PointerTarget::Local(name) => self.lookup(&name)?,
+                            PointerTarget::Parameter(value) => *value,
+                        };
+                        swizzle(&vector, &[index])?
+                    }
+                    other => return Err(EvalError::new(format!("dereference of {other:?}"))),
+                },
             },
             Expr::Binary {
                 op: BinaryOp::And,
@@ -900,7 +976,8 @@ impl Interpreter<'_> {
             }
             Expr::Cast { ty, expr: inner } => {
                 if ty.pointer {
-                    return Err(EvalError::new("pointer casts are not supported"));
+                    // `(REAL *)&v` only reinterprets a vector as its components.
+                    return self.expr(inner);
                 }
                 convert(&ty.name, self.expr(inner)?)?
             }
