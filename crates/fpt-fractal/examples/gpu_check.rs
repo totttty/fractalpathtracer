@@ -115,9 +115,9 @@ fn main() {
         [_, root, scene, points, ..] => (root, scene, points),
         _ => panic!("usage: gpu_check MANDELBULBER_ROOT SCENE.fract POINTS [WGSL_OUT]"),
     };
-    let fractal = loader::load_fractal(Path::new(root), scene);
+    let shape = loader::load_shape(Path::new(root), scene);
     let shader =
-        fpt_fractal::wgsl::emit(&fractal).unwrap_or_else(|e| panic!("WGSL generation: {e}"));
+        fpt_fractal::wgsl::emit_shape(&shape).unwrap_or_else(|e| panic!("WGSL generation: {e}"));
     let source = format!("{}{HARNESS}", shader.source);
     if let Some(out) = args.get(4) {
         fs::write(out, &source).expect("write WGSL");
@@ -130,11 +130,11 @@ fn main() {
     let gpu = gpu_distances(&source, &shader.parameters, &inputs);
     let reference: Vec<f64> = samples
         .iter()
-        .map(|s| fractal.distance([s[0], s[1], s[2]], s[3]).unwrap())
+        .map(|s| shape.distance([s[0], s[1], s[2]], s[3]).unwrap())
         .collect();
     println!(
         "formula {}: {} parameter slots, {} lines of WGSL",
-        fractal.primary().meta.internal_name,
+        shape.fractals()[0].primary().meta.internal_name,
         shader.parameters.len(),
         shader.source.lines().count()
     );

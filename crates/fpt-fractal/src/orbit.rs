@@ -55,6 +55,15 @@ pub struct Fractal {
     pub de_function: DeFunction,
     /// `linear_DE_offset`, used by hybrids' linear analytic DE.
     pub linear_de_offset: f64,
+    /// `fractal_position`, `fractal_rotation` (rows) and `repeat`, applied to
+    /// the point before the orbit starts.
+    pub position: [f64; 3],
+    pub rotation: [[f64; 3]; 3],
+    pub repeat: [f64; 3],
+    /// Global `box_folding` (limit, value), run before every iteration.
+    pub box_fold: Option<(f64, f64)>,
+    /// Global `spherical_folding` (outer, inner), after the box fold.
+    pub spherical_fold: Option<(f64, f64)>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -109,13 +118,13 @@ impl Fractal {
     }
 
     /// The scene's fractal from its active slots' formulas. A hybrid when
-    /// `hybrid_fractal_enable` is set; otherwise only slot 1 is used.
+    /// `hybrid_fractal_enable` is set; otherwise only the first is used.
     pub fn from_slots(file: &FractFile, sources: Vec<FormulaSource>) -> Result<Fractal, String> {
         let hybrid = file.boolean("hybrid_fractal_enable", false);
         let mut sources = sources;
         sources.sort_by_key(|s| s.slot);
         if !hybrid {
-            sources.retain(|s| s.slot == 1);
+            sources.truncate(1);
         }
         if sources.is_empty() {
             return Err("no formula in slot 1".into());
@@ -200,6 +209,11 @@ impl Fractal {
                 meta: source.meta,
             });
         }
+        // A chosen delta_DE_function also replaces a single formula's
+        // analytic DE (cNineFractals, non-hybrid branch).
+        if !hybrid && file.number("delta_DE_function", 0.0) as i64 != 0 {
+            formulas[0].meta.analytic_function = de_function;
+        }
         let sequence = if hybrid {
             hybrid_sequence(file, &formulas, max_iterations)
         } else {
@@ -220,6 +234,21 @@ impl Fractal {
             delta,
             de_function,
             linear_de_offset: file.number("linear_DE_offset", 0.0),
+            position: file.vector("fractal_position", [0.0; 3]),
+            rotation: crate::params::rotation_matrix(2, file.vector("fractal_rotation", [0.0; 3])),
+            repeat: file.vector("repeat", [0.0; 3]),
+            box_fold: file.boolean("box_folding", false).then(|| {
+                (
+                    file.number("box_folding_limit", 1.0),
+                    file.number("box_folding_value", 2.0),
+                )
+            }),
+            spherical_fold: file.boolean("spherical_folding", false).then(|| {
+                (
+                    file.number("spherical_folding_outer", 1.0),
+                    file.number("spherical_folding_inner", 0.5),
+                )
+            }),
         })
     }
 
@@ -264,6 +293,12 @@ impl Fractal {
     /// for exactly `forced` iterations with no bailout (Delta-DE's probes,
     /// `calcModeDeltaDE2`).
     pub fn orbit(&self, point: [f64; 3], forced: Option<usize>) -> Result<OrbitResult, EvalError> {
+        // Compute's "repeat, move and rotate".
+        let moved = [0, 1, 2].map(|i| point[i] - self.position[i]);
+        let m = self.rotation;
+        let rotated =
+            [0, 1, 2].map(|i| m[i][0] * moved[0] + m[i][1] * moved[1] + m[i][2] * moved[2]);
+        let point = crate::boolean::repeat_mod(rotated, self.repeat);
         let mut z = [point[0], point[1], point[2], self.initial_w];
         let mut aux = self.initial_aux(z);
         let limit = forced.unwrap_or(self.max_iterations);
@@ -297,6 +332,9 @@ impl Fractal {
                     .and_then(|v| v.as_scalar().ok())
                     .unwrap_or(0.0)
             };
+            self.global_folds(&mut z, &mut aux);
+            // The weight blend starts from z after the global folds.
+            let temp_z = z;
             let (previous_de, previous_color) = (scalar(&aux, "DE"), scalar(&aux, "color"));
             aux.fields.insert("i".into(), Value::Int(i as i64));
             if !self.hybrid || formula.weight > 0.0 {
@@ -342,7 +380,7 @@ impl Fractal {
             }
             if self.hybrid && formula.weight < 1.0 {
                 let k = formula.weight;
-                z = smooth_vector(last_z, z, k);
+                z = smooth_vector(temp_z, z, k);
                 let de = scalar(&aux, "DE") * k + previous_de * (1.0 - k);
                 let color = scalar(&aux, "color") * k + previous_color * (1.0 - k);
                 aux.fields.insert("DE".into(), Value::Scalar(de));
@@ -394,6 +432,50 @@ impl Fractal {
             empty_slot: false,
             last_formula,
         })
+    }
+
+    /// `BoxFolding` and `SphericalFolding` (legacy_fractal_transforms.cpp).
+    fn global_folds(&self, z: &mut [f64; 4], aux: &mut Aux) {
+        let scale_color = |aux: &mut Aux| {
+            if let Some(Value::Scalar(color)) = aux.fields.get_mut("color") {
+                *color *= 0.9;
+            }
+        };
+        if let Some((limit, value)) = self.box_fold {
+            for k in 0..3 {
+                if z[k] > limit {
+                    z[k] = value - z[k];
+                    scale_color(aux);
+                } else if z[k] < -limit {
+                    z[k] = -value - z[k];
+                    scale_color(aux);
+                }
+            }
+            aux.fields.insert("r".into(), Value::Scalar(norm(*z)));
+        }
+        if let Some((outer, inner)) = self.spherical_fold {
+            let r = aux
+                .fields
+                .get("r")
+                .and_then(|v| v.as_scalar().ok())
+                .unwrap_or(0.0);
+            let (outer2, inner2, r2) = (outer * outer, inner * inner, r * r);
+            let factor = if r2 < inner2 {
+                Some(outer2 / inner2)
+            } else if r2 < outer2 {
+                Some(outer2 / r2)
+            } else {
+                None
+            };
+            if let Some(factor) = factor {
+                *z = z.map(|x| x * factor);
+                if let Some(Value::Scalar(de)) = aux.fields.get_mut("DE") {
+                    *de *= factor;
+                }
+                scale_color(aux);
+            }
+            aux.fields.insert("r".into(), Value::Scalar(norm(*z)));
+        }
     }
 
     /// Distance estimate at `point` for a ray step with `detail_size` (the
@@ -476,6 +558,7 @@ impl Fractal {
             DeFunction::MaxAxis => max_axis / de,
             DeFunction::Custom => base.dist,
             DeFunction::None => -1.0,
+            DeFunction::Undefined => r,
         }
     }
 

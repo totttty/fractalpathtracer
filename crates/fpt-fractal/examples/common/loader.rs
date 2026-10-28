@@ -1,7 +1,8 @@
-//! Loads a single-formula scene from a Mandelbulber checkout (examples only).
+//! Loads a scene's fractal from a Mandelbulber checkout (examples only).
 
 use std::{fs, path::Path};
 
+use fpt_fractal::boolean::Shape;
 use fpt_fractal::orbit::{FormulaSource, Fractal};
 use fpt_fractal::params::ParameterSchema;
 use fpt_fractal::scene::{FormulaMeta, FractFile};
@@ -34,8 +35,8 @@ pub fn formula_files(root: &Path, id: i64) -> (String, String) {
     panic!("no definition for fractal::{enum_name}");
 }
 
-/// The scene's fractal (every active slot of a hybrid), ready to evaluate.
-pub fn load_fractal(root: &Path, scene: impl AsRef<Path>) -> Fractal {
+/// The scene's shape (every active slot of a hybrid or Boolean scene).
+pub fn load_shape(root: &Path, scene: impl AsRef<Path>) -> Shape {
     let file = FractFile::parse(&read(scene));
     let schema = ParameterSchema::parse(
         &read(root.join("src/initparameters.cpp")),
@@ -43,7 +44,8 @@ pub fn load_fractal(root: &Path, scene: impl AsRef<Path>) -> Fractal {
     )
     .unwrap();
     let constants = fpt_fractal::constants::enum_constants(&read(root.join("opencl/fractal_cl.h")));
-    let hybrid = file.boolean("hybrid_fractal_enable", false);
+    let multiple =
+        file.boolean("hybrid_fractal_enable", false) || file.boolean("boolean_operators", false);
     let mut sources = Vec::new();
     for slot in 1..=fpt_fractal::orbit::SLOTS {
         let id = file.number(
@@ -51,7 +53,7 @@ pub fn load_fractal(root: &Path, scene: impl AsRef<Path>) -> Fractal {
             if slot == 1 { 2.0 } else { 0.0 },
         ) as i64;
         let enabled = file.boolean(&format!("fractal_enable_{slot}"), true);
-        if id == 0 || !enabled || (slot > 1 && !hybrid) {
+        if id == 0 || !enabled || (slot > 1 && !multiple) {
             continue;
         }
         let (definition, cl) = formula_files(root, id);
@@ -71,7 +73,15 @@ pub fn load_fractal(root: &Path, scene: impl AsRef<Path>) -> Fractal {
             parameters,
         });
     }
-    Fractal::from_slots(&file, sources).unwrap()
+    Shape::from_slots(&file, sources).unwrap()
+}
+
+/// The scene's fractal; panics on Boolean scenes.
+pub fn load_fractal(root: &Path, scene: impl AsRef<Path>) -> Fractal {
+    match load_shape(root, scene) {
+        Shape::Single(fractal) => fractal,
+        Shape::Boolean(_) => panic!("Boolean scene: use load_shape"),
+    }
 }
 
 /// `x y z detail_size native_distance` samples.

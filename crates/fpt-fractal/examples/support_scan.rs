@@ -10,32 +10,36 @@ mod loader;
 
 use std::{env, panic, path::Path};
 
-use fpt_fractal::scene::FractFile;
+use fpt_fractal::boolean::Shape;
 
 fn classify(root: &Path, scene: &Path) -> (&'static str, String) {
-    let file = FractFile::parse(&loader::read(scene));
-    if file.boolean("boolean_operators", false) {
-        return ("boolean", String::new());
-    }
-    let loaded = panic::catch_unwind(|| loader::load_fractal(root, scene));
-    let fractal = match loaded {
-        Ok(fractal) => fractal,
+    let loaded = panic::catch_unwind(|| loader::load_shape(root, scene));
+    let shape = match loaded {
+        Ok(shape) => shape,
         Err(e) => return ("error", panic_text(e)),
     };
-    let name = fractal
-        .formulas
+    let mut detail = shape
+        .fractals()
         .iter()
-        .map(|f| f.meta.internal_name.as_str())
+        .map(|f| {
+            f.formulas
+                .iter()
+                .map(|f| f.meta.internal_name.as_str())
+                .collect::<Vec<_>>()
+                .join("+")
+        })
         .collect::<Vec<_>>()
-        .join("+");
-    let mut detail = name.clone();
-    if fractal.delta {
+        .join(" | ");
+    if shape.fractals().iter().any(|f| f.delta) {
         detail.push_str(" delta");
     }
-    if let Err(e) = fractal.distance([0.1, 0.2, 0.3], 1e-4) {
+    if matches!(shape, Shape::Boolean(_)) {
+        detail.push_str(" boolean");
+    }
+    if let Err(e) = shape.distance([0.1, 0.2, 0.3], 1e-4) {
         return ("error", format!("{detail}: eval {e}"));
     }
-    match fpt_fractal::wgsl::emit(&fractal) {
+    match fpt_fractal::wgsl::emit_shape(&shape) {
         Ok(shader) => match validate(&shader.source) {
             Ok(()) => ("gpu", detail),
             Err(e) => ("cpu", format!("{detail}: invalid WGSL {e}")),

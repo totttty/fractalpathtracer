@@ -318,7 +318,7 @@ fn rotate(matrix: [[f64; 3]; 3], axis: usize, angle: f64) -> [[f64; 3]; 3] {
 
 /// `SetRotation2`: Z(z), Y(y), X(x). `SetRotation3`: Z(x), Y(y), X(z).
 /// `SetRotation4`: X(x), Y(y), Z(z). Angles in degrees.
-fn rotation_matrix(order: u8, degrees: [f64; 3]) -> [[f64; 3]; 3] {
+pub(crate) fn rotation_matrix(order: u8, degrees: [f64; 3]) -> [[f64; 3]; 3] {
     let r = degrees.map(f64::to_radians);
     match order {
         2 => rotate(rotate(rotate(IDENTITY, 2, r[2]), 1, r[1]), 0, r[0]),

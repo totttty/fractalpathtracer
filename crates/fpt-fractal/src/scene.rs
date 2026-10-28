@@ -87,7 +87,10 @@ pub enum DeFunction {
     JosKleinian,
     Custom,
     MaxAxis,
+    /// `withoutDEFunction` / `analyticFunctionNone`: distance -1.
     None,
+    /// `analyticFunctionUndefined`: the orbit radius.
+    Undefined,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -131,17 +134,25 @@ impl FormulaMeta {
                 DeFunction::Logarithmic
             }
             Some("analyticFunctionIFS") => DeFunction::Ifs,
+            Some("analyticFunctionUndefined" | "undefinedDEFunction") => DeFunction::Undefined,
             Some(
                 "peudoKleinianDEFunction"
                 | "pseudoKleinianDEFunction"
-                | "analyticFunctionPeudoKleinian",
+                | "analyticFunctionPeudoKleinian"
+                | "analyticFunctionPseudoKleinian",
             ) => DeFunction::PseudoKleinian,
             Some(
-                "joKleinianDEFunction" | "josKleinianDEFunction" | "analyticFunctionJoKleinian",
+                "joKleinianDEFunction"
+                | "josKleinianDEFunction"
+                | "analyticFunctionJoKleinian"
+                | "analyticFunctionJosKleinian",
             ) => DeFunction::JosKleinian,
-            Some("cutomDEFunction" | "customDEFunction" | "analyticFunctionCutomDE") => {
-                DeFunction::Custom
-            }
+            Some(
+                "cutomDEFunction"
+                | "customDEFunction"
+                | "analyticFunctionCutomDE"
+                | "analyticFunctionCustomDE",
+            ) => DeFunction::Custom,
             Some("maxAxisDEFunction" | "analyticFunctionMaxAxis") => DeFunction::MaxAxis,
             _ => DeFunction::None,
         };

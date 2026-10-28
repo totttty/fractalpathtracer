@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 
 use crate::ast::*;
+use crate::boolean::{BooleanFractal, Operator, Shape};
 use crate::eval::{Parameters, Value};
 use crate::orbit::Fractal;
 use crate::scene::DeFunction;
@@ -146,6 +147,11 @@ struct Emitter<'a> {
     families: HashMap<String, Family>,
     /// The formula being emitted (index into `Fractal::formulas`).
     current: usize,
+    /// Prefix of every generated name (`fractal_`, or `fractal_c2_` for a
+    /// Boolean component).
+    prefix: String,
+    /// Buffer slot of this fractal's two header slots.
+    header: usize,
     scopes: Vec<HashMap<String, Ty>>,
     /// Module-scope declarations, placed after the prelude.
     globals: String,
@@ -154,43 +160,168 @@ struct Emitter<'a> {
     temporaries: usize,
 }
 
-/// Header slots at the start of the parameter buffer.
-const HEADER_SLOTS: usize = 2;
-
 pub fn emit(fractal: &Fractal) -> Result<FractalShader> {
+    let mut out = String::new();
+    prelude(&mut out);
+    let globals_at = out.len();
+    let mut globals = String::new();
+    let parameters = emit_fractal(fractal, "fractal_", Vec::new(), &mut globals, &mut out)?;
+    out.insert_str(globals_at, &globals);
+    Ok(FractalShader {
+        source: out,
+        parameters,
+    })
+}
+
+/// A Boolean scene: each component's functions under `fractal_c{k}_`, then
+/// `fractal_distance` folding them in slot order.
+pub fn emit_boolean(scene: &BooleanFractal) -> Result<FractalShader> {
+    let mut out = String::new();
+    prelude(&mut out);
+    let globals_at = out.len();
+    let mut globals = String::new();
+    let mut parameters = Vec::new();
+    let mut transforms = Vec::new();
+    for (c, component) in scene.components.iter().enumerate() {
+        let prefix = format!("fractal_c{c}_");
+        parameters = emit_fractal(
+            &component.fractal,
+            &prefix,
+            parameters,
+            &mut globals,
+            &mut out,
+        )?;
+        let vector = |v: [f64; 3]| [v[0] as f32, v[1] as f32, v[2] as f32, 0.0];
+        transforms.push(parameters.len());
+        parameters.push(vector(component.position));
+        for row in component.rotation {
+            parameters.push(vector(row));
+        }
+        parameters.push(vector(component.repeat));
+        let smooth = component.smooth.unwrap_or(0.0) as f32;
+        parameters.push([component.scale as f32, smooth, 0.0, 0.0]);
+    }
+    out.push_str("fn fractal_distance(p: vec3<f32>, detail_size: f32) -> f32 {\n");
+    out.push_str("    var distance = 0.0;\n");
+    for (c, component) in scene.components.iter().enumerate() {
+        let k = transforms[c];
+        let _ = writeln!(
+            out,
+            "    {{\n        let rotation = mat3x3<f32>(fractal_params[{}].xyz, fractal_params[{}].xyz, fractal_params[{}].xyz);",
+            k + 1,
+            k + 2,
+            k + 3
+        );
+        let _ = writeln!(
+            out,
+            "        let scale = fractal_params[{}].x;\n        let local = fractal_repeat_mod((p - fractal_params[{k}].xyz) * rotation, fractal_params[{}].xyz) * scale;",
+            k + 5,
+            k + 4
+        );
+        let _ = writeln!(
+            out,
+            "        let d = fractal_c{c}_distance(local, detail_size) / scale;"
+        );
+        let combine = match (c, component.operator, component.smooth) {
+            (0, ..) => "distance = d;".to_owned(),
+            (_, Operator::Or, Some(_)) => {
+                format!("distance = fractal_smooth_union(d, distance, fractal_params[{}].y);", k + 5)
+            }
+            (_, Operator::Or, None) => "distance = min(d, distance);".into(),
+            (_, Operator::And, _) => "distance = max(d, distance);".into(),
+            (_, Operator::Sub, _) => "if (distance < detail_size) { distance = select(max(max(1.5 * detail_size - d, distance), 0.0), 1.5 * detail_size, d < 1.5 * detail_size); }".into(),
+        };
+        let _ = writeln!(out, "        {combine}\n    }}");
+    }
+    out.push_str("    return distance;\n}\n");
+    out.insert_str(globals_at, &globals);
+    Ok(FractalShader {
+        source: out,
+        parameters,
+    })
+}
+
+/// WGSL for any scene shape.
+pub fn emit_shape(shape: &Shape) -> Result<FractalShader> {
+    match shape {
+        Shape::Single(fractal) => emit(fractal),
+        Shape::Boolean(scene) => emit_boolean(scene),
+    }
+}
+
+/// Appends `fractal`'s functions, named from `prefix`, to `out`, with its
+/// parameters appended to `parameters` (its two header slots first).
+/// `{prefix}distance(p, detail_size)` is the entry point.
+fn emit_fractal(
+    fractal: &Fractal,
+    prefix: &str,
+    parameters: Vec<[f32; 4]>,
+    globals: &mut String,
+    out: &mut String,
+) -> Result<Vec<[f32; 4]>> {
+    let header = parameters.len();
     let mut emitter = Emitter {
         fractal,
-        parameters: vec![[0.0; 4]; HEADER_SLOTS],
+        parameters,
         slots: HashMap::new(),
         families: HashMap::new(),
         current: 0,
+        prefix: prefix.to_owned(),
+        header,
         scopes: vec![HashMap::new()],
-        globals: String::new(),
-        out: String::new(),
+        globals: std::mem::take(globals),
+        out: std::mem::take(out),
         indent: 0,
         temporaries: 0,
     };
-    let julia = fractal.julia.unwrap_or([0.0; 3]);
-    emitter.parameters[0] = [
+    let m = fractal.constant_multiplier;
+    emitter.push_slot([
         fractal.max_iterations as f32,
         fractal.bailout as f32,
         fractal.initial_w as f32,
         fractal.min_iterations as f32,
-    ];
-    let m = fractal.constant_multiplier;
-    emitter.parameters[1] = [m[0] as f32, m[1] as f32, m[2] as f32, 0.0];
+    ]);
+    emitter.push_slot([m[0] as f32, m[1] as f32, m[2] as f32, 0.0]);
+    let julia = fractal.julia.unwrap_or([0.0; 3]);
     let julia_slot = emitter.push_slot([julia[0] as f32, julia[1] as f32, julia[2] as f32, 0.0]);
-    emitter.prelude();
-    let globals_at = emitter.out.len();
     emitter.formulas()?;
     emitter.distance(julia_slot)?;
-    let globals = std::mem::take(&mut emitter.globals);
-    emitter.out.insert_str(globals_at, &globals);
-    Ok(FractalShader {
-        source: emitter.out,
-        parameters: emitter.parameters,
-    })
+    *globals = emitter.globals;
+    *out = emitter.out;
+    Ok(emitter.parameters)
 }
+
+/// Declarations every generated module shares.
+fn prelude(out: &mut String) {
+    out.push_str("// Generated by fpt-fractal from Mandelbulber's formula sources.\n");
+    out.push_str("struct FractalAux {\n");
+    for (name, ty) in &AUX_FIELDS {
+        let _ = writeln!(out, "    {name}: {},", ty.wgsl());
+    }
+    out.push_str("}\n\n");
+    out.push_str(FRACTAL_ORBIT);
+    out.push_str(crate::boolean::WGSL_HELPERS);
+}
+
+const FRACTAL_ORBIT: &str = r#"struct FractalOrbit {
+    z: vec4<f32>,
+    aux: FractalAux,
+    iterations: i32,
+    formula: i32,
+    empty: bool,
+}
+
+// Mandelbulber's SmoothCVector: blends direction and length apart.
+fn fractal_smooth_vector(a: vec4<f32>, b: vec4<f32>, k: f32) -> vec4<f32> {
+    if (k <= 0.0) { return a; }
+    if (k >= 1.0) { return b; }
+    let blend = a * (1.0 - k) + b * k;
+    let blend_length = length(blend);
+    if (blend_length <= 0.0) { return a; }
+    return blend / blend_length * (length(a) * (1.0 - k) + length(b) * k);
+}
+
+"#;
 
 impl Emitter<'_> {
     fn params(&self) -> &Parameters {
@@ -208,16 +339,6 @@ impl Emitter<'_> {
         }
         self.out.push_str(text.as_ref());
         self.out.push('\n');
-    }
-
-    fn prelude(&mut self) {
-        self.out
-            .push_str("// Generated by fpt-fractal from Mandelbulber's formula sources.\n");
-        self.out.push_str("struct FractalAux {\n");
-        for (name, ty) in &AUX_FIELDS {
-            let _ = writeln!(self.out, "    {name}: {},", ty.wgsl());
-        }
-        self.out.push_str("}\n\n");
     }
 
     fn slot(&mut self, path: &str) -> Result<Slot> {
@@ -297,7 +418,7 @@ impl Emitter<'_> {
             if ty == Ty::I32 && elements.iter().any(|(_, v)| matches!(v, Value::Bool(_))) {
                 return err(format!("mixed element types in fractal->{template}"));
             }
-            let table = format!("fractal_table{}", self.families.len());
+            let table = format!("{}table{}", self.prefix, self.families.len());
             let array = Ty::Array(Box::new(ty.clone()), items.len()).wgsl();
             let _ = writeln!(
                 self.globals,
@@ -392,7 +513,8 @@ impl Emitter<'_> {
             .ok_or(EmitError("formula has no z".into()))?;
         self.line(format!("// {}", fractal.formulas[k].meta.internal_name));
         self.line(format!(
-            "fn fractal_formula_{k}(z_in: vec4<f32>, aux: ptr<function, FractalAux>) -> vec4<f32> {{"
+            "fn {}formula_{k}(z_in: vec4<f32>, aux: ptr<function, FractalAux>) -> vec4<f32> {{",
+            self.prefix
         ));
         self.indent += 1;
         self.line(format!("var {z} = z_in;"));
@@ -1294,7 +1416,8 @@ impl Emitter<'_> {
                 .collect();
             let _ = writeln!(
                 self.globals,
-                "// Formula run by each iteration; -1 is an empty slot.\nvar<private> fractal_sequence: array<i32, {sequence_length}> = array<i32, {sequence_length}>({});\n",
+                "// Formula run by each iteration; -1 is an empty slot.\nvar<private> {}sequence: array<i32, {sequence_length}> = array<i32, {sequence_length}>({});\n",
+                self.prefix,
                 entries.join(", ")
             );
         }
@@ -1304,22 +1427,40 @@ impl Emitter<'_> {
             .map(|f| self.push_slot([f.weight as f32, 0.0, 0.0, 0.0]))
             .collect();
         let linear_offset = self.push_slot([fractal.linear_de_offset as f32, 0.0, 0.0, 0.0]);
-        self.line("struct FractalOrbit {");
-        self.line("    z: vec4<f32>,");
-        self.line("    aux: FractalAux,");
-        self.line("    iterations: i32,");
-        self.line("    formula: i32,");
-        self.line("    empty: bool,");
-        self.line("}");
-        self.line("");
+        let vector = |v: [f64; 3]| [v[0] as f32, v[1] as f32, v[2] as f32, 0.0];
+        let transform = self.push_slot(vector(fractal.position));
+        for row in fractal.rotation {
+            self.push_slot(vector(row));
+        }
+        self.push_slot(vector(fractal.repeat));
+        let box_fold = fractal
+            .box_fold
+            .map(|(limit, value)| self.push_slot([limit as f32, value as f32, 0.0, 0.0]));
+        let spherical_fold = fractal
+            .spherical_fold
+            .map(|(outer, inner)| self.push_slot([outer as f32, inner as f32, 0.0, 0.0]));
+        let (prefix, header) = (self.prefix.clone(), self.header);
         self.line("// `forced` >= 0 runs exactly that many iterations with no bailout,");
         self.line("// as Delta-DE's probes do.");
-        self.line("fn fractal_orbit(p: vec3<f32>, forced: i32) -> FractalOrbit {");
+        self.line(format!(
+            "fn {prefix}orbit(p: vec3<f32>, forced: i32) -> FractalOrbit {{"
+        ));
         self.indent += 1;
-        self.line("let header = fractal_params[0];");
+        self.line(format!("let header = fractal_params[{header}];"));
         self.line("let max_iterations = select(i32(header.x), forced, forced >= 0);");
         self.line("let bailout = header.y;");
-        self.line("var z = vec4<f32>(p, header.z);");
+        // Compute's "repeat, move and rotate".
+        self.line(format!(
+            "let rotation = mat3x3<f32>(fractal_params[{}].xyz, fractal_params[{}].xyz, fractal_params[{}].xyz);",
+            transform + 1,
+            transform + 2,
+            transform + 3
+        ));
+        self.line(format!(
+            "let q = fractal_repeat_mod((p - fractal_params[{transform}].xyz) * rotation, fractal_params[{}].xyz);",
+            transform + 4
+        ));
+        self.line("var z = vec4<f32>(q, header.z);");
         self.line("var aux: FractalAux;");
         for (field, value) in [
             ("i", "0".to_owned()),
@@ -1350,9 +1491,37 @@ impl Emitter<'_> {
         self.line("let last_last_z = last_z;");
         self.line("last_z = z;");
         self.line("aux.i = i;");
+        if let Some(k) = box_fold {
+            // BoxFolding (legacy_fractal_transforms.cpp).
+            self.line(format!("let box_fold = fractal_params[{k}];"));
+            self.line("for (var axis = 0; axis < 3; axis++) {");
+            self.line("    if (z[axis] > box_fold.x) { z[axis] = box_fold.y - z[axis]; aux.color *= 0.9; }");
+            self.line(
+                "    else if (z[axis] < -box_fold.x) { z[axis] = -box_fold.y - z[axis]; aux.color *= 0.9; }",
+            );
+            self.line("}");
+            self.line("aux.r = length(z);");
+        }
+        if let Some(k) = spherical_fold {
+            // SphericalFolding: outer^2 / max(r^2, inner^2) inside the outer radius.
+            self.line(format!("let sphere_fold = fractal_params[{k}];"));
+            self.line("let outer2 = sphere_fold.x * sphere_fold.x;");
+            self.line("let inner2 = sphere_fold.y * sphere_fold.y;");
+            self.line("let r2 = aux.r * aux.r;");
+            self.line("if (r2 < outer2) {");
+            self.line("    let factor = outer2 / select(r2, inner2, r2 < inner2);");
+            self.line("    z *= factor;");
+            self.line("    aux.DE *= factor;");
+            self.line("    aux.color *= 0.9;");
+            self.line("}");
+            self.line("aux.r = length(z);");
+        }
+        if fractal.hybrid {
+            self.line("let temp_z = z;");
+        }
         if fractal.hybrid {
             self.line(format!(
-                "formula = fractal_sequence[min(i, {})];",
+                "formula = {prefix}sequence[min(i, {})];",
                 sequence_length - 1
             ));
             self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true); }");
@@ -1360,7 +1529,7 @@ impl Emitter<'_> {
             self.line("let previous_color = aux.color;");
             self.line("switch formula {");
         }
-        let m = "fractal_params[1].xyz";
+        let m = &format!("fractal_params[{}].xyz", header + 1);
         for (k, formula) in fractal.formulas.iter().enumerate() {
             if fractal.hybrid {
                 let label = if k + 1 == fractal.formulas.len() {
@@ -1372,10 +1541,10 @@ impl Emitter<'_> {
                 self.indent += 1;
                 let weight = format!("fractal_params[{}].x", weights[k]);
                 self.line(format!(
-                    "if ({weight} > 0.0) {{ z = fractal_formula_{k}(z, &aux); }}"
+                    "if ({weight} > 0.0) {{ z = {prefix}formula_{k}(z, &aux); }}"
                 ));
             } else {
-                self.line(format!("z = fractal_formula_{k}(z, &aux);"));
+                self.line(format!("z = {prefix}formula_{k}(z, &aux);"));
             }
             if formula.add_c {
                 let swapped = matches!(
@@ -1398,7 +1567,7 @@ impl Emitter<'_> {
                 let weight = format!("fractal_params[{}].x", weights[k]);
                 self.line(format!("if ({weight} < 1.0) {{"));
                 self.line(format!(
-                    "    z = fractal_smooth_vector(last_z, z, {weight});"
+                    "    z = fractal_smooth_vector(temp_z, z, {weight});"
                 ));
                 self.line(format!(
                     "    aux.DE = aux.DE * {weight} + previous_de * (1.0 - {weight});"
@@ -1449,23 +1618,11 @@ impl Emitter<'_> {
         self.indent -= 1;
         self.line("}");
         self.line("");
-        if fractal.hybrid {
-            self.line("// Mandelbulber's SmoothCVector: blends direction and length apart.");
-            self.line(
-                "fn fractal_smooth_vector(a: vec4<f32>, b: vec4<f32>, k: f32) -> vec4<f32> {",
-            );
-            self.line("    if (k <= 0.0) { return a; }");
-            self.line("    if (k >= 1.0) { return b; }");
-            self.line("    let blend = a * (1.0 - k) + b * k;");
-            self.line("    let blend_length = length(blend);");
-            self.line("    if (blend_length <= 0.0) { return a; }");
-            self.line("    return blend / blend_length * (length(a) * (1.0 - k) + length(b) * k);");
-            self.line("}");
-            self.line("");
-        }
-        self.line("fn fractal_distance(p: vec3<f32>, detail_size: f32) -> f32 {");
+        self.line(format!(
+            "fn {prefix}distance(p: vec3<f32>, detail_size: f32) -> f32 {{"
+        ));
         self.indent += 1;
-        self.line("let orbit = fractal_orbit(p, -1);");
+        self.line(format!("let orbit = {prefix}orbit(p, -1);"));
         self.line("if (orbit.empty) { return 10.0; }");
         self.line("let z = orbit.z;");
         self.line("let aux = orbit.aux;");
@@ -1474,9 +1631,9 @@ impl Emitter<'_> {
         } else {
             self.analytic_distance(linear_offset)?;
         }
-        self.line(
-            "if (orbit.iterations < i32(fractal_params[0].w) && distance < detail_size) { distance = detail_size; }",
-        );
+        self.line(format!(
+            "if (orbit.iterations < i32(fractal_params[{header}].w) && distance < detail_size) {{ distance = detail_size; }}"
+        ));
         self.line("return clamp(distance, 0.0, 10.0);");
         self.indent -= 1;
         self.line("}");
@@ -1530,6 +1687,7 @@ impl Emitter<'_> {
             (DeFunction::JosKleinian, _) => jos_kleinian(),
             (DeFunction::None, true) => "0.0".into(),
             (DeFunction::None, false) => "-1.0".into(),
+            (DeFunction::Undefined, _) => "aux.r".into(),
         };
         self.line(format!(
             "var distance = select(aux.r, {analytic}, aux.DE > 0.0);"
@@ -1564,8 +1722,13 @@ impl Emitter<'_> {
         self.line("    ahead[axis] += delta;");
         self.line("    behind[axis] -= delta;");
         self.line("    let step = ahead[axis] - behind[axis];");
-        self.line("    let r_ahead = length(fractal_orbit(ahead, orbit.iterations).z.xyz);");
-        self.line("    let r_behind = length(fractal_orbit(behind, orbit.iterations).z.xyz);");
+        let prefix = self.prefix.clone();
+        self.line(format!(
+            "    let r_ahead = length({prefix}orbit(ahead, orbit.iterations).z.xyz);"
+        ));
+        self.line(format!(
+            "    let r_behind = length({prefix}orbit(behind, orbit.iterations).z.xyz);"
+        ));
         // Across a fold kink the central slope can vanish; the smaller
         // one-sided slope keeps the step bounded there.
         self.line("    let one_sided = min(abs(r_ahead - r), abs(r - r_behind)) / (0.5 * step);");
@@ -1752,6 +1915,11 @@ REAL4 TestIteration(REAL4 z, __constant sFractalCl *fractal, sExtendedAuxCl *aux
             delta: false,
             de_function: DeFunction::Logarithmic,
             linear_de_offset: 0.0,
+            position: [0.0; 3],
+            rotation: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            repeat: [0.0; 3],
+            box_fold: None,
+            spherical_fold: None,
         }
     }
 
@@ -1772,17 +1940,23 @@ REAL4 TestIteration(REAL4 z, __constant sFractalCl *fractal, sExtendedAuxCl *aux
 
     #[test]
     fn generated_module_validates_and_folds_baked_branches() {
+        // The formula's own body, without the shared orbit code.
+        let body = |shader: &FractalShader| {
+            let start = shader.source.find("fn fractal_formula_0").unwrap();
+            let end = shader.source.find("fn fractal_orbit").unwrap();
+            shader.source[start..end].to_owned()
+        };
         let enabled = emit(&fractal(true)).unwrap();
         validate(&enabled);
-        assert!(enabled.source.contains("mat3x3<f32>"));
-        assert!(!enabled.source.contains("777.0"));
+        assert!(body(&enabled).contains("mat3x3<f32>"));
+        assert!(!body(&enabled).contains("777.0"));
         let disabled = emit(&fractal(false)).unwrap();
         validate(&disabled);
-        assert!(disabled.source.contains("777.0"));
-        assert!(!disabled.source.contains("mat3x3<f32>"));
+        assert!(body(&disabled).contains("777.0"));
+        assert!(!body(&disabled).contains("mat3x3<f32>"));
         // Header (2) + julia + power + offset (+ 3 matrix rows when enabled)
-        // + weight + linear DE offset.
-        assert_eq!(disabled.parameters.len(), 7);
-        assert_eq!(enabled.parameters.len(), 10);
+        // + weight + linear DE offset + transform (position, 3 rows, repeat).
+        assert_eq!(disabled.parameters.len(), 12);
+        assert_eq!(enabled.parameters.len(), 15);
     }
 }
