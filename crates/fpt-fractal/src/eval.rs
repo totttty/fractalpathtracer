@@ -356,6 +356,12 @@ fn builtin(name: &str, args: &[Value]) -> Result<Value> {
         "atan2" => map2(arg(0)?, arg(1)?, f64::atan2)?,
         "pow" | "powr" => map2(arg(0)?, arg(1)?, f64::powf)?,
         "fmod" => map2(arg(0)?, arg(1)?, |x, y| x % y)?,
+        // opencl_algebra.h: x - s wrapped into [0, a), shifted back by s.
+        "wrap" => {
+            let shifted = map2(arg(0)?, arg(2)?, |x, s| x - s)?;
+            let wrapped = map2(&shifted, arg(1)?, |x, a| x - a * (x / a).floor())?;
+            map2(&wrapped, arg(2)?, |x, s| x + s)?
+        }
         "min" | "fmin" => map2(arg(0)?, arg(1)?, f64::min)?,
         "max" | "fmax" => map2(arg(0)?, arg(1)?, f64::max)?,
         "copysign" => map2(arg(0)?, arg(1)?, f64::copysign)?,
@@ -387,6 +393,41 @@ fn builtin(name: &str, args: &[Value]) -> Result<Value> {
             let v = arg(0)?;
             let length = dot(v, v)?.sqrt();
             map(v, |x| x / length)?
+        }
+        // opencl_algebra.h: a logistic step, 1 / (1 + exp(sharpness (b - a))).
+        "SmoothConditionAGreaterB" => {
+            let (a, b, k) = (
+                arg(0)?.as_scalar()?,
+                arg(1)?.as_scalar()?,
+                arg(2)?.as_scalar()?,
+            );
+            Value::Scalar(1.0 / (1.0 + (k * (b - a)).exp()))
+        }
+        "SmoothConditionALessB" => {
+            let (a, b, k) = (
+                arg(0)?.as_scalar()?,
+                arg(1)?.as_scalar()?,
+                arg(2)?.as_scalar()?,
+            );
+            Value::Scalar(1.0 / (1.0 + (k * (a - b)).exp()))
+        }
+        // opencl_algebra.h: Rodrigues' rotation; the 4D form keeps w.
+        "RotateAroundVectorByAngle" | "RotateAroundVectorByAngle4" => {
+            let (o, k) = (arg(0)?.components(3)?, arg(1)?.components(3)?);
+            let angle = arg(2)?.as_scalar()?;
+            let (s, c) = angle.sin_cos();
+            let along = k[0] * o[0] + k[1] * o[1] + k[2] * o[2];
+            let cross = [
+                k[1] * o[2] - k[2] * o[1],
+                k[2] * o[0] - k[0] * o[2],
+                k[0] * o[1] - k[1] * o[0],
+            ];
+            let r = [0, 1, 2].map(|i| o[i] * c + cross[i] * s + k[i] * along * (1.0 - c));
+            if name.ends_with('4') {
+                Value::vec4([r[0], r[1], r[2], o[3]])
+            } else {
+                Value::vec3(r)
+            }
         }
         "cross" => {
             let (a, b) = (arg(0)?.components(3)?, arg(1)?.components(3)?);
@@ -483,6 +524,8 @@ impl Interpreter<'_> {
         match statement {
             Stmt::Empty => Ok(Flow::Next),
             Stmt::Expr(Expr::Call { name, .. }) if name == "Q_UNUSED" => Ok(Flow::Next),
+            // `(void)aux;` only silences an unused-parameter warning.
+            Stmt::Expr(Expr::Cast { ty, .. }) if ty.name == "void" => Ok(Flow::Next),
             Stmt::Expr(expr) => {
                 self.expr(expr)?;
                 Ok(Flow::Next)

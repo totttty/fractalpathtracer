@@ -62,6 +62,43 @@ impl FractFile {
         }
     }
 
+    /// `(major, minor)` of the `# version` line; (0, 0) when missing.
+    pub fn version_number(&self) -> (u32, u32) {
+        let mut parts = self
+            .version
+            .split('.')
+            .map(|p| p.trim().parse().unwrap_or(0));
+        (parts.next().unwrap_or(0), parts.next().unwrap_or(0))
+    }
+
+    /// `delta_DE_function` after cSettings' compatibility rules
+    /// (settings.cpp): 0 preferred, 1 linear, 2 logarithmic, ...
+    pub fn delta_de_function(&self) -> i64 {
+        let version = self.version_number();
+        let mut function = self.number("delta_DE_function", 0.0) as i64;
+        // Up to 2.06 the setting was linear_DE_mode.
+        if version < (2, 7) && self.get("main_parameters", "linear_DE_mode").is_some() {
+            function = 1;
+        }
+        // Before 2.09 preferred and logarithmic were numbered the other way round.
+        if version < (2, 9) {
+            function = match function {
+                0 => 2,
+                2 => 0,
+                other => other,
+            };
+        }
+        // Up to 2.06 every non-linear function became logarithmic.
+        if version < (2, 7) && function != 1 {
+            function = 2;
+        }
+        // Before 2.20 the stored function applied only with a forced DE method.
+        if version < (2, 20) && self.number("delta_DE_method", 0.0) as i64 == 0 {
+            function = 0;
+        }
+        function
+    }
+
     /// Settings of fractal slot `index` (1-based), as `fractal.cpp` reads them.
     pub fn fractal_settings(&self, index: usize) -> HashMap<String, String> {
         self.sections

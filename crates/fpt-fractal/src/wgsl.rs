@@ -309,6 +309,16 @@ const FRACTAL_ORBIT: &str = r#"struct FractalOrbit {
     iterations: i32,
     formula: i32,
     empty: bool,
+    escaped: bool,
+}
+
+// opencl_algebra.h's RotateAroundVectorByAngle: Rodrigues' rotation.
+fn fractal_rotate_around(o: vec3<f32>, k: vec3<f32>, angle: f32) -> vec3<f32> {
+    return o * cos(angle) + cross(k, o) * sin(angle) + k * dot(k, o) * (1.0 - cos(angle));
+}
+
+fn fractal_rotate_around4(o: vec4<f32>, k: vec3<f32>, angle: f32) -> vec4<f32> {
+    return vec4<f32>(fractal_rotate_around(o.xyz, k, angle), o.w);
 }
 
 // Mandelbulber's SmoothCVector: blends direction and length apart.
@@ -831,6 +841,7 @@ impl Emitter<'_> {
                 Ok(())
             }
             Expr::Call { name, .. } if name == "Q_UNUSED" => Ok(()),
+            Expr::Cast { ty, .. } if ty.name == "void" => Ok(()),
             Expr::Call { name, args } if name == "__comma" => {
                 self.expression_statement(&args[0])?;
                 self.expression_statement(&args[1])
@@ -1323,6 +1334,18 @@ impl Emitter<'_> {
                 let (codes, ty) = float_args(self, 2)?;
                 (format!("{wgsl}({}, {})", codes[0], codes[1]), ty)
             }
+            "wrap" => {
+                let (codes, ty) = float_args(self, 3)?;
+                let shifted = format!("({} - {})", codes[0], codes[2]);
+                (
+                    format!(
+                        "({shifted} - {a} * floor({shifted} / {a}) + {s})",
+                        a = codes[1],
+                        s = codes[2]
+                    ),
+                    ty,
+                )
+            }
             "fmod" => {
                 let (codes, ty) = float_args(self, 2)?;
                 (
@@ -1373,6 +1396,34 @@ impl Emitter<'_> {
                 (code, Ty::F32)
             }
             "normalize" => unary("normalize", self)?,
+            "SmoothConditionAGreaterB" | "SmoothConditionALessB" => {
+                let a = self.coerced(&args[0], &Ty::F32)?;
+                let b = self.coerced(&args[1], &Ty::F32)?;
+                let k = self.coerced(&args[2], &Ty::F32)?;
+                let difference = if name.ends_with("GreaterB") {
+                    format!("({b} - {a})")
+                } else {
+                    format!("({a} - {b})")
+                };
+                (format!("(1.0 / (1.0 + exp({k} * {difference})))"), Ty::F32)
+            }
+            "RotateAroundVectorByAngle" | "RotateAroundVectorByAngle4" => {
+                let origin =
+                    self.coerced(&args[0], &Ty::Vec(if name.ends_with('4') { 4 } else { 3 }))?;
+                let axis = self.coerced(&args[1], &Ty::Vec(3))?;
+                let angle = self.coerced(&args[2], &Ty::F32)?;
+                if name.ends_with('4') {
+                    (
+                        format!("fractal_rotate_around4({origin}, {axis}, {angle})"),
+                        Ty::Vec(4),
+                    )
+                } else {
+                    (
+                        format!("fractal_rotate_around({origin}, {axis}, {angle})"),
+                        Ty::Vec(3),
+                    )
+                }
+            }
             "cross" => {
                 let (codes, ty) = float_args(self, 2)?;
                 match ty {
@@ -1485,6 +1536,7 @@ impl Emitter<'_> {
         self.line("var formula = 0;");
         self.line("var last_z = z;");
         self.line("var done = false;");
+        self.line("var escaped = false;");
         self.line("for (var i = 0; i < max_iterations; i++) {");
         self.indent += 1;
         self.line("iterations = i + 1;");
@@ -1524,7 +1576,7 @@ impl Emitter<'_> {
                 "formula = {prefix}sequence[min(i, {})];",
                 sequence_length - 1
             ));
-            self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true); }");
+            self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true, false); }");
             self.line("let previous_de = aux.DE;");
             self.line("let previous_color = aux.color;");
             self.line("switch formula {");
@@ -1591,9 +1643,13 @@ impl Emitter<'_> {
             self.line("}");
             if formula.check_bailout {
                 self.line("if (!done && forced < 0) {");
-                self.line(format!("    if (aux.r > bailout) {{ {exit} }}"));
+                self.line(format!(
+                    "    if (aux.r > bailout) {{ escaped = true; {exit} }}"
+                ));
                 if formula.additional_bailout {
-                    // The pseudo-Kleinian "orbit stalled" exit.
+                    // The pseudo-Kleinian "orbit stalled" exit, which also
+                    // always clears Mandelbulber's maxiter flag.
+                    self.line("    escaped = true;");
                     self.line(format!(
                         "    if (length(z - last_z) / aux.r < 0.1 / bailout) {{ {exit} }}"
                     ));
@@ -1614,7 +1670,7 @@ impl Emitter<'_> {
         }
         self.indent -= 1;
         self.line("}");
-        self.line("return FractalOrbit(z, aux, iterations, formula, false);");
+        self.line("return FractalOrbit(z, aux, iterations, formula, false, escaped);");
         self.indent -= 1;
         self.line("}");
         self.line("");
@@ -1631,9 +1687,33 @@ impl Emitter<'_> {
         } else {
             self.analytic_distance(linear_offset)?;
         }
+        // CalculateDistanceSimple's maxiter, interior and threshold rules.
+        let jos_delta = fractal.delta && fractal.de_function == DeFunction::JosKleinian;
+        self.line(format!(
+            "let never_escaped = !orbit.escaped && {};",
+            !jos_delta
+        ));
+        self.line(format!(
+            "let maxiter = {} && never_escaped;",
+            fractal.iteration_threshold
+        ));
+        self.line("if (maxiter) { distance = 0.0; }");
         self.line(format!(
             "if (orbit.iterations < i32(fractal_params[{header}].w) && distance < detail_size) {{ distance = detail_size; }}"
         ));
+        if fractal.interior {
+            let flag = if fractal.delta {
+                "maxiter"
+            } else {
+                "never_escaped"
+            };
+            self.line(format!(
+                "if (distance < 0.5 * detail_size || {flag}) {{ distance = detail_size; }}"
+            ));
+        }
+        if fractal.iteration_threshold {
+            self.line("if (!maxiter && distance < detail_size) { distance = detail_size * 1.01; }");
+        }
         self.line("return clamp(distance, 0.0, 10.0);");
         self.indent -= 1;
         self.line("}");
@@ -1920,6 +2000,8 @@ REAL4 TestIteration(REAL4 z, __constant sFractalCl *fractal, sExtendedAuxCl *aux
             repeat: [0.0; 3],
             box_fold: None,
             spherical_fold: None,
+            interior: false,
+            iteration_threshold: false,
         }
     }
 

@@ -128,10 +128,15 @@ fn main() {
         .map(|s| [s[0] as f32, s[1] as f32, s[2] as f32, s[3] as f32])
         .collect();
     let gpu = gpu_distances(&source, &shader.parameters, &inputs);
-    let reference: Vec<f64> = samples
-        .iter()
-        .map(|s| shape.distance([s[0], s[1], s[2]], s[3]).unwrap())
-        .collect();
+    // GPU_CHECK_NO_REFERENCE skips the f64 pass (native_check already ran it).
+    let reference: Vec<f64> = if env::var_os("GPU_CHECK_NO_REFERENCE").is_some() {
+        Vec::new()
+    } else {
+        samples
+            .iter()
+            .map(|s| shape.distance([s[0], s[1], s[2]], s[3]).unwrap())
+            .collect()
+    };
     println!(
         "formula {}: {} parameter slots, {} lines of WGSL",
         shape.fractals()[0].primary().meta.internal_name,

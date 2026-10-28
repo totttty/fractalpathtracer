@@ -64,6 +64,10 @@ pub struct Fractal {
     pub box_fold: Option<(f64, f64)>,
     /// Global `spherical_folding` (outer, inner), after the box fold.
     pub spherical_fold: Option<(f64, f64)>,
+    /// `interior_mode`: points that never escape are a solid surface.
+    pub interior: bool,
+    /// `iteration_threshold_mode`: the surface is where orbits stop escaping.
+    pub iteration_threshold: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -83,7 +87,7 @@ pub struct OrbitResult {
 
 fn delta_function(file: &FractFile, preferred: DeFunction) -> DeFunction {
     // delta_DE_function: 0 preferred, 1 linear, 2 logarithmic, 3 pseudo-Kleinian, ...
-    match file.number("delta_DE_function", 0.0) as i64 {
+    match file.delta_de_function() {
         1 => DeFunction::Linear,
         2 => DeFunction::Logarithmic,
         3 => DeFunction::PseudoKleinian,
@@ -211,7 +215,7 @@ impl Fractal {
         }
         // A chosen delta_DE_function also replaces a single formula's
         // analytic DE (cNineFractals, non-hybrid branch).
-        if !hybrid && file.number("delta_DE_function", 0.0) as i64 != 0 {
+        if !hybrid && file.delta_de_function() != 0 {
             formulas[0].meta.analytic_function = de_function;
         }
         let sequence = if hybrid {
@@ -243,6 +247,8 @@ impl Fractal {
                     file.number("box_folding_value", 2.0),
                 )
             }),
+            interior: file.boolean("interior_mode", false),
+            iteration_threshold: file.boolean("iteration_threshold_mode", false),
             spherical_fold: file.boolean("spherical_folding", false).then(|| {
                 (
                     file.number("spherical_folding_outer", 1.0),
@@ -523,8 +529,24 @@ impl Fractal {
         } else {
             base.r
         };
+        // CalculateDistanceSimple's maxiter, interior and threshold rules (ray
+        // marching, limits off). Delta-DE ignores maxiter without the threshold
+        // mode; the analytic interior test reads it regardless.
+        let never_escaped = base.max_iterations_reached
+            && !(self.delta && self.de_function == DeFunction::JosKleinian);
+        let maxiter = self.iteration_threshold && never_escaped;
+        if maxiter {
+            distance = 0.0;
+        }
         if base.iterations < self.min_iterations && distance < detail_size {
             distance = detail_size;
+        }
+        let interior_maxiter = if self.delta { maxiter } else { never_escaped };
+        if self.interior && (distance < 0.5 * detail_size || interior_maxiter) {
+            distance = detail_size;
+        }
+        if self.iteration_threshold && !maxiter && distance < detail_size {
+            distance = detail_size * 1.01;
         }
         Ok(distance.clamp(0.0, 10.0))
     }
