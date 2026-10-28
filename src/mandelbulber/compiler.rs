@@ -314,6 +314,7 @@ pub fn specialize_scene_with_kernel_specialization(
             scene.global_box_folding || scene.global_spherical_folding,
             direct_hybrid_loop,
             formula_optimization,
+            scene_deep_origin(scene),
         )
     } else {
         let (_, formula) = formulas
@@ -3847,7 +3848,17 @@ pub fn specialize_fpt_shader(
                     super::double_float::DEEP_MARKER,
                     super::double_float::LIBRARY,
                     super::double_float::origin_constants(origin),
-                    super::double_float::formula_source(&declarations, &formula.function_name)?
+                    super::double_float::with_parameter_remainders(
+                        &super::double_float::formula_source(
+                            &declarations,
+                            &formula.function_name
+                        )?,
+                        &if supports_bulb_parameter_block(formula) {
+                            bulb_parameter_remainders(formula_values)?
+                        } else {
+                            Vec::new()
+                        }
+                    )
                 ),
                 super::double_float::standalone_sample_source(
                     &formula.function_name,
@@ -4374,6 +4385,7 @@ pub fn specialize_fpt_shader_hybrid(
     global_folding: bool,
     direct_hybrid_loop: bool,
     formula_optimization: SceneFormulaOptimizationPolicy,
+    deep_origin: Option<[f64; 3]>,
 ) -> Result<String> {
     // Without slot 1 among the active slots, its container still holds the
     // default mandelbox scale.
@@ -4467,6 +4479,10 @@ pub fn specialize_fpt_shader_hybrid(
             && slots
                 .iter()
                 .any(|slot| slot.formula.source.de_type == "deltaDEType"));
+    ensure!(
+        deep_origin.is_none() || !uses_delta,
+        "deep zoom does not support Delta-DE hybrids yet"
+    );
     // Dual gradients need every slot's formula translated; global folds keep
     // their validated finite-difference probe.
     let dual_hybrid = uses_delta
@@ -4526,8 +4542,13 @@ pub fn specialize_fpt_shader_hybrid(
             linear_de_offset,
             delta_de_function,
         )?);
+        let orbit_function = if deep_origin.is_some() {
+            "mandelHybridDeepOrbit"
+        } else {
+            "mandelHybridOrbit"
+        };
         format!(
-            r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
+            r#"    MandelHybridOrbitResult base = {orbit_function}(
         scaled, cfg, -iteration_multiplier, iteration_budget);{empty_slot_exit}
     float4 z = base.z;
     MandelOrbitState aux = {{}};
@@ -4572,6 +4593,34 @@ pub fn specialize_fpt_shader_hybrid(
             )
             .collect::<Vec<_>>();
         super::dual::hybrid_delta_source(&dual_slots, &initial_w, &seed_actual_scale)?
+    } else if let Some(origin) = deep_origin {
+        let deep_slots = slots
+            .iter()
+            .zip(&slot_sources)
+            .map(
+                |(slot, (index, namespace, slot_declarations, constant_addition))| {
+                    super::double_float::HybridDeepSlot {
+                        index: *index,
+                        namespace,
+                        declarations: slot_declarations,
+                        function_name: &slot.formula.function_name,
+                        constant_addition,
+                    }
+                },
+            )
+            .collect::<Vec<_>>();
+        format!(
+            "{}\n{}{}{}",
+            super::double_float::DEEP_MARKER,
+            super::double_float::LIBRARY,
+            super::double_float::origin_constants(origin),
+            super::double_float::hybrid_orbit_source(
+                &deep_slots,
+                &initial_w,
+                &seed_actual_scale,
+                sequence.len()
+            )?
+        )
     } else {
         String::new()
     };
@@ -6020,6 +6069,38 @@ fn bulb_constant_initializer(values: &BTreeMap<String, String>) -> Result<String
         metal_float(gamma),
         metal_float(power)
     ))
+}
+
+/// Deep zooms need the bulb parameters past fp32: 22.5 degrees in radians
+/// alone is off by ~1e-8, which the power multiplies every iteration. The
+/// remainder of the f64 value over the f32 constant `bulb_constant_initializer`
+/// emits, as (parameter path, remainder) pairs.
+fn bulb_parameter_remainders(
+    values: &BTreeMap<String, String>,
+) -> Result<Vec<(&'static str, f32)>> {
+    let exact = |name: &str, fallback: f64| -> Result<f64> {
+        Ok(match values.get(name) {
+            Some(value) => value
+                .replace(',', ".")
+                .parse::<f64>()
+                .with_context(|| format!("invalid fractal_1.{name} value {value}"))?,
+            None => fallback,
+        })
+    };
+    let mut remainders = Vec::new();
+    for (path, name) in [
+        ("fractal.bulb.alphaAngleOffset", "alpha_angle_offset"),
+        ("fractal.bulb.betaAngleOffset", "beta_angle_offset"),
+        ("fractal.bulb.gammaAngleOffset", "gamma_angle_offset"),
+    ] {
+        let single = formula_scalar(values, name, 0.0)?.to_radians();
+        let double = exact(name, 0.0)?.to_radians();
+        remainders.push((path, (double - f64::from(single)) as f32));
+    }
+    let power = formula_scalar(values, "power", 9.0)?;
+    let remainder = (exact("power", 9.0)? - f64::from(power)) as f32;
+    remainders.push(("fractal.bulb.power", remainder));
+    Ok(remainders)
 }
 
 fn analytic_de_constant_initializer(values: &BTreeMap<String, String>) -> Result<String> {

@@ -1074,7 +1074,6 @@ impl MandelbulberScene {
             || enabled("clouds_enable")
             || enabled("random_lights_group")
             || self.boolean_enabled
-            || self.hybrid_enabled
             || self.fractal_rotation != [0.0; 3]
             || self.fractal_repeat != [0.0; 3]
             || self.global_box_folding
@@ -3957,13 +3956,17 @@ fn parameter_number(values: &BTreeMap<String, String>, name: &str, fallback: f64
 /// Catalogue scenes whose surface detail is below one fp32 ulp of the camera
 /// position (Mandelbulber's own notes require its double-precision CPU path).
 /// `FPT_MANDEL_DEEP_ZOOM` opts any other eligible scene in.
-const DEEP_ZOOM_SCENES: [&str; 3] = [
+const DEEP_ZOOM_SCENES: [&str; 5] = [
     // mandelbox58: camera 8.5e-14 from its target.
     "b69a45c2c53f2aa7a70d148fda8d5cb5d186fd18526dfdc63b8981671ac968b5",
     // aboxMod11_for8cA.
     "c318cee69f25fee270a419bf9f6e23b495e3b9f3a2af58a61744f3b7fde33de1",
     // mandelbulb power 2 - slice 4.
     "4098156c0452ec3949d0884c6b4a84de910cb03996991db2d8430e27a8bfb1fd",
+    // mandelbulb power 8 - 4_2: camera 3.4e-10 from its target.
+    "52e7bfb4416ee88d43bfd54959d9774f258a277a3c891ec4de6bbd31817a08f0",
+    // menger-FabsAddTgladFold4D (hybrid): rays hit within 1e-8 of the camera.
+    "ed6528d2335f47f90415a3d3874c0f93c78fd073f9cebbd56bbd502a7ab38a13",
 ];
 
 fn is_deep_zoom_source(source: &str) -> bool {
@@ -4969,7 +4972,7 @@ target 0 0 0;
         assert_eq!(scene.deep_origin(), None);
         let mut scene = MandelbulberScene::parse(IFS_SCENE).expect("ifs scene");
         scene.deep_zoom = true;
-        scene.hybrid_enabled = true;
+        scene.boolean_enabled = true;
         assert_eq!(scene.deep_origin(), None);
     }
 

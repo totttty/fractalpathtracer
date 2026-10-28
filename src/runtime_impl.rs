@@ -7561,6 +7561,7 @@ fn mandel_parity(args: &[String]) -> Result<()> {
             scene.global_box_folding || scene.global_spherical_folding,
             false,
             mandelbulber::compiler::SceneFormulaOptimizationPolicy::default(),
+            None,
         )?)
     } else if let Some((_, formula)) = runtime_formulas.first() {
         Some(mandelbulber::compiler::specialize_fpt_shader(

@@ -200,6 +200,127 @@ static inline bool dfIsNaN(DF4 a) {
     return any(((bits & 0x7f800000u) == 0x7f800000u) & ((bits & 0x007fffffu) != 0u));
 }
 
+// Transcendentals to about 1e-14: series on reduced arguments, or one Newton
+// step from the fp32 result, which squares its ~1e-7 error.
+static inline DF dfSinSeries(DF r, DF r2) {
+    DF p = DF(2.811457359e-15f, -1.046208474e-22f);
+    p = DF(7.647163610e-13f, 1.220071047e-20f) - r2 * p;
+    p = DF(1.605904437e-10f, -5.352526512e-18f) - r2 * p;
+    p = DF(2.505210794e-08f, 4.417623045e-16f) - r2 * p;
+    p = DF(2.755731884e-06f, 3.793571224e-14f) - r2 * p;
+    p = DF(1.984127011e-04f, -2.725596875e-12f) - r2 * p;
+    p = DF(8.333333768e-03f, -4.346172033e-10f) - r2 * p;
+    p = DF(1.666666716e-01f, -4.967053879e-09f) - r2 * p;
+    return r - r * r2 * p;
+}
+static inline DF dfCosSeries(DF r2) {
+    DF q = DF(4.779477256e-14f, 7.625444044e-22f);
+    q = DF(1.147074536e-11f, 2.372207689e-19f) - r2 * q;
+    q = DF(2.087675588e-09f, 1.108283981e-16f) - r2 * q;
+    q = DF(2.755731998e-07f, -7.575112209e-15f) - r2 * q;
+    q = DF(2.480158764e-05f, -3.406996094e-13f) - r2 * q;
+    q = DF(1.388888923e-03f, -3.363109444e-11f) - r2 * q;
+    q = DF(4.166666791e-02f, -1.241763470e-09f) - r2 * q;
+    q = DF(5.000000000e-01f) - r2 * q;
+    return DF(1.0f) - r2 * q;
+}
+static inline void dfSinCos(DF x, thread DF &s, thread DF &c) {
+    float k = rint(x.hi * 0.636619772f);
+    DF r = x - DF(1.570796371e+00f, -4.371138829e-08f) * k;
+    DF r2 = r * r;
+    DF sr = dfSinSeries(r, r2);
+    DF cr = dfCosSeries(r2);
+    int quadrant = int(k) & 3;
+    s = quadrant == 0 ? sr : (quadrant == 1 ? cr : (quadrant == 2 ? -sr : -cr));
+    c = quadrant == 0 ? cr : (quadrant == 1 ? -sr : (quadrant == 2 ? -cr : sr));
+}
+static inline DF sin(DF x) { DF s, c; dfSinCos(x, s, c); return s; }
+static inline DF cos(DF x) { DF s, c; dfSinCos(x, s, c); return c; }
+static inline DF tan(DF x) { DF s, c; dfSinCos(x, s, c); return s / c; }
+static inline DF atan2(DF y, DF x) {
+    if (x.hi == 0.0f && y.hi == 0.0f) return DF(atan2(y.hi, x.hi));
+    float a0 = atan2(y.hi, x.hi);
+    DF s, c;
+    dfSinCos(DF(a0), s, c);
+    return DF(a0) + (y * c - x * s) / (x * c + y * s);
+}
+static inline DF atan(DF x) { return atan2(x, DF(1.0f)); }
+static inline DF mandelSafeAsin(DF value) {
+    if (!(abs(value.hi) <= 1.0f + 1.0e-5f)) return DF(as_type<float>(0x7fc00000u));
+    value = clamp(value, -1.0f, 1.0f);
+    return atan2(value, sqrt((DF(1.0f) - value) * (DF(1.0f) + value)));
+}
+static inline DF mandelSafeAcos(DF value) {
+    if (!(abs(value.hi) <= 1.0f + 1.0e-5f)) return DF(as_type<float>(0x7fc00000u));
+    value = clamp(value, -1.0f, 1.0f);
+    return atan2(sqrt((DF(1.0f) - value) * (DF(1.0f) + value)), value);
+}
+static inline DF asin(DF value) { return mandelSafeAsin(value); }
+static inline DF acos(DF value) { return mandelSafeAcos(value); }
+static inline DF exp(DF x) {
+    float k = rint(x.hi * 1.442695041f);
+    // e^r - 1 on r / 512, then squared back nine times as s(s + 2).
+    DF r = (x - DF(6.931471825e-01f, -1.904654212e-09f) * k) * (1.0f / 512.0f);
+    DF p = DF(2.480158764e-05f, -3.406996094e-13f);
+    p = DF(1.984127011e-04f, -2.725596875e-12f) + r * p;
+    p = DF(1.388888923e-03f, -3.363109444e-11f) + r * p;
+    p = DF(8.333333768e-03f, -4.346172033e-10f) + r * p;
+    p = DF(4.166666791e-02f, -1.241763470e-09f) + r * p;
+    p = DF(1.666666716e-01f, -4.967053879e-09f) + r * p;
+    p = DF(5.000000000e-01f) + r * p;
+    DF s = r + r * r * p;
+    for (int i = 0; i < 9; ++i) s = s * (s + 2.0f);
+    DF e = s + 1.0f;
+    return DF(ldexp(e.hi, int(k)), ldexp(e.lo, int(k)));
+}
+static inline DF log(DF a) {
+    if (!(a.hi > 0.0f)) return DF(log(a.hi));
+    DF l = DF(log(a.hi));
+    return l + a * exp(-l) - 1.0f;
+}
+static inline DF pow(DF a, float p) {
+    if (!(a.hi > 0.0f)) return DF(pow(a.hi, p));
+    if (p == rint(p) && abs(p) <= 64.0f) {
+        int n = int(abs(p));
+        DF result = DF(1.0f);
+        DF base = a;
+        while (n > 0) {
+            if ((n & 1) != 0) result = result * base;
+            base = base * base;
+            n >>= 1;
+        }
+        return p < 0.0f ? DF(1.0f) / result : result;
+    }
+    return exp(log(a) * p);
+}
+static inline DF pow(DF a, DF p) {
+    if (p.lo == 0.0f) return pow(a, p.hi);
+    if (!(a.hi > 0.0f)) return DF(pow(a.hi, p.hi));
+    return exp(log(a) * p);
+}
+
+static inline DF dfComponent(DF4 v, int c) {
+    return c == 0 ? v.x : (c == 1 ? v.y : (c == 2 ? v.z : v.w));
+}
+static inline DF dfComponentRest(DF4 v, int c) {
+    if (c == 0) v.x = 0.0f;
+    else if (c == 1) v.y = 0.0f;
+    else if (c == 2) v.z = 0.0f;
+    else v.w = 0.0f;
+    return length(v);
+}
+static inline bool dfComponentRadius(DF4 v, DF r) {
+    return r.hi > 0.0f && abs(length(v) - r).hi <= 1.0e-6f * r.hi;
+}
+static inline DF mandelComponentAsin(DF4 v, int c, DF r) {
+    return dfComponentRadius(v, r) ? atan2(dfComponent(v, c), dfComponentRest(v, c))
+                                   : mandelSafeAsin(dfComponent(v, c) / r);
+}
+static inline DF mandelComponentAcos(DF4 v, int c, DF r) {
+    return dfComponentRadius(v, r) ? atan2(dfComponentRest(v, c), dfComponent(v, c))
+                                   : mandelSafeAcos(dfComponent(v, c) / r);
+}
+
 struct MandelDeepOrbitState {
     uint i;
     DF4 c;
@@ -240,6 +361,17 @@ pub(super) fn origin_constants(origin: [f64; 3]) -> String {
     )
 }
 
+/// Reads of `fractal.<path>` in a double-float formula become `DF(value,
+/// remainder)` for parameters whose f32 constant drops a nonzero remainder.
+pub(super) fn with_parameter_remainders(source: &str, remainders: &[(&str, f32)]) -> String {
+    remainders
+        .iter()
+        .filter(|(_, remainder)| *remainder != 0.0)
+        .fold(source.to_owned(), |source, (path, remainder)| {
+            source.replace(path, &format!("DF({path}, {remainder:.9e}f)"))
+        })
+}
+
 /// Double-float copy of the formula, with the matrix helper when the
 /// declarations define `matrix33`.
 pub(super) fn formula_source(declarations: &str, function_name: &str) -> Result<String> {
@@ -251,6 +383,137 @@ pub(super) fn formula_source(declarations: &str, function_name: &str) -> Result<
     Ok(format!(
         "{matrix}{}\n",
         translate_formula(declarations, function_name, &DEEP_TYPES)?
+    ))
+}
+
+/// One hybrid slot to translate into double-float.
+pub(super) struct HybridDeepSlot<'a> {
+    pub index: usize,
+    pub namespace: &'a str,
+    /// The slot's own emitted namespace source (parameters, helpers, formula).
+    pub declarations: &'a str,
+    pub function_name: &'a str,
+    /// The slot's float constant-addition statement, if any.
+    pub constant_addition: &'a str,
+}
+
+/// Double-float twin of `mandelHybridOrbit`: the same sequence, weights,
+/// smoothing, constant additions, per-slot bailouts and NaN rule, iterated from
+/// origin + the camera-relative point, returning the float orbit result.
+pub(super) fn hybrid_orbit_source(
+    slots: &[HybridDeepSlot<'_>],
+    initial_w: &str,
+    actual_scale: &str,
+    sequence_length: usize,
+) -> Result<String> {
+    let mut namespaces = String::new();
+    let mut dispatch_cases = String::new();
+    for slot in slots {
+        namespaces.push_str(&format!(
+            "namespace {} {{\n{}}}\n\n",
+            slot.namespace,
+            formula_source(slot.declarations, slot.function_name)?
+        ));
+        dispatch_cases.push_str(&format!(
+            "            case {}:\n                if (formula_weight > 0.0f) z = {}::{}Deep(z, {}::kMandelFormulaParameters, aux);\n{}                break;\n",
+            slot.index,
+            slot.namespace,
+            slot.function_name,
+            slot.namespace,
+            slot.constant_addition.replace("float4(", "DF4(")
+        ));
+    }
+    Ok(format!(
+        r#"{namespaces}static DF4 dfHybridSmoothVector(DF4 first, DF4 second, float weight) {{
+    if (weight <= 0.0f) return first;
+    if (weight >= 1.0f) return second;
+    float inverse_weight = 1.0f - weight;
+    DF interpolated_length = length(first) * inverse_weight + length(second) * weight;
+    DF4 blended = first * inverse_weight + second * weight;
+    DF blended_length = length(blended);
+    return blended_length.hi > 0.0f ? blended * (interpolated_length / blended_length) : first;
+}}
+
+static MandelHybridOrbitResult mandelHybridDeepOrbit(float3 scaled,
+                                                      constant FptRenderConfig &cfg,
+                                                      int forced_iterations,
+                                                      int iteration_budget) {{
+    DF4 z = DF4(DF(kMandelDeepOriginHi.x, kMandelDeepOriginLo.x) + DF(scaled.x),
+                DF(kMandelDeepOriginHi.y, kMandelDeepOriginLo.y) + DF(scaled.z),
+                DF(kMandelDeepOriginHi.z, kMandelDeepOriginLo.z) + DF(scaled.y),
+                DF({initial_w}));
+    MandelDeepOrbitState aux;
+    aux.i = 0u;
+    aux.c = z;
+    aux.const_c = z;
+    aux.old_z = z;
+    aux.pos_neg = 1.0f;
+    aux.r = length(z);
+    aux.DE = 1.0f;
+    aux.DE0 = 0.0f;
+    aux.dist = 1000.0f;
+    aux.pseudoKleinianDE = 1.0f;
+    aux.actualScale = {actual_scale};
+    aux.actualScaleA = 0.0f;
+    aux.color = 1.0f;
+    aux.colorHybrid = 0.0f;
+    aux.temp1000 = 1000.0f;
+    int completed_iterations = 0;
+    int iteration_multiplier = max(-forced_iterations, 1);
+    int configured_iterations = min(
+        clamp(int(setv(cfg, 1)) * iteration_multiplier, 1, 4096),
+        {sequence_length});
+    int max_iterations = forced_iterations >= 0
+        ? min(configured_iterations, forced_iterations)
+        : (iteration_budget > 0
+            ? min(configured_iterations, iteration_budget)
+            : configured_iterations);
+    bool escaped = false;
+    DF4 last_last_z = DF4(DF(0.0f));
+    for (int iteration = 0; iteration < max_iterations; ++iteration) {{
+        int sequence_index = int(kMandelHybridSequence[iteration]);
+        float formula_weight = kMandelHybridWeights[sequence_index];
+        aux.i = uint(iteration);
+        last_last_z = aux.old_z;
+        aux.old_z = z;
+        DF4 previous_z = z;
+        DF previous_de = aux.DE;
+        DF previous_color = aux.color;
+        switch (sequence_index) {{
+{dispatch_cases}        }}
+        if (formula_weight < 1.0f) {{
+            z = dfHybridSmoothVector(previous_z, z, formula_weight);
+            float inverse_weight = 1.0f - formula_weight;
+            aux.DE = aux.DE * formula_weight + previous_de * inverse_weight;
+            aux.color = aux.color * formula_weight + previous_color * inverse_weight;
+        }}
+        aux.r = length(z);
+        if (dfIsNaN(z)) {{
+            z = aux.old_z;
+            aux.r = length(z);
+            completed_iterations = iteration + 1;
+            break;
+        }}
+        completed_iterations = iteration + 1;
+        if (forced_iterations < 0
+            && kMandelHybridBailoutChecks[sequence_index] != 0) {{
+            float bailout = kMandelHybridBailouts[sequence_index];
+            if (aux.r > bailout) {{
+                escaped = true;
+                break;
+            }}
+            if (kMandelHybridAdditionalBailoutChecks[sequence_index] != 0) {{
+                escaped = true;
+                if (length(z - aux.old_z) / aux.r < 0.1f / bailout) break;
+                if (length(z - last_last_z) / aux.r < 0.1f / bailout) break;
+            }}
+        }}
+    }}
+    float4 float_z = float4(float(z.x), float(z.y), float(z.z), float(z.w));
+    return {{ float_z, float(aux.r), float(aux.DE), float(aux.dist),
+              float(aux.pseudoKleinianDE), completed_iterations, escaped }};
+}}
+"#
     ))
 }
 
@@ -358,6 +621,23 @@ mod tests {
         let lo = (-2.398_636_884_638_98 - f64::from(hi)) as f32;
         assert!(lo != 0.0);
         assert!(source.contains(&format!("{lo:.9e}f")));
+    }
+
+    #[test]
+    fn parameter_remainders_wrap_only_inexact_reads() {
+        let source = "DF a = fractal.bulb.power - 1.0f; DF b = fractal.bulb.alphaAngleOffset;";
+        let wrapped = with_parameter_remainders(
+            source,
+            &[
+                ("fractal.bulb.power", 0.0),
+                ("fractal.bulb.alphaAngleOffset", 1.5e-8),
+            ],
+        );
+        assert!(wrapped.contains("DF a = fractal.bulb.power - 1.0f;"));
+        assert!(wrapped.contains(&format!(
+            "DF(fractal.bulb.alphaAngleOffset, {:.9e}f)",
+            1.5e-8_f32
+        )));
     }
 
     #[test]
