@@ -6,3 +6,9 @@ description = "Mandelbulber fractal formulas as a portable IR: parsing, CPU eval
 publish = false
 
 [dependencies]
+
+[dev-dependencies]
+wgpu = "29.0.4"
+pollster = "0.4"
+bytemuck = "1"
+naga = { version = "29.0.4", features = ["wgsl-in"] }

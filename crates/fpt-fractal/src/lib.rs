@@ -17,5 +17,6 @@ pub mod orbit;
 pub mod params;
 mod parse;
 pub mod scene;
+pub mod wgsl;
 
 pub use parse::{ParseError, parse_formula_file};
