@@ -276,14 +276,42 @@ struct MandelDualOrbitState {
 /// vector `float` types become dual types except behind `const` (constant
 /// parameter pointers), and the orbit state becomes the dual state.
 pub(super) fn formula_function(declarations: &str, function_name: &str) -> Result<String> {
+    translate_formula(declarations, function_name, &DUAL_TYPES)
+}
+
+/// Target types for a token-level formula translation.
+pub(super) struct FormulaTypes {
+    pub scalar: &'static str,
+    pub vector3: &'static str,
+    pub vector4: &'static str,
+    pub state: &'static str,
+    pub suffix: &'static str,
+}
+
+const DUAL_TYPES: FormulaTypes = FormulaTypes {
+    scalar: "MD",
+    vector3: "MD3",
+    vector4: "MD4",
+    state: "MandelDualOrbitState",
+    suffix: "Dual",
+};
+
+/// Copy of `function_name` from `declarations` with `float` types (except
+/// behind `const`) and the orbit state renamed to `types`, and the function
+/// renamed with `types.suffix`.
+pub(super) fn translate_formula(
+    declarations: &str,
+    function_name: &str,
+    types: &FormulaTypes,
+) -> Result<String> {
     let signature = format!("static float4 {function_name}(");
     let start = declarations
         .find(&signature)
-        .with_context(|| format!("dual translation: {function_name} not found"))?;
+        .with_context(|| format!("formula translation: {function_name} not found"))?;
     let open = start
         + declarations[start..]
             .find('{')
-            .context("dual translation: formula body has no opening brace")?;
+            .context("formula translation: formula body has no opening brace")?;
     let mut depth = 0usize;
     let mut end = None;
     for (offset, ch) in declarations[open..].char_indices() {
@@ -299,7 +327,7 @@ pub(super) fn formula_function(declarations: &str, function_name: &str) -> Resul
             _ => {}
         }
     }
-    let end = end.context("dual translation: unterminated formula body")?;
+    let end = end.context("formula translation: unterminated formula body")?;
     let source = &declarations[start..end];
     let mut output = String::with_capacity(source.len() + 64);
     let mut previous_word = "";
@@ -318,11 +346,11 @@ pub(super) fn formula_function(declarations: &str, function_name: &str) -> Resul
             let word = &source[index..stop];
             let replacement = match word {
                 _ if previous_word == "const" => word.to_owned(),
-                "float" => "MD".to_owned(),
-                "float3" => "MD3".to_owned(),
-                "float4" => "MD4".to_owned(),
-                "MandelOrbitState" => "MandelDualOrbitState".to_owned(),
-                _ if word == function_name => format!("{function_name}Dual"),
+                "float" => types.scalar.to_owned(),
+                "float3" => types.vector3.to_owned(),
+                "float4" => types.vector4.to_owned(),
+                "MandelOrbitState" => types.state.to_owned(),
+                _ if word == function_name => format!("{function_name}{}", types.suffix),
                 _ => word.to_owned(),
             };
             output.push_str(&replacement);

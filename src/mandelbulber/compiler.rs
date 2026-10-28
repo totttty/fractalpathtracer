@@ -326,6 +326,7 @@ pub fn specialize_scene_with_kernel_specialization(
             &scene.formula_parameters,
             scene.force_delta_de,
             scene.delta_de_function,
+            scene_deep_origin(scene),
         )
     }?;
     let specialized = with_periodic_orbit_shift(specialized, scene);
@@ -375,6 +376,20 @@ pub fn scene_uses_kernel_specialization(scene: &Path) -> Result<bool> {
 /// Whether generated Metal source evaluates its radial gradient with dual numbers.
 pub fn source_uses_dual_gradient(source: &str) -> bool {
     super::dual::source_uses_dual_gradient(source)
+}
+
+/// The double-float origin of a deep-zoom scene in fractal space: its camera
+/// less the fractal position, which the rebased config drops.
+fn scene_deep_origin(scene: &MandelbulberScene) -> Option<[f64; 3]> {
+    scene
+        .deep_origin()
+        .map(|camera| std::array::from_fn(|axis| camera[axis] - scene.fractal_position[axis]))
+}
+
+/// Whether generated Metal source iterates in double-float, which needs IEEE
+/// arithmetic (no fast-math reassociation).
+pub fn source_needs_ieee_math(source: &str) -> bool {
+    source.contains(super::double_float::DEEP_MARKER)
 }
 
 pub fn scene_uses_direct_hybrid_loop(scene: &Path) -> Result<bool> {
@@ -3728,6 +3743,7 @@ pub fn specialize_fpt_shader(
     formula_values: &BTreeMap<String, String>,
     force_delta_de: bool,
     delta_de_function: u32,
+    deep_origin: Option<[f64; 3]>,
 ) -> Result<String> {
     ensure!(
         supports_runtime_emitter(formula),
@@ -3780,7 +3796,12 @@ pub fn specialize_fpt_shader(
             ),
         };
     let specialized_kernel_define = mandel_specialized_kernel_define(base_source);
-    let fragment = if force_delta_de || formula.source.de_type == "deltaDEType" {
+    let uses_delta = force_delta_de || formula.source.de_type == "deltaDEType";
+    ensure!(
+        deep_origin.is_none() || !uses_delta,
+        "deep zoom does not support Delta-DE formulas yet"
+    );
+    let fragment = if uses_delta {
         standalone_delta_fragment(
             &declarations,
             &parameter_initializer,
@@ -3819,22 +3840,29 @@ pub fn specialize_fpt_shader(
             overridden_analytic_function(&formula.source.analytic_function, delta_de_function)?;
         let distance_expression =
             clamped_distance_expression(&analytic_distance_expression(analytic_function)?);
-        format!(
-            r#"#define FPT_MANDEL_GENERATED_FIELD 1
-{specialized_kernel_define}
-{declarations}
-
-
-{parameter_initializer}
-
-static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
-    int completed_iterations) {{
-    MandelFormulaIterationCounts counts = {{}};
-    counts.slots[0] = uint(max(completed_iterations, 0));
-    return counts;
-}}
-
-static float4 mandelbulberGeneratedFieldSample(float3 p,
+        let (deep_source, sample_source, fake_orbit_origin) = match deep_origin {
+            Some(origin) => (
+                format!(
+                    "{}\n{}{}{}",
+                    super::double_float::DEEP_MARKER,
+                    super::double_float::LIBRARY,
+                    super::double_float::origin_constants(origin),
+                    super::double_float::formula_source(&declarations, &formula.function_name)?
+                ),
+                super::double_float::standalone_sample_source(
+                    &formula.function_name,
+                    &initial_w,
+                    &actual_scale,
+                    &post_iteration.replace("float4(", "DF4("),
+                    additional_bailout,
+                    &distance_expression,
+                )?,
+                " + kMandelDeepOriginHi.xzy",
+            ),
+            None => (
+                String::new(),
+                format!(
+                    r#"static float4 mandelbulberGeneratedFieldSample(float3 p,
                                                 constant FptRenderConfig &cfg,
                                                 int iteration_multiplier,
                                                 int iteration_budget) {{
@@ -3868,14 +3896,34 @@ static float4 mandelbulberGeneratedFieldSample(float3 p,
         : float(completed_iterations);
     return float4(distance, aux.r, aux.DE, iteration_state);
 }}
+"#
+                ),
+                "",
+            ),
+        };
+        format!(
+            r#"#define FPT_MANDEL_GENERATED_FIELD 1
+{specialized_kernel_define}
+{declarations}
 
+
+{parameter_initializer}
+{deep_source}
+static MandelFormulaIterationCounts mandelbulberProfileFormulaIterations(
+    int completed_iterations) {{
+    MandelFormulaIterationCounts counts = {{}};
+    counts.slots[0] = uint(max(completed_iterations, 0));
+    return counts;
+}}
+
+{sample_source}
 #if defined(FPT_MANDEL_FAKE_LIGHTS)
 #define FPT_MANDEL_HAS_FAKE_ORBIT 1
 // Shading-only orbit query. This never supplies a distance to the marcher.
 static float3 mandelFakeOrbit(float3 p, float3 trap, int first, int last,
                              uint channels, bool relative,
                              constant FptRenderConfig &cfg) {{
-    float3 scaled = p / max(setv(cfg, 0), 1.0f);
+    float3 scaled = p / max(setv(cfg, 0), 1.0f){fake_orbit_origin};
     float4 z = float4(scaled.x, scaled.z, scaled.y, {initial_w});
     MandelOrbitState aux = {{}};
     aux.c = z; aux.const_c = z; aux.old_z = z;

@@ -13,6 +13,7 @@ pub mod catalog;
 pub mod compiler;
 pub mod coverage;
 mod displacement;
+mod double_float;
 mod dual;
 mod formula_optimizer;
 mod interior;
@@ -342,6 +343,8 @@ pub struct MandelbulberScene {
     pub camera_top: [f64; 3],
     pub camera_projection: u32,
     pub legacy_coordinate_system: bool,
+    /// The scene zooms below fp32 position resolution (see `deep_origin`).
+    pub deep_zoom: bool,
     pub fov_degrees: f64,
     pub background_three_colors: bool,
     pub background_colors: [[f32; 3]; 3],
@@ -1054,6 +1057,38 @@ impl MandelbulberScene {
     /// wraps the point into a periodic cell, so translating the camera and
     /// target by whole cell periods is exact and avoids losing every initial
     /// march step to fp32 cancellation.
+    /// Native camera position for deep-zoom rendering: the world is rebased so
+    /// the camera sits at the origin and the fractal iterates in double-float
+    /// from it. None for scenes that keep absolute fp32 coordinates.
+    pub fn deep_origin(&self) -> Option<[f64; 3]> {
+        if !self.deep_zoom {
+            return None;
+        }
+        // Positioned lights, clouds and primitives are baked in absolute
+        // native coordinates; such scenes keep fp32 positions.
+        let positioned_lights = lighting::AuxiliaryLighting::load(self).map_or(true, |lighting| {
+            !lighting.point.is_empty() || lighting.fake.is_some()
+        });
+        let enabled = |name| parameter_bool(&self.main_parameters, name, false).unwrap_or(true);
+        if positioned_lights
+            || enabled("clouds_enable")
+            || enabled("random_lights_group")
+            || self.boolean_enabled
+            || self.hybrid_enabled
+            || self.fractal_rotation != [0.0; 3]
+            || self.fractal_repeat != [0.0; 3]
+            || self.global_box_folding
+            || self.global_spherical_folding
+            || !self.primitive_planes.is_empty()
+            || !self.primitive_spheres.is_empty()
+            || !self.primitive_shapes.is_empty()
+            || self.periodic_camera_rebase().is_some()
+        {
+            return None;
+        }
+        Some(self.camera)
+    }
+
     fn periodic_camera_rebase(&self) -> Option<([f64; 3], [f64; 3])> {
         if self.boolean_enabled
             || self.fractal_position != [0.0; 3]
@@ -1800,6 +1835,7 @@ impl MandelbulberScene {
             camera_top,
             camera_projection,
             legacy_coordinate_system,
+            deep_zoom: is_deep_zoom_source(source),
             fov_degrees,
             background_three_colors: document.boolean(
                 "main_parameters",
@@ -2298,9 +2334,12 @@ impl MandelbulberScene {
             slot += shape.slots();
         }
 
-        let (source_camera, source_target) = self
-            .periodic_camera_rebase()
-            .unwrap_or((self.camera, self.target));
+        let (source_camera, source_target) = match self.deep_origin() {
+            Some(origin) => (subtract(self.camera, origin), subtract(self.target, origin)),
+            None => self
+                .periodic_camera_rebase()
+                .unwrap_or((self.camera, self.target)),
+        };
         let camera = map_mandel_point(source_camera).map(|value| value * WORLD_SCALE);
         let target = map_mandel_point(source_target).map(|value| value * WORLD_SCALE);
         let direction = subtract(target, camera);
@@ -2424,7 +2463,8 @@ impl MandelbulberScene {
         config.vset_values[VPARAM_CAMERA_PROJECTION] = self.camera_projection as f32;
         // Boolean scenes apply the global fractal transform after each slot's
         // own transform, in the generated evaluator (compute_fractal.cpp order).
-        let (position, rotation, repeat) = if self.boolean_enabled {
+        // Deep zooms fold the fractal position into the double-float origin.
+        let (position, rotation, repeat) = if self.boolean_enabled || self.deep_origin().is_some() {
             ([0.0; 3], [0.0; 3], [0.0; 3])
         } else {
             (
@@ -3914,6 +3954,26 @@ fn parameter_number(values: &BTreeMap<String, String>, name: &str, fallback: f64
     Ok(parsed)
 }
 
+/// Catalogue scenes whose surface detail is below one fp32 ulp of the camera
+/// position (Mandelbulber's own notes require its double-precision CPU path).
+/// `FPT_MANDEL_DEEP_ZOOM` opts any other eligible scene in.
+const DEEP_ZOOM_SCENES: [&str; 3] = [
+    // mandelbox58: camera 8.5e-14 from its target.
+    "b69a45c2c53f2aa7a70d148fda8d5cb5d186fd18526dfdc63b8981671ac968b5",
+    // aboxMod11_for8cA.
+    "c318cee69f25fee270a419bf9f6e23b495e3b9f3a2af58a61744f3b7fde33de1",
+    // mandelbulb power 2 - slice 4.
+    "4098156c0452ec3949d0884c6b4a84de910cb03996991db2d8430e27a8bfb1fd",
+];
+
+fn is_deep_zoom_source(source: &str) -> bool {
+    std::env::var_os("FPT_MANDEL_DEEP_ZOOM").is_some() || {
+        use sha2::{Digest, Sha256};
+        let digest = format!("{:x}", Sha256::digest(source.as_bytes()));
+        DEEP_ZOOM_SCENES.contains(&digest.as_str())
+    }
+}
+
 fn parameter_bool(values: &BTreeMap<String, String>, name: &str, fallback: bool) -> Result<bool> {
     match values.get(name).map(String::as_str) {
         None => Ok(fallback),
@@ -4872,6 +4932,45 @@ target 0 0 0;
         let source = source.replace("formula_2 7;", "formula_2 7;\nboolean_operator_1 0;");
         let scene = MandelbulberScene::parse(&source).expect("parse explicit AND");
         assert_eq!(scene.boolean_operators[0], 0, "AND is Mandelbulber value 0");
+    }
+
+    #[test]
+    fn deep_zoom_scenes_march_from_a_camera_origin() {
+        let mut scene = MandelbulberScene::parse(IFS_SCENE).expect("ifs scene");
+        assert!(!scene.deep_zoom, "unlisted scenes keep fp32 positions");
+        assert_eq!(scene.deep_origin(), None);
+
+        scene.deep_zoom = true;
+        scene.fractal_position = [0.25, 0.0, 0.0];
+        assert_eq!(scene.deep_origin(), Some(scene.camera));
+        let mut config = FptRenderConfig::default();
+        scene.apply_to_config(&mut config);
+        assert_eq!(config.camera_position, [0.0; 3]);
+        // The fractal position joins the double-float origin instead.
+        assert_eq!(
+            config.vset_values[VPARAM_FRACTAL_POSITION..VPARAM_FRACTAL_POSITION + 3],
+            [0.0; 3]
+        );
+        let mut absolute = FptRenderConfig::default();
+        scene.deep_zoom = false;
+        scene.apply_to_config(&mut absolute);
+        assert_eq!(absolute.camera_yaw_pitch, config.camera_yaw_pitch);
+        assert_eq!(absolute.camera_roll, config.camera_roll);
+    }
+
+    #[test]
+    fn deep_zoom_needs_scenes_without_absolute_positions() {
+        let lit = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nprimitive_plane_1_enabled true;\nprimitive_plane_1_position 1 2 3;",
+        );
+        let mut scene = MandelbulberScene::parse(&lit).expect("primitive scene");
+        scene.deep_zoom = true;
+        assert_eq!(scene.deep_origin(), None);
+        let mut scene = MandelbulberScene::parse(IFS_SCENE).expect("ifs scene");
+        scene.deep_zoom = true;
+        scene.hybrid_enabled = true;
+        assert_eq!(scene.deep_origin(), None);
     }
 
     #[test]

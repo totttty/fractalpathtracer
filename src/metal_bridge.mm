@@ -47,13 +47,16 @@ void set_error(char *error, size_t error_len, const char *fmt, ...) {
     va_end(args);
 }
 
-MTLCompileOptions *runtime_compile_options() {
+MTLCompileOptions *runtime_compile_options(NSString *metal_source) {
     MTLCompileOptions *options = [MTLCompileOptions new];
     options.languageVersion = MTLLanguageVersion2_4;
+    // Double-float deep-zoom orbits rely on exact IEEE rounding, which fast
+    // math may reassociate away.
+    const bool ieee = [metal_source containsString:@"#define FPT_MANDEL_DOUBLE_FLOAT 1"];
     if (@available(macOS 15.0, *)) {
-        options.mathMode = MTLMathModeFast;
+        options.mathMode = ieee ? MTLMathModeSafe : MTLMathModeFast;
     } else {
-        options.fastMathEnabled = YES;
+        options.fastMathEnabled = ieee ? NO : YES;
     }
     return options;
 }
@@ -85,7 +88,7 @@ id<MTLLibrary> compile_runtime_source_library(
         return library;
     }
     library = [device newLibraryWithSource:metal_source
-                                   options:runtime_compile_options()
+                                   options:runtime_compile_options(metal_source)
                                      error:error];
     if (library) {
         [cache setObject:library

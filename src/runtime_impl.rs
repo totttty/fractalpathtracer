@@ -4551,7 +4551,15 @@ fn cached_diagnostic_metallib(
     digest.update(b"fpt-mandel-diagnostic-metallib-v4\0");
     digest.update(b"macos-metal2.4\0");
     digest.update(optimization.cache_tag());
-    digest.update(b"\0-ffast-math\0");
+    // Double-float orbits rely on exact IEEE rounding.
+    let math_flag = if mandelbulber::compiler::source_needs_ieee_math(source) {
+        "-fno-fast-math"
+    } else {
+        "-ffast-math"
+    };
+    digest.update(b"\0");
+    digest.update(math_flag.as_bytes());
+    digest.update(b"\0");
     digest.update(std::env::consts::ARCH.as_bytes());
     digest.update(source.as_bytes());
     let key = format!("{:x}", digest.finalize());
@@ -4584,7 +4592,7 @@ fn cached_diagnostic_metallib(
     compile_command.args(["-sdk", "macosx", "metal", "-std=macos-metal2.4"]);
     optimization.apply(&mut compile_command);
     let compile = compile_command
-        .args(["-ffast-math", "-c"])
+        .args([math_flag, "-c"])
         .arg(&metal_source)
         .arg("-o")
         .arg(&air)
@@ -4623,7 +4631,7 @@ fn cached_diagnostic_metallib(
                 "metal",
                 "-std=macos-metal2.4",
                 "-O1",
-                "-ffast-math",
+                math_flag,
                 "-c",
             ])
             .arg(&metal_source)
@@ -6681,8 +6689,14 @@ fn compile_mandel_metallib(
     let mut compile_command = Command::new("xcrun");
     compile_command.args(["-sdk", "macosx", "metal", "-std=macos-metal2.4"]);
     optimization.apply(&mut compile_command);
+    let math_flag =
+        if std::str::from_utf8(source).is_ok_and(mandelbulber::compiler::source_needs_ieee_math) {
+            "-fno-fast-math"
+        } else {
+            "-ffast-math"
+        };
     let compile = compile_command
-        .args(["-ffast-math", "-c"])
+        .args([math_flag, "-c"])
         .arg(&metal_path)
         .arg("-o")
         .arg(&air_path)
@@ -7556,6 +7570,7 @@ fn mandel_parity(args: &[String]) -> Result<()> {
             &scene.formula_parameters,
             scene.force_delta_de,
             scene.delta_de_function,
+            None,
         )?)
     } else {
         None

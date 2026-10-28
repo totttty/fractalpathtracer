@@ -22,11 +22,17 @@ pub(super) fn specialize(base: &str, scene: &MandelbulberScene) -> Result<String
             v[0] as f32, v[1] as f32, v[2] as f32
         )
     };
+    // Deep zooms march camera-relative positions; the coarse limit box only
+    // needs the camera added back in fp32.
+    let origin = scene
+        .deep_origin()
+        .map(|camera| format!(" + {}", vector(camera)))
+        .unwrap_or_default();
     let helper = format!(
         "#define FPT_MANDEL_SCENE_LIMITS 1\n\
          static float fptMandelLimitDistance(float3 p, constant FptRenderConfig &cfg) {{\n\
              float scale = max(setv(cfg, 0), 1.0f);\n\
-             float3 source = p.xzy / scale;\n\
+             float3 source = p.xzy / scale{origin};\n\
              float3 outside = max(source - {}, {} - source);\n\
              return max(outside.x, max(outside.y, outside.z)) * scale;\n\
          }}\n",
