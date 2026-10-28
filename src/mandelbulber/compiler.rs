@@ -3798,10 +3798,11 @@ pub fn specialize_fpt_shader(
         };
     let specialized_kernel_define = mandel_specialized_kernel_define(base_source);
     let uses_delta = force_delta_de || formula.source.de_type == "deltaDEType";
-    ensure!(
-        deep_origin.is_none() || !uses_delta,
-        "deep zoom does not support Delta-DE formulas yet"
-    );
+    let remainders = if deep_origin.is_some() && supports_bulb_parameter_block(formula) {
+        bulb_parameter_remainders(formula_values)?
+    } else {
+        Vec::new()
+    };
     let fragment = if uses_delta {
         standalone_delta_fragment(
             &declarations,
@@ -3812,6 +3813,7 @@ pub fn specialize_fpt_shader(
             &post_iteration,
             delta_de_function,
             &specialized_kernel_define,
+            deep_origin.map(|origin| (origin, remainders.as_slice())),
         )?
     } else {
         let additional_bailout = i32::from(uses_additional_bailout(formula));
@@ -3853,11 +3855,7 @@ pub fn specialize_fpt_shader(
                             &declarations,
                             &formula.function_name
                         )?,
-                        &if supports_bulb_parameter_block(formula) {
-                            bulb_parameter_remainders(formula_values)?
-                        } else {
-                            Vec::new()
-                        }
+                        &remainders
                     )
                 ),
                 super::double_float::standalone_sample_source(
@@ -4175,6 +4173,7 @@ fn standalone_delta_fragment(
     post_iteration: &str,
     delta_de_function: u32,
     specialized_kernel_define: &str,
+    deep: Option<([f64; 3], &[(&'static str, f32)])>,
 ) -> Result<String> {
     let marker = "// FPT_MANDELBULBER_GENERATED_INSERTION_POINT";
     let de_function = overridden_de_function(&formula.source.de_function_type, delta_de_function)?;
@@ -4204,6 +4203,55 @@ fn standalone_delta_fragment(
         };
     let radial_gradient_source = delta_radial_gradient_source();
     let additional_bailout = i32::from(uses_additional_bailout(formula));
+    let (dual_source, sample_source) = match deep {
+        Some((origin, remainders)) => (
+            format!(
+                "{}\n{}{}{}",
+                super::double_float::DEEP_MARKER,
+                super::double_float::LIBRARY,
+                super::double_float::origin_constants(origin),
+                super::double_float::with_parameter_remainders(
+                    &super::double_float::formula_source(declarations, &formula.function_name)?,
+                    remainders
+                )
+            ),
+            super::double_float::standalone_delta_sample_source(
+                &formula.function_name,
+                initial_w,
+                actual_scale,
+                &post_iteration.replace("float4(", "DF4("),
+                additional_bailout,
+                radial_gradient_source,
+                distance_expression,
+            ),
+        ),
+        None => (
+            dual_source,
+            format!(
+                r#"static float4 mandelbulberGeneratedFieldSample(float3 p,
+                                                constant FptRenderConfig &cfg,
+                                                int iteration_multiplier,
+                                                int iteration_budget) {{
+    float world_scale = max(setv(cfg, 0), 1.0f);
+    float3 scaled = p / world_scale;
+    MandelDeltaOrbitResult base = mandelDeltaOrbit(
+        scaled, cfg, -iteration_multiplier, iteration_budget);
+    // Most fp32 formulas use the 1e-5 relative step. Formula-specific
+    // source can instead mirror a smaller authoritative OpenCL stencil.
+{delta_source}
+{radial_derivative_source}
+{radial_gradient_source}
+    float distance = radial_gradient > 0.0f ? ({distance_expression}) : base.radius;
+    distance = clamp(distance, 0.0f, 10.0f) * world_scale;
+    float iteration_state = base.escaped
+        ? -float(base.iterations)
+        : float(base.iterations);
+    return float4(distance, base.radius, base.derivative, iteration_state);
+}}
+"#
+            ),
+        ),
+    };
     Ok(format!(
         r#"#define FPT_MANDEL_GENERATED_FIELD 1
 {specialized_kernel_define}
@@ -4273,30 +4321,12 @@ static MandelDeltaOrbitResult mandelDeltaOrbit(float3 scaled,
             if (length(z - last_last_z) / aux.r < 0.1f / bailout) break;
         }}
     }}
-    return {{ z, aux.r, aux.DE, completed_iterations, escaped }};
+    // Mandelbulber's Delta-DE reads the radius of out->z = z.GetXYZ(), which
+    // drops w; bailout inside the orbit still uses the 4D length.
+    return {{ z, length(z.xyz), aux.DE, completed_iterations, escaped }};
 }}
 {dual_source}
-static float4 mandelbulberGeneratedFieldSample(float3 p,
-                                                constant FptRenderConfig &cfg,
-                                                int iteration_multiplier,
-                                                int iteration_budget) {{
-    float world_scale = max(setv(cfg, 0), 1.0f);
-    float3 scaled = p / world_scale;
-    MandelDeltaOrbitResult base = mandelDeltaOrbit(
-        scaled, cfg, -iteration_multiplier, iteration_budget);
-    // Most fp32 formulas use the 1e-5 relative step. Formula-specific
-    // source can instead mirror a smaller authoritative OpenCL stencil.
-{delta_source}
-{radial_derivative_source}
-{radial_gradient_source}
-    float distance = radial_gradient > 0.0f ? ({distance_expression}) : base.radius;
-    distance = clamp(distance, 0.0f, 10.0f) * world_scale;
-    float iteration_state = base.escaped
-        ? -float(base.iterations)
-        : float(base.iterations);
-    return float4(distance, base.radius, base.derivative, iteration_state);
-}}
-
+{sample_source}
 {marker}"#,
         function_name = formula.function_name
     ))
@@ -4510,9 +4540,9 @@ pub fn specialize_fpt_shader_hybrid(
         let zero_gradient_distance = hybrid_delta_zero_gradient_distance();
         let delta_source =
             format!("    float delta = max({delta_scale}, {delta_scale} * length(scaled));");
-        let derivative_source = r#"    float rx = mandelHybridOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations, 0).radius;
-    float ry = mandelHybridOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations, 0).radius;
-    float rz = mandelHybridOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations, 0).radius;
+        let derivative_source = r#"    float rx = length(mandelHybridOrbit(scaled + float3(delta, 0.0f, 0.0f), cfg, base.iterations, 0).z.xyz);
+    float ry = length(mandelHybridOrbit(scaled + float3(0.0f, delta, 0.0f), cfg, base.iterations, 0).z.xyz);
+    float rz = length(mandelHybridOrbit(scaled + float3(0.0f, 0.0f, delta), cfg, base.iterations, 0).z.xyz);
     float3 radial_derivative = abs(float3(rx, ry, rz) - base.radius) / delta;"#;
         let delta_probe_source =
             hybrid_delta_probe_source(&delta_source, &derivative_source, global_folding);
@@ -4525,6 +4555,9 @@ pub fn specialize_fpt_shader_hybrid(
         format!(
             r#"    MandelHybridOrbitResult base = mandelHybridOrbit(
         scaled, cfg, -iteration_multiplier, iteration_budget);{empty_slot_exit}
+    // Mandelbulber's Delta-DE reads the radius of out->z = z.GetXYZ(), which
+    // drops w.
+    base.radius = length(base.z.xyz);
 {delta_probe_source}
 {radial_gradient_source}
     // Mandelbulber's Delta-DE treats a zero radial gradient as an interior

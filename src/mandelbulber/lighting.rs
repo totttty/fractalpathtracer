@@ -112,6 +112,19 @@ impl AuxiliaryLighting {
     }
     pub fn load(scene: &MandelbulberScene) -> Result<Self> {
         let mut result = Self::load_lights(scene)?;
+        if let Some(origin) = scene.deep_origin() {
+            // Deep zooms march from a camera rebased to the origin.
+            let origin = super::map_mandel_point(origin);
+            let absolute = result
+                .point
+                .iter_mut()
+                .filter(|light| !light.camera_relative);
+            for light in absolute {
+                light.position = std::array::from_fn(|axis| {
+                    (f64::from(light.position[axis]) - origin[axis]) as f32
+                });
+            }
+        }
         result.unsupported.extend(unsupported_media(scene)?);
         result.emissive_material_ids = scene
             .materials

@@ -517,6 +517,124 @@ static MandelHybridOrbitResult mandelHybridDeepOrbit(float3 scaled,
     ))
 }
 
+/// Field sample for one Delta-DE formula: double-float orbits at the point and
+/// at Mandelbulber's own probe offsets, max(|c| 1e-14, 1e-5 x detail size),
+/// which double-float resolves where fp32 needed a coarser step.
+pub(super) fn standalone_delta_sample_source(
+    function_name: &str,
+    initial_w: &str,
+    actual_scale: &str,
+    post_iteration: &str,
+    additional_bailout: i32,
+    radial_gradient_source: &str,
+    distance_expression: &str,
+) -> String {
+    format!(
+        r#"struct MandelDeepDeltaResult {{
+    DF4 z;
+    DF radius;
+    float derivative;
+    int iterations;
+    bool escaped;
+}};
+
+static MandelDeepDeltaResult mandelDeltaDeepOrbit(DF4 z,
+                                                  constant FptRenderConfig &cfg,
+                                                  int forced_iterations,
+                                                  int iteration_budget) {{
+    MandelDeepOrbitState aux;
+    aux.i = 0u;
+    aux.c = z;
+    aux.const_c = z;
+    aux.old_z = z;
+    aux.pos_neg = 1.0f;
+    aux.r = length(z);
+    aux.DE = 1.0f;
+    aux.DE0 = 0.0f;
+    aux.dist = 1000.0f;
+    aux.pseudoKleinianDE = 1.0f;
+    aux.actualScale = {actual_scale};
+    aux.actualScaleA = 0.0f;
+    aux.color = 1.0f;
+    aux.colorHybrid = 0.0f;
+    aux.temp1000 = 1000.0f;
+    int completed_iterations = 0;
+    int iteration_multiplier = max(-forced_iterations, 1);
+    int configured_iterations = clamp(
+        int(setv(cfg, 1)) * iteration_multiplier, 1, 4096);
+    int max_iterations = forced_iterations >= 0
+        ? min(configured_iterations, forced_iterations)
+        : (iteration_budget > 0
+            ? min(configured_iterations, iteration_budget)
+            : configured_iterations);
+    bool escaped = false;
+    float bailout = max(setv(cfg, 2), 1.0f);
+    DF4 last_last_z = DF4(DF(0.0f));
+    for (int iteration = 0; iteration < max_iterations; ++iteration) {{
+        aux.i = uint(iteration);
+        last_last_z = aux.old_z;
+        aux.old_z = z;
+        z = {function_name}Deep(z, kMandelFormulaParameters, aux);
+{post_iteration}        aux.r = length(z);
+        if (dfIsNaN(z)) {{
+            z = aux.old_z;
+            aux.r = length(z);
+            completed_iterations = iteration + 1;
+            break;
+        }}
+        completed_iterations = iteration + 1;
+        if (forced_iterations < 0 && aux.r > bailout) {{
+            escaped = true;
+            break;
+        }}
+        if (forced_iterations < 0 && {additional_bailout} != 0) {{
+            escaped = true;
+            if (length(z - aux.old_z) / aux.r < 0.1f / bailout) break;
+            if (length(z - last_last_z) / aux.r < 0.1f / bailout) break;
+        }}
+    }}
+    // Delta-DE reads the xyz radius (Mandelbulber's out->z drops w).
+    return {{ z, length(DF3(z.x, z.y, z.z)), float(aux.DE), completed_iterations, escaped }};
+}}
+
+static float mandelbulberMarchThreshold(float3 position, constant FptRenderConfig &cfg);
+
+static float4 mandelbulberGeneratedFieldSample(float3 p,
+                                                constant FptRenderConfig &cfg,
+                                                int iteration_multiplier,
+                                                int iteration_budget) {{
+    float world_scale = max(setv(cfg, 0), 1.0f);
+    float3 scaled = p / world_scale;
+    DF4 point = DF4(DF(kMandelDeepOriginHi.x, kMandelDeepOriginLo.x) + DF(scaled.x),
+                    DF(kMandelDeepOriginHi.y, kMandelDeepOriginLo.y) + DF(scaled.z),
+                    DF(kMandelDeepOriginHi.z, kMandelDeepOriginLo.z) + DF(scaled.y),
+                    DF({initial_w}));
+    MandelDeepDeltaResult deep = mandelDeltaDeepOrbit(
+        point, cfg, -iteration_multiplier, iteration_budget);
+    float point_length = float(length(DF3(point.x, point.y, point.z)));
+    float detail_size = mandelbulberMarchThreshold(p, cfg) / world_scale;
+    float delta = max(point_length * 1.0e-14f, 1.0e-5f * detail_size);
+    DF rx = mandelDeltaDeepOrbit(point + DF4(float4(delta, 0.0f, 0.0f, 0.0f)), cfg, deep.iterations, 0).radius;
+    DF ry = mandelDeltaDeepOrbit(point + DF4(float4(0.0f, delta, 0.0f, 0.0f)), cfg, deep.iterations, 0).radius;
+    DF rz = mandelDeltaDeepOrbit(point + DF4(float4(0.0f, 0.0f, delta, 0.0f)), cfg, deep.iterations, 0).radius;
+    float3 radial_derivative = abs(float3(float(rx - deep.radius),
+                                          float(ry - deep.radius),
+                                          float(rz - deep.radius))) / delta;
+    MandelDeltaOrbitResult base = {{
+        float4(float(deep.z.x), float(deep.z.y), float(deep.z.z), float(deep.z.w)),
+        float(deep.radius), deep.derivative, deep.iterations, deep.escaped }};
+{radial_gradient_source}
+    float distance = radial_gradient > 0.0f ? ({distance_expression}) : base.radius;
+    distance = clamp(distance, 0.0f, 10.0f) * world_scale;
+    float iteration_state = base.escaped
+        ? -float(base.iterations)
+        : float(base.iterations);
+    return float4(distance, base.radius, base.derivative, iteration_state);
+}}
+"#
+    )
+}
+
 /// Field sample for one analytic formula: the point is camera-relative, the
 /// orbit runs in double-float from origin + point, and the distance finalizer
 /// reads float copies of the orbit's radius and derivative.

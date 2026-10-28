@@ -438,7 +438,8 @@ pub(super) fn gradient_source(
         }}
         aux.r = length(z);
     }}
-    return length(z).d;
+    // Delta-DE reads the xyz radius (Mandelbulber's out->z drops w).
+    return length(MD3(z.x, z.y, z.z)).d;
 }}
 "#
     )
@@ -560,7 +561,8 @@ static float3 mandelDeltaDualGradient(float3 scaled,
         }}
         aux.r = length(z);
     }}
-    return length(z).d;
+    // Delta-DE reads the xyz radius (Mandelbulber's out->z drops w).
+    return length(MD3(z.x, z.y, z.z)).d;
 }}
 "#
     ))

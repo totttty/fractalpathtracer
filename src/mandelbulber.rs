@@ -1064,13 +1064,11 @@ impl MandelbulberScene {
         if !self.deep_zoom {
             return None;
         }
-        // Positioned lights, clouds and primitives are baked in absolute
-        // native coordinates; such scenes keep fp32 positions.
-        let positioned_lights = lighting::AuxiliaryLighting::load(self).map_or(true, |lighting| {
-            !lighting.point.is_empty() || lighting.fake.is_some()
-        });
+        // Clouds, random and fake lights and primitives are baked in absolute
+        // native coordinates; such scenes keep fp32 positions. Point lights
+        // are rebased with the camera (`AuxiliaryLighting::load`).
         let enabled = |name| parameter_bool(&self.main_parameters, name, false).unwrap_or(true);
-        if positioned_lights
+        if enabled("fake_lights_enabled")
             || enabled("clouds_enable")
             || enabled("random_lights_group")
             || self.boolean_enabled
@@ -3956,7 +3954,7 @@ fn parameter_number(values: &BTreeMap<String, String>, name: &str, fallback: f64
 /// Catalogue scenes whose surface detail is below one fp32 ulp of the camera
 /// position (Mandelbulber's own notes require its double-precision CPU path).
 /// `FPT_MANDEL_DEEP_ZOOM` opts any other eligible scene in.
-const DEEP_ZOOM_SCENES: [&str; 5] = [
+const DEEP_ZOOM_SCENES: [&str; 6] = [
     // mandelbox58: camera 8.5e-14 from its target.
     "b69a45c2c53f2aa7a70d148fda8d5cb5d186fd18526dfdc63b8981671ac968b5",
     // aboxMod11_for8cA.
@@ -3967,6 +3965,8 @@ const DEEP_ZOOM_SCENES: [&str; 5] = [
     "52e7bfb4416ee88d43bfd54959d9774f258a277a3c891ec4de6bbd31817a08f0",
     // menger-FabsAddTgladFold4D (hybrid): rays hit within 1e-8 of the camera.
     "ed6528d2335f47f90415a3d3874c0f93c78fd073f9cebbd56bbd502a7ab38a13",
+    // mandelbox28 (with point lights).
+    "8adacbc9970e956a95bb08a7533008b69595d370e9f0652b196e4008b80519e2",
 ];
 
 fn is_deep_zoom_source(source: &str) -> bool {
@@ -4973,6 +4973,33 @@ target 0 0 0;
         let mut scene = MandelbulberScene::parse(IFS_SCENE).expect("ifs scene");
         scene.deep_zoom = true;
         scene.boolean_enabled = true;
+        assert_eq!(scene.deep_origin(), None);
+    }
+
+    #[test]
+    fn deep_zoom_rebases_point_lights_with_the_camera() {
+        let lit = IFS_SCENE.replace(
+            "detail_level 2;",
+            "detail_level 2;\nlight2_enabled true;\nlight2_position 1 2 3;",
+        );
+        let mut scene = MandelbulberScene::parse(&lit).expect("lit scene");
+        let first_light = |scene: &MandelbulberScene| {
+            lighting::AuxiliaryLighting::load(scene)
+                .expect("lights")
+                .point[0]
+                .position
+        };
+        let absolute = first_light(&scene);
+        scene.deep_zoom = true;
+        let rebased = first_light(&scene);
+        let camera = map_mandel_point(scene.camera);
+        for axis in 0..3 {
+            let expected = (f64::from(absolute[axis]) - camera[axis]) as f32;
+            assert_eq!(rebased[axis], expected);
+        }
+        let clouded = lit.replace("detail_level 2;", "detail_level 2;\nclouds_enable true;");
+        let mut scene = MandelbulberScene::parse(&clouded).expect("cloud scene");
+        scene.deep_zoom = true;
         assert_eq!(scene.deep_origin(), None);
     }
 
