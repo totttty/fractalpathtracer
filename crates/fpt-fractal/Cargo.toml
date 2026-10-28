@@ -1,0 +1,8 @@
+[package]
+name = "fpt-fractal"
+version = "0.1.0"
+edition = "2024"
+description = "Mandelbulber fractal formulas as a portable IR: parsing, CPU evaluation and GPU shader generation"
+publish = false
+
+[dependencies]
