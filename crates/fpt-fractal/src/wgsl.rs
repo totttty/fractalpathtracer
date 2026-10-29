@@ -129,8 +129,8 @@ enum ParameterRef {
 }
 
 /// Every element of an array parameter family, laid out row-major from
-/// `first`, `stride` slots apart, or for baked booleans and integers in the
-/// module-scope array `table`.
+/// `first`, `stride` slots apart; booleans and integers (`table`) are packed
+/// four to a slot.
 #[derive(Clone, Debug)]
 struct Family {
     first: usize,
@@ -413,10 +413,10 @@ impl Emitter<'_> {
             let mut ty = Ty::Bool;
             for (_, value) in &elements {
                 match value {
-                    Value::Bool(b) => items.push(b.to_string()),
+                    Value::Bool(b) => items.push(f32::from(u8::from(*b))),
                     Value::Int(i) => {
                         ty = Ty::I32;
-                        items.push(i.to_string());
+                        items.push(*i as f32);
                     }
                     other => {
                         return err(format!(
@@ -428,19 +428,19 @@ impl Emitter<'_> {
             if ty == Ty::I32 && elements.iter().any(|(_, v)| matches!(v, Value::Bool(_))) {
                 return err(format!("mixed element types in fractal->{template}"));
             }
-            let table = format!("{}table{}", self.prefix, self.families.len());
-            let array = Ty::Array(Box::new(ty.clone()), items.len()).wgsl();
-            let _ = writeln!(
-                self.globals,
-                "// fractal->{template}\nvar<private> {table}: {array} = {array}({});\n",
-                items.join(", ")
-            );
+            // Four to a buffer slot: a constant array in the shader read back wrong entries on Metal.
+            let first = self.parameters.len();
+            for chunk in items.chunks(4) {
+                let mut slot = [0.0; 4];
+                slot[..chunk.len()].copy_from_slice(chunk);
+                self.push_slot(slot);
+            }
             let family = Family {
-                first: 0,
+                first,
                 dims,
                 stride: 1,
                 ty,
-                table: Some(table),
+                table: Some(template.to_owned()),
             };
             self.families.insert(key, family.clone());
             return Ok(family);
@@ -1039,7 +1039,18 @@ impl Emitter<'_> {
     fn indexed_read(&mut self, template: &str, indices: &[String]) -> Result<(String, Ty)> {
         let (family, flat) = self.family_offset(template, indices)?;
         Ok(match &family.table {
-            Some(table) => (format!("{table}[{flat}]"), family.ty),
+            Some(_) => {
+                let packed = format!(
+                    "fractal_params[{}u + u32({flat}) / 4u][u32({flat}) % 4u]",
+                    family.first
+                );
+                let code = if family.ty == Ty::Bool {
+                    format!("({packed} != 0.0)")
+                } else {
+                    format!("i32({packed})")
+                };
+                (code, family.ty)
+            }
             None => {
                 let k = format!("({} + {flat})", family.first);
                 (Self::buffer_code(&k, &family.ty), family.ty)
@@ -1459,19 +1470,24 @@ impl Emitter<'_> {
             None => "2.0".into(),
         };
         let sequence_length = fractal.sequence.len().max(1);
-        if fractal.hybrid {
-            let entries: Vec<String> = fractal
+        // The formula each iteration runs (-1: an empty slot), four to a buffer slot. A constant array in the shader
+        // read back wrong entries on Metal (scene 44's hybrid ran its first formula throughout).
+        let sequence_slot = if fractal.hybrid {
+            let entries: Vec<f32> = fractal
                 .sequence
                 .iter()
-                .map(|entry| entry.map_or(-1, |k| k as i64).to_string())
+                .map(|entry| entry.map_or(-1.0, |k| k as f32))
                 .collect();
-            let _ = writeln!(
-                self.globals,
-                "// Formula run by each iteration; -1 is an empty slot.\nvar<private> {}sequence: array<i32, {sequence_length}> = array<i32, {sequence_length}>({});\n",
-                self.prefix,
-                entries.join(", ")
-            );
-        }
+            let first = self.parameters.len();
+            for chunk in entries.chunks(4) {
+                let mut slot = [-1.0; 4];
+                slot[..chunk.len()].copy_from_slice(chunk);
+                self.push_slot(slot);
+            }
+            first
+        } else {
+            0
+        };
         let weights: Vec<usize> = fractal
             .formulas
             .iter()
@@ -1499,6 +1515,7 @@ impl Emitter<'_> {
         self.indent += 1;
         self.line(format!("let header = fractal_params[{header}];"));
         self.line("let max_iterations = select(i32(header.x), forced, forced >= 0);");
+
         self.line("let bailout = header.y;");
         // Compute's "repeat, move and rotate".
         self.line(format!(
@@ -1573,7 +1590,7 @@ impl Emitter<'_> {
         }
         if fractal.hybrid {
             self.line(format!(
-                "formula = {prefix}sequence[min(i, {})];",
+                "let step = u32(min(i, {}));\n        formula = i32(fractal_params[{sequence_slot}u + step / 4u][step % 4u]);",
                 sequence_length - 1
             ));
             self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true, false); }");
