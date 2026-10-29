@@ -18,6 +18,8 @@ pub enum Operator {
 /// One slot of a Boolean scene.
 #[derive(Clone, Debug)]
 pub struct Component {
+    /// The formula slot (1 to 9).
+    pub slot: usize,
     pub fractal: Fractal,
     pub position: [f64; 3],
     /// `formula_rotation` as `SetRotation2` builds it (rows).
@@ -68,6 +70,7 @@ impl BooleanFractal {
                 _ => Operator::Or,
             };
             components.push(Component {
+                slot,
                 fractal,
                 position: file.vector(&format!("formula_position_{slot}"), [0.0; 3]),
                 rotation: rotation_matrix(

@@ -268,6 +268,21 @@ pub fn emit_deep(fractal: &Fractal, origin: [f64; 3]) -> Result<FractalShader> {
 /// A Boolean scene: each component's functions under `fractal_c{k}_`, then
 /// `fractal_distance` folding them in slot order.
 pub fn emit_boolean(scene: &BooleanFractal) -> Result<FractalShader> {
+    emit_boolean_with(scene, None)
+}
+
+/// [`emit_boolean`] plus each component's colouring orbit (`colourings`, one per component), and
+/// `fractal_component(p, detail_size)`: the component Mandelbulber colours at `p` (`objectId` in
+/// `CalculateDistance`), with `fractal_component_colour_index(component, p)` its colour index there
+/// (`SurfaceColour`'s point in the component's own coordinates).
+pub fn emit_boolean_coloured(scene: &BooleanFractal, colourings: &[Colouring]) -> Result<FractalShader> {
+    if colourings.len() != scene.components.len() {
+        return err("one colouring per Boolean component");
+    }
+    emit_boolean_with(scene, Some(colourings))
+}
+
+fn emit_boolean_with(scene: &BooleanFractal, colourings: Option<&[Colouring]>) -> Result<FractalShader> {
     let mut out = String::new();
     prelude(&mut out);
     let globals_at = out.len();
@@ -283,7 +298,7 @@ pub fn emit_boolean(scene: &BooleanFractal) -> Result<FractalShader> {
             &mut globals,
             &mut out,
             None,
-            None,
+            colourings.map(|all| &all[c]),
         )?;
         let vector = |v: [f64; 3]| [v[0] as f32, v[1] as f32, v[2] as f32, 0.0];
         transforms.push(parameters.len());
@@ -328,11 +343,69 @@ pub fn emit_boolean(scene: &BooleanFractal) -> Result<FractalShader> {
         let _ = writeln!(out, "        {combine}\n    }}");
     }
     out.push_str("    return distance;\n}\n");
+    if colourings.is_some() {
+        boolean_colour_functions(scene, &transforms, &mut out);
+    }
     out.insert_str(globals_at, &globals);
     Ok(FractalShader {
         source: out,
         parameters,
     })
+}
+
+/// `fractal_component` and `fractal_component_colour_index` for [`emit_boolean_coloured`]: the fold again, keeping
+/// the component Mandelbulber's `CalculateDistance` names (`objectId`): the closer under OR, the farther under AND,
+/// and under SUB the subtracted one wherever it reaches the first.
+fn boolean_colour_functions(scene: &BooleanFractal, transforms: &[usize], out: &mut String) {
+    let local = |k: usize| {
+        format!(
+            "fractal_repeat_mod((p - fractal_params[{k}].xyz) * mat3x3<f32>(fractal_params[{}].xyz, fractal_params[{}].xyz, fractal_params[{}].xyz), fractal_params[{}].xyz) * fractal_params[{}].x",
+            k + 1,
+            k + 2,
+            k + 3,
+            k + 4,
+            k + 5
+        )
+    };
+    out.push_str("fn fractal_component(p: vec3<f32>, detail_size: f32) -> i32 {\n");
+    out.push_str("    var distance = 0.0;\n    var component = 0;\n");
+    for (c, component) in scene.components.iter().enumerate() {
+        let k = transforms[c];
+        let _ = writeln!(
+            out,
+            "    {{\n        let d = fractal_c{c}_distance({}, detail_size) / fractal_params[{}].x;",
+            local(k),
+            k + 5
+        );
+        let step = match (c, component.operator, component.smooth) {
+            (0, ..) => "distance = d;".to_owned(),
+            (_, Operator::Or, smooth) => {
+                let combine = if smooth.is_some() {
+                    format!("fractal_smooth_union(d, distance, fractal_params[{}].y)", k + 5)
+                } else {
+                    "min(d, distance)".into()
+                };
+                format!("if (d < distance) {{ component = {c}; }}\n        distance = {combine};")
+            }
+            (_, Operator::And, _) => {
+                format!("if (d > distance) {{ component = {c}; }}\n        distance = max(d, distance);")
+            }
+            (_, Operator::Sub, _) => format!(
+                "if (distance < detail_size) {{\n            if (d < 2.25 * detail_size) {{ component = {c}; }}\n            distance = select(max(max(1.5 * detail_size - d, distance), 0.0), 1.5 * detail_size, d < 1.5 * detail_size);\n        }}"
+            ),
+        };
+        let _ = writeln!(out, "        {step}\n    }}");
+    }
+    out.push_str("    return component;\n}\n");
+    out.push_str("fn fractal_component_colour_index(component: i32, p: vec3<f32>) -> f32 {\n    switch component {\n");
+    for (c, k) in transforms.iter().enumerate() {
+        let _ = writeln!(
+            out,
+            "        case {c}: {{ return fractal_c{c}_colour_index({}); }}",
+            local(*k)
+        );
+    }
+    out.push_str("        default: { return 0.0; }\n    }\n}\n");
 }
 
 /// WGSL for any scene shape.

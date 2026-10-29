@@ -386,7 +386,13 @@ fn slot(v: [f64; 3], w: f64) -> [f32; 4] {
 /// or its surface colour when it does not use the palette.
 #[must_use]
 pub fn emit_palette(material: &Material, params: &mut Vec<[f32; 4]>) -> String {
-    let mut out = String::from("fn fractal_palette(index: f32) -> vec3<f32> {\n");
+    emit_palette_as("fractal_palette", material, params)
+}
+
+/// [`emit_palette`] under another function name.
+#[must_use]
+pub fn emit_palette_as(name: &str, material: &Material, params: &mut Vec<[f32; 4]>) -> String {
+    let mut out = format!("fn {name}(index: f32) -> vec3<f32> {{\n");
     let k = params.len();
     params.push(slot(material.surface_colour, material.speed));
     params.push(slot([material.offset, 0.0, 0.0], 0.0));

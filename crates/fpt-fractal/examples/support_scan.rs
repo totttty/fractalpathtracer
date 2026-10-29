@@ -41,16 +41,25 @@ fn classify(id: &str, root: &Path, scene: &Path) -> (&'static str, String) {
     if let Err(e) = shape.distance([0.1, 0.2, 0.3], 1e-4) {
         return ("error", format!("{detail}: eval {e}"));
     }
-    // SUPPORT_SCAN_COLOUR=1 adds the colouring orbit of the scene's fractal material.
-    let colouring = env::var_os("SUPPORT_SCAN_COLOUR").map(|_| {
-        let file = fpt_fractal::scene::FractFile::parse(&loader::read(scene));
-        let id = file.number("formula_material_id", 1.0).max(1.0) as i64;
+    // SUPPORT_SCAN_COLOUR=1 adds the colouring orbit of the scene's fractal material (each Boolean component's).
+    let file = fpt_fractal::scene::FractFile::parse(&loader::read(scene));
+    let colouring_of = |key: &str| {
+        let id = file.number(key, 1.0).max(1.0) as i64;
         fpt_fractal::colouring::material(&file, id).colouring
-    });
+    };
+    let colouring = env::var_os("SUPPORT_SCAN_COLOUR").map(|_| colouring_of("formula_material_id"));
     let deep = env::var_os("SUPPORT_SCAN_DEEP").map(|_| [0.1, 0.2, 0.3]);
     let emitted = match (&shape, &colouring, deep) {
         (Shape::Single(fractal), Some(colouring), origin) => {
             fpt_fractal::wgsl::emit_coloured(fractal, origin, colouring)
+        }
+        (Shape::Boolean(boolean), Some(_), _) => {
+            let colourings: Vec<_> = boolean
+                .components
+                .iter()
+                .map(|c| colouring_of(&format!("formula_material_id_{}", c.slot)))
+                .collect();
+            fpt_fractal::wgsl::emit_boolean_coloured(boolean, &colourings)
         }
         (Shape::Single(fractal), None, Some(origin)) => {
             fpt_fractal::wgsl::emit_deep(fractal, origin)
