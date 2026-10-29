@@ -15,6 +15,9 @@ use crate::eval::{Parameters, Value};
 use crate::orbit::Fractal;
 use crate::scene::DeFunction;
 
+#[path = "wgsl_df.rs"]
+mod df;
+
 /// Generated WGSL plus the values for its parameter buffer.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FractalShader {
@@ -158,6 +161,28 @@ struct Emitter<'a> {
     out: String,
     indent: usize,
     temporaries: usize,
+    /// Deep zoom: the camera origin in fractal space, with every float a double-float (`wgsl_df.rs`).
+    deep: Option<[f64; 3]>,
+    /// Names of the on-demand double-float helpers already in `globals`.
+    helpers: std::collections::HashSet<String>,
+}
+
+/// Buffer slots of the orbit glue (`Emitter::glue_slots`).
+struct Glue {
+    sequence_slot: usize,
+    weights: Vec<usize>,
+    linear_offset: usize,
+    transform: usize,
+    box_fold: Option<usize>,
+    spherical_fold: Option<usize>,
+}
+
+/// Where an assignment writes: a whole value, a double-float vector component (`base.hi{access}` and
+/// `base.lo{access}`), or a multi-component swizzle of `base`.
+enum Target {
+    Whole,
+    Component { base: String, access: String },
+    Swizzle { base: String, field: String },
 }
 
 pub fn emit(fractal: &Fractal) -> Result<FractalShader> {
@@ -165,7 +190,36 @@ pub fn emit(fractal: &Fractal) -> Result<FractalShader> {
     prelude(&mut out);
     let globals_at = out.len();
     let mut globals = String::new();
-    let parameters = emit_fractal(fractal, "fractal_", Vec::new(), &mut globals, &mut out)?;
+    let parameters = emit_fractal(
+        fractal,
+        "fractal_",
+        Vec::new(),
+        &mut globals,
+        &mut out,
+        None,
+    )?;
+    out.insert_str(globals_at, &globals);
+    Ok(FractalShader {
+        source: out,
+        parameters,
+    })
+}
+
+/// A deep zoom: the same `fractal_distance(p, detail_size)`, with `p` relative to `origin` (fractal space, f64) and
+/// the orbit in double-float. Parameters carry their f64 remainders. Needs IEEE arithmetic (no fast-math).
+pub fn emit_deep(fractal: &Fractal, origin: [f64; 3]) -> Result<FractalShader> {
+    let mut out = String::new();
+    df::prelude(&mut out);
+    let globals_at = out.len();
+    let mut globals = String::new();
+    let parameters = emit_fractal(
+        fractal,
+        "fractal_",
+        Vec::new(),
+        &mut globals,
+        &mut out,
+        Some(origin),
+    )?;
     out.insert_str(globals_at, &globals);
     Ok(FractalShader {
         source: out,
@@ -190,6 +244,7 @@ pub fn emit_boolean(scene: &BooleanFractal) -> Result<FractalShader> {
             parameters,
             &mut globals,
             &mut out,
+            None,
         )?;
         let vector = |v: [f64; 3]| [v[0] as f32, v[1] as f32, v[2] as f32, 0.0];
         transforms.push(parameters.len());
@@ -258,6 +313,7 @@ fn emit_fractal(
     parameters: Vec<[f32; 4]>,
     globals: &mut String,
     out: &mut String,
+    deep: Option<[f64; 3]>,
 ) -> Result<Vec<[f32; 4]>> {
     let header = parameters.len();
     let mut emitter = Emitter {
@@ -273,6 +329,8 @@ fn emit_fractal(
         out: std::mem::take(out),
         indent: 0,
         temporaries: 0,
+        deep,
+        helpers: std::collections::HashSet::new(),
     };
     let m = fractal.constant_multiplier;
     emitter.push_slot([
@@ -283,9 +341,13 @@ fn emit_fractal(
     ]);
     emitter.push_slot([m[0] as f32, m[1] as f32, m[2] as f32, 0.0]);
     let julia = fractal.julia.unwrap_or([0.0; 3]);
-    let julia_slot = emitter.push_slot([julia[0] as f32, julia[1] as f32, julia[2] as f32, 0.0]);
+    let julia_slot = emitter.push_value([julia[0], julia[1], julia[2], 0.0]);
     emitter.formulas()?;
-    emitter.distance(julia_slot)?;
+    if emitter.deep.is_some() {
+        emitter.deep_distance(julia_slot)?;
+    } else {
+        emitter.distance(julia_slot)?;
+    }
     *globals = emitter.globals;
     *out = emitter.out;
     Ok(emitter.parameters)
@@ -343,6 +405,122 @@ impl Emitter<'_> {
         self.parameters.len() - 1
     }
 
+    /// A parameter value's slot; deep zooms add its f64 remainders in the next slot.
+    fn push_value(&mut self, value: [f64; 4]) -> usize {
+        let first = self.push_slot(value.map(|x| x as f32));
+        if self.deep.is_some() {
+            self.push_slot(value.map(|x| (x - f64::from(x as f32)) as f32));
+        }
+        first
+    }
+
+    /// A matrix parameter's three row slots, then (deep zooms) three remainder slots.
+    fn push_matrix(&mut self, rows: [[f64; 3]; 3]) -> usize {
+        let first = self.parameters.len();
+        for row in rows {
+            self.push_slot([row[0] as f32, row[1] as f32, row[2] as f32, 0.0]);
+        }
+        if self.deep.is_some() {
+            for row in rows {
+                let lo = row.map(|x| (x - f64::from(x as f32)) as f32);
+                self.push_slot([lo[0], lo[1], lo[2], 0.0]);
+            }
+        }
+        first
+    }
+
+    /// Slots per buffered value of `ty`.
+    fn slots_of(&self, ty: &Ty) -> usize {
+        let rows = if *ty == Ty::Mat3 { 3 } else { 1 };
+        if self.deep.is_some() { 2 * rows } else { rows }
+    }
+
+    /// The WGSL type of `ty`'s values.
+    fn ty(&self, ty: &Ty) -> String {
+        match (ty, self.deep.is_some()) {
+            (Ty::F32, true) => "DF1".into(),
+            (Ty::Vec(n), true) => format!("DF{n}"),
+            (Ty::Mat3, true) => "DFM3".into(),
+            (Ty::Array(element, n), _) => format!("array<{}, {n}>", self.ty(element)),
+            _ => ty.wgsl(),
+        }
+    }
+
+    fn literal(&self, value: f64) -> String {
+        if self.deep.is_some() {
+            df::literal(value)
+        } else {
+            float_literal(value)
+        }
+    }
+
+    /// `scalar` (an F32 value) in every component of a `vec{n}`.
+    fn splat(&self, n: u8, scalar: &str) -> String {
+        if self.deep.is_some() {
+            format!("df{n}_splat({scalar})")
+        } else {
+            format!("vec{n}<f32>({scalar})")
+        }
+    }
+
+    /// Adds a helper function to the module once.
+    fn helper(&mut self, name: &str, source: impl FnOnce() -> String) {
+        if self.helpers.insert(name.to_owned()) {
+            self.globals.push_str(&source());
+            self.globals.push('\n');
+        }
+    }
+
+    /// Reads `field` of the vector `base` (WGSL code of type `ty`).
+    fn swizzle(&mut self, base: &str, ty: &Ty, field: &str) -> Result<(String, Ty)> {
+        let Some(result) = swizzle_type(ty, field) else {
+            return err(format!("member .{field} of {ty:?}"));
+        };
+        let Ty::Vec(n) = ty else {
+            unreachable!("swizzle of a vector")
+        };
+        if self.deep.is_none() {
+            return Ok((format!("{base}.{field}"), result));
+        }
+        if field.len() == 1 {
+            let index = swizzle_indices(field).expect("swizzle")[0];
+            return Ok((format!("df{n}_get({base}, {index})"), result));
+        }
+        let name = format!("df{n}_s_{field}");
+        let m = field.len();
+        self.helper(&name, || {
+            format!("fn {name}(v: DF{n}) -> DF{m} {{ return DF{m}(v.hi.{field}, v.lo.{field}); }}")
+        });
+        Ok((format!("{name}({base})"), result))
+    }
+
+    fn select_code(&self, ty: &Ty, otherwise: &str, then: &str, cond: &str) -> String {
+        match (ty, self.deep.is_some()) {
+            (Ty::F32, true) => format!("df1_select({otherwise}, {then}, {cond})"),
+            (Ty::Vec(n), true) => format!("df{n}_select({otherwise}, {then}, {cond})"),
+            _ => format!("select({otherwise}, {then}, {cond})"),
+        }
+    }
+
+    fn convert(&self, code: String, from: &Ty, to: &Ty) -> Result<String> {
+        if self.deep.is_none() {
+            return convert(code, from, to);
+        }
+        Ok(match (from, to) {
+            (a, b) if a == b => code,
+            (Ty::I32, Ty::F32) => format!("df1_i({code})"),
+            (Ty::F32, Ty::I32) => format!("df1_to_i({code})"),
+            (Ty::Bool, Ty::F32) => format!("df1_b({code})"),
+            (Ty::F32, Ty::Bool) => format!("df1_nz({code})"),
+            (Ty::Bool, Ty::I32) | (Ty::I32, Ty::Bool) => convert(code, from, to)?,
+            (scalar, Ty::Vec(n)) if scalar.is_scalar() => {
+                format!("df{n}_splat({})", self.convert(code, scalar, &Ty::F32)?)
+            }
+            (Ty::Vec(n), Ty::Vec(m)) => format!("df{n}_to{m}({code})"),
+            _ => return err(format!("cannot convert {from:?} to {to:?}")),
+        })
+    }
+
     fn line(&mut self, text: impl AsRef<str>) {
         for _ in 0..self.indent {
             self.out.push_str("    ");
@@ -362,17 +540,9 @@ impl Emitter<'_> {
         let slot = match value {
             Value::Int(i) => Slot::Baked(i.to_string(), Ty::I32),
             Value::Bool(b) => Slot::Baked(b.to_string(), Ty::Bool),
-            Value::Scalar(x) => Slot::Buffer(self.push_slot([x as f32, 0.0, 0.0, 0.0]), Ty::F32),
-            Value::Vector { len, v } => {
-                Slot::Buffer(self.push_slot(v.map(|x| x as f32)), Ty::Vec(len))
-            }
-            Value::Matrix(rows) => {
-                let first =
-                    self.push_slot([rows[0][0] as f32, rows[0][1] as f32, rows[0][2] as f32, 0.0]);
-                self.push_slot([rows[1][0] as f32, rows[1][1] as f32, rows[1][2] as f32, 0.0]);
-                self.push_slot([rows[2][0] as f32, rows[2][1] as f32, rows[2][2] as f32, 0.0]);
-                Slot::Buffer(first, Ty::Mat3)
-            }
+            Value::Scalar(x) => Slot::Buffer(self.push_value([x, 0.0, 0.0, 0.0]), Ty::F32),
+            Value::Vector { len, v } => Slot::Buffer(self.push_value(v), Ty::Vec(len)),
+            Value::Matrix(rows) => Slot::Buffer(self.push_matrix(rows), Ty::Mat3),
             Value::Array(_) | Value::Pointer { .. } => {
                 return err(format!("parameter fractal->{path} is not a value"));
             }
@@ -450,17 +620,15 @@ impl Emitter<'_> {
         for (_, value) in &elements {
             let element_ty = match value {
                 Value::Scalar(x) => {
-                    self.push_slot([*x as f32, 0.0, 0.0, 0.0]);
+                    self.push_value([*x, 0.0, 0.0, 0.0]);
                     Ty::F32
                 }
                 Value::Vector { len, v } => {
-                    self.push_slot(v.map(|x| x as f32));
+                    self.push_value(*v);
                     Ty::Vec(*len)
                 }
                 Value::Matrix(rows) => {
-                    for row in rows {
-                        self.push_slot([row[0] as f32, row[1] as f32, row[2] as f32, 0.0]);
-                    }
+                    self.push_matrix(*rows);
                     Ty::Mat3
                 }
                 other => {
@@ -477,7 +645,7 @@ impl Emitter<'_> {
         let family = Family {
             first,
             dims,
-            stride: if ty == Ty::Mat3 { 3 } else { 1 },
+            stride: self.slots_of(&ty),
             ty,
             table: None,
         };
@@ -485,15 +653,18 @@ impl Emitter<'_> {
         Ok(family)
     }
 
-    fn slot_code(slot: &Slot) -> (String, Ty) {
+    fn slot_code(&self, slot: &Slot) -> (String, Ty) {
         match slot {
             Slot::Baked(code, ty) => (code.clone(), ty.clone()),
-            Slot::Buffer(k, ty) => (Self::buffer_code(&k.to_string(), ty), ty.clone()),
+            Slot::Buffer(k, ty) => (self.buffer_code(&k.to_string(), ty), ty.clone()),
         }
     }
 
     /// Reads a `ty` value starting at buffer slot `k` (WGSL code).
-    fn buffer_code(k: &str, ty: &Ty) -> String {
+    fn buffer_code(&self, k: &str, ty: &Ty) -> String {
+        if self.deep.is_some() {
+            return df::buffer_code(k, ty);
+        }
         match ty {
             Ty::F32 => format!("fractal_params[{k}].x"),
             Ty::Vec(2) => format!("fractal_params[{k}].xy"),
@@ -522,8 +693,9 @@ impl Emitter<'_> {
             .map(|p| p.name.clone())
             .ok_or(EmitError("formula has no z".into()))?;
         self.line(format!("// {}", fractal.formulas[k].meta.internal_name));
+        let z_ty = self.ty(&Ty::Vec(4));
         self.line(format!(
-            "fn {}formula_{k}(z_in: vec4<f32>, aux: ptr<function, FractalAux>) -> vec4<f32> {{",
+            "fn {}formula_{k}(z_in: {z_ty}, aux: ptr<function, FractalAux>) -> {z_ty} {{",
             self.prefix
         ));
         self.indent += 1;
@@ -600,7 +772,11 @@ impl Emitter<'_> {
                                 .collect::<Result<Vec<_>>>()?
                                 .join(", ");
                             let array = Ty::Array(Box::new(base.clone()), items.len());
-                            self.line(format!("var {} = {}({elements});", var.name, array.wgsl()));
+                            self.line(format!(
+                                "var {} = {}({elements});",
+                                var.name,
+                                self.ty(&array)
+                            ));
                             self.declare(&var.name, array);
                         }
                         (Some(size), None) => {
@@ -608,16 +784,16 @@ impl Emitter<'_> {
                                 return err("non-constant array size");
                             };
                             let array = Ty::Array(Box::new(base.clone()), *value as usize);
-                            self.line(format!("var {}: {};", var.name, array.wgsl()));
+                            self.line(format!("var {}: {};", var.name, self.ty(&array)));
                             self.declare(&var.name, array);
                         }
                         (None, Some(init)) => {
                             let code = self.coerced(init, &base)?;
-                            self.line(format!("var {}: {} = {code};", var.name, base.wgsl()));
+                            self.line(format!("var {}: {} = {code};", var.name, self.ty(&base)));
                             self.declare(&var.name, base.clone());
                         }
                         (None, None) => {
-                            self.line(format!("var {}: {};", var.name, base.wgsl()));
+                            self.line(format!("var {}: {};", var.name, self.ty(&base)));
                             self.declare(&var.name, base.clone());
                         }
                         _ => return err("unsupported array declaration"),
@@ -831,13 +1007,17 @@ impl Emitter<'_> {
                     | UnaryOp::PreDecrement),
                 expr,
             } => {
-                let (target, _) = self.place(expr)?;
-                let operator = if matches!(op, UnaryOp::PostIncrement | UnaryOp::PreIncrement) {
-                    "++"
-                } else {
-                    "--"
-                };
-                self.line(format!("{target}{operator};"));
+                let (target, ty, written) = self.place_target(expr)?;
+                let up = matches!(op, UnaryOp::PostIncrement | UnaryOp::PreIncrement);
+                if self.deep.is_some() && ty == Ty::F32 {
+                    let Target::Whole = written else {
+                        return err("increment of a vector component in a deep zoom");
+                    };
+                    let step = if up { "add" } else { "sub" };
+                    self.line(format!("{target} = df1_{step}({target}, df1_f(1.0));"));
+                    return Ok(());
+                }
+                self.line(format!("{target}{};", if up { "++" } else { "--" }));
                 Ok(())
             }
             Expr::Call { name, .. } if name == "Q_UNUSED" => Ok(()),
@@ -854,11 +1034,27 @@ impl Emitter<'_> {
         }
     }
 
-    /// A writable reference and its type.
+    /// A writable reference read as a value, and its type.
     fn place(&mut self, expr: &Expr) -> Result<(String, Ty)> {
+        let (code, ty, _) = self.place_target(expr)?;
+        Ok((code, ty))
+    }
+
+    /// A component `base{access}` of a vector: one f32, or (deep zooms) a pair of them.
+    fn component(&self, base: String, access: String) -> (String, Ty, Target) {
+        if self.deep.is_some() {
+            let code = format!("DF1({base}.hi{access}, {base}.lo{access})");
+            (code, Ty::F32, Target::Component { base, access })
+        } else {
+            (format!("{base}{access}"), Ty::F32, Target::Whole)
+        }
+    }
+
+    /// A writable reference (read as a value), its type and how to write it.
+    fn place_target(&mut self, expr: &Expr) -> Result<(String, Ty, Target)> {
         match expr {
             Expr::Ident(name) => match self.lookup(name) {
-                Some(ty) => Ok((name.clone(), ty)),
+                Some(ty) => Ok((name.clone(), ty, Target::Whole)),
                 None => err(format!("assignment to unknown {name}")),
             },
             Expr::Member {
@@ -871,7 +1067,7 @@ impl Emitter<'_> {
                     .find(|(name, _)| *name == field)
                     .map(|(_, ty)| ty.clone());
                 match ty {
-                    Some(ty) => Ok((format!("(*aux).{field}"), ty)),
+                    Some(ty) => Ok((format!("(*aux).{field}"), ty, Target::Whole)),
                     None => err(format!("unknown aux->{field}")),
                 }
             }
@@ -881,25 +1077,32 @@ impl Emitter<'_> {
                 arrow: false,
             } => {
                 let (base, ty) = self.place(base)?;
-                match swizzle_type(&ty, field) {
-                    Some(ty) => Ok((format!("{base}.{field}"), ty)),
-                    None => err(format!("member .{field} of {ty:?}")),
+                if swizzle_type(&ty, field).is_none() {
+                    return err(format!("member .{field} of {ty:?}"));
                 }
+                if field.len() == 1 {
+                    return Ok(self.component(base, format!(".{field}")));
+                }
+                let (code, result) = self.swizzle(&base, &ty, field)?;
+                let field = field.clone();
+                Ok((code, result, Target::Swizzle { base, field }))
             }
             Expr::Unary {
                 op: UnaryOp::Deref,
                 expr: inner,
             } => match self.expr(inner)? {
-                (pointer, Ty::Ptr(target)) => Ok((format!("{target}[{pointer}]"), Ty::F32)),
+                (pointer, Ty::Ptr(target)) => Ok(self.component(target, format!("[{pointer}]"))),
                 (_, other) => err(format!("dereference of {other:?}")),
             },
             Expr::Index { base, index } => {
                 let (base, ty) = self.place(base)?;
                 let index = self.coerced(index, &Ty::I32)?;
                 match ty {
-                    Ty::Array(element, _) => Ok((format!("{base}[{index}]"), *element)),
-                    Ty::Vec(_) => Ok((format!("{base}[{index}]"), Ty::F32)),
-                    Ty::Ptr(target) => Ok((format!("{target}[{base} + {index}]"), Ty::F32)),
+                    Ty::Array(element, _) => {
+                        Ok((format!("{base}[{index}]"), *element, Target::Whole))
+                    }
+                    Ty::Vec(_) => Ok(self.component(base, format!("[{index}]"))),
+                    Ty::Ptr(target) => Ok(self.component(target, format!("[{base} + {index}]"))),
                     other => err(format!("index into {other:?}")),
                 }
             }
@@ -908,7 +1111,7 @@ impl Emitter<'_> {
     }
 
     fn assignment(&mut self, op: Option<BinaryOp>, target: &Expr, value: &Expr) -> Result<()> {
-        let (place, ty) = self.place(target)?;
+        let (place, ty, written) = self.place_target(target)?;
         let value = match op {
             Some(op) => {
                 let combined = Expr::Binary {
@@ -920,21 +1123,31 @@ impl Emitter<'_> {
             }
             None => self.coerced(value, &ty)?,
         };
-        // WGSL cannot assign through a multi-component swizzle.
-        if let Some((base, field)) = place.rsplit_once('.')
-            && field.len() > 1
-            && swizzle_indices(field).is_some()
-        {
-            self.temporaries += 1;
-            let temporary = format!("swizzled{}", self.temporaries);
-            self.line(format!("let {temporary} = {value};"));
-            for (slot, component) in field.chars().enumerate() {
-                let source = ['x', 'y', 'z', 'w'][slot];
-                self.line(format!("{base}.{component} = {temporary}.{source};"));
+        match written {
+            // WGSL cannot assign through a multi-component swizzle.
+            Target::Swizzle { base, field } => {
+                self.temporaries += 1;
+                let temporary = format!("swizzled{}", self.temporaries);
+                self.line(format!("let {temporary} = {value};"));
+                for (slot, component) in field.chars().enumerate() {
+                    let source = ['x', 'y', 'z', 'w'][slot];
+                    if self.deep.is_some() {
+                        self.line(format!("{base}.hi.{component} = {temporary}.hi.{source};"));
+                        self.line(format!("{base}.lo.{component} = {temporary}.lo.{source};"));
+                    } else {
+                        self.line(format!("{base}.{component} = {temporary}.{source};"));
+                    }
+                }
             }
-            return Ok(());
+            Target::Component { base, access } => {
+                self.temporaries += 1;
+                let temporary = format!("component{}", self.temporaries);
+                self.line(format!("let {temporary} = {value};"));
+                self.line(format!("{base}.hi{access} = {temporary}.hi;"));
+                self.line(format!("{base}.lo{access} = {temporary}.lo;"));
+            }
+            Target::Whole => self.line(format!("{place} = {value};")),
         }
-        self.line(format!("{place} = {value};"));
         Ok(())
     }
 
@@ -1053,7 +1266,7 @@ impl Emitter<'_> {
             }
             None => {
                 let k = format!("({} + {flat})", family.first);
-                (Self::buffer_code(&k, &family.ty), family.ty)
+                (self.buffer_code(&k, &family.ty), family.ty)
             }
         })
     }
@@ -1068,10 +1281,7 @@ impl Emitter<'_> {
                     && !self.has_family(&template)
                 {
                     let (code, ty) = self.indexed_read(base, &indices)?;
-                    return match swizzle_type(&ty, field) {
-                        Some(result) => Ok((format!("{code}.{field}"), result)),
-                        None => err(format!("swizzle .{field} of fractal->{base}")),
-                    };
+                    return self.swizzle(&code, &ty, field);
                 }
                 self.indexed_read(&template, &indices)
             }
@@ -1091,8 +1301,13 @@ impl Emitter<'_> {
                     self.indexed_parameter(&template, &indices)?
                 }
             };
+            let target = if self.deep.is_some() {
+                format!("DF4(fractal_params[{k}], fractal_params[{k} + 1])")
+            } else {
+                format!("fractal_params[{k}]")
+            };
             return match ty {
-                Ty::F32 | Ty::Vec(_) => Ok(("0".into(), Ty::Ptr(format!("fractal_params[{k}]")))),
+                Ty::F32 | Ty::Vec(_) => Ok(("0".into(), Ty::Ptr(target))),
                 other => err(format!("pointer into {other:?} parameter")),
             };
         }
@@ -1115,21 +1330,21 @@ impl Emitter<'_> {
 
     fn coerced(&mut self, expr: &Expr, target: &Ty) -> Result<String> {
         if let (Expr::Number { value, .. }, Ty::F32 | Ty::Vec(_)) = (expr, target) {
-            let literal = float_literal(*value);
+            let literal = self.literal(*value);
             return Ok(match target {
-                Ty::Vec(n) => format!("vec{n}<f32>({literal})"),
+                Ty::Vec(n) => self.splat(*n, &literal),
                 _ => literal,
             });
         }
         let (code, ty) = self.expr(expr)?;
-        convert(code, &ty, target)
+        self.convert(code, &ty, target)
     }
 
     fn expr(&mut self, expr: &Expr) -> Result<(String, Ty)> {
         Ok(match expr {
             Expr::Number { value, float } => {
                 if *float {
-                    (float_literal(*value), Ty::F32)
+                    (self.literal(*value), Ty::F32)
                 } else {
                     (format!("{}", *value as i64), Ty::I32)
                 }
@@ -1142,7 +1357,7 @@ impl Emitter<'_> {
                 } else if let Some(value) = crate::constants::int_constant(name) {
                     (value.to_string(), Ty::I32)
                 } else if let Some(value) = crate::constants::float_constant(name) {
-                    (float_literal(value), Ty::F32)
+                    (self.literal(value), Ty::F32)
                 } else if name == "true" || name == "false" {
                     (name.clone(), Ty::Bool)
                 } else {
@@ -1157,10 +1372,7 @@ impl Emitter<'_> {
                     return self.place(expr);
                 }
                 let (base, ty) = self.expr(base)?;
-                match swizzle_type(&ty, field) {
-                    Some(result) => (format!("{base}.{field}"), result),
-                    None => return err(format!("member .{field} of {ty:?}")),
-                }
+                self.swizzle(&base, &ty, field)?
             }
             Expr::Index { base, .. } => {
                 if let Some(reference) = self.parameter_path(expr)? {
@@ -1172,7 +1384,11 @@ impl Emitter<'_> {
             Expr::Unary { op, expr: inner } => match op {
                 UnaryOp::Neg => {
                     let (code, ty) = self.expr(inner)?;
-                    (format!("(-{code})"), ty)
+                    match (&ty, self.deep.is_some()) {
+                        (Ty::F32, true) => (format!("df1_neg({code})"), ty),
+                        (Ty::Vec(n), true) => (format!("df{n}_neg({code})"), ty),
+                        _ => (format!("(-{code})"), ty),
+                    }
                 }
                 UnaryOp::Plus => self.expr(inner)?,
                 UnaryOp::Not => (format!("(!{})", self.coerced(inner, &Ty::Bool)?), Ty::Bool),
@@ -1194,7 +1410,7 @@ impl Emitter<'_> {
                 let cond = self.coerced(cond, &Ty::Bool)?;
                 let then = self.coerced(then, &ty)?;
                 let otherwise = self.coerced(otherwise, &ty)?;
-                (format!("select({otherwise}, {then}, {cond})"), ty)
+                (self.select_code(&ty, &otherwise, &then, &cond), ty)
             }
             Expr::Call { name, args } => self.call(name, args)?,
             Expr::Cast { ty, expr: inner } => {
@@ -1204,7 +1420,7 @@ impl Emitter<'_> {
                 }
                 let target = declared_type(&ty.name)?;
                 let (code, from) = self.expr(inner)?;
-                (convert(code, &from, &target)?, target)
+                (self.convert(code, &from, &target)?, target)
             }
             Expr::VectorLiteral { ty, elements } => {
                 let target = declared_type(&ty.name)?;
@@ -1215,11 +1431,16 @@ impl Emitter<'_> {
                 for element in elements {
                     let (code, ty) = self.expr(element)?;
                     parts.push(match ty {
-                        Ty::Vec(_) => code,
-                        other => convert(code, &other, &Ty::F32)?,
+                        Ty::Vec(k) => (code, k),
+                        other => (self.convert(code, &other, &Ty::F32)?, 1),
                     });
                 }
-                (format!("vec{n}<f32>({})", parts.join(", ")), target)
+                if self.deep.is_some() {
+                    (self.deep_vector(n, &parts), target)
+                } else {
+                    let codes: Vec<String> = parts.into_iter().map(|(code, _)| code).collect();
+                    (format!("vec{n}<f32>({})", codes.join(", ")), target)
+                }
             }
             Expr::InitList(_) => return err("initialiser list outside a declaration"),
         })
@@ -1232,13 +1453,16 @@ impl Emitter<'_> {
             && swizzle_indices(field).is_some()
             && self.params().values.contains_key(base)
         {
-            let (code, ty) = Self::slot_code(&self.slot(base)?);
-            return match swizzle_type(&ty, field) {
-                Some(result) => Ok((format!("{code}.{field}"), result)),
-                None => err(format!("swizzle .{field} of fractal->{base}")),
+            let (code, ty) = {
+                let slot = self.slot(base)?;
+                self.slot_code(&slot)
             };
+            return self.swizzle(&code, &ty, field);
         }
-        Ok(Self::slot_code(&self.slot(path)?))
+        Ok({
+            let slot = self.slot(path)?;
+            self.slot_code(&slot)
+        })
     }
 
     fn binary(&mut self, op: BinaryOp, lhs: &Expr, rhs: &Expr) -> Result<(String, Ty)> {
@@ -1279,6 +1503,9 @@ impl Emitter<'_> {
         let (_, lt) = self.expr(lhs)?;
         let (_, rt) = self.expr(rhs)?;
         let operand = common_type(&lt, &rt)?;
+        if self.deep.is_some() && matches!(operand, Ty::F32 | Ty::Vec(_)) {
+            return self.deep_binary(op, lhs, rhs, (&lt, &rt), &operand);
+        }
         let comparison = matches!(op, Eq | Ne | Lt | Le | Gt | Ge);
         // Vector-scalar arithmetic is native in WGSL; keep the scalar side.
         let (a, b) = match (&lt, &rt, comparison) {
@@ -1316,6 +1543,9 @@ impl Emitter<'_> {
 
     fn call(&mut self, name: &str, args: &[Expr]) -> Result<(String, Ty)> {
         let name = name.strip_prefix("native_").unwrap_or(name);
+        if self.deep.is_some() {
+            return self.deep_call(name, args);
+        }
         let float_args = |emitter: &mut Self, count: usize| emitter.float_args(name, args, count);
         let unary = |wgsl: &str, emitter: &mut Self| -> Result<(String, Ty)> {
             let (codes, ty) = emitter.float_args(name, args, 1)?;
@@ -1462,14 +1692,10 @@ impl Emitter<'_> {
         })
     }
 
-    fn distance(&mut self, julia_slot: usize) -> Result<()> {
+    /// The orbit's buffer slots after the formulas' own: the hybrid sequence, weights, the linear DE offset, the
+    /// global transform and the legacy folds.
+    fn glue_slots(&mut self) -> Glue {
         let fractal = self.fractal;
-        self.current = 0;
-        let actual_scale = match self.params().values.get("mandelbox.scale") {
-            Some(_) => Self::slot_code(&self.slot("mandelbox.scale")?).0,
-            None => "2.0".into(),
-        };
-        let sequence_length = fractal.sequence.len().max(1);
         // The formula each iteration runs (-1: an empty slot), four to a buffer slot. A constant array in the shader
         // read back wrong entries on Metal (scene 44's hybrid ran its first formula throughout).
         let sequence_slot = if fractal.hybrid {
@@ -1500,12 +1726,49 @@ impl Emitter<'_> {
             self.push_slot(vector(row));
         }
         self.push_slot(vector(fractal.repeat));
+        if self.deep.is_some() {
+            // The position's f64 remainder, at `transform + 5`.
+            let p = fractal.position.map(|x| (x - f64::from(x as f32)) as f32);
+            self.push_slot([p[0], p[1], p[2], 0.0]);
+        }
         let box_fold = fractal
             .box_fold
             .map(|(limit, value)| self.push_slot([limit as f32, value as f32, 0.0, 0.0]));
         let spherical_fold = fractal
             .spherical_fold
             .map(|(outer, inner)| self.push_slot([outer as f32, inner as f32, 0.0, 0.0]));
+        Glue {
+            sequence_slot,
+            weights,
+            linear_offset,
+            transform,
+            box_fold,
+            spherical_fold,
+        }
+    }
+
+    fn distance(&mut self, julia_slot: usize) -> Result<()> {
+        let fractal = self.fractal;
+        self.current = 0;
+        let actual_scale = match self.params().values.get("mandelbox.scale") {
+            Some(_) => {
+                {
+                    let slot = self.slot("mandelbox.scale")?;
+                    self.slot_code(&slot)
+                }
+                .0
+            }
+            None => "2.0".into(),
+        };
+        let sequence_length = fractal.sequence.len().max(1);
+        let Glue {
+            sequence_slot,
+            weights,
+            linear_offset,
+            transform,
+            box_fold,
+            spherical_fold,
+        } = self.glue_slots();
         let (prefix, header) = (self.prefix.clone(), self.header);
         self.line("// `forced` >= 0 runs exactly that many iterations with no bailout,");
         self.line("// as Delta-DE's probes do.");
@@ -1704,7 +1967,14 @@ impl Emitter<'_> {
         } else {
             self.analytic_distance(linear_offset)?;
         }
-        // CalculateDistanceSimple's maxiter, interior and threshold rules.
+        self.distance_rules();
+        Ok(())
+    }
+
+    /// CalculateDistanceSimple's maxiter, interior and threshold rules on `distance`, closing the function.
+    fn distance_rules(&mut self) {
+        let fractal = self.fractal;
+        let header = self.header;
         let jos_delta = fractal.delta && fractal.de_function == DeFunction::JosKleinian;
         self.line(format!(
             "let never_escaped = !orbit.escaped && {};",
@@ -1734,7 +2004,6 @@ impl Emitter<'_> {
         self.line("return clamp(distance, 0.0, 10.0);");
         self.indent -= 1;
         self.line("}");
-        Ok(())
     }
 
     fn analytic_distance(&mut self, linear_offset: usize) -> Result<()> {
@@ -1756,10 +2025,19 @@ impl Emitter<'_> {
             self.fractal.primary().meta.analytic_function
         };
         if function == DeFunction::JosKleinian {
-            let (tweak, _) = self.parameter("analyticDE.tweak005")?;
-            let (offset, _) = self.parameter("analyticDE.offset1")?;
+            // The deep glue's `aux` and `z` are f32 copies of the orbit's.
+            let narrow = |(code, _): (String, Ty), deep: bool| {
+                if deep {
+                    format!("df1_to_f({code})")
+                } else {
+                    code
+                }
+            };
+            let deep = self.deep.is_some();
+            let tweak = narrow(self.parameter("analyticDE.tweak005")?, deep);
+            let offset = narrow(self.parameter("analyticDE.offset1")?, deep);
             let (spheres, _) = self.parameter("transformCommon.spheresEnabled")?;
-            let (folding, _) = self.parameter("transformCommon.foldingValue")?;
+            let folding = narrow(self.parameter("transformCommon.foldingValue")?, deep);
             self.line(format!("let fractal_jos_tweak = {tweak};"));
             self.line(format!("let fractal_jos_offset = {offset};"));
             self.line(format!(
@@ -1797,18 +2075,7 @@ impl Emitter<'_> {
     /// Native steps by 1e-5 x detail size in f64; f32 cannot resolve that
     /// far from the origin, so the step never drops below 1e-5 of |p|.
     fn delta_distance(&mut self) -> Result<()> {
-        let finaliser = match self.fractal.de_function {
-            DeFunction::Linear => "0.5 * r / dr",
-            DeFunction::Logarithmic => "0.5 * r * log(r) / dr",
-            DeFunction::PseudoKleinian => {
-                "max(length(z.xy) - 0.92784, abs(length(z.xy) * z.z) / r) / dr"
-            }
-            DeFunction::JosKleinian => "abs(length(z.xz) * z.y) / r / dr",
-            DeFunction::MaxAxis => {
-                "0.5 * max(abs(z.x), max(abs(z.y), abs(z.z))) / max(gradient.x, max(gradient.y, gradient.z))"
-            }
-            _ => "r",
-        };
+        let finaliser = self.delta_finaliser();
         self.line("let delta = max(1e-5 * detail_size, 1e-5 * max(length(p), 1.0));");
         self.line("let r = length(z.xyz);");
         // Divide by the step f32 actually took: p + delta rounds.
@@ -1834,6 +2101,23 @@ impl Emitter<'_> {
         self.line("let dr = length(gradient);");
         self.line(format!("var distance = select(r, {finaliser}, dr > 0.0);"));
         Ok(())
+    }
+
+    /// Delta-DE's distance from the xyz radius `r`, its gradient `gradient`
+    /// (length `dr`) and the final `z`.
+    fn delta_finaliser(&self) -> &'static str {
+        match self.fractal.de_function {
+            DeFunction::Linear => "0.5 * r / dr",
+            DeFunction::Logarithmic => "0.5 * r * log(r) / dr",
+            DeFunction::PseudoKleinian => {
+                "max(length(z.xy) - 0.92784, abs(length(z.xy) * z.z) / r) / dr"
+            }
+            DeFunction::JosKleinian => "abs(length(z.xz) * z.y) / r / dr",
+            DeFunction::MaxAxis => {
+                "0.5 * max(abs(z.x), max(abs(z.y), abs(z.z))) / max(gradient.x, max(gradient.y, gradient.z))"
+            }
+            _ => "r",
+        }
     }
 }
 

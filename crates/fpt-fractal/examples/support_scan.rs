@@ -3,7 +3,8 @@
 //! Usage: support_scan MANDELBULBER_ROOT EXAMPLES_DIR SCENES.tsv
 //! SCENES.tsv: `id width height relative_path` per line. Prints
 //! `id status detail` per scene: `gpu`, `cpu` (WGSL failed), `hybrid`,
-//! `boolean` or `error`.
+//! `boolean` or `error`. `SUPPORT_SCAN_DEEP=1` emits single fractals as deep
+//! zooms; `SUPPORT_SCAN_DUMP=dir` writes each module and its parameters there.
 
 #[path = "common/loader.rs"]
 mod loader;
@@ -12,7 +13,7 @@ use std::{env, panic, path::Path};
 
 use fpt_fractal::boolean::Shape;
 
-fn classify(root: &Path, scene: &Path) -> (&'static str, String) {
+fn classify(id: &str, root: &Path, scene: &Path) -> (&'static str, String) {
     let loaded = panic::catch_unwind(|| loader::load_shape(root, scene));
     let shape = match loaded {
         Ok(shape) => shape,
@@ -39,7 +40,19 @@ fn classify(root: &Path, scene: &Path) -> (&'static str, String) {
     if let Err(e) = shape.distance([0.1, 0.2, 0.3], 1e-4) {
         return ("error", format!("{detail}: eval {e}"));
     }
-    match fpt_fractal::wgsl::emit_shape(&shape) {
+    let emitted = match (&shape, env::var_os("SUPPORT_SCAN_DEEP")) {
+        (Shape::Single(fractal), Some(_)) => fpt_fractal::wgsl::emit_deep(fractal, [0.1, 0.2, 0.3]),
+        _ => fpt_fractal::wgsl::emit_shape(&shape),
+    };
+    if let (Some(dir), Ok(shader)) = (env::var_os("SUPPORT_SCAN_DUMP"), &emitted) {
+        let dir = Path::new(&dir);
+        let _ = std::fs::write(dir.join(format!("{id}.wgsl")), &shader.source);
+        let _ = std::fs::write(
+            dir.join(format!("{id}.params")),
+            format!("{:?}", shader.parameters),
+        );
+    }
+    match emitted {
         Ok(shader) => match validate(&shader.source) {
             Ok(()) => ("gpu", detail),
             Err(e) => ("cpu", format!("{detail}: invalid WGSL {e}")),
@@ -81,7 +94,7 @@ fn main() {
         let [id, _, _, relative] = fields.as_slice() else {
             continue;
         };
-        let (status, detail) = classify(Path::new(root), &Path::new(examples).join(relative));
+        let (status, detail) = classify(id, Path::new(root), &Path::new(examples).join(relative));
         println!("{id}\t{status}\t{}", detail.replace(['\n', '\t'], " "));
     }
 }
