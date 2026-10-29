@@ -13,6 +13,7 @@
 pub mod ast;
 pub mod boolean;
 pub mod constants;
+pub mod displacement;
 pub mod eval;
 mod lex;
 pub mod orbit;

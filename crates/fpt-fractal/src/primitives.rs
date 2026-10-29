@@ -76,6 +76,8 @@ pub struct Primitive {
     pub empty: bool,
     pub wall: f64,
     pub limits: Option<([f64; 3], [f64; 3])>,
+    /// Its material, whose Perlin noise may displace it (`displacement::emit`).
+    pub material: i64,
 }
 
 /// The enabled primitives in Mandelbulber's evaluation order (parameter-name order, then `_calculation_order`),
@@ -232,6 +234,8 @@ fn primitive(file: &FractFile, name: &str) -> Option<Primitive> {
                 vector("limits_max", [0.7; 3]),
             )
         }),
+        #[allow(clippy::cast_possible_truncation, reason = "a material id")]
+        material: number("material_id", 1.0) as i64,
         kind,
     })
 }
@@ -261,7 +265,8 @@ fn slot(v: [f64; 3], w: f64) -> [f32; 4] {
 }
 
 /// WGSL for `fractal_primitives(p, distance, detail_size)`: `TotalDistance` over the scene's primitives, with `p`
-/// in the estimate's coordinates (Mandelbulber's, less `origin`). Their numbers go into `params`.
+/// in the estimate's coordinates (Mandelbulber's, less `origin`). Their numbers go into `params`. It calls
+/// `fractal_displacement` (`displacement::emit`).
 #[must_use]
 pub fn emit(file: &FractFile, origin: [f64; 3], params: &mut Vec<[f32; 4]>) -> String {
     let all = primitives(file);
@@ -329,6 +334,12 @@ pub fn emit(file: &FractFile, origin: [f64; 3], params: &mut Vec<[f32; 4]>) -> S
                     k + 5
                 );
             }
+            // Its material's displacement, at the point all primitives share.
+            let _ = writeln!(
+                out,
+                "        d = fractal_displacement({}, q, d);",
+                primitive.material
+            );
             let combine = match (primitive.operator, primitive.smooth) {
                 (0, _) => "distance = max(distance, d);".to_owned(),
                 (1, Some(_)) => format!("distance = fractal_smooth_union(distance, d, fractal_params[{}].w);", k + 4),
@@ -507,6 +518,7 @@ mod tests {
             "@group(0) @binding(0) var<storage, read> fractal_params: array<vec4<f32>>;\n{}{}",
             crate::boolean::WGSL_HELPERS,
             emit(&file, [0.0; 3], &mut params)
+                + "fn fractal_displacement(material: i32, p: vec3<f32>, distance: f32) -> f32 { return distance; }\n"
         );
         let module = naga::front::wgsl::parse_str(&source)
             .unwrap_or_else(|e| panic!("{}", e.emit_to_string(&source)));

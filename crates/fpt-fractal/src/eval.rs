@@ -4,8 +4,44 @@
 //! interpreting the OpenCL source in f64 reproduces the native distance field
 //! and serves as the reference for generated GPU code.
 
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::fmt;
+
+thread_local! {
+    /// Rounds every value the formulas compute to f32 (`with_f32_rounding`).
+    static ROUND_F32: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Runs `f` with every formula value rounded to f32 as it is computed: an estimate of what the f32 WGSL computes,
+/// to tell when a scene needs more precision than f32 holds.
+pub fn with_f32_rounding<R>(f: impl FnOnce() -> R) -> R {
+    let before = ROUND_F32.replace(true);
+    let result = f();
+    ROUND_F32.set(before);
+    result
+}
+
+#[allow(
+    clippy::cast_possible_truncation,
+    reason = "rounding to f32 is the point"
+)]
+fn round(x: f64) -> f64 {
+    f64::from(x as f32)
+}
+
+fn rounded(value: Value) -> Value {
+    match value {
+        Value::Scalar(x) => Value::Scalar(round(x)),
+        Value::Vector { len, v } => Value::Vector {
+            len,
+            v: v.map(round),
+        },
+        Value::Matrix(m) => Value::Matrix(m.map(|row| row.map(round))),
+        Value::Array(items) => Value::Array(items.into_iter().map(rounded).collect()),
+        other => other,
+    }
+}
 
 use crate::ast::*;
 
@@ -895,6 +931,15 @@ impl Interpreter<'_> {
     }
 
     fn expr(&mut self, expr: &Expr) -> Result<Value> {
+        let value = self.expr_exact(expr)?;
+        Ok(if ROUND_F32.get() {
+            rounded(value)
+        } else {
+            value
+        })
+    }
+
+    fn expr_exact(&mut self, expr: &Expr) -> Result<Value> {
         Ok(match expr {
             Expr::Number { value, float } => {
                 if *float {

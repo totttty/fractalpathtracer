@@ -57,8 +57,9 @@ fn df1_div(a: DF1, b: DF1) -> DF1 {
     let q2 = r.hi / b.hi;
     let r2 = df1_sub(r, df1_mul(df1_f(q2), b));
     let q3 = r2.hi / b.hi;
-    // Division by zero or an overflow: f32's quotient (the refinement would be NaN).
-    return df1_select(df1_f(q1), df1_add(df1_quick_two_sum(q1, q2), df1_f(q3)), abs(q1) <= 3.4028235e38);
+    // Division by zero or by infinity, or an overflow: f32's quotient (the refinement would be NaN).
+    let finite = abs(q1) <= 3.4028235e38 && abs(b.hi) <= 3.4028235e38;
+    return df1_select(df1_f(q1), df1_add(df1_quick_two_sum(q1, q2), df1_f(q3)), finite);
 }
 fn df1_lt(a: DF1, b: DF1) -> bool { return a.hi < b.hi || (a.hi == b.hi && a.lo < b.lo); }
 fn df1_gt(a: DF1, b: DF1) -> bool { return df1_lt(b, a); }
