@@ -316,6 +316,15 @@ fn rotate(matrix: [[f64; 3]; 3], axis: usize, angle: f64) -> [[f64; 3]; 3] {
     multiply(matrix, rotation)
 }
 
+/// `CRotationMatrix::SetRotation`: Z(x), X(y), Y(z), angles in radians.
+pub(crate) fn set_rotation(radians: [f64; 3]) -> [[f64; 3]; 3] {
+    rotate(
+        rotate(rotate(IDENTITY, 2, radians[0]), 0, radians[1]),
+        1,
+        radians[2],
+    )
+}
+
 /// `SetRotation2`: Z(z), Y(y), X(x). `SetRotation3`: Z(x), Y(y), X(z).
 /// `SetRotation4`: X(x), Y(y), Z(z). Angles in degrees.
 pub(crate) fn rotation_matrix(order: u8, degrees: [f64; 3]) -> [[f64; 3]; 3] {

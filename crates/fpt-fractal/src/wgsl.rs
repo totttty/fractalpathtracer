@@ -11,8 +11,10 @@ use std::fmt::Write as _;
 
 use crate::ast::*;
 use crate::boolean::{BooleanFractal, Operator, Shape};
+use crate::colouring::Colouring;
 use crate::eval::{Parameters, Value};
 use crate::orbit::Fractal;
+use crate::scene::ColoringFunction;
 use crate::scene::DeFunction;
 
 #[path = "wgsl_df.rs"]
@@ -165,9 +167,12 @@ struct Emitter<'a> {
     deep: Option<[f64; 3]>,
     /// Names of the on-demand double-float helpers already in `globals`.
     helpers: std::collections::HashSet<String>,
+    /// Mandelbulber's colouring orbit, emitted as `{prefix}colour_index(p)` alongside the distance.
+    colouring: Option<Colouring>,
 }
 
 /// Buffer slots of the orbit glue (`Emitter::glue_slots`).
+#[derive(Clone)]
 struct Glue {
     sequence_slot: usize,
     weights: Vec<usize>,
@@ -197,6 +202,38 @@ pub fn emit(fractal: &Fractal) -> Result<FractalShader> {
         &mut globals,
         &mut out,
         None,
+        None,
+    )?;
+    out.insert_str(globals_at, &globals);
+    Ok(FractalShader {
+        source: out,
+        parameters,
+    })
+}
+
+/// `emit` or `emit_deep` (with `origin`), plus `fractal_colour_index(p)`: Mandelbulber's colour index at `p` (in the
+/// distance's coordinates) from its colouring orbit with `colouring` (`CalculateColorIndex`).
+pub fn emit_coloured(
+    fractal: &Fractal,
+    origin: Option<[f64; 3]>,
+    colouring: &Colouring,
+) -> Result<FractalShader> {
+    let mut out = String::new();
+    if origin.is_some() {
+        df::prelude(&mut out);
+    } else {
+        prelude(&mut out);
+    }
+    let globals_at = out.len();
+    let mut globals = String::new();
+    let parameters = emit_fractal(
+        fractal,
+        "fractal_",
+        Vec::new(),
+        &mut globals,
+        &mut out,
+        origin,
+        Some(colouring),
     )?;
     out.insert_str(globals_at, &globals);
     Ok(FractalShader {
@@ -219,6 +256,7 @@ pub fn emit_deep(fractal: &Fractal, origin: [f64; 3]) -> Result<FractalShader> {
         &mut globals,
         &mut out,
         Some(origin),
+        None,
     )?;
     out.insert_str(globals_at, &globals);
     Ok(FractalShader {
@@ -244,6 +282,7 @@ pub fn emit_boolean(scene: &BooleanFractal) -> Result<FractalShader> {
             parameters,
             &mut globals,
             &mut out,
+            None,
             None,
         )?;
         let vector = |v: [f64; 3]| [v[0] as f32, v[1] as f32, v[2] as f32, 0.0];
@@ -314,6 +353,7 @@ fn emit_fractal(
     globals: &mut String,
     out: &mut String,
     deep: Option<[f64; 3]>,
+    colouring: Option<&Colouring>,
 ) -> Result<Vec<[f32; 4]>> {
     let header = parameters.len();
     let mut emitter = Emitter {
@@ -331,6 +371,7 @@ fn emit_fractal(
         temporaries: 0,
         deep,
         helpers: std::collections::HashSet::new(),
+        colouring: colouring.cloned(),
     };
     let m = fractal.constant_multiplier;
     emitter.push_slot([
@@ -1760,24 +1801,67 @@ impl Emitter<'_> {
             }
             None => "2.0".into(),
         };
+        let glue = self.glue_slots();
+        let linear_offset = glue.linear_offset;
+        self.orbit_function(None, &glue, julia_slot, &actual_scale)?;
+        if let Some(colouring) = self.colouring.clone() {
+            self.orbit_function(Some(&colouring), &glue, julia_slot, &actual_scale)?;
+        }
+        let prefix = self.prefix.clone();
+        self.line(format!(
+            "fn {prefix}distance(p: vec3<f32>, detail_size: f32) -> f32 {{"
+        ));
+        self.indent += 1;
+        self.line(format!("let orbit = {prefix}orbit(p, -1);"));
+        self.line("if (orbit.empty) { return 10.0; }");
+        self.line("let z = orbit.z;");
+        self.line("let aux = orbit.aux;");
+        if fractal.delta {
+            self.delta_distance()?;
+        } else {
+            self.analytic_distance(linear_offset)?;
+        }
+        self.distance_rules();
+        Ok(())
+    }
+
+    /// The orbit function: `{prefix}orbit(p, forced)`, or with `colouring` Mandelbulber's colouring orbit
+    /// `{prefix}colour_index(p)`.
+    fn orbit_function(
+        &mut self,
+        colouring: Option<&Colouring>,
+        glue: &Glue,
+        julia_slot: usize,
+        actual_scale: &str,
+    ) -> Result<()> {
+        let fractal = self.fractal;
+        let (prefix, header) = (self.prefix.clone(), self.header);
         let sequence_length = fractal.sequence.len().max(1);
         let Glue {
             sequence_slot,
-            weights,
-            linear_offset,
+            ref weights,
             transform,
             box_fold,
             spherical_fold,
-        } = self.glue_slots();
-        let (prefix, header) = (self.prefix.clone(), self.header);
-        self.line("// `forced` >= 0 runs exactly that many iterations with no bailout,");
-        self.line("// as Delta-DE's probes do.");
-        self.line(format!(
-            "fn {prefix}orbit(p: vec3<f32>, forced: i32) -> FractalOrbit {{"
-        ));
-        self.indent += 1;
-        self.line(format!("let header = fractal_params[{header}];"));
-        self.line("let max_iterations = select(i32(header.x), forced, forced >= 0);");
+            ..
+        } = *glue;
+        if colouring.is_some() {
+            // calcModeColouring: four times the iterations, Mandelbulber's own exits and an orbit trap.
+            self.line(format!("fn {prefix}colour_index(p: vec3<f32>) -> f32 {{"));
+            self.indent += 1;
+            self.line(format!("let header = fractal_params[{header}];"));
+            self.line("let max_iterations = i32(header.x) * 4;");
+            self.line("let forced = -1;");
+        } else {
+            self.line("// `forced` >= 0 runs exactly that many iterations with no bailout,");
+            self.line("// as Delta-DE's probes do.");
+            self.line(format!(
+                "fn {prefix}orbit(p: vec3<f32>, forced: i32) -> FractalOrbit {{"
+            ));
+            self.indent += 1;
+            self.line(format!("let header = fractal_params[{header}];"));
+            self.line("let max_iterations = select(i32(header.x), forced, forced >= 0);");
+        }
 
         self.line("let bailout = header.y;");
         // Compute's "repeat, move and rotate".
@@ -1792,6 +1876,10 @@ impl Emitter<'_> {
             transform + 4
         ));
         self.line("var z = vec4<f32>(q, header.z);");
+        if colouring.is_some() {
+            self.line("let initial = z;");
+            self.line("var colour_min = 1000.0;");
+        }
         self.line("var aux: FractalAux;");
         for (field, value) in [
             ("i", "0".to_owned()),
@@ -1804,7 +1892,7 @@ impl Emitter<'_> {
             ("DE0", "0.0".into()),
             ("dist", "1000.0".into()),
             ("pseudoKleinianDE", "1.0".into()),
-            ("actualScale", actual_scale),
+            ("actualScale", actual_scale.to_owned()),
             ("actualScaleA", "0.0".into()),
             ("color", "1.0".into()),
             ("colorHybrid", "0.0".into()),
@@ -1856,12 +1944,17 @@ impl Emitter<'_> {
                 "let step = u32(min(i, {}));\n        formula = i32(fractal_params[{sequence_slot}u + step / 4u][step % 4u]);",
                 sequence_length - 1
             ));
-            self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true, false); }");
+            if colouring.is_some() {
+                self.line("if (formula < 0) { return 0.0; }");
+            } else {
+                self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true, false); }");
+            }
             self.line("let previous_de = aux.DE;");
             self.line("let previous_color = aux.color;");
             self.line("switch formula {");
         }
         let m = &format!("fractal_params[{}].xyz", header + 1);
+        let _ = &fractal;
         for (k, formula) in fractal.formulas.iter().enumerate() {
             if fractal.hybrid {
                 let label = if k + 1 == fractal.formulas.len() {
@@ -1921,7 +2014,10 @@ impl Emitter<'_> {
             self.line("    aux.r = length(z);");
             self.line(format!("    {exit}"));
             self.line("}");
-            if formula.check_bailout {
+            if let (Some(colouring), true) = (colouring, formula.check_bailout) {
+                let mandelbox = formula.meta.internal_name == "mandelbox";
+                self.colour_trap(colouring, mandelbox, formula.additional_bailout, exit);
+            } else if formula.check_bailout {
                 self.line("if (!done && forced < 0) {");
                 self.line(format!(
                     "    if (aux.r > bailout) {{ escaped = true; {exit} }}"
@@ -1950,24 +2046,256 @@ impl Emitter<'_> {
         }
         self.indent -= 1;
         self.line("}");
-        self.line("return FractalOrbit(z, aux, iterations, formula, false, escaped);");
+        if let Some(colouring) = colouring {
+            self.line("let cz = z;");
+            self.line("let cr = aux.r;");
+            self.line("let cde = aux.DE;");
+            self.line("let ccolour = aux.color;");
+            self.line("let chybrid = aux.colorHybrid;");
+            self.line("let ci = f32(aux.i);");
+            self.line("let cc = aux.c;");
+            self.colour_index_code(colouring)?;
+        } else {
+            self.line("return FractalOrbit(z, aux, iterations, formula, false, escaped);");
+        }
         self.indent -= 1;
         self.line("}");
         self.line("");
-        self.line(format!(
-            "fn {prefix}distance(p: vec3<f32>, detail_size: f32) -> f32 {{"
-        ));
-        self.indent += 1;
-        self.line(format!("let orbit = {prefix}orbit(p, -1);"));
-        self.line("if (orbit.empty) { return 10.0; }");
-        self.line("let z = orbit.z;");
-        self.line("let aux = orbit.aux;");
-        if fractal.delta {
-            self.delta_distance()?;
+        Ok(())
+    }
+
+    /// The colouring orbit's trap and exits after a formula (compute_fractal.cpp, calcModeColouring), on `z`.
+    fn colour_trap(
+        &mut self,
+        colouring: &Colouring,
+        mandelbox: bool,
+        additional: bool,
+        exit: &str,
+    ) {
+        let f = float_literal;
+        let line = colouring.line_direction;
+        let length = if self.deep.is_some() {
+            "df4_length(df4_sub(z, last_z))"
         } else {
-            self.analytic_distance(linear_offset)?;
+            "length(z - last_z)"
+        };
+        let length = if self.deep.is_some() {
+            format!("df1_to_f({length})")
+        } else {
+            length.to_owned()
+        };
+        self.line("if (!done) {");
+        self.indent += 1;
+        if self.deep.is_some() {
+            self.line("var cz = df4_to_f(z);");
+            self.line("let r = df1_to_f(aux.r);");
+        } else {
+            self.line("var cz = z;");
+            self.line("let r = aux.r;");
         }
-        self.distance_rules();
+        if !colouring.color_4d {
+            self.line("cz.w = 0.0;");
+        }
+        let len = match colouring.algorithm {
+            1 => "abs(dot(cz, initial))".to_owned(),
+            2 => format!("abs(length(cz - initial) - {})", f(colouring.sphere_radius)),
+            3 if colouring.color_4d => {
+                "min(min(abs(cz.x), abs(cz.y)), min(abs(cz.z), abs(cz.w)))".into()
+            }
+            3 => "min(abs(cz.x), min(abs(cz.y), abs(cz.z)))".into(),
+            4 => format!(
+                "abs(dot(cz, vec4<f32>({}, {}, {}, {})))",
+                f(line[0]),
+                f(line[1]),
+                f(line[2]),
+                f(line[3])
+            ),
+            -1 => "r".into(),
+            _ => "length(cz)".into(),
+        };
+        self.line(format!("let len = {len};"));
+        let stalled = format!("{length} / r < 1e-15");
+        let trap = "colour_min = min(colour_min, len);";
+        let standard = colouring.algorithm == 0;
+        match (colouring.pre_v215, mandelbox) {
+            (false, false) => {
+                self.line(trap);
+                self.line(format!("if (r > header.y) {{ {exit} }}"));
+                if additional {
+                    self.line(format!("if ({stalled}) {{ {exit} }}"));
+                }
+            }
+            (false, true) if standard => {
+                self.line(format!("if (r > 1e15 || {stalled}) {{ {exit} }}"))
+            }
+            (false, true) => {
+                self.line(trap);
+                self.line(format!("if (r > header.y || {stalled}) {{ {exit} }}"));
+            }
+            (true, _) => {
+                if !mandelbox || !standard {
+                    self.line(trap);
+                }
+                self.line(format!("if (r > 1e15 || {stalled}) {{ {exit} }}"));
+            }
+        }
+        self.indent -= 1;
+        self.line("}");
+    }
+
+    /// `CalculateColorIndex` from the colouring orbit's end (f32 `cz`, `cr`, `cde`, `ccolour`, `chybrid`, `ci`,
+    /// `cc` and `colour_min`), returned.
+    fn colour_index_code(&mut self, colouring: &Colouring) -> Result<()> {
+        let f = float_literal;
+        let deep = self.deep.is_some();
+        if let Some(extra) = &colouring.extra {
+            self.line(format!("var value = {};", f(extra.initial)));
+            if let Some(w) = extra.initial_radius {
+                self.line(format!("value += length(cc.xyz) * {};", f(w)));
+            }
+            if let Some((weights, raw)) = extra.initial_xyz {
+                let v = if raw { "cc.xyz" } else { "abs(cc.xyz)" };
+                self.line(format!(
+                    "value += dot({v} * vec3<f32>({}, {}, {}), vec3<f32>(1.0));",
+                    f(weights[0]),
+                    f(weights[1]),
+                    f(weights[2])
+                ));
+            }
+            if let Some(w) = extra.orbit_trap {
+                self.line(format!("value += colour_min * {};", f(w)));
+            }
+            if let Some((w, hybrid)) = extra.aux_color {
+                self.line(format!(
+                    "value += ccolour * {} + chybrid * {};",
+                    f(w),
+                    f(hybrid)
+                ));
+            }
+            for (term, divisor, name) in [
+                (extra.radius, "", "rad"),
+                (extra.radius_over_de, " / cde", "rad_de"),
+            ] {
+                if let Some((w, div, squared)) = term {
+                    self.line(format!("var {name} = cr;"));
+                    if div {
+                        self.line(format!("{name} /= 1e13;"));
+                    }
+                    if squared {
+                        self.line(format!("{name} *= {name};"));
+                    }
+                    self.line(format!("value += {name}{divisor} * {};", f(w)));
+                }
+            }
+            if let Some((weights, scale, raw, div, squared)) = extra.xyz {
+                self.line("var axis = cz.xyz;");
+                if div {
+                    self.line("axis /= 1e13;");
+                }
+                let v = if raw { "axis" } else { "abs(axis)" };
+                self.line(format!(
+                    "axis = {v} * vec3<f32>({}, {}, {});",
+                    f(weights[0]),
+                    f(weights[1]),
+                    f(weights[2])
+                ));
+                for (i, c) in ["x", "y", "z"].iter().enumerate() {
+                    if squared[i] {
+                        self.line(format!("axis.{c} *= axis.{c};"));
+                    }
+                }
+                self.line(format!(
+                    "value += (axis.x + axis.y + axis.z) * (1.0 + {} * ci);",
+                    f(scale)
+                ));
+            }
+            if let Some((start, add, scale)) = extra.iterations {
+                if let Some(add) = add {
+                    self.line(format!(
+                        "if (ci > {0}) {{ value += {1} * (ci - {0}); }}",
+                        f(start),
+                        f(add)
+                    ));
+                }
+                if let Some(scale) = scale {
+                    self.line(format!(
+                        "if (ci >= {0}) {{ value *= (ci - {0}) * {1} + 1.0; }}",
+                        f(start),
+                        f(scale)
+                    ));
+                }
+            }
+            if let Some([start, spread, max]) = extra.add {
+                self.line(format!(
+                    "if (value > {0}) {{ value += (1.0 - 1.0 / (1.0 + (value - {0}) / {1})) * {2}; }}",
+                    f(start),
+                    f(spread),
+                    f(max)
+                ));
+            }
+            if let Some([start, scale]) = extra.parabola {
+                // Mandelbulber measures the parabola from the cosine's start.
+                self.line(format!(
+                    "if (value > {}) {{ let parab = value - {}; value += parab * parab * {}; }}",
+                    f(start),
+                    f(extra.cos_start),
+                    f(scale)
+                ));
+            }
+            if let Some([start, period, add]) = extra.cosine {
+                self.line(format!(
+                    "if (value > {0}) {{ value += (0.5 - 0.5 * cos((value - {0}) * 3.14159265 / ({1} * 2.0))) * {2}; }}",
+                    f(start),
+                    f(period),
+                    f(add)
+                ));
+            }
+            if let Some(scale) = extra.round {
+                self.line(format!("value = round(value / {0}) * {0};", f(scale)));
+            }
+            self.line(format!(
+                "return clamp(value, {}, {}) * 256.0;",
+                f(extra.min),
+                f(extra.max)
+            ));
+            return Ok(());
+        }
+        if self.fractal.hybrid {
+            let [trap, aux, radius] = colouring.hybrid_scales.unwrap_or([1.0; 3]);
+            self.line(format!(
+                "return min(colour_min, 100.0) * 1000.0 * {} + ccolour * 100.0 * {} + min(cr / abs(cde), 20.0) * 5000.0 * {};",
+                f(trap),
+                f(aux),
+                f(radius)
+            ));
+            return Ok(());
+        }
+        let index = match self.fractal.formulas[0].meta.coloring_function {
+            ColoringFunction::ABox => {
+                let factor = if self.params().values.contains_key("mandelbox.color.factorR") {
+                    let code = self.parameter("mandelbox.color.factorR")?.0;
+                    if deep {
+                        format!("df1_to_f({code})")
+                    } else {
+                        code
+                    }
+                } else {
+                    "0.0".into()
+                };
+                let trap = if colouring.algorithm == 0 {
+                    "0.0"
+                } else {
+                    "colour_min * 1000.0"
+                };
+                format!("ccolour * 100.0 + cr * {factor} / 1e13 + {trap}")
+            }
+            ColoringFunction::Ifs => "colour_min * 1000.0".into(),
+            ColoringFunction::AmazingSurf => "colour_min * 200.0".into(),
+            ColoringFunction::Donut => "ccolour * 2000.0 / ci".into(),
+            ColoringFunction::Default => "colour_min * 5000.0".into(),
+            ColoringFunction::Undefined => "0.0".into(),
+        };
+        self.line(format!("return {index};"));
         Ok(())
     }
 
@@ -2273,6 +2601,7 @@ REAL4 TestIteration(REAL4 z, __constant sFractalCl *fractal, sExtendedAuxCl *aux
             analytic_function: DeFunction::Logarithmic,
             c_addition: CAddition::EnabledByDefault,
             default_bailout: 10.0,
+            coloring_function: crate::scene::ColoringFunction::Default,
         };
         Fractal {
             formulas: vec![crate::orbit::Formula {

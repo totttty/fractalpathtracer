@@ -43,7 +43,12 @@ fn main() {
                     shape.distance(p, f64::from(s[3] as f32))
                 })
                 .ok()?;
-                Some((rounded - exact).abs() / exact.abs().max(1e-30))
+                let error = (rounded - exact).abs() / exact.abs().max(1e-30);
+                // PRECISION_SCAN_POINTS=id prints that scene's points: distance, detail size, error.
+                if env::var("PRECISION_SCAN_POINTS").as_deref() == Ok(*id) {
+                    eprintln!("{exact:.6e}\t{:.3e}\t{error:.3e}", s[3]);
+                }
+                Some(error)
             })
             .collect();
         if errors.is_empty() {

@@ -12,10 +12,12 @@
 
 pub mod ast;
 pub mod boolean;
+pub mod colouring;
 pub mod constants;
 pub mod displacement;
 pub mod eval;
 mod lex;
+pub mod lights;
 pub mod orbit;
 pub mod params;
 mod parse;

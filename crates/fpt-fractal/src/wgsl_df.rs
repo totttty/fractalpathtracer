@@ -7,6 +7,7 @@ use std::fmt::Write as _;
 
 use super::{AUX_FIELDS, Emitter, Glue, Result, Ty, err};
 use crate::ast::{BinaryOp, Expr};
+use crate::colouring::Colouring;
 
 /// The scalar core: error-free transforms, arithmetic, comparisons and transcendentals (series on reduced arguments,
 /// or one Newton step from the f32 result, which squares its error).
@@ -16,15 +17,18 @@ struct DF2 { hi: vec2<f32>, lo: vec2<f32>, }
 struct DF3 { hi: vec3<f32>, lo: vec3<f32>, }
 struct DF4 { hi: vec4<f32>, lo: vec4<f32>, }
 
-// An overflowed sum keeps f32's infinity (its error term would be NaN).
 fn df1_quick_two_sum(a: f32, b: f32) -> DF1 {
     let s = a + b;
-    return DF1(s, select(0.0, b - (s - a), abs(s) <= 3.4028235e38));
+    return DF1(s, b - (s - a));
 }
 fn df1_two_sum(a: f32, b: f32) -> DF1 {
     let s = a + b;
     let bb = s - a;
-    return DF1(s, select(0.0, (a - (s - bb)) + (b - bb), abs(s) <= 3.4028235e38));
+    return DF1(s, (a - (s - bb)) + (b - bb));
+}
+// A sum or product that overflowed, or met an infinity, is f32's `plain` result: its error terms would be NaN.
+fn df1_finite(r: DF1, plain: f32) -> DF1 {
+    return DF1(select(plain, r.hi, abs(r.hi) <= 3.4028235e38), select(0.0, r.lo, abs(r.hi) <= 3.4028235e38));
 }
 fn df1_f(x: f32) -> DF1 { return DF1(x, 0.0); }
 fn df1_i(x: i32) -> DF1 { return DF1(f32(x), 0.0); }
@@ -36,30 +40,25 @@ fn df1_to_i(a: DF1) -> i32 {
     return i32(h);
 }
 fn df1_nz(a: DF1) -> bool { return a.hi != 0.0 || a.lo != 0.0; }
+// Dekker's sum: exact high parts, low parts added in f32 (accurate to 2^-48 of the larger operand).
 fn df1_add(a: DF1, b: DF1) -> DF1 {
-    var s = df1_two_sum(a.hi, b.hi);
-    let t = df1_two_sum(a.lo, b.lo);
-    s.lo += t.hi;
-    s = df1_quick_two_sum(s.hi, s.lo);
-    s.lo += t.lo;
-    return df1_quick_two_sum(s.hi, s.lo);
+    let s = df1_two_sum(a.hi, b.hi);
+    return df1_finite(df1_quick_two_sum(s.hi, s.lo + (a.lo + b.lo)), a.hi + b.hi);
 }
 fn df1_neg(a: DF1) -> DF1 { return DF1(-a.hi, -a.lo); }
 fn df1_sub(a: DF1, b: DF1) -> DF1 { return df1_add(a, df1_neg(b)); }
 fn df1_mul(a: DF1, b: DF1) -> DF1 {
     let p = a.hi * b.hi;
     let e = fma(a.hi, b.hi, -p);
-    return df1_quick_two_sum(p, select(0.0, e + (a.hi * b.lo + a.lo * b.hi), abs(p) <= 3.4028235e38));
+    return df1_finite(df1_quick_two_sum(p, e + (a.hi * b.lo + a.lo * b.hi)), p);
 }
 fn df1_div(a: DF1, b: DF1) -> DF1 {
     let q1 = a.hi / b.hi;
     let r = df1_sub(a, df1_mul(df1_f(q1), b));
     let q2 = r.hi / b.hi;
-    let r2 = df1_sub(r, df1_mul(df1_f(q2), b));
-    let q3 = r2.hi / b.hi;
     // Division by zero or by infinity, or an overflow: f32's quotient (the refinement would be NaN).
     let finite = abs(q1) <= 3.4028235e38 && abs(b.hi) <= 3.4028235e38;
-    return df1_select(df1_f(q1), df1_add(df1_quick_two_sum(q1, q2), df1_f(q3)), finite);
+    return df1_select(df1_f(q1), df1_quick_two_sum(q1, q2), finite);
 }
 fn df1_lt(a: DF1, b: DF1) -> bool { return a.hi < b.hi || (a.hi == b.hi && a.lo < b.lo); }
 fn df1_gt(a: DF1, b: DF1) -> bool { return df1_lt(b, a); }
@@ -121,14 +120,26 @@ fn df1_cos_series(r2: DF1) -> DF1 {
     q = df1_sub(DF1(5.000000000e-01, 0.0), df1_mul(r2, q));
     return df1_sub(df1_f(1.0), df1_mul(r2, q));
 }
+// x less the nearest multiple k of pi/2, and k mod 4. k is a double-float too: past 2^24 an f32 cannot hold
+// every integer, and an f32 k left the reduced angle in the thousands, where the series overflow.
+struct DFReduced { r: DF1, quadrant: i32, }
+fn df1_reduce(x: DF1) -> DFReduced {
+    let scaled = df1_mul(x, DF1(6.366197467e-01, 2.568255297e-08));
+    let k_hi = round(scaled.hi);
+    let k = df1_quick_two_sum(k_hi, round((scaled.hi - k_hi) + scaled.lo));
+    let r = df1_sub(x, df1_mul(DF1(1.570796371e+00, -4.371138829e-08), k));
+    // Each part's remainder after 4 (exact: k's parts are integers, and dividing by 4 is exact).
+    let quadrant = i32(k.hi - 4.0 * floor(k.hi * 0.25)) + i32(k.lo - 4.0 * floor(k.lo * 0.25));
+    return DFReduced(r, quadrant & 3);
+}
 // (sin x, cos x) as DF2's hi.x/lo.x and hi.y/lo.y.
 fn df1_sincos(x: DF1) -> DF2 {
-    let k = round(x.hi * 0.636619772);
-    let r = df1_sub(x, df1_mul(DF1(1.570796371e+00, -4.371138829e-08), df1_f(k)));
+    let reduced = df1_reduce(x);
+    let r = reduced.r;
     let r2 = df1_mul(r, r);
     let sr = df1_sin_series(r, r2);
     let cr = df1_cos_series(r2);
-    let quadrant = i32(k) & 3;
+    let quadrant = reduced.quadrant;
     var s = sr;
     var c = cr;
     if quadrant == 1 { s = cr; c = df1_neg(sr); }
@@ -136,8 +147,25 @@ fn df1_sincos(x: DF1) -> DF2 {
     if quadrant == 3 { s = df1_neg(cr); c = sr; }
     return DF2(vec2(s.hi, c.hi), vec2(s.lo, c.lo));
 }
-fn df1_sin(x: DF1) -> DF1 { let sc = df1_sincos(x); return DF1(sc.hi.x, sc.lo.x); }
-fn df1_cos(x: DF1) -> DF1 { let sc = df1_sincos(x); return DF1(sc.hi.y, sc.lo.y); }
+// sin and cos alone evaluate only the series their quadrant needs.
+fn df1_sin(x: DF1) -> DF1 {
+    let reduced = df1_reduce(x);
+    let r = reduced.r;
+    let r2 = df1_mul(r, r);
+    let quadrant = reduced.quadrant;
+    var v: DF1;
+    if (quadrant & 1) == 0 { v = df1_sin_series(r, r2); } else { v = df1_cos_series(r2); }
+    return df1_select(v, df1_neg(v), quadrant >= 2);
+}
+fn df1_cos(x: DF1) -> DF1 {
+    let reduced = df1_reduce(x);
+    let r = reduced.r;
+    let r2 = df1_mul(r, r);
+    let quadrant = reduced.quadrant;
+    var v: DF1;
+    if (quadrant & 1) == 0 { v = df1_cos_series(r2); } else { v = df1_sin_series(r, r2); }
+    return df1_select(v, df1_neg(v), quadrant == 1 || quadrant == 2);
+}
 fn df1_tan(x: DF1) -> DF1 { let sc = df1_sincos(x); return df1_div(DF1(sc.hi.x, sc.lo.x), DF1(sc.hi.y, sc.lo.y)); }
 fn df1_atan2(y: DF1, x: DF1) -> DF1 {
     if x.hi == 0.0 && y.hi == 0.0 { return df1_f(atan2(y.hi, x.hi)); }
@@ -639,24 +667,85 @@ impl Emitter<'_> {
             }
             None => "df1_f(2.0)".into(),
         };
+        let glue = self.glue_slots();
+        let linear_offset = glue.linear_offset;
+        let origin_slot = self.push_value([origin[0], origin[1], origin[2], 0.0]);
+        self.deep_orbit_function(None, &glue, julia_slot, &actual_scale, origin_slot)?;
+        if let Some(colouring) = self.colouring.clone() {
+            self.deep_orbit_function(
+                Some(&colouring),
+                &glue,
+                julia_slot,
+                &actual_scale,
+                origin_slot,
+            )?;
+        }
+        let prefix = self.prefix.clone();
+        self.line(format!(
+            "fn {prefix}distance(p_camera: vec3<f32>, detail_size: f32) -> f32 {{"
+        ));
+        self.indent += 1;
+        self.line(format!(
+            "let p = df3_add(DF3(fractal_params[{origin_slot}].xyz, fractal_params[{}].xyz), df3_f(p_camera));",
+            origin_slot + 1
+        ));
+        self.line(format!("let orbit = {prefix}orbit(p, -1);"));
+        self.line("if (orbit.empty) { return 10.0; }");
+        self.line("let z = df4_to_f(orbit.z);");
+        if fractal.delta {
+            self.deep_delta_distance();
+        } else {
+            self.line(
+                "let aux = FractalAuxF(df1_to_f(orbit.aux.r), df1_to_f(orbit.aux.DE), df1_to_f(orbit.aux.pseudoKleinianDE), df1_to_f(orbit.aux.dist));",
+            );
+            self.analytic_distance(linear_offset)?;
+        }
+        self.distance_rules();
+        Ok(())
+    }
+
+    /// The deep orbit function: `{prefix}orbit(p, forced)` on a double-float `p`, or with `colouring` the colouring
+    /// orbit `{prefix}colour_index(p_camera)`.
+    fn deep_orbit_function(
+        &mut self,
+        colouring: Option<&Colouring>,
+        glue: &Glue,
+        julia_slot: usize,
+        actual_scale: &str,
+        origin_slot: usize,
+    ) -> Result<()> {
+        let fractal = self.fractal;
+        let (prefix, header) = (self.prefix.clone(), self.header);
         let sequence_length = fractal.sequence.len().max(1);
         let Glue {
             sequence_slot,
-            weights,
-            linear_offset,
+            ref weights,
             transform,
             ..
-        } = self.glue_slots();
-        let origin_slot = self.push_value([origin[0], origin[1], origin[2], 0.0]);
-        let (prefix, header) = (self.prefix.clone(), self.header);
-        self.line("// `forced` >= 0 runs exactly that many iterations with no bailout,");
-        self.line("// as Delta-DE's probes do.");
-        self.line(format!(
-            "fn {prefix}orbit(p: DF3, forced: i32) -> FractalOrbit {{"
-        ));
-        self.indent += 1;
-        self.line(format!("let header = fractal_params[{header}];"));
-        self.line("let max_iterations = select(i32(header.x), forced, forced >= 0);");
+        } = *glue;
+        if colouring.is_some() {
+            // calcModeColouring: four times the iterations, Mandelbulber's own exits and an orbit trap.
+            self.line(format!(
+                "fn {prefix}colour_index(p_camera: vec3<f32>) -> f32 {{"
+            ));
+            self.indent += 1;
+            self.line(format!(
+                "let p = df3_add(DF3(fractal_params[{origin_slot}].xyz, fractal_params[{}].xyz), df3_f(p_camera));",
+                origin_slot + 1
+            ));
+            self.line(format!("let header = fractal_params[{header}];"));
+            self.line("let max_iterations = i32(header.x) * 4;");
+            self.line("let forced = -1;");
+        } else {
+            self.line("// `forced` >= 0 runs exactly that many iterations with no bailout,");
+            self.line("// as Delta-DE's probes do.");
+            self.line(format!(
+                "fn {prefix}orbit(p: DF3, forced: i32) -> FractalOrbit {{"
+            ));
+            self.indent += 1;
+            self.line(format!("let header = fractal_params[{header}];"));
+            self.line("let max_iterations = select(i32(header.x), forced, forced >= 0);");
+        }
         self.line("let bailout = df1_f(header.y);");
         self.line(format!(
             "let position = DF3(fractal_params[{transform}].xyz, fractal_params[{}].xyz);",
@@ -675,6 +764,10 @@ impl Emitter<'_> {
             self.line("let q = df3_mat_rows(rotation, df3_sub(p, position));");
         }
         self.line("var z = DF4(vec4<f32>(q.hi, header.z), vec4<f32>(q.lo, 0.0));");
+        if colouring.is_some() {
+            self.line("let initial = df4_to_f(z);");
+            self.line("var colour_min = 1000.0;");
+        }
         self.line("var aux: FractalAux;");
         for (field, value) in [
             ("i", "0".to_owned()),
@@ -687,7 +780,7 @@ impl Emitter<'_> {
             ("DE0", "df1_f(0.0)".into()),
             ("dist", "df1_f(1000.0)".into()),
             ("pseudoKleinianDE", "df1_f(1.0)".into()),
-            ("actualScale", actual_scale),
+            ("actualScale", actual_scale.to_owned()),
             ("actualScaleA", "df1_f(0.0)".into()),
             ("color", "df1_f(1.0)".into()),
             ("colorHybrid", "df1_f(0.0)".into()),
@@ -712,7 +805,11 @@ impl Emitter<'_> {
                 "let step = u32(min(i, {}));\n        formula = i32(fractal_params[{sequence_slot}u + step / 4u][step % 4u]);",
                 sequence_length - 1
             ));
-            self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true, false); }");
+            if colouring.is_some() {
+                self.line("if (formula < 0) { return 0.0; }");
+            } else {
+                self.line("if (formula < 0) { return FractalOrbit(z, aux, 1, 0, true, false); }");
+            }
             self.line("let previous_de = aux.DE;");
             self.line("let previous_color = aux.color;");
             self.line("switch formula {");
@@ -782,7 +879,10 @@ impl Emitter<'_> {
             self.line("    aux.r = df4_length(z);");
             self.line(format!("    {exit}"));
             self.line("}");
-            if formula.check_bailout {
+            if let (Some(colouring), true) = (colouring, formula.check_bailout) {
+                let mandelbox = formula.meta.internal_name == "mandelbox";
+                self.colour_trap(colouring, mandelbox, formula.additional_bailout, exit);
+            } else if formula.check_bailout {
                 self.line("if (!done && forced < 0) {");
                 self.line(format!(
                     "    if (df1_gt(aux.r, bailout)) {{ escaped = true; {exit} }}"
@@ -810,30 +910,21 @@ impl Emitter<'_> {
         }
         self.indent -= 1;
         self.line("}");
-        self.line("return FractalOrbit(z, aux, iterations, formula, false, escaped);");
+        if let Some(colouring) = colouring {
+            self.line("let cz = df4_to_f(z);");
+            self.line("let cr = df1_to_f(aux.r);");
+            self.line("let cde = df1_to_f(aux.DE);");
+            self.line("let ccolour = df1_to_f(aux.color);");
+            self.line("let chybrid = df1_to_f(aux.colorHybrid);");
+            self.line("let ci = f32(aux.i);");
+            self.line("let cc = df4_to_f(aux.c);");
+            self.colour_index_code(colouring)?;
+        } else {
+            self.line("return FractalOrbit(z, aux, iterations, formula, false, escaped);");
+        }
         self.indent -= 1;
         self.line("}");
         self.line("");
-        self.line(format!(
-            "fn {prefix}distance(p_camera: vec3<f32>, detail_size: f32) -> f32 {{"
-        ));
-        self.indent += 1;
-        self.line(format!(
-            "let p = df3_add(DF3(fractal_params[{origin_slot}].xyz, fractal_params[{}].xyz), df3_f(p_camera));",
-            origin_slot + 1
-        ));
-        self.line(format!("let orbit = {prefix}orbit(p, -1);"));
-        self.line("if (orbit.empty) { return 10.0; }");
-        self.line("let z = df4_to_f(orbit.z);");
-        if fractal.delta {
-            self.deep_delta_distance();
-        } else {
-            self.line(
-                "let aux = FractalAuxF(df1_to_f(orbit.aux.r), df1_to_f(orbit.aux.DE), df1_to_f(orbit.aux.pseudoKleinianDE), df1_to_f(orbit.aux.dist));",
-            );
-            self.analytic_distance(linear_offset)?;
-        }
-        self.distance_rules();
         Ok(())
     }
 

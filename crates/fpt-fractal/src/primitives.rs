@@ -265,15 +265,16 @@ fn slot(v: [f64; 3], w: f64) -> [f32; 4] {
 }
 
 /// WGSL for `fractal_primitives(p, distance, detail_size)`: `TotalDistance` over the scene's primitives, with `p`
-/// in the estimate's coordinates (Mandelbulber's, less `origin`). Their numbers go into `params`. It calls
-/// `fractal_displacement` (`displacement::emit`).
+/// in the estimate's coordinates (Mandelbulber's, less `origin`), and `fractal_primitive_material(p, distance,
+/// detail_size)`: the material of the object `TotalDistance` deems closest (`closestObject`), −1 for the fractal.
+/// Their numbers go into `params`. They call `fractal_displacement` (`displacement::emit`).
 #[must_use]
 pub fn emit(file: &FractFile, origin: [f64; 3], params: &mut Vec<[f32; 4]>) -> String {
     let all = primitives(file);
-    let mut out = String::from(
-        "fn fractal_primitives(p: vec3<f32>, distance_in: f32, detail_size: f32) -> f32 {\n",
-    );
-    out.push_str("    var distance = distance_in;\n");
+    // The shared start, then each primitive's distance `d` and how it combines (distance alone; and with the
+    // closest object).
+    let mut start = String::new();
+    let mut blocks: Vec<(String, String, String)> = Vec::new();
     if !all.is_empty() {
         let global = params.len();
         let at = file.vector("all_primitives_position", [0.0; 3]);
@@ -289,13 +290,14 @@ pub fn emit(file: &FractFile, origin: [f64; 3], params: &mut Vec<[f32; 4]>) -> S
                 k + 2
             )
         };
-        let _ = writeln!(out, "    let all = p - fractal_params[{global}].xyz;");
+        let _ = writeln!(start, "    let all = p - fractal_params[{global}].xyz;");
         let _ = writeln!(
-            out,
+            start,
             "    let q = {};",
             rows(global + 1).replace("{v}", "all")
         );
         for primitive in &all {
+            let mut out = String::new();
             let _ = writeln!(out, "    {{ // {}", primitive.name);
             let k = params.len();
             params.push(slot(primitive.position, primitive.wall));
@@ -318,8 +320,7 @@ pub fn emit(file: &FractFile, origin: [f64; 3], params: &mut Vec<[f32; 4]>) -> S
                 "        point = fractal_repeat_mod(point, fractal_params[{}].xyz);",
                 k + 4
             );
-            let d = shape(&primitive.kind, primitive.empty, own, params);
-            out.push_str(&d);
+            out.push_str(&shape(&primitive.kind, primitive.empty, own, params));
             if primitive.empty {
                 out.push_str("        d = abs(d);\n");
             }
@@ -340,17 +341,59 @@ pub fn emit(file: &FractFile, origin: [f64; 3], params: &mut Vec<[f32; 4]>) -> S
                 "        d = fractal_displacement({}, q, d);",
                 primitive.material
             );
-            let combine = match (primitive.operator, primitive.smooth) {
-                (0, _) => "distance = max(distance, d);".to_owned(),
-                (1, Some(_)) => format!("distance = fractal_smooth_union(distance, d, fractal_params[{}].w);", k + 4),
-                (2, _) => "if (distance < detail_size) { if (d < 1.5 * detail_size) { distance = 1.5 * detail_size; } else { distance = max(max(1.5 * detail_size - d, distance), 0.0); } }".into(),
-                (3, _) => "if (d < detail_size) { if (distance < 1.5 * detail_size) { distance = 1.5 * detail_size; } else { distance = max(max(1.5 * detail_size - distance, d), 0.0); } } else { distance = d; }".into(),
-                _ => "distance = min(distance, d);".into(),
+            let union = match primitive.smooth {
+                Some(_) => format!(
+                    "distance = fractal_smooth_union(distance, d, fractal_params[{}].w);",
+                    k + 4
+                ),
+                None => "distance = min(distance, d);".into(),
             };
-            let _ = writeln!(out, "        {combine}\n    }}");
+            let sub = "if (d < 1.5 * detail_size) { distance = 1.5 * detail_size; } else { distance = max(max(1.5 * detail_size - d, distance), 0.0); }";
+            let reverse = "if (distance < 1.5 * detail_size) { distance = 1.5 * detail_size; } else { distance = max(max(1.5 * detail_size - distance, d), 0.0); }";
+            let m = primitive.material;
+            let (combine, closest) = match primitive.operator {
+                0 => (
+                    "distance = max(distance, d);".to_owned(),
+                    format!("if (d > distance) {{ closest = {m}; }} distance = max(distance, d);"),
+                ),
+                2 => (
+                    format!("if (distance < detail_size) {{ {sub} }}"),
+                    format!(
+                        "if (distance < detail_size) {{ if (d < 2.25 * detail_size) {{ closest = {m}; }} {sub} }}"
+                    ),
+                ),
+                3 => (
+                    format!("if (d < detail_size) {{ {reverse} }} else {{ distance = d; }}"),
+                    format!(
+                        "let previous = closest; closest = {m}; if (d < detail_size) {{ if (distance < 2.25 * detail_size) {{ closest = previous; }} {reverse} }} else {{ distance = d; }}"
+                    ),
+                ),
+                _ => (
+                    union.clone(),
+                    format!("if (d < distance) {{ closest = {m}; }} {union}"),
+                ),
+            };
+            blocks.push((out, combine, closest));
         }
     }
+    let mut out = String::from(
+        "fn fractal_primitives(p: vec3<f32>, distance_in: f32, detail_size: f32) -> f32 {\n",
+    );
+    out.push_str("    var distance = distance_in;\n");
+    out.push_str(&start);
+    for (block, combine, _) in &blocks {
+        out.push_str(block);
+        let _ = writeln!(out, "        {combine}\n    }}");
+    }
     out.push_str("    return distance;\n}\n");
+    out.push_str("fn fractal_primitive_material(p: vec3<f32>, distance_in: f32, detail_size: f32) -> i32 {\n");
+    out.push_str("    var distance = distance_in;\n    var closest = -1;\n");
+    out.push_str(&start);
+    for (block, _, closest) in &blocks {
+        out.push_str(block);
+        let _ = writeln!(out, "        {closest}\n    }}");
+    }
+    out.push_str("    return closest;\n}\n");
     out
 }
 

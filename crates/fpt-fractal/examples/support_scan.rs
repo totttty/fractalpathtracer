@@ -4,7 +4,8 @@
 //! SCENES.tsv: `id width height relative_path` per line. Prints
 //! `id status detail` per scene: `gpu`, `cpu` (WGSL failed), `hybrid`,
 //! `boolean` or `error`. `SUPPORT_SCAN_DEEP=1` emits single fractals as deep
-//! zooms; `SUPPORT_SCAN_DUMP=dir` writes each module and its parameters there.
+//! zooms; `SUPPORT_SCAN_COLOUR=1` adds the colouring orbit; `SUPPORT_SCAN_DUMP=dir` writes each module and its
+//! parameters there.
 
 #[path = "common/loader.rs"]
 mod loader;
@@ -40,8 +41,20 @@ fn classify(id: &str, root: &Path, scene: &Path) -> (&'static str, String) {
     if let Err(e) = shape.distance([0.1, 0.2, 0.3], 1e-4) {
         return ("error", format!("{detail}: eval {e}"));
     }
-    let emitted = match (&shape, env::var_os("SUPPORT_SCAN_DEEP")) {
-        (Shape::Single(fractal), Some(_)) => fpt_fractal::wgsl::emit_deep(fractal, [0.1, 0.2, 0.3]),
+    // SUPPORT_SCAN_COLOUR=1 adds the colouring orbit of the scene's fractal material.
+    let colouring = env::var_os("SUPPORT_SCAN_COLOUR").map(|_| {
+        let file = fpt_fractal::scene::FractFile::parse(&loader::read(scene));
+        let id = file.number("formula_material_id", 1.0).max(1.0) as i64;
+        fpt_fractal::colouring::material(&file, id).colouring
+    });
+    let deep = env::var_os("SUPPORT_SCAN_DEEP").map(|_| [0.1, 0.2, 0.3]);
+    let emitted = match (&shape, &colouring, deep) {
+        (Shape::Single(fractal), Some(colouring), origin) => {
+            fpt_fractal::wgsl::emit_coloured(fractal, origin, colouring)
+        }
+        (Shape::Single(fractal), None, Some(origin)) => {
+            fpt_fractal::wgsl::emit_deep(fractal, origin)
+        }
         _ => fpt_fractal::wgsl::emit_shape(&shape),
     };
     if let (Some(dir), Ok(shader)) = (env::var_os("SUPPORT_SCAN_DUMP"), &emitted) {

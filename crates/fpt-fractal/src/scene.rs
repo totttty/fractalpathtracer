@@ -64,11 +64,26 @@ impl FractFile {
 
     /// `(major, minor)` of the `# version` line; (0, 0) when missing.
     pub fn version_number(&self) -> (u32, u32) {
-        let mut parts = self
-            .version
-            .split('.')
-            .map(|p| p.trim().parse().unwrap_or(0));
-        (parts.next().unwrap_or(0), parts.next().unwrap_or(0))
+        // Mandelbulber's versions are decimals (2.071 comes before 2.08 and 2.1 is 2.10): hundredths.
+        let version = self.version();
+        #[allow(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "a version"
+        )]
+        let major = version.trunc() as u32;
+        #[allow(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "a version"
+        )]
+        let minor = ((version - version.trunc()) * 100.0 + 1e-6).floor() as u32;
+        (major, minor)
+    }
+
+    /// The `# version` line as Mandelbulber reads it (a decimal); 0 when missing.
+    pub fn version(&self) -> f64 {
+        self.version.trim().parse().unwrap_or(0.0)
     }
 
     /// `delta_DE_function` after cSettings' compatibility rules
@@ -137,6 +152,17 @@ pub enum CAddition {
     AlreadyHas,
 }
 
+/// `coloringFunction` in a formula definition: how `CalculateColorIndex` colours a single formula.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ColoringFunction {
+    ABox,
+    Ifs,
+    AmazingSurf,
+    Donut,
+    Default,
+    Undefined,
+}
+
 /// Metadata from `formula/definition/fractal_<name>.cpp`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FormulaMeta {
@@ -146,6 +172,7 @@ pub struct FormulaMeta {
     pub analytic_function: DeFunction,
     pub c_addition: CAddition,
     pub default_bailout: f64,
+    pub coloring_function: ColoringFunction,
 }
 
 impl FormulaMeta {
@@ -209,6 +236,17 @@ impl FormulaMeta {
             default_bailout: field("defaultBailout")
                 .and_then(|v| v.trim_end_matches('f').parse().ok())
                 .unwrap_or(10.0),
+            coloring_function: match field("coloringFunction")
+                .as_deref()
+                .map(|v| v.rsplit("::").next().unwrap_or(v))
+            {
+                Some("coloringFunctionABox") => ColoringFunction::ABox,
+                Some("coloringFunctionIFS") => ColoringFunction::Ifs,
+                Some("coloringFunctionAmazingSurf") => ColoringFunction::AmazingSurf,
+                Some("coloringFunctionDonut") => ColoringFunction::Donut,
+                Some("coloringFunctionUndefined") => ColoringFunction::Undefined,
+                _ => ColoringFunction::Default,
+            },
         })
     }
 }

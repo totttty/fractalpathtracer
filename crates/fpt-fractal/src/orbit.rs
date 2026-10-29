@@ -686,6 +686,7 @@ mod tests {
                 analytic_function: DeFunction::Linear,
                 c_addition: CAddition::DisabledByDefault,
                 default_bailout: 10.0,
+                coloring_function: crate::scene::ColoringFunction::Default,
             },
             add_c: false,
             weight: 1.0,
