@@ -18,6 +18,7 @@ mod lex;
 pub mod orbit;
 pub mod params;
 mod parse;
+pub mod primitives;
 pub mod scene;
 pub mod wgsl;
 
